@@ -1,0 +1,42 @@
+{
+  "name": "my-keycloak-theme",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@patternfly-v5/patternfly": "npm:@patternfly/patternfly@^5.4.2",
+    "@patternfly/patternfly": "^4.224.5",
+    "patternfly": "^3.59.5",
+    "prettier": "^3.6.2",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@emotion/react": "^11.5.0",
+    "@emotion/styled": "^11.3.0",
+    "@eslint/js": "^9.30.1",
+    "@grapesjs/react": "^0.1.0",
+    "@mdi/js": "^7.2.96",
+    "@mdi/react": "^1.6.1",
+    "@mui/material": "^5.13.7",
+    "@types/backbone": "^1.4.15",
+    "@types/react": "18.2.14",
+    "@types/react-dom": "18.2.6",
+    "@vitejs/plugin-react": "^4.6.0",
+    "eslint": "^9.30.1",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.20",
+    "globals": "^16.3.0",
+    "grapesjs": "^0.21.3",
+    "typescript": "~5.8.3",
+    "typescript-eslint": "^8.35.1",
+    "vite": "^7.0.4",
+    "vite-plugin-static-copy": "^3.1.1"
+  }
+}
