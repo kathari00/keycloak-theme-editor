@@ -1,0 +1,1132 @@
+.checkbox {
+  display: flex;
+}
+
+.kcFormOptionsWrapperClass {
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+html{
+  color-scheme: light;
+  background: var(--quickstart-bg-color, #f0f4f9);
+}
+
+body{
+  background: var(--quickstart-bg-color, #f0f4f9);
+  background-image: none;
+  color: var(--quickstart-text-primary-light);
+  min-height: 100vh;
+  margin: 0;
+  font-family: system-ui;
+}
+
+body#keycloak-bg{
+  background: var(--quickstart-bg-color, #f0f4f9);
+}
+
+html.pf-v5-theme-dark{
+  color-scheme: dark;
+  background: var(--quickstart-bg-color, #1e1f20);
+}
+
+body.pf-v5-theme-dark, body#keycloak-bg.pf-v5-theme-dark{
+  background: var(--quickstart-bg-color, #1e1f20);
+  color: var(--quickstart-text-primary-dark);
+}
+
+.kcLoginClass{
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: clamp(16px, 4vw, 48px);
+}
+
+#kc-header{
+  display: none;
+}
+
+.kcFormCardClass{
+  width: 100%;
+  max-width: 1040px;
+  min-height: 384px;
+  background: var(--quickstart-card-bg-color, #ffffff);
+  border: 1px solid var(--quickstart-card-border-color, #d1d5db);
+  border-radius: var(--quickstart-border-radius, var(--quickstart-card-border-radius-default, 28px));
+  box-shadow: none;
+  padding: clamp(24px, 4vw, 48px);
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) minmax(320px, 1.15fr);
+  column-gap: clamp(20px, 4vw, 72px);
+  align-items: stretch;
+}
+
+@media (max-width: 900px) {
+  .kcFormCardClass{
+    grid-template-columns: 1fr;
+    row-gap: 1.25rem;
+  }
+}
+
+.kcLoginMain, .kcFormCardClass{
+  box-shadow: var(--quickstart-card-shadow);
+}
+
+body.pf-v5-theme-dark .kcFormCardClass{
+  background: var(--quickstart-card-bg-color-dark, #0e0e0e);
+  border-color: var(--quickstart-card-border-color-dark, #2b2c2e);
+}
+
+.kc-horizontal-card-footer-under-card{
+  width: 100%;
+  max-width: 1040px;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  border-radius: 18px;
+}
+
+.kc-horizontal-card-footer-row{
+  width: 100%;
+  padding: 0.5rem clamp(16px, 4vw, 24px);
+
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 12px;
+  justify-content: flex-start;
+  align-items: center;
+  font-size: 1rem;
+}
+
+.kc-horizontal-card-footer-language{
+  flex: 0 0 auto;
+}
+
+.kc-horizontal-card-footer-under-card a{
+  color: var(--quickstart-primary-color, #0b57d0);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.kc-horizontal-card-footer-under-card a:hover{
+  text-decoration: underline;
+}
+
+body.pf-v5-theme-dark .kc-horizontal-card-footer-under-card a, body#keycloak-bg.pf-v5-theme-dark .kc-horizontal-card-footer-under-card a{
+  color: var(--quickstart-primary-color, #0b57d0);
+}
+
+.kc-horizontal-card-footer-language select.kcInputClass{
+  border: 0;
+  background: transparent;
+  color: var(--quickstart-primary-color, #0b57d0);
+  color-scheme: light;
+  font: inherit;
+  line-height: 1.2;
+  padding: 0;
+  min-height: auto;
+  cursor: pointer;
+  width: auto;
+  text-decoration: underline;
+
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath d='M6 8l4 4 4-4' fill='none' stroke='%23e8eaed' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right center;
+  background-size: 0.9rem;
+  padding-right: 1.2rem;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.pf-v5-theme-dark .kc-horizontal-card-footer-language select.kcInputClass{
+  color: var(--quickstart-primary-color, #0b57d0);
+  color-scheme: dark;
+}
+
+.kc-horizontal-card-footer-language select.kcInputClass option{
+  background-color: var(--quickstart-bg-color, #1e1f20);
+  color: var(--quickstart-text-primary-dark);
+}
+
+.kc-horizontal-card-footer-language select.kcInputClass:focus{
+  text-decoration: underline;
+}
+
+.kc-horizontal-card-footer-language select.kcInputClass:focus-visible{
+  outline: 2px solid var(--quickstart-primary-color, #a8c7fa);
+  outline-offset: 2px;
+}
+
+.kc-footer-legal-links{
+  display: inline-flex;
+  gap: clamp(16px, 3vw, 56px);
+  align-items: center;
+  margin-left: auto;
+}
+
+.kcFormHeaderClass{
+  grid-column: 1;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.kc-horizontal-card-logo{
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background-image: var(--kc-applied-logo-url, conic-gradient(from 180deg, #ea4335, #fbbc05, #34a853, #4285f4, #ea4335));
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+h1#kc-page-title{
+  margin: 0;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  font-size: 2.25rem;
+  line-height: 1.15;
+  color: inherit;
+}
+
+h1, h2, h3, h4, h5, h6, body h1, body h2, body h3, body h4, body h5, body h6, html h1, html h2, html h3, html h4, html h5, html h6, #kc-header-wrapper, #kc-header-wrapper #kc-realm-name, #kc-header-wrapper #kc-client-name, #kc-header-wrapper span#kc-realm-name, #kc-header-wrapper span#kc-client-name, body .kcLoginMainTitle{
+  font-family: var(--quickstart-heading-font-family, inherit);
+}
+
+.kc-horizontal-card-subtitle{
+  margin: 0;
+  color: var(--quickstart-text-secondary-light);
+  color: var(--gm3-sys-color-on-surface, var(--quickstart-text-secondary-light));
+  font-family: "Google Sans", roboto, "Noto Sans Myanmar UI", "Noto Sans Khmer", arial, sans-serif;
+  font-weight: 400;
+  font-weight: var(--c-stfwt, 400);
+  letter-spacing: 0rem;
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.kc-horizontal-card-subtitle-separator{
+  display: none;
+}
+
+body.pf-v5-theme-dark .kc-horizontal-card-subtitle, body#keycloak-bg.pf-v5-theme-dark .kc-horizontal-card-subtitle{
+  color: var(--quickstart-text-secondary-dark);
+}
+
+#kc-content{
+  grid-column: 2;
+  display: flex;
+  align-self: stretch;
+  height: 100%;
+  padding-top: calc(40px + 0.9rem);
+  box-sizing: border-box;
+  min-height: 0;
+}
+
+#kc-content-wrapper{
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+}
+
+#kc-content-wrapper ul:not([class]):not([id]){
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+#kc-content-wrapper ul:not([class]):not([id]) > li{
+  list-style: none;
+  color: var(--quickstart-text-primary-light);
+  margin: 0;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--quickstart-secondary-color, #9aa0a6) 45%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--quickstart-secondary-color, #9aa0a6) 14%, transparent);
+}
+
+body.pf-v5-theme-dark #kc-content-wrapper ul:not([class]):not([id]) > li,
+body#keycloak-bg.pf-v5-theme-dark #kc-content-wrapper ul:not([class]):not([id]) > li{
+  color: var(--quickstart-text-primary-dark);
+}
+
+.kcLabelWrapperClass{
+  display: flex;
+  flex-direction: row;
+  gap: 0.5rem;
+}
+
+.subtitle {
+  display: flex;
+  justify-content: flex-end;
+}
+
+#kc-code {
+  margin-top: 0.5rem;
+  height: 40%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#kc-form, #kc-form-wrapper, #kc-form-wrapper > form{
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+#kc-content > #kc-content-wrapper > #kc-form > #kc-form-wrapper > form > .kcFormGroupClass:last-child{
+  margin-top: auto;
+}
+
+#kc-form-buttons, .form-actions{
+  margin-top: auto;
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: stretch;
+}
+
+#kc-form-buttons.kcFormGroupClass, .form-actions.kcFormGroupClass{
+  margin-bottom: 0;
+}
+
+#kc-form-buttons > *, .form-actions > *{
+  width: 100%;
+  box-sizing: border-box;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+input.kcInputClass,
+.kcInputClass input,
+select.kcInputClass,
+textarea.kcInputClass,
+.kcButtonClass,
+.kcButtonPrimaryClass,
+.kcButtonSecondaryClass,
+.kcFormSocialAccountListButtonClass,
+.kcPanelMainBodyClass,
+.kcLoginMain,
+.kcFormCardClass{
+  border-radius: var(--quickstart-border-radius, var(--quickstart-control-border-radius-default, 28px));
+}
+
+.kcButtonClass, button.kcButtonClass, a.kcButtonClass, input.kcButtonClass{
+  border-radius: var(--quickstart-border-radius, var(--quickstart-control-border-radius-default, 28px));
+  padding: 0.6rem 1.1rem;
+  min-height: 40px;
+  font-weight: 500;
+  border: 1px solid #d1d5db;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  line-height: 1.2;
+}
+
+.kcButtonPrimaryClass, button.kcButtonPrimaryClass, a.kcButtonPrimaryClass, button[type="submit"], input[type="submit"]{
+  border-color: var(--quickstart-primary-color);
+}
+
+.kcButtonPrimaryClass, button.kcButtonPrimaryClass, input.kcButtonPrimaryClass{
+  background: var(--quickstart-primary-color, #0b57d0);
+  border-color: var(--quickstart-primary-color, #0b57d0);
+  color: #ffffff;
+}
+
+.kcButtonPrimaryClass:hover, button.kcButtonPrimaryClass:hover, input.kcButtonPrimaryClass:hover{
+  filter: brightness(1.03);
+}
+
+.kcButtonPrimaryClass:hover, .kcButtonPrimaryClass:focus, button[type="submit"]:hover, button[type="submit"]:focus{
+  filter: brightness(0.9);
+}
+
+.kcButtonBlockClass{
+  width: 100%;
+}
+
+.kcFormGroupClass{
+  margin-bottom: 1.25rem;
+}
+
+#kc-form-login .kcFormSettingClass{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kcLabelClass{
+  color: inherit;
+  font-weight: 500;
+  display: block;
+  margin-bottom: 0.35rem;
+}
+
+#kc-totp-settings{
+  margin: 0 0 1.25rem 1.25rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+#kc-totp-settings p{
+  margin: 0 0 0.5rem;
+}
+
+#kc-totp-settings > li{
+  margin: 0;
+}
+
+#kc-totp-settings p:last-child{
+  margin-bottom: 0;
+}
+
+#kc-totp-settings ul{
+  margin: 0.5rem 0 0 1.25rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+#kc-totp-settings-form{
+  margin-top: 1rem;
+}
+
+.kcInputGroup{
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+
+.kcInputGroup input[type="password"]{
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-right: none;
+}
+
+#code, input.kcInputClass, .kcInputClass input, select.kcInputClass, textarea.kcInputClass{
+  background: transparent;
+  color: inherit;
+  border: 1px solid #d1d5db;
+  border-radius: var(--quickstart-border-radius, var(--quickstart-control-border-radius-default, 28px));
+  padding: 0.625rem 0.75rem;
+  font: inherit;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+#code {
+  width: 50%;
+  text-align: center;
+}
+
+input.kcInputClass:hover, .kcInputClass:hover, .kcInputClass input:hover, select.kcInputClass:hover, textarea.kcInputClass:hover{
+  border-color: var(--quickstart-primary-color, #0b57d0);
+}
+
+input.kcInputClass:focus, .kcInputClass input:focus, select.kcInputClass:focus, textarea.kcInputClass:focus{
+  border-color: var(--quickstart-primary-color, #0b57d0);
+  box-shadow: 0 0 0 1px var(--quickstart-primary-color, #0b57d0);
+  outline: none;
+}
+
+.kcInputClass input:focus, input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focus{
+  border-bottom-color: var(--quickstart-primary-color);
+}
+
+input.kcInputClass:focus, .kcInputClass input:focus, .kcInputGroupItemClass.kcFill > input:focus, .kcInputGroupItemClass.kcFill > .kcInputClass input:focus, input[type="password"]:focus, input[type="text"]:focus, input[type="email"]:focus, input[type="tel"]:focus, input[type="number"]:focus, input.kcInputClass[aria-invalid="true"], .kcInputClass input[aria-invalid="true"], .kcInputGroupItemClass.kcFill > input[aria-invalid="true"], .kcInputGroupItemClass.kcFill > .kcInputClass input[aria-invalid="true"]{
+  box-shadow: none;
+}
+
+.kcInputGroup :is(
+  input.kcInputClass,
+  .kcInputClass input,
+  .kcInputGroupItemClass.kcFill > input,
+  .kcInputGroupItemClass.kcFill > .kcInputClass,
+  .kcInputGroupItemClass.kcFill > .kcInputClass input,
+  input[type="password"],
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="number"]
+){
+  border-top-left-radius: var(--quickstart-border-radius, var(--quickstart-control-border-radius-default, 28px));
+  border-bottom-left-radius: var(--quickstart-border-radius, var(--quickstart-control-border-radius-default, 28px));
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-right-width: 0;
+  border-inline-end-width: 0;
+}
+
+#kc-cancel {
+  width: 20%
+}
+
+body.pf-v5-theme-dark .kcButtonClass, body.pf-v5-theme-dark button.kcButtonClass, body.pf-v5-theme-dark a.kcButtonClass, body.pf-v5-theme-dark input.kcButtonClass{
+  border-color: #2b2c2e;
+}
+
+.kcButtonSecondaryClass, #kc-form-buttons [name="cancel-aia"], #kc-form-buttons [name="cancel"], #kc-form-buttons #kc-cancel, #kc-form-buttons #kc-decline, #backToApplication{
+  border: 1px solid var(--quickstart-primary-color, #0b57d0);
+  background: transparent;
+  color: var(--quickstart-primary-color, #0b57d0);
+  text-decoration: none;
+  padding: 0.6rem 1.1rem;
+  min-height: 40px;
+  border-radius: var(--quickstart-border-radius, var(--quickstart-control-border-radius-default, 28px));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font: inherit;
+  line-height: 1.2;
+}
+
+.kcButtonSecondaryClass:hover, #kc-form-buttons [name="cancel-aia"]:hover, #kc-form-buttons [name="cancel"]:hover, #kc-form-buttons #kc-cancel:hover, #kc-form-buttons #kc-decline:hover, #backToApplication:hover, .kcButtonLinkClass:hover{
+  text-decoration: none;
+  background: color-mix(in srgb, var(--quickstart-primary-color, #0b57d0) 12%, transparent);
+}
+
+body.pf-v5-theme-dark .kcButtonSecondaryClass, body.pf-v5-theme-dark #kc-form-buttons [name="cancel-aia"], body.pf-v5-theme-dark #kc-form-buttons [name="cancel"], body.pf-v5-theme-dark #kc-form-buttons #kc-cancel, body.pf-v5-theme-dark #kc-form-buttons #kc-decline, body.pf-v5-theme-dark #backToApplication{
+  border-color: var(--quickstart-primary-color, #a8c7fa);
+  color: var(--quickstart-primary-color, #a8c7fa);
+}
+
+body.pf-v5-theme-dark .kcButtonSecondaryClass:hover, body.pf-v5-theme-dark #kc-form-buttons [name="cancel-aia"]:hover, body.pf-v5-theme-dark #kc-form-buttons [name="cancel"]:hover, body.pf-v5-theme-dark #kc-form-buttons #kc-cancel:hover, body.pf-v5-theme-dark #kc-form-buttons #kc-decline:hover, body.pf-v5-theme-dark #backToApplication:hover, body.pf-v5-theme-dark .kcButtonLinkClass:hover{
+  background: color-mix(in srgb, var(--quickstart-primary-color, #a8c7fa) 14%, transparent);
+}
+
+body.pf-v5-theme-dark .kcButtonPrimaryClass, body.pf-v5-theme-dark button.kcButtonPrimaryClass, body.pf-v5-theme-dark input.kcButtonPrimaryClass{
+  background: var(--quickstart-primary-color, #a8c7fa);
+  border-color: var(--quickstart-primary-color, #a8c7fa);
+  color: #0b0c0d;
+}
+
+.kcFormPasswordVisibilityButtonClass, button.kcFormPasswordVisibilityButtonClass{
+  border-radius: 0 8px 8px 0;
+  border: 1px solid #d1d5db;
+  border-left: none;
+  background: transparent;
+  color: inherit;
+  padding: 0 0.75rem;
+  min-height: 40px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+body.pf-v5-theme-dark .kcFormPasswordVisibilityButtonClass, body#keycloak-bg.pf-v5-theme-dark .kcFormPasswordVisibilityButtonClass{
+  border-color: #2b2c2e;
+}
+
+.kcFormPasswordVisibilityButtonClass:hover{
+  background: rgba(11, 87, 208, 0.08);
+}
+
+body.pf-v5-theme-dark .kcFormPasswordVisibilityButtonClass:hover, body#keycloak-bg.pf-v5-theme-dark .kcFormPasswordVisibilityButtonClass:hover{
+  background: rgba(168, 199, 250, 0.12);
+}
+
+.kcFormPasswordVisibilityButtonClass i{
+  display: none;
+}
+
+.kcFormPasswordVisibilityButtonClass::before{
+  content: '';
+  width: 1rem;
+  height: 1rem;
+  display: block;
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='black'%3E%3Cpath%20d='M12%205c-5%200-9.27%203.11-11%207%201.73%203.89%206%207%2011%207s9.27-3.11%2011-7c-1.73-3.89-6-7-11-7zm0%2011a4%204%200%201%201%200-8%204%204%200%200%201%200%208z'/%3E%3C/svg%3E") no-repeat center / contain;
+  mask: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='black'%3E%3Cpath%20d='M12%205c-5%200-9.27%203.11-11%207%201.73%203.89%206%207%2011%207s9.27-3.11%2011-7c-1.73-3.89-6-7-11-7zm0%2011a4%204%200%201%201%200-8%204%204%200%200%201%200%208z'/%3E%3C/svg%3E") no-repeat center / contain;
+}
+
+.kcFormPasswordVisibilityButtonClass[data-password-visible="true"]::before{
+  -webkit-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2024%2024'%20fill%3D'black'%3E%3Cpath%20d%3D'M12%205c-5%200-9.27%203.11-11%207%201.73%203.89%206%207%2011%207s9.27-3.11%2011-7c-1.73-3.89-6-7-11-7zm0%2011a4%204%200%201%201%200-8%204%204%200%200%201%200%208z'%2F%3E%3Cpath%20d%3D'M3%203l18%2018'%20fill%3D'none'%20stroke%3D'black'%20stroke-width%3D'2'%20stroke-linecap%3D'round'%2F%3E%3C%2Fsvg%3E") no-repeat center / contain;
+  mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2024%2024'%20fill%3D'black'%3E%3Cpath%20d%3D'M12%205c-5%200-9.27%203.11-11%207%201.73%203.89%206%207%2011%207s9.27-3.11%2011-7c-1.73-3.89-6-7-11-7zm0%2011a4%204%200%201%201%200-8%204%204%200%200%201%200%208z'%2F%3E%3Cpath%20d%3D'M3%203l18%2018'%20fill%3D'none'%20stroke%3D'black'%20stroke-width%3D'2'%20stroke-linecap%3D'round'%2F%3E%3C%2Fsvg%3E") no-repeat center / contain;
+}
+
+body.pf-v5-theme-dark input.kcInputClass, body.pf-v5-theme-dark .kcInputClass input, body.pf-v5-theme-dark select.kcInputClass, body.pf-v5-theme-dark textarea.kcInputClass{
+  border-color: #2b2c2e;
+}
+
+body.pf-v5-theme-dark input.kcInputClass:hover, body.pf-v5-theme-dark .kcInputClass:hover, body.pf-v5-theme-dark .kcInputClass input:hover, body.pf-v5-theme-dark select.kcInputClass:hover, body.pf-v5-theme-dark textarea.kcInputClass:hover, body#keycloak-bg.pf-v5-theme-dark input.kcInputClass:hover, body#keycloak-bg.pf-v5-theme-dark .kcInputClass:hover, body#keycloak-bg.pf-v5-theme-dark .kcInputClass input:hover, body#keycloak-bg.pf-v5-theme-dark select.kcInputClass:hover, body#keycloak-bg.pf-v5-theme-dark textarea.kcInputClass:hover{
+  border-color: var(--quickstart-primary-color, #0b57d0);
+}
+
+body.pf-v5-theme-dark input.kcInputClass:focus, body.pf-v5-theme-dark .kcInputClass input:focus, body.pf-v5-theme-dark select.kcInputClass:focus, body.pf-v5-theme-dark textarea.kcInputClass:focus{
+  border-color: var(--quickstart-primary-color, #a8c7fa);
+  box-shadow: 0 0 0 1px var(--quickstart-primary-color, #a8c7fa);
+}
+
+.kcFormGroupClass:has(.kcInputHelperTextItemClass.kcError) input.kcInputClass, .kcFormGroupClass:has(.kcInputHelperTextItemClass.kcError) .kcInputClass input, .kcFormGroupClass:has(.kcInputHelperTextItemClass.kcError) select.kcInputClass, .kcFormGroupClass:has(.kcInputHelperTextItemClass.kcError) textarea.kcInputClass, .kcFormGroupClass:has(input[aria-invalid="true"]) input.kcInputClass, .kcFormGroupClass:has(input[aria-invalid="true"]) .kcInputClass input, .kcFormGroupClass:has(select[aria-invalid="true"]) select.kcInputClass, .kcFormGroupClass:has(textarea[aria-invalid="true"]) textarea.kcInputClass, input.kcInputClass[aria-invalid="true"], .kcInputClass input[aria-invalid="true"], select.kcInputClass[aria-invalid="true"], textarea.kcInputClass[aria-invalid="true"]{
+  border-color: #d92d20;
+  box-shadow: 0 0 0 1px rgba(217, 45, 32, 0.35);
+  background: transparent;
+}
+
+.kcInputErrorMessageClass, #input-error.kcInputErrorMessageClass{
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  margin-top: 0.45rem;
+  border-radius: var(--quickstart-border-radius);
+  color: var(--quickstart-error-text-color, var(--quickstart-text-secondary-light, #1f1f1f));
+  background: var(--quickstart-error-label-bg-color, rgba(11, 12, 13, 0.06));
+}
+
+body.pf-v5-theme-dark .kcFormGroupClass:has(.kcInputHelperTextItemClass.kcError) input.kcInputClass, body.pf-v5-theme-dark .kcFormGroupClass:has(.kcInputHelperTextItemClass.kcError) .kcInputClass input, body.pf-v5-theme-dark .kcFormGroupClass:has(.kcInputHelperTextItemClass.kcError) select.kcInputClass, body.pf-v5-theme-dark .kcFormGroupClass:has(.kcInputHelperTextItemClass.kcError) textarea.kcInputClass, body.pf-v5-theme-dark .kcFormGroupClass:has(input[aria-invalid="true"]) input.kcInputClass, body.pf-v5-theme-dark .kcFormGroupClass:has(input[aria-invalid="true"]) .kcInputClass input, body.pf-v5-theme-dark .kcFormGroupClass:has(select[aria-invalid="true"]) select.kcInputClass, body.pf-v5-theme-dark .kcFormGroupClass:has(textarea[aria-invalid="true"]) textarea.kcInputClass, body.pf-v5-theme-dark input.kcInputClass[aria-invalid="true"], body.pf-v5-theme-dark .kcInputClass input[aria-invalid="true"], body.pf-v5-theme-dark select.kcInputClass[aria-invalid="true"], body.pf-v5-theme-dark textarea.kcInputClass[aria-invalid="true"], body#keycloak-bg.pf-v5-theme-dark .kcFormGroupClass:has(.kcInputHelperTextItemClass.kcError) input.kcInputClass, body#keycloak-bg.pf-v5-theme-dark .kcFormGroupClass:has(.kcInputHelperTextItemClass.kcError) .kcInputClass input, body#keycloak-bg.pf-v5-theme-dark .kcFormGroupClass:has(.kcInputHelperTextItemClass.kcError) select.kcInputClass, body#keycloak-bg.pf-v5-theme-dark .kcFormGroupClass:has(.kcInputHelperTextItemClass.kcError) textarea.kcInputClass, body#keycloak-bg.pf-v5-theme-dark .kcFormGroupClass:has(input[aria-invalid="true"]) input.kcInputClass, body#keycloak-bg.pf-v5-theme-dark .kcFormGroupClass:has(input[aria-invalid="true"]) .kcInputClass input, body#keycloak-bg.pf-v5-theme-dark .kcFormGroupClass:has(select[aria-invalid="true"]) select.kcInputClass, body#keycloak-bg.pf-v5-theme-dark .kcFormGroupClass:has(textarea[aria-invalid="true"]) textarea.kcInputClass, body#keycloak-bg.pf-v5-theme-dark input.kcInputClass[aria-invalid="true"], body#keycloak-bg.pf-v5-theme-dark .kcInputClass input[aria-invalid="true"], body#keycloak-bg.pf-v5-theme-dark select.kcInputClass[aria-invalid="true"], body#keycloak-bg.pf-v5-theme-dark textarea.kcInputClass[aria-invalid="true"]{
+  border-color: #f97066;
+  box-shadow: 0 0 0 1px rgba(249, 112, 102, 0.45);
+  background: transparent;
+}
+
+html.pf-v5-theme-dark :is(.kcInputErrorMessageClass, #input-error.kcInputErrorMessageClass), body.pf-v5-theme-dark :is(.kcInputErrorMessageClass, #input-error.kcInputErrorMessageClass), html.pf-v6-theme-dark :is(.kcInputErrorMessageClass, #input-error.kcInputErrorMessageClass), body.pf-v6-theme-dark :is(.kcInputErrorMessageClass, #input-error.kcInputErrorMessageClass), html.kcDarkModeClass :is(.kcInputErrorMessageClass, #input-error.kcInputErrorMessageClass), body.kcDarkModeClass :is(.kcInputErrorMessageClass, #input-error.kcInputErrorMessageClass), body#keycloak-bg.pf-v5-theme-dark :is(.kcInputErrorMessageClass, #input-error.kcInputErrorMessageClass), body#keycloak-bg.pf-v6-theme-dark :is(.kcInputErrorMessageClass, #input-error.kcInputErrorMessageClass), body#keycloak-bg.kcDarkModeClass :is(.kcInputErrorMessageClass, #input-error.kcInputErrorMessageClass){
+  color: var(--quickstart-error-text-color-dark, var(--quickstart-text-secondary-dark, #ffffff));
+  background: var(--quickstart-error-label-bg-color-dark, rgba(255, 255, 255, 0.14));
+}
+
+.kcButtonLinkClass, a.kcButtonLinkClass, button.kcButtonLinkClass{
+  border: 0;
+  background: transparent;
+  color: var(--quickstart-primary-color, #0b57d0);
+  text-decoration: none;
+  padding: 0.6rem 1.1rem;
+  min-height: 40px;
+  border-radius: var(--quickstart-border-radius, var(--quickstart-control-border-radius-default, 28px));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font: inherit;
+  line-height: 1.2;
+}
+
+#kc-social-providers .kcFormSocialAccountListClass{
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+#kc-social-providers .kcFormSocialAccountListClass:has(> :nth-child(4)){
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+#kc-social-providers{
+  text-align: center;
+}
+
+#kc-social-providers > h2, #kc-social-providers > h4{
+  text-align: center;
+  margin: 0 0 0.75rem;
+}
+
+#kc-social-providers .kcFormSocialAccountListClass li{
+  margin: 0;
+}
+
+#kc-social-providers .kcFormSocialAccountListButtonClass, #kc-social-providers a.kcFormSocialAccountListButtonClass{
+  border: 1px solid var(--quickstart-primary-color, #0b57d0);
+  background: transparent;
+  color: var(--quickstart-primary-color, #0b57d0);
+  text-decoration: none;
+  padding: 0.6rem 1.1rem;
+  min-height: 40px;
+  border-radius: var(--quickstart-border-radius, var(--quickstart-control-border-radius-default, 28px));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font: inherit;
+  line-height: 1.2;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+#kc-social-providers .kcFormSocialAccountListButtonClass::before, #kc-social-providers a.kcFormSocialAccountListButtonClass::before{
+  content: '';
+  width: 1.1rem;
+  height: 1.1rem;
+  display: inline-block;
+  flex: 0 0 1.1rem;
+}
+
+#kc-social-providers .kcFormSocialAccountListButtonClass::before, #kc-social-providers a.kcFormSocialAccountListButtonClass::before{
+  background-color: currentColor;
+  opacity: 0;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+#kc-social-providers .kcFormSocialAccountListButtonClass:has(svg)::before, #kc-social-providers a.kcFormSocialAccountListButtonClass:has(svg)::before{
+  display: none;
+}
+
+#kc-social-providers .kcFormSocialAccountListButtonClass svg, #kc-social-providers a.kcFormSocialAccountListButtonClass svg{
+  width: 1.1rem;
+  height: 1.1rem;
+  flex: 0 0 1.1rem;
+}
+
+#kc-social-providers .kcFormSocialAccountListButtonClass svg:not(.google), #kc-social-providers a.kcFormSocialAccountListButtonClass svg:not(.google){
+  filter: invert(47%) sepia(88%) saturate(7486%) hue-rotate(199deg) brightness(91%) contrast(101%);
+}
+
+body.pf-v5-theme-dark #kc-social-providers .kcFormSocialAccountListButtonClass svg:not(.google), body.pf-v5-theme-dark #kc-social-providers a.kcFormSocialAccountListButtonClass svg:not(.google){
+  filter: invert(54%) sepia(96%) saturate(2028%) hue-rotate(174deg) brightness(99%) contrast(97%);
+}
+
+#kc-social-providers .kcFormSocialAccountListButtonClass#social-google::before{
+  opacity: 1;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M21.35 11.1h-9.17v2.98h5.25c-.53 2.53-2.75 3.65-5.24 3.65-3.09 0-5.8-2.43-5.8-5.73 0-3.2 2.62-5.74 5.81-5.74 2.46 0 3.91 1.57 3.91 1.57l2.1-2.17S16.08 3 12.12 3C6.99 3 3 7.16 3 12s3.84 9 9.24 9c4.78 0 8.16-3.27 8.16-8.09 0-.99-.05-1.55-.05-1.81z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M21.35 11.1h-9.17v2.98h5.25c-.53 2.53-2.75 3.65-5.24 3.65-3.09 0-5.8-2.43-5.8-5.73 0-3.2 2.62-5.74 5.81-5.74 2.46 0 3.91 1.57 3.91 1.57l2.1-2.17S16.08 3 12.12 3C6.99 3 3 7.16 3 12s3.84 9 9.24 9c4.78 0 8.16-3.27 8.16-8.09 0-.99-.05-1.55-.05-1.81z'/%3E%3C/svg%3E");
+}
+
+#kc-social-providers .kcFormSocialAccountListButtonClass#social-github::before{
+  opacity: 1;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M12 .5A12 12 0 0 0 8.2 23.9c.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.4-4-1.4-.5-1.3-1.2-1.6-1.2-1.6-1-.7.1-.7.1-.7 1.1.1 1.7 1.2 1.7 1.2 1 .1 1.9.9 2.2 1.7.9 1.5 2.6 1.1 3.3.8.1-.7.4-1.2.7-1.5-2.7-.3-5.4-1.4-5.4-6A4.7 4.7 0 0 1 7.7 10c-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.2 1.2a11 11 0 0 1 5.9 0C19 6.6 20 7 20 7c.6 1.6.2 2.8.1 3.1a4.7 4.7 0 0 1 1.3 3.3c0 4.6-2.7 5.6-5.4 6 .4.3.8 1 .8 2v3c0 .3.2.7.8.6A12 12 0 0 0 12 .5z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M12 .5A12 12 0 0 0 8.2 23.9c.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.4-4-1.4-.5-1.3-1.2-1.6-1.2-1.6-1-.7.1-.7.1-.7 1.1.1 1.7 1.2 1.7 1.2 1 .1 1.9.9 2.2 1.7.9 1.5 2.6 1.1 3.3.8.1-.7.4-1.2.7-1.5-2.7-.3-5.4-1.4-5.4-6A4.7 4.7 0 0 1 7.7 10c-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.2 1.2a11 11 0 0 1 5.9 0C19 6.6 20 7 20 7c.6 1.6.2 2.8.1 3.1a4.7 4.7 0 0 1 1.3 3.3c0 4.6-2.7 5.6-5.4 6 .4.3.8 1 .8 2v3c0 .3.2.7.8.6A12 12 0 0 0 12 .5z'/%3E%3C/svg%3E");
+}
+
+#kc-social-providers .kcFormSocialAccountListButtonClass#social-facebook::before{
+  opacity: 1;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M13.5 22v-8h2.7l.4-3h-3.1V9.1c0-.9.3-1.5 1.6-1.5h1.7V5a23 23 0 0 0-2.5-.1c-2.5 0-4.3 1.5-4.3 4.4V11H7v3h2.8v8h3.7z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M13.5 22v-8h2.7l.4-3h-3.1V9.1c0-.9.3-1.5 1.6-1.5h1.7V5a23 23 0 0 0-2.5-.1c-2.5 0-4.3 1.5-4.3 4.4V11H7v3h2.8v8h3.7z'/%3E%3C/svg%3E");
+}
+
+#kc-social-providers .kcFormSocialAccountListButtonClass#social-microsoft::before{
+  opacity: 1;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M2 3h9v9H2zm11 0h9v9h-9zM2 14h9v9H2zm11 0h9v9h-9z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M2 3h9v9H2zm11 0h9v9h-9zM2 14h9v9H2zm11 0h9v9h-9z'/%3E%3C/svg%3E");
+}
+
+#kc-social-providers .kcFormSocialAccountListButtonClass#social-gitlab::before{
+  opacity: 1;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M12 22l4.4-13.6h-8.8L12 22zm-9-9.8l4.7-3.7-2-5.9-2.7 9.6zm15.3-3.7l4.7 3.7-2.7-9.6-2 5.9zM7.7 8.5h8.6l-2.6-7.7h-3.4z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M12 22l4.4-13.6h-8.8L12 22zm-9-9.8l4.7-3.7-2-5.9-2.7 9.6zm15.3-3.7l4.7 3.7-2.7-9.6-2 5.9zM7.7 8.5h8.6l-2.6-7.7h-3.4z'/%3E%3C/svg%3E");
+}
+
+#kc-social-providers .kcFormSocialAccountListButtonClass#social-linkedin::before{
+  opacity: 1;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M6.5 9H3.3v11h3.2V9zm.2-3.4A1.9 1.9 0 1 0 2.8 5.6a1.9 1.9 0 0 0 3.9 0zM20.7 20v-6c0-3.2-1.7-4.7-4-4.7-1.8 0-2.6 1-3.1 1.8V9h-3.2v11h3.2v-6.2c0-1.6.3-3.1 2.3-3.1s2 1.9 2 3.2V20h2.8z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M6.5 9H3.3v11h3.2V9zm.2-3.4A1.9 1.9 0 1 0 2.8 5.6a1.9 1.9 0 0 0 3.9 0zM20.7 20v-6c0-3.2-1.7-4.7-4-4.7-1.8 0-2.6 1-3.1 1.8V9h-3.2v11h3.2v-6.2c0-1.6.3-3.1 2.3-3.1s2 1.9 2 3.2V20h2.8z'/%3E%3C/svg%3E");
+}
+
+#kc-social-providers .kcFormSocialAccountNameClass{
+  flex: 0 1 auto;
+  text-align: left;
+}
+
+#kc-social-providers .kcFormSocialAccountListButtonClass:hover, #kc-social-providers a.kcFormSocialAccountListButtonClass:hover{
+  text-decoration: none;
+  background: color-mix(in srgb, var(--quickstart-primary-color, #0b57d0) 12%, transparent);
+}
+
+#kc-registration > span > a{
+  font-size: inherit;
+  color: inherit;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+#kc-registration-container #kc-registration > a{
+  font-size: 14px;
+  color: var(--quickstart-primary-color);
+}
+
+a{
+  color: var(--quickstart-primary-color);
+}
+
+#kc-registration-container #kc-registration > a{
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--quickstart-border-radius, var(--quickstart-control-border-radius-default, 28px));
+  border: 1px solid var(--quickstart-primary-color, #0b57d0);
+  color: var(--quickstart-primary-color, #0b57d0);
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  text-align: center;
+  background: transparent;
+  box-sizing: border-box;
+  margin: 0;
+}
+
+#authenticateWebAuthnButton.kcButtonSecondaryClass{
+  border-radius: var(--quickstart-border-radius, var(--quickstart-control-border-radius-default, 28px));
+}
+
+body.pf-v5-theme-dark a{
+  color: var(--quickstart-primary-color, #0b57d0);
+}
+
+body.pf-v5-theme-dark #kc-registration-container #kc-registration > a{
+  border-color: var(--quickstart-primary-color, #a8c7fa);
+  color: var(--quickstart-primary-color, #a8c7fa);
+}
+
+body.pf-v5-theme-dark #kc-registration > span{
+  border-color: var(--quickstart-primary-color, #a8c7fa);
+  color: var(--quickstart-primary-color, #a8c7fa);
+}
+
+body.pf-v5-theme-dark #kc-social-providers .kcFormSocialAccountListButtonClass, body.pf-v5-theme-dark #kc-social-providers a.kcFormSocialAccountListButtonClass{
+  border-color: var(--quickstart-primary-color, #a8c7fa);
+  color: var(--quickstart-primary-color, #a8c7fa);
+}
+
+#authenticateWebAuthnButton.kcButtonSecondaryClass{
+  color: var(--quickstart-primary-color, #0b57d0);
+  margin-top: 0.75rem;
+}
+
+#authenticateWebAuthnButton.kcButtonSecondaryClass ~ #kc-info{
+  margin-top: 0.75rem;
+}
+
+#backToApplication{
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+body.pf-v5-theme-dark #kc-registration-container #kc-registration > a:hover{
+  background: color-mix(in srgb, var(--quickstart-primary-color, #a8c7fa) 14%, transparent);
+}
+
+body.pf-v5-theme-dark #kc-social-providers .kcFormSocialAccountListButtonClass:hover, body.pf-v5-theme-dark #kc-social-providers a.kcFormSocialAccountListButtonClass:hover{
+  background: color-mix(in srgb, var(--quickstart-primary-color, #a8c7fa) 14%, transparent);
+}
+
+.kcButtonSecondaryClass:focus-visible, #kc-form-buttons [name="cancel-aia"]:focus-visible, #kc-form-buttons [name="cancel"]:focus-visible, #kc-form-buttons #kc-cancel:focus-visible, #kc-form-buttons #kc-decline:focus-visible, #backToApplication:focus-visible, .kcButtonLinkClass:focus-visible, .kcButtonPrimaryClass:focus-visible{
+  outline: 2px solid var(--quickstart-primary-color, #0b57d0);
+  outline-offset: 2px;
+}
+
+#kc-registration-container #kc-registration > a:focus-visible{
+  outline: 2px solid var(--quickstart-primary-color, #0b57d0);
+  outline-offset: 2px;
+}
+
+#kc-social-providers .kcFormSocialAccountListButtonClass:focus-visible, #kc-social-providers a.kcFormSocialAccountListButtonClass:focus-visible{
+  outline: 2px solid var(--quickstart-primary-color, #0b57d0);
+  outline-offset: 2px;
+}
+
+body.pf-v5-theme-dark .kcButtonSecondaryClass:focus-visible, body.pf-v5-theme-dark #kc-form-buttons [name="cancel-aia"]:focus-visible, body.pf-v5-theme-dark #kc-form-buttons [name="cancel"]:focus-visible, body.pf-v5-theme-dark #kc-form-buttons #kc-cancel:focus-visible, body.pf-v5-theme-dark #kc-form-buttons #kc-decline:focus-visible, body.pf-v5-theme-dark #backToApplication:focus-visible, body.pf-v5-theme-dark .kcButtonLinkClass:focus-visible, body.pf-v5-theme-dark .kcButtonPrimaryClass:focus-visible{
+  outline: 2px solid var(--quickstart-primary-color, #a8c7fa);
+}
+
+body.pf-v5-theme-dark #kc-registration-container #kc-registration > a:focus-visible{
+  outline: 2px solid var(--quickstart-primary-color, #a8c7fa);
+  outline-offset: 2px;
+}
+
+body.pf-v5-theme-dark #kc-social-providers .kcFormSocialAccountListButtonClass:focus-visible, body.pf-v5-theme-dark #kc-social-providers a.kcFormSocialAccountListButtonClass:focus-visible{
+  outline: 2px solid var(--quickstart-primary-color, #a8c7fa);
+  outline-offset: 2px;
+}
+
+hr{
+  border: 0;
+  border-top: 1px solid #d1d5db;
+  margin: 1.5rem 0;
+}
+
+body.pf-v5-theme-dark hr{
+  border-top-color: #2b2c2e;
+}
+
+#kc-info{
+  margin-top: 1rem;
+}
+
+#kc-registration > span{
+  display: inline-flex;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--quickstart-border-radius, var(--quickstart-control-border-radius-default, 28px));
+  border: 1px solid var(--quickstart-primary-color, #0b57d0);
+  color: var(--quickstart-primary-color, #0b57d0);
+  font-size: 14px;
+  box-sizing: border-box;
+  text-align: center;
+  background: transparent;
+  cursor: pointer;
+}
+
+.kcAlertClass,
+.alert-warning,
+.alert-warnning{
+  --kc-alert-surface: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+  --kc-alert-border: #8b5cf6;
+  --kc-alert-icon: #5b21b6;
+  --kc-alert-title: #312e81;
+
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.85rem 1rem;
+  margin: 0 0 1rem;
+  border-radius: 14px;
+  border: 1px solid var(--kc-alert-border);
+  background: var(--kc-alert-surface);
+  box-shadow: none;
+  color: var(--kc-alert-title);
+}
+
+.kcAlertClass .kcAlertIconClass,
+.alert-warning .pficon,
+.alert-warnning .pficon{
+  color: var(--kc-alert-icon);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.kcFeedbackInfoIcon::before{
+  content: "\2139";
+}
+
+.kcFeedbackWarningIcon::before{
+  content: "\26A0";
+}
+
+.kcFeedbackErrorIcon::before{
+  content: "\2715";
+}
+
+.kcFeedbackSuccessIcon::before{
+  content: "\2713";
+}
+
+.pficon-warning-triangle-o::before{
+  content: "\26A0";
+}
+
+.alert-warning,
+.alert-warnning{
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.kcAlertClass .kcAlertTitleClass, .kcAlertClass .kc-feedback-text{
+  color: var(--kc-alert-title);
+  font-weight: 600;
+  font-size: 0.92rem;
+  margin: 0;
+}
+
+.kcAlertClass.pf-m-danger, .kcAlertClass.kcError{
+  --kc-alert-surface: linear-gradient(135deg, #ffe8e8 0%, #ffd5db 100%);
+  --kc-alert-border: #f9738b;
+  --kc-alert-icon: #be123c;
+  --kc-alert-title: #9f1239;
+}
+
+.kcAlertClass.pf-m-danger .kcAlertTitleClass, .kcAlertClass.pf-m-danger .kc-feedback-text, .kcAlertClass.kcError .kcAlertTitleClass, .kcAlertClass.kcError .kc-feedback-text{
+  color: #b42318;
+}
+
+.kcAlertClass.pf-m-warning, .kcAlertClass.kcWarning, .alert-warning, .alert-warnning{
+  --kc-alert-surface: linear-gradient(135deg, #fff7db 0%, #ffe9c2 100%);
+  --kc-alert-border: #f59e0b;
+  --kc-alert-icon: #b45309;
+  --kc-alert-title: #92400e;
+}
+
+.kcAlertClass.pf-m-success, .kcAlertClass.kcSuccess{
+  --kc-alert-surface: linear-gradient(135deg, #e8fff4 0%, #cff7e4 100%);
+  --kc-alert-border: #22c55e;
+  --kc-alert-icon: #15803d;
+  --kc-alert-title: #166534;
+}
+
+.kcAlertClass.pf-m-info, .kcAlertClass.kcInfo{
+  --kc-alert-surface: linear-gradient(135deg, #e8f2ff 0%, #d8e7ff 100%);
+  --kc-alert-border: #3b82f6;
+  --kc-alert-icon: #1d4ed8;
+  --kc-alert-title: #1e3a8a;
+}
+
+html.pf-v5-theme-dark .kcAlertClass, body.pf-v5-theme-dark .kcAlertClass, html.kcDarkModeClass .kcAlertClass{
+  --kc-alert-surface: linear-gradient(135deg, #20233a 0%, #1a1f35 100%);
+  --kc-alert-border: #6366f1;
+  --kc-alert-icon: #c7d2fe;
+  --kc-alert-title: #e0e7ff;
+}
+
+html.pf-v5-theme-dark .kcAlertClass.pf-m-danger, body.pf-v5-theme-dark .kcAlertClass.pf-m-danger, html.kcDarkModeClass .kcAlertClass.pf-m-danger, html.pf-v5-theme-dark .kcAlertClass.kcError, body.pf-v5-theme-dark .kcAlertClass.kcError, html.kcDarkModeClass .kcAlertClass.kcError{
+  --kc-alert-surface: linear-gradient(135deg, #3a1e28 0%, #301721 100%);
+  --kc-alert-border: #fb7185;
+  --kc-alert-icon: #fb7185;
+  --kc-alert-title: #fb7185;
+}
+
+html.pf-v5-theme-dark .kcAlertClass.pf-m-danger .kcAlertTitleClass, html.pf-v5-theme-dark .kcAlertClass.pf-m-danger .kc-feedback-text, body.pf-v5-theme-dark .kcAlertClass.pf-m-danger .kcAlertTitleClass, body.pf-v5-theme-dark .kcAlertClass.pf-m-danger .kc-feedback-text, html.kcDarkModeClass .kcAlertClass.pf-m-danger .kcAlertTitleClass, html.kcDarkModeClass .kcAlertClass.pf-m-danger .kc-feedback-text, html.pf-v5-theme-dark .kcAlertClass.kcError .kcAlertTitleClass, html.pf-v5-theme-dark .kcAlertClass.kcError .kc-feedback-text, body.pf-v5-theme-dark .kcAlertClass.kcError .kcAlertTitleClass, body.pf-v5-theme-dark .kcAlertClass.kcError .kc-feedback-text, html.kcDarkModeClass .kcAlertClass.kcError .kcAlertTitleClass, html.kcDarkModeClass .kcAlertClass.kcError .kc-feedback-text{
+  color: #fb7185;
+}
+
+html.pf-v5-theme-dark .kcAlertClass.pf-m-warning, body.pf-v5-theme-dark .kcAlertClass.pf-m-warning, html.kcDarkModeClass .kcAlertClass.pf-m-warning, html.pf-v5-theme-dark .kcAlertClass.kcWarning, body.pf-v5-theme-dark .kcAlertClass.kcWarning, html.kcDarkModeClass .kcAlertClass.kcWarning{
+  --kc-alert-surface: linear-gradient(135deg, #3a2c12 0%, #31240e 100%);
+  --kc-alert-border: #fbbf24;
+  --kc-alert-icon: #fef3c7;
+  --kc-alert-title: #fef3c7;
+}
+
+html.pf-v5-theme-dark .alert-warning,
+body.pf-v5-theme-dark .alert-warning,
+html.kcDarkModeClass .alert-warning,
+html.pf-v5-theme-dark .alert-warnning,
+body.pf-v5-theme-dark .alert-warnning,
+html.kcDarkModeClass .alert-warnning{
+  --kc-alert-surface: linear-gradient(135deg, #3a2c12 0%, #31240e 100%);
+  --kc-alert-border: #fbbf24;
+  --kc-alert-icon: #fef3c7;
+  --kc-alert-title: #fef3c7;
+}
+
+html.pf-v5-theme-dark .kcAlertClass.pf-m-success, body.pf-v5-theme-dark .kcAlertClass.pf-m-success, html.kcDarkModeClass .kcAlertClass.pf-m-success, html.pf-v5-theme-dark .kcAlertClass.kcSuccess, body.pf-v5-theme-dark .kcAlertClass.kcSuccess, html.kcDarkModeClass .kcAlertClass.kcSuccess{
+  --kc-alert-surface: linear-gradient(135deg, #143127 0%, #10281f 100%);
+  --kc-alert-border: #4ade80;
+  --kc-alert-icon: #dcfce7;
+  --kc-alert-title: #dcfce7;
+}
+
+html.pf-v5-theme-dark .kcAlertClass.pf-m-info, body.pf-v5-theme-dark .kcAlertClass.pf-m-info, html.kcDarkModeClass .kcAlertClass.pf-m-info, html.pf-v5-theme-dark .kcAlertClass.kcInfo, body.pf-v5-theme-dark .kcAlertClass.kcInfo, html.kcDarkModeClass .kcAlertClass.kcInfo{
+  --kc-alert-surface: linear-gradient(135deg, #12283f 0%, #102236 100%);
+  --kc-alert-border: #60a5fa;
+  --kc-alert-icon: #dbeafe;
+  --kc-alert-title: #dbeafe;
+}
+
+@media (max-width: 900px) {
+  .kcFormHeaderClass, #kc-content{
+    grid-column: 1;
+  }
+
+  #kc-content{
+    padding-top: 0;
+  }
+}
+
+@media (max-width: 700px) {
+  .kc-horizontal-card-footer-row{
+    justify-content: center;
+  }
+}
+
+.kc-horizontal-card-subtitle, .kc-horizontal-card-client-name, .kc-horizontal-card-realm-name{
+
+   letter-spacing: 0rem;
+  line-height: 1.5;
+  font-size: 1.3rem;
+}
+
+.kcButtonSecondaryClass, a.kcButtonSecondaryClass, button.kcButtonSecondaryClass, .kcButtonSecondaryClass.kcButtonSecondaryClass{
+  border-color: var(--quickstart-primary-color);
+  color: var(--quickstart-primary-color);
+}
+
+.kcButtonLinkClass, a.kcButtonLinkClass, button.kcButtonLinkClass{
+  color: var(--quickstart-primary-color);
+}
+
+#printRecoveryCodes:hover, #downloadRecoveryCodes:hover, #copyRecoveryCodes:hover{
+  color: var(--quickstart-secondary-color);
+}
+
+.kcCheckboxInputClass, input[type="checkbox"].kcCheckboxInputClass, .kcCheckboxClass input[type="checkbox"], input[type="checkbox"]{
+  accent-color: var(--quickstart-secondary-color);
+}
+
+.kcCheckboxInputClass, input[type="checkbox"]{
+  accent-color: var(--quickstart-primary-color);
+}
+
+body{
+  font-family: var(--quickstart-font-family, inherit);
+}
+
+html:not(.pf-v5-theme-dark):not(.kcDarkModeClass), html:not(.pf-v5-theme-dark):not(.kcDarkModeClass) body, html:not(.pf-v5-theme-dark):not(.kcDarkModeClass) body#keycloak-bg{
+  background-color: var(--quickstart-bg-color);
+}
+
+html:not(.pf-v5-theme-dark):not(.kcDarkModeClass) body .kcLogin, html:not(.pf-v5-theme-dark):not(.kcDarkModeClass) body#keycloak-bg .kcLogin, html:not(.pf-v5-theme-dark):not(.kcDarkModeClass) body .kcLoginClass, html:not(.pf-v5-theme-dark):not(.kcDarkModeClass) body#keycloak-bg .kcLoginClass, html.pf-v5-theme-dark, html.pf-v5-theme-dark body, html.pf-v5-theme-dark body#keycloak-bg, html.pf-v5-theme-dark body .kcLogin, html.pf-v5-theme-dark body#keycloak-bg .kcLogin, html.pf-v5-theme-dark body .kcLoginClass, html.pf-v5-theme-dark body#keycloak-bg .kcLoginClass, html.kcDarkModeClass, html.kcDarkModeClass body, html.kcDarkModeClass body#keycloak-bg, html.kcDarkModeClass body .kcLogin, html.kcDarkModeClass body#keycloak-bg .kcLogin, html.kcDarkModeClass body .kcLoginClass, html.kcDarkModeClass body#keycloak-bg .kcLoginClass{
+  background-color: var(--quickstart-bg-color);
+  background-image: var(--quickstart-bg-image);
+}
+
+.kcInputGroup .kcFormPasswordVisibilityButtonClass{
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-top-right-radius: var(--quickstart-border-radius, var(--quickstart-control-border-radius-default, 28px));
+  border-bottom-right-radius: var(--quickstart-border-radius, var(--quickstart-control-border-radius-default, 28px));
+}
+
+html body .pf-v5-c-login{
+  background-image: none;
+}
+
+#kc-register-form {
+  height: 100%;
+}
+
+#kc-error-message { 
+  min-height: 16rem;
+  height: auto;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}

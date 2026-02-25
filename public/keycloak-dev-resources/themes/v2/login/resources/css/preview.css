@@ -1,0 +1,5 @@
+/* Preview-only styles. This file is loaded by the editor preview and is never exported. */
+[data-preview-selected="true"] {
+  outline: 2px solid #0b57d0 !important;
+  outline-offset: 2px !important;
+}

@@ -1,6 +1,153 @@
+@import "tailwindcss";
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
 body {
   margin: 0;
+  background-color: var(--pf-t--global--background--color--secondary--default) !important;
+  /* The app uses internal scroll containers (e.g. sidebar panels). */
+  overflow: hidden;
 }
-.gjs-toolbar-items {
-    display: none;
+h1,
+p {
+  font-family: var(--pf-t--global--font--family--sans-serif, system-ui, -apple-system, "Segoe UI", Arial, sans-serif);
+}
+
+/* Less intense disabled state for undo/redo buttons */
+.pf-v6-c-button:disabled {
+    opacity: 0.6 !important;
+}
+
+/* Fix dropdown/select option colors in dark mode */
+.pf-v6-theme-dark .pf-v6-c-menu,
+.pf-v6-theme-dark .pf-v6-c-select__menu,
+.pf-v6-theme-dark .pf-v6-c-dropdown__menu,
+.pf-v6-theme-dark .pf-v6-c-form-control select,
+.pf-v6-theme-dark .pf-v6-c-form-control select option,
+.pf-v6-theme-dark .pf-v6-c-form-control__select,
+.pf-v6-theme-dark select,
+.pf-v6-theme-dark select option {
+    background-color: var(--pf-t--global--background--color--primary--default) !important;
+    color: var(--pf-t--global--color--nonstatus--default) !important;
+    border-color: var(--pf-t--global--border--color--default) !important;
+}
+
+/* Fix FormSelect styling */
+.pf-v6-c-form-control__select {
+    background-color: var(--pf-t--global--background--color--primary--default);
+}
+
+.pf-v6-theme-dark .pf-v6-c-form-control {
+    --pf-v6-c-form-control--BackgroundColor: var(--pf-t--global--background--color--primary--default);
+}
+
+.pf-v6-theme-dark .pf-v6-c-menu__item,
+.pf-v6-theme-dark .pf-v6-c-select__menu-item,
+.pf-v6-theme-dark .pf-v6-c-dropdown__menu-item {
+    background-color: var(--pf-t--global--background--color--primary--default) !important;
+    color: var(--pf-t--global--color--nonstatus--default) !important;
+}
+
+.pf-v6-theme-dark .pf-v6-c-menu__item:hover,
+.pf-v6-theme-dark .pf-v6-c-select__menu-item:hover,
+.pf-v6-theme-dark .pf-v6-c-dropdown__menu-item:hover,
+.pf-v6-theme-dark .pf-v6-c-form-control select option:hover {
+    background-color: var(--pf-t--global--background--color--secondary--hover) !important;
+    color: var(--pf-t--global--color--nonstatus--default) !important;
+}
+
+/* Ensure dropdown portals inherit dark theme when body has the class */
+.pf-v6-theme-dark .pf-v6-c-dropdown__menu {
+    background-color: var(--pf-t--global--background--color--primary--default) !important;
+    color: var(--pf-t--global--color--nonstatus--default) !important;
+}
+
+
+
+/* Remove border underneath tab header buttons in CustomPageManager */
+.pf-v6-c-nav.pf-m-tertiary .pf-v6-c-nav__link {
+    border-bottom: none !important;
+}
+
+.pf-v6-c-nav.pf-m-tertiary .pf-v6-c-nav__list {
+    border-bottom: none !important;
+}
+
+.pf-v6-c-tabs {
+    border: 0px;
+}
+
+/* Selection tree: compact layout with clearer click affordance */
+.selection-tree-view {
+    --pf-v6-c-tree-view__node--indent--base: 0.875rem;
+    --pf-v6-c-tree-view__node--nested-indent--base: 0.375rem;
+    --pf-v6-c-tree-view__node--PaddingBlockStart: 0.125rem;
+    --pf-v6-c-tree-view__node--PaddingBlockEnd: 0.125rem;
+    --pf-v6-c-tree-view__node--PaddingInlineEnd: 0.25rem;
+}
+
+.selection-tree-view .pf-v6-c-tree-view__node-toggle {
+    display: none !important;
+}
+
+.selection-tree-view .pf-v6-c-tree-view__list-item::before,
+.selection-tree-view .pf-v6-c-tree-view__node::before {
+    display: none !important;
+    content: none !important;
+}
+
+.selection-tree-view .pf-v6-c-tree-view__node {
+    cursor: pointer;
+    border: var(--pf-t--global--border--width--regular) solid transparent;
+    border-radius: var(--pf-t--global--border--radius--small);
+    transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.selection-tree-view .pf-v6-c-tree-view__node:hover {
+    background-color: var(--pf-t--global--background--color--primary--hover);
+    border-color: var(--pf-t--global--border--color--default);
+}
+
+.selection-tree-view .pf-v6-c-tree-view__node.pf-m-current {
+    background-color: var(--pf-t--global--background--color--primary--clicked);
+    border-color: var(--pf-t--global--border--color--default);
+}
+
+.selection-tree-view .pf-v6-c-tree-view__node-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.selection-tree-panel,
+.selection-tree-panel .pf-v6-c-panel__main,
+.selection-tree-panel .pf-v6-c-panel__main-body {
+    height: 100%;
+    min-height: 0;
+}
+
+.selection-tree-panel .pf-v6-c-panel__main-body {
+    display: flex;
+    flex-direction: column;
+}
+
+.selection-tree-loading {
+    height: 100%;
+    min-height: 240px;
+}
+
+.selection-tree-scroll {
+    height: 100%;
+    min-height: 0;
+    overflow: auto;
+    padding-inline-end: var(--pf-t--global--spacer--xs);
+}
+
+.selection-tree-empty {
+    color: var(--pf-t--global--text--color--subtle);
+    font-size: var(--pf-t--global--font--size--body--sm);
 }

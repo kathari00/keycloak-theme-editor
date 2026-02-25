@@ -1,0 +1,21 @@
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: keycloak-theme-test
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      # Disable theme caching for hot reload
+      KC_SPI_THEME_CACHE_THEMES: "false"
+      KC_SPI_THEME_CACHE_TEMPLATES: "false"
+      KC_SPI_THEME_STATIC_MAX_AGE: "-1"
+    ports:
+      - "8080:8080"
+    volumes:
+      # For JAR export: Mount to providers folder (requires restart)
+      - C:/Users/katha/Downloads:/opt/keycloak/providers
+      # For Quick export: Mount to themes folder (hot-reload with caching disabled)
+      - C:/Users/katha/Downloads:/opt/keycloak/themes
+    command:
+      - start-dev
+    restart: unless-stopped

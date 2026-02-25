@@ -1,0 +1,24 @@
+:root {
+  --quickstart-primary-color: #667eea;
+  --quickstart-primary-color-dark: #667eea;
+  --quickstart-secondary-color: #764ba2;
+  --quickstart-font-family: 'Inter', sans-serif;
+  --quickstart-logo-url: none;
+  --quickstart-bg-logo-url: none;
+  --quickstart-logo-height: 63px;
+  --quickstart-logo-width: 300px;
+  --quickstart-control-border-radius-default: 8px;
+  --quickstart-card-border-radius-default: 16px;
+  --quickstart-card-shadow-default: 0 20px 60px rgba(0, 0, 0, 0.3), 0 8px 20px rgba(0, 0, 0, 0.15);
+  --quickstart-card-shadow-default-dark: 0 20px 70px rgba(0, 0, 0, 0.65), 0 10px 28px rgba(0, 0, 0, 0.35);
+  --quickstart-text-primary-light: #1a1a2e;
+  --quickstart-text-primary-dark: #e8eaed;
+  --quickstart-text-secondary-light: #374151;
+  --quickstart-text-secondary-dark: #cbd5e1;
+  --quickstart-gradient-bg-default: linear-gradient(135deg, var(--quickstart-primary-color, #667eea) 0%, var(--quickstart-secondary-color, #764ba2) 100%);
+  --quickstart-card-bg-color: #ffffff;
+  --quickstart-card-bg-color-dark: #0e0e0e;
+  --quickstart-input-bg-color-dark: #141516;
+  --quickstart-input-border-color-dark: #2b2c2e;
+  --quickstart-muted-text-color-dark: #9aa0a6;
+}

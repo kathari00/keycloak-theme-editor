@@ -1,0 +1,15 @@
+{
+  "repo": "keycloak/keycloak",
+  "tag": "26.5.3",
+  "themes": [
+    {
+      "id": "base",
+      "upstream": "base"
+    },
+    {
+      "id": "v2",
+      "upstream": "keycloak.v2"
+    }
+  ],
+  "targetDir": "public/keycloak-upstream"
+}

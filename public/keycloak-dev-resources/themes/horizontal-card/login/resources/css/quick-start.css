@@ -1,0 +1,31 @@
+:root {
+  --quickstart-primary-color: #0b57d0;
+  --quickstart-primary-color-dark: #a8c7fa;
+  --quickstart-secondary-color: #9aa0a6;
+  --quickstart-font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --quickstart-logo-url: none;
+  --quickstart-bg-logo-url: none;
+  --quickstart-logo-height: 63px;
+  --quickstart-logo-width: 300px;
+  --quickstart-text-primary-light: #0b0c0d;
+  --quickstart-text-primary-dark: #e8eaed;
+  --quickstart-text-secondary-light: #1f1f1f;
+  --quickstart-text-secondary-dark: #ffffff;
+  --quickstart-error-color: #d92d20;
+  --quickstart-error-color-dark: #f97066;
+  --quickstart-error-text-color: var(--quickstart-text-secondary-light, #1f1f1f);
+  --quickstart-error-text-color-dark: var(--quickstart-text-secondary-dark, #ffffff);
+  --quickstart-error-label-bg-color: rgba(217, 45, 32, 0.12);
+  --quickstart-error-label-bg-color-dark: rgba(249, 112, 102, 0.2);
+  --quickstart-error-label-border-color: rgba(217, 45, 32, 0.32);
+  --quickstart-error-label-border-color-dark: rgba(249, 112, 102, 0.38);
+  --quickstart-bg-color: #f0f4f9;
+  --quickstart-bg-color-dark: #1e1f20;
+  --quickstart-card-bg-color: #ffffff;
+  --quickstart-card-border-color: #d1d5db;
+  --quickstart-card-bg-color-dark: #0e0e0e;
+  --quickstart-card-border-color-dark: #2b2c2e;
+  --quickstart-card-border-radius-default: 8px;
+  --quickstart-control-border-radius-default: 8px;
+  --quickstart-card-shadow-default: none;
+}

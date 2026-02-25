@@ -1,0 +1,15 @@
+{
+  "page": "login-config-totp",
+  "stories": [
+    {
+      "id": "scan-qr-code",
+      "name": "Scan QR Code",
+      "htmlFile": "login-config-totp/scan-qr-code.html"
+    },
+    {
+      "id": "enter-manual-key",
+      "name": "Enter Manual Key",
+      "htmlFile": "login-config-totp/enter-manual-key.html"
+    }
+  ]
+}

@@ -14,6 +14,9 @@ dist-ssr
 
 # Editor directories and files
 .vscode/*
+example
+keycloak-jar-server
+/login
 !.vscode/extensions.json
 .idea
 .DS_Store
@@ -22,3 +25,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+.agents
+.claude
+CLAUDE.md
+tools/preview-renderer/target/
+public/keycloak-upstream/

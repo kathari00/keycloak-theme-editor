@@ -1,0 +1,202 @@
+import type { PresetState, QuickSettings } from '../stores/types'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { REMOVED_ASSET_ID } from '../../assets/types'
+import { presetActions } from '../actions/preset-actions'
+import { assetStore } from '../stores/asset-store'
+import { coreStore } from '../stores/core-store'
+import { historyStore } from '../stores/history-store'
+import { presetStore } from '../stores/preset-store'
+
+vi.mock('../../presets/queries', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../presets/queries')>()
+
+  return {
+    ...actual,
+    getThemeConfigCached: vi.fn(async () => ({
+      themes: [
+        { id: 'base', baseId: 'base' },
+        { id: 'v2', baseId: 'v2' },
+        { id: 'modern-gradient', baseId: 'base' },
+        { id: 'horizontal-card', baseId: 'base' },
+      ],
+    })),
+    getThemeCssStructuredCached: vi.fn(async (themeId: string) => {
+      if (themeId === 'horizontal-card') {
+        const quickStartDefaults = `
+:root {
+  --quickstart-primary-color: #0b57d0;
+  --quickstart-primary-color-dark: #a8c7fa;
+  --quickstart-secondary-color: #9aa0a6;
+  --quickstart-font-family: custom;
+  --quickstart-bg-color: #f0f4f9;
+  --quickstart-bg-color-dark: #1e1f20;
+  --quickstart-card-shadow-default: none;
+}
+      `.trim()
+        return {
+          quickStartDefaults,
+          stylesCss: '.kcFormCardClass { display: grid; }',
+        }
+      }
+
+      const quickStartDefaults = `
+:root {
+  --quickstart-primary-color: #0066cc;
+  --quickstart-primary-color-dark: #0066cc;
+  --quickstart-secondary-color: #c0c0c0;
+  --quickstart-font-family: custom;
+}
+    `.trim()
+      return {
+        quickStartDefaults,
+        stylesCss: '.pf-v5-c-login__main-header { border-top-color: var(--quickstart-primary-color); }',
+      }
+    }),
+  }
+})
+
+function createQuickSettings(overrides: Partial<QuickSettings> = {}): QuickSettings {
+  return {
+    colorPresetId: 'custom',
+    colorPresetPrimaryColor: '#123456',
+    colorPresetSecondaryColor: '#654321',
+    colorPresetFontFamily: 'custom',
+    colorPresetBgColor: '',
+    colorPresetBorderRadius: 'default',
+    colorPresetCardShadow: 'default',
+    colorPresetHeadingFontFamily: 'custom',
+    showClientName: false,
+    showRealmName: true,
+    infoMessage: '',
+    imprintUrl: '',
+    dataProtectionUrl: '',
+    ...overrides,
+  }
+}
+
+function createPresetState(overrides: Partial<PresetState> = {}): PresetState {
+  return {
+    selectedThemeId: 'base',
+    presetCss: '',
+    colorPresetId: 'keycloak-default',
+    colorPresetPrimaryColor: '#0066cc',
+    colorPresetSecondaryColor: '#c0c0c0',
+    colorPresetFontFamily: 'custom',
+    colorPresetBgColor: '',
+    colorPresetBorderRadius: 'default',
+    colorPresetCardShadow: 'default',
+    colorPresetHeadingFontFamily: 'custom',
+    showClientName: false,
+    showRealmName: true,
+    infoMessage: '',
+    imprintUrl: '',
+    dataProtectionUrl: '',
+    presetQuickSettings: {},
+    ...overrides,
+  }
+}
+
+describe('preset background sync on preset selection', () => {
+  beforeEach(() => {
+    coreStore.setState(() => ({
+      isDarkMode: false,
+      activePageId: 'login.html',
+      activeStoryId: 'default',
+      selectedNodeId: null,
+      previewReady: false,
+      deviceId: 'desktop',
+    }))
+
+    historyStore.setState(() => ({
+      activeScopeKey: 'v2::light',
+      stacksByScope: {},
+      undoStack: [],
+      redoStack: [],
+      canUndo: false,
+      canRedo: false,
+    }))
+
+    assetStore.setState(() => ({
+      uploadedAssets: [
+        {
+          id: 'default-bg',
+          name: 'default-bg.png',
+          category: 'background',
+          mimeType: 'image/png',
+          base64Data: '',
+          size: 0,
+          createdAt: 0,
+          isDefault: true,
+        },
+      ],
+      appliedAssets: {
+        background: 'default-bg',
+      },
+    }))
+  })
+
+  it('disables default background when selecting a non-v2 theme', async () => {
+    presetStore.setState(() =>
+      createPresetState({
+        selectedThemeId: 'base',
+        presetQuickSettings: {
+          'horizontal-card::light': createQuickSettings({
+            colorPresetPrimaryColor: '#0057d8',
+          }),
+        },
+      }),
+    )
+
+    await presetActions.applyThemeSelection('horizontal-card')
+
+    expect(presetStore.state.selectedThemeId).toBe('horizontal-card')
+    expect(assetStore.state.appliedAssets.background).toBe(REMOVED_ASSET_ID)
+  })
+
+  it('uses horizontal-card defaults in dark mode without saved settings', async () => {
+    coreStore.setState(state => ({ ...state, isDarkMode: true }))
+    presetStore.setState(() =>
+      createPresetState({
+        selectedThemeId: 'base',
+        presetQuickSettings: {},
+      }),
+    )
+
+    await presetActions.applyThemeSelection('horizontal-card')
+
+    expect(presetStore.state.colorPresetPrimaryColor).toBe('#a8c7fa')
+    expect(presetStore.state.colorPresetBgColor).toBe('#1e1f20')
+    expect(assetStore.state.appliedAssets.background).toBe(REMOVED_ASSET_ID)
+  })
+
+  it('keeps default background active when selecting v2', async () => {
+    assetStore.setState(state => ({ ...state, appliedAssets: {} }))
+    presetStore.setState(() =>
+      createPresetState({
+        selectedThemeId: 'v2',
+        presetQuickSettings: {
+          'v2::light': createQuickSettings({
+            colorPresetPrimaryColor: '#1a73e8',
+          }),
+        },
+      }),
+    )
+
+    await presetActions.applyThemeSelection('v2')
+
+    expect(presetStore.state.selectedThemeId).toBe('v2')
+    expect(assetStore.state.appliedAssets.background).toBe('default-bg')
+  })
+
+  it('clears persisted default background when current theme base is non-v2', async () => {
+    presetStore.setState(() =>
+      createPresetState({
+        selectedThemeId: 'modern-gradient',
+      }),
+    )
+
+    await presetActions.syncBackgroundForCurrentTheme()
+
+    expect(assetStore.state.appliedAssets.background).toBe(REMOVED_ASSET_ID)
+  })
+})

@@ -1,0 +1,42 @@
+{
+  "themes": [
+    {
+      "id": "base",
+      "name": "Keycloak Base",
+      "description": "Classic Keycloak base look",
+      "baseId": "base",
+      "export": {
+        "parent": "base",
+        "import": "common/keycloak",
+        "styles": "css/styles.css css/custom-user-styles.css"
+      }
+    },
+    {
+      "id": "v2",
+      "name": "Keycloak v2",
+      "description": "Official Keycloak v2 look",
+      "baseId": "v2",
+      "defaultAssets": {
+        "background": "img/keycloak-bg-darken.svg",
+        "logo": "img/keycloak-logo-text.svg"
+      },
+      "export": {
+        "parent": "keycloak.v2",
+        "stylesCommon": "node_modules/@patternfly/patternfly/patternfly-base.css node_modules/@patternfly/patternfly/components/Login/login.css node_modules/@patternfly/patternfly/components/Button/button.css node_modules/@patternfly/patternfly/components/FormControl/form-control.css node_modules/@patternfly/patternfly/components/InputGroup/input-group.css node_modules/@patternfly/patternfly/components/HelperText/helper-text.css node_modules/@patternfly/patternfly/components/Alert/alert.css node_modules/@patternfly/patternfly/components/Spinner/spinner.css node_modules/@patternfly/patternfly/utilities/Accessibility/accessibility.css web_modules/@fontawesome/fontawesome-free/css/icons/solid.css",
+        "styles": "css/styles.css css/custom-user-styles.css"
+      }
+    },
+    {
+      "id": "modern-gradient",
+      "name": "Modern Gradient",
+      "description": "Modern gradient with translucent surfaces and soft shadows",
+      "baseId": "base"
+    },
+    {
+      "id": "horizontal-card",
+      "name": "Horizontal Card",
+      "description": "Minimal dark horizontal card inspired by modern sign-in screens",
+      "baseId": "base"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+:root {
+  --quickstart-primary-color: #0066cc;
+  --quickstart-primary-color-dark: #0066cc;
+  --quickstart-secondary-color: #c0c0c0;
+  --quickstart-logo-url: none;
+  --quickstart-bg-logo-url: none;
+  --quickstart-logo-height: 63px;
+  --quickstart-logo-width: 300px;
+  --quickstart-text-primary-light: #151515;
+  --quickstart-text-primary-dark: #f0f0f0;
+  --quickstart-text-secondary-light: #4f5255;
+  --quickstart-text-secondary-dark: #d2d2d2;
+  --quickstart-control-border-radius-default: 8px;
+  --quickstart-card-border-radius-default: 16px;
+  --quickstart-card-shadow-default: none;
+}

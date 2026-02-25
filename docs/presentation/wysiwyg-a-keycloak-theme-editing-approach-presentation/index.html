@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Keycloak Theme Editor: Import → Edit → Export (30 min)</title>
+
+    <!-- Reveal.js (CDN) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/white.css"
+      id="theme"
+    />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/monokai.css" />
+
+    <style>
+      /* Removed custom slide width CSS; use Reveal config instead */
+      :root {
+        --kc-blue: #0066cc;
+        --kc-gray: #6a6e73;
+      }
+
+
+
+      .reveal .title-accent {
+        color: var(--kc-blue);
+      }
+
+      .reveal .muted {
+        color: rgba(0, 0, 0, 0.6);
+      }
+
+      .reveal code {
+        font-size: 0.9em;
+      }
+
+      .reveal .demo-step {
+        padding: 0.4rem 0.6rem;
+        border-left: 6px solid var(--kc-blue);
+        background: rgba(0, 102, 204, 0.06);
+        margin: 0.5rem 0;
+      }
+
+      .reveal .timebox {
+        font-size: 0.55em;
+        padding: 0.25rem 0.5rem;
+        border: 1px solid rgba(0, 0, 0, 0.2);
+        border-radius: 0.4rem;
+        display: inline-block;
+        margin-top: 0.5rem;
+      }
+
+      .reveal .mock-login {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr;
+        gap: 1.25rem;
+        align-items: center;
+        margin-top: 1rem;
+      }
+
+      .reveal .mock-screen {
+        border: 1px solid rgba(0, 0, 0, 0.18);
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
+        background: radial-gradient(1100px 420px at 10% 15%, rgba(0, 102, 204, 0.18), transparent 60%),
+          radial-gradient(900px 380px at 80% 25%, rgba(106, 110, 115, 0.16), transparent 55%),
+          linear-gradient(180deg, #f8fafc, #eef2f7);
+        padding: 1.1rem;
+      }
+
+      .reveal .mock-card {
+        background: rgba(255, 255, 255, 0.75);
+        border: 1px solid rgba(0, 0, 0, 0.12);
+        border-radius: 12px;
+        padding: 1rem;
+        backdrop-filter: blur(10px);
+      }
+
+      .reveal .mock-card h4 {
+        margin: 0 0 0.5rem 0;
+      }
+
+      .reveal .mock-field {
+        height: 38px;
+        border-radius: 10px;
+        border: 1px solid rgba(0, 0, 0, 0.16);
+        background: rgba(255, 255, 255, 0.9);
+        margin: 0.55rem 0;
+      }
+
+      .reveal .mock-button {
+        height: 40px;
+        border-radius: 10px;
+        background: var(--kc-blue);
+        color: white;
+        display: grid;
+        place-items: center;
+        font-weight: 650;
+        margin-top: 0.75rem;
+      }
+
+      li {
+        line-height: 1.75;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="reveal">
+      <div class="slides">
+        <!-- 1) Title / promise (1:00) -->
+        <section>
+          <h2 style="margin-bottom: 2rem;">
+            <span class="title-accent">WYSIWYG - A Keycloak theme editing approach</span>
+          </h2>
+          <p>
+            <strong>What you will learn:</strong>
+            <ul>
+              <li>You will learn to use an editor for Keycloak theme editing</li>
+              <li>You will learn different ways to visually customize it</li>
+              <li>You will learn how to export a deployable artifact from the editor</li>
+            </ul>
+          </p>
+          <aside class="notes">
+            Timing: 1:00. Set expectations: practical workflow, not a deep code walk-through.
+            One sentence on who this is for: Keycloak admins / IAM engineers responsible for branding the login experience.
+          </aside>
+        </section>
+
+        <section>
+          <h3>Contents</h3>
+          <ol>
+            <li>Keycloak login theming</li>
+            <li>What the editor does</li>
+            <li>Live demo</li>
+            <li>Import/export</li>
+            <li>Gotchas + FAQ</li>
+          </ol>
+          <aside class="notes">
+            Timing: 0:30. Keep this crisp. Signal that there will be a live demo and a fallback plan if needed.
+          </aside>
+        </section>
+
+        <!-- 3) Why theming feels slow (2:00) -->
+        <section>
+          <h3>The login page you want</h3>
+            <div style="display: flex; align-items: center; gap: 2rem;">
+            <img src="./public/target-theme.png" alt="Branded Keycloak login example" style="max-width: 420px; border-radius: 14px; box-shadow: 0 8px 32px rgba(0,0,0,0.13);" />
+            <div>
+              <p>
+                What does a platform team want from Keycloak theming?
+              </p>
+              <ul>
+                <li>Brand-consistency</li>
+                <li>Little to no freemarker templating</li>
+                <li>Easy to style; Even if CSS isn’t their day job</li>
+                <li>Fast shipping</li>
+              </ul>
+            </div>
+          </div>
+          <aside class="notes">
+            Timing: 2:00. Open with the desired outcome: “a modern login that looks like your product.”
+            Keep it positive: the challenge is team constraints and safe iteration, not “slow” or “bad tooling.”
+          </aside>
+        </section>
+
+              <!-- 4) What solutions are there atm (3:00) -->
+              <section>
+              <h3>What solutions are there atm?</h3>
+              <ul>
+                <li>
+                <strong>Hand editing:</strong> Directly modify theme files (CSS, FTL, assets) in the Keycloak theme folder.
+                <br /><span class="muted">Flexible but complex</span>
+                </li>
+                <li>
+                <strong>Quick theme (dev preview):</strong> Use Keycloak’s <code>quick theme</code> feature to style the base theme
+                <br /><span class="muted">Faster feedback and easy to try out, but limited to basic look-and-feel</span>
+                </li>
+                <li>
+                <strong>Keycloakify:</strong> SPA Framework approach for large-scale apps.
+                <br /><span class="muted">Great for teams with Framework expertise and high need for branding consistency</span>
+                </li>
+              </ul>
+              <p class="timebox">Time: 3:00</p>
+              <aside class="notes">
+                Timing: 3:00. Briefly compare the main options: manual editing (flexible but slow), quick theme for dev preview (set a handful of variables for fast styling), and Keycloakify for advanced use cases.
+                Set up why a visual editor can help bridge these approaches.
+              </aside>
+              </section>
+
+        <!-- 5) What this editor is (2:00) -->
+        <section>
+          <h3>What the editor gives you</h3>
+          <ul>
+            <li>Visual editing with immediate preview of all pages</li>
+            <li>Quick start presets</li>
+            <li>Upload assets</li>
+            <li>Undo/redo + device preview</li>
+            <li>Import a theme JAR to continue editing</li>
+            <li>Export deployable output</li>
+          </ul>
+          <aside class="notes">
+            Timing: 2:00. “This is not a new theming system; it’s a faster editor for the existing system.”
+          </aside>
+        </section>
+
+        <!-- 6) Workflow overview (1:30) -->
+        <section>
+          <h3>Workflow overview</h3>
+          <div class="demo-step"><strong>Option A:</strong> Start from a base/preset → customize → export</div>
+          <div class="demo-step"><strong>Option B:</strong> Import existing theme JAR → adjust → export</div>
+          <ul>
+            <li>Quick start to get 80% of the look fast</li>
+            <li>Fine-tune specific elements when needed</li>
+            <li>Export artifacts that fit your deployment model</li>
+          </ul>
+          <aside class="notes">
+            Timing: 1:30. Set up the demo path: we’ll do Option A and show where Option B fits.
+          </aside>
+        </section>
+
+        <!-- 7) Demo plan (0:30) -->
+        <section>
+          <h3>Live demo: plan</h3>
+          <ul>
+            <li>Pick a base/preset</li>
+            <li>Change brand colors + fonts</li>
+            <li>Apply logo/background</li>
+            <li>Small targeted tweak</li>
+            <li>Export (JAR + quick export overview)</li>
+          </ul>
+          <p class="timebox">Time: 0:30</p>
+          <aside class="notes">
+            Timing: 0:30. Tell the room: if anything fails mid-demo, you’ll switch to prepared checkpoints.
+          </aside>
+        </section>
+
+        <!-- 8) Park slide: demo checklist (10:00 live demo) -->
+        <section>
+          <h3>Live demo: step checklist</h3>
+          <div class="demo-step">1) Choose base / preset</div>
+          <div class="demo-step">2) Quick colors + font family</div>
+          <div class="demo-step">3) Upload/apply assets (logo, background, favicon)</div>
+          <div class="demo-step">4) Select an element → tweak spacing/typography/shadow</div>
+          <div class="demo-step">5) Export theme JAR + show “quick export” option</div>
+          <aside class="notes">
+            Timing: 10:00. Demo script:
+            - Start on login page, show device selector + sidebar tabs.
+            - Quick start panel: pick design preset, set primary/secondary colors, choose font.
+            - Upload logo/background; apply; mention favicon.
+            - Switch to Styles: select header/button; adjust one obvious property.
+            - Undo/redo once to show safety.
+            - Export: set theme name, download .jar. Mention quick export uses File System Access API (Chrome/Edge).
+            Fallback: if demo breaks, show prepared export artifact and screenshots of before/after.
+          </aside>
+        </section>
+
+        <!-- 9) Export options (3:00) -->
+        <section>
+          <h3>Export options</h3>
+          <ul>
+            <li><strong>Download .jar</strong>: a single deployable artifact containing templates, properties, CSS, assets</li>
+            <li><strong>Quick export</strong>: writes/downloads the theme files for fast iteration (browser support varies)</li>
+          </ul>
+          <pre><code class="language-text">Exported artifacts (high-level):
+  template.ftl (+ optional footer.ftl)
+  theme.properties (+ messages)
+  styles.css (base) + quick-start.css
+  uploaded assets</code></pre>
+          <aside class="notes">
+            Timing: 3:00. Emphasize deployability: you end up with standard Keycloak theme contents.
+            Mention: quick export is great for “themes folder” workflows; JAR is great for artifact-based deployments.
+          </aside>
+        </section>
+
+        <!-- 10) Import story (2:00) -->
+        <section>
+          <h3>Import an existing theme JAR</h3>
+          <ul>
+            <li>Load a theme JAR and extract theme CSS + properties</li>
+            <li>Bring along uploaded assets (fonts/backgrounds/logos/favicon)</li>
+            <li>Keep iterating visually, then export again</li>
+          </ul>
+          <p class="muted">
+            Note: Import is best-effort in this client-only app. CSS usually import; custom
+            <code>template.ftl</code> edits and non-standard properties may not.
+          </p>
+          <p class="muted">
+            Useful when you already have a working theme and want to change branding without hand-editing everything.
+          </p>
+          <aside class="notes">
+            Timing: 2:00. Keep it simple: “import → tweak → export”.
+            Callout: this is a client-only app; import is best-effort. Template (FTL) customizations are not guaranteed to round-trip.
+          </aside>
+        </section>
+
+        <!-- 11) Deployment checklist (2:00) -->
+        <section>
+          <h3>What’s next?</h3>
+          <ul>
+            <li>
+              <strong>Compile custom Freemarker with test data:</strong>
+              Preview your custom login pages
+            </li>
+            <li>
+              <strong>Edit translations in the editor:</strong>
+              Directly view and modify <code>messages.properties</code>
+            </li>
+            <li>
+              <strong>Keycloak versioning support:</strong>
+              Choose your Keycloak version to ensure theme compatibility
+            </li>
+          </ul>
+          <aside class="notes">
+            Timing: 2:00. Highlight that these features would further shorten the feedback loop and improve accuracy.
+            Invite feedback on what would help most in real-world theming workflows.
+          </aside>
+        </section>
+
+        <!-- 12) Gotchas / best practices (2:00) -->
+        <section>
+          <h3>Gotchas &amp; best practices</h3>
+          <ul>
+            <li>Prefer small, scoped overrides over “rewrite everything”</li>
+            <li>Keep contrast/accessibility in mind (especially error states)</li>
+            <li>Use undo/redo to explore safely</li>
+            <li>Export early and test in Keycloak before polishing</li>
+          </ul>
+          <aside class="notes">
+            Timing: 2:00. Emphasize safety and iteration: export+test early.
+          </aside>
+        </section>
+
+        <!-- 13) FAQ + close (1:30) -->
+        <section>
+          <h3>FAQ + close</h3>
+          <ul>
+            <li><strong>Does this upload my theme?</strong> The workflow is local/in-browser (no server required for edit/import/export).</li>
+            <li><strong>Can I export a deployable JAR?</strong> Yes—export as <code>.jar</code>.</li>
+            <li>
+              <strong>Can I start from an existing theme?</strong> Partially—import is best-effort. CSS usually import;
+              custom <code>template.ftl</code> edits and custom properties may not.
+            </li>
+            <li><strong>How do I deploy?</strong> Use your org’s established theme packaging path (files or artifact).</li>
+          </ul>
+     
+          <aside class="notes">
+            Timing: 1:30. Close with the single takeaway and invite questions about their deployment model.
+          </aside>
+        </section>
+
+        <!-- 14) QR Codes slide (now last) -->
+        <section>
+          <h3>Try it yourself</h3>
+          <div style="display: flex; gap: 3rem; align-items: center; justify-content: center; margin-top: 2rem;">
+            <div style="text-align: center;">
+              <div><strong>Web App</strong></div>
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://your-web-app-url.com" alt="Web App QR" style="margin: 1rem auto; display: block;" />
+              <div style="font-size: 0.9em; color: #666;">your-web-app-url.com</div>
+            </div>
+            <div style="text-align: center;">
+              <div><strong>Repository</strong></div>
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://github.com/your-org/your-repo" alt="Repo QR" style="margin: 1rem auto; display: block;" />
+              <div style="font-size: 0.9em; color: #666;">github.com/your-org/your-repo</div>
+            </div>
+          </div>
+          <p style="font-size:1.2em; margin-top:2.5rem; margin-bottom:0.5rem; text-align:center; font-weight:500; color:#0056a3;">
+            What are your pain points when theming?
+          </p>
+          <aside class="notes">
+            Final slide: QR codes for quick access to the web app and the repository.
+          </aside>
+        </section>
+      </div>
+    </div>
+
+    <!-- Reveal.js (CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/notes/notes.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js"></script>
+
+    <script>
+      // eslint-disable-next-line no-undef
+      Reveal.initialize({
+        hash: true,
+        slideNumber: true,
+        transition: 'fade',
+        pdfSeparateFragments: false,
+        width: 1400,
+        height: 800,
+        plugins: [
+          // eslint-disable-next-line no-undef
+          RevealNotes,
+          // eslint-disable-next-line no-undef
+          RevealHighlight,
+        ],
+      })
+    </script>
+  </body>
+</html>
