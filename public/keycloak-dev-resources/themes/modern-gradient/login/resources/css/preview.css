@@ -1,4 +1,4 @@
-/* Preview-only styles. This file is loaded by the editor preview and is never exported. */
+﻿/* Preview-only styles. This file is loaded by the editor preview and is never exported. */
 [data-preview-selected="true"] {
   outline: 2px solid #0b57d0 !important;
   outline-offset: 2px !important;
@@ -6,7 +6,7 @@
 
 /* Ensure preview reflects Quick Start background overrides. */
 .kcLogin {
-  background-image: var(--quickstart-bg-image, linear-gradient(135deg, var(--quickstart-primary-color, #667eea) 0%, var(--quickstart-secondary-color, #764ba2) 100%)) !important;
+  background-image: var(--quickstart-bg-image) !important;
   background-repeat: no-repeat !important;
   background-position: center center !important;
   background-size: cover !important;

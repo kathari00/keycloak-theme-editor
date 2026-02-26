@@ -1,7 +1,40 @@
+﻿@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 .kcLoginMain,
 .kcFormCardClass {
-  box-shadow: var(--quickstart-card-shadow, var(--quickstart-card-shadow-default));
+  box-shadow: var(--quickstart-card-shadow);
+}
+
+.kcLoginMain {
+  background: var(--quickstart-card-bg-color);
+  border-radius: var(--quickstart-border-radius);
+  padding: 2rem 2rem;
+  box-shadow: var(--quickstart-card-shadow);
+  border: none;
+}
+
+html.pf-v5-theme-dark .kcLoginMain,
+body.pf-v5-theme-dark .kcLoginMain,
+html.kcDarkModeClass .kcLoginMain {
+  background: var(--quickstart-card-bg-color-dark);
+  box-shadow: var(--quickstart-card-shadow);
+}
+
+@media (max-width: 768px) {
+  .kcLoginMain {
+    padding: 1.5rem 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .kcLoginMain {
+    padding: 1.25rem 1rem;
+  }
+}
+
+.kcLoginMain,
+.kcFormCardClass {
+  border-radius: var(--quickstart-border-radius);
 }
 
 .alert-warning {
@@ -18,13 +51,6 @@
   color: #92400e;
 }
 
-.kcButtonClass:not(.kcButtonSecondaryClass),
-button:not(.kcButtonSecondaryClass),
-input[type="submit"],
-a.kcButtonClass:not(.kcButtonSecondaryClass) {
-  border-radius: var(--quickstart-border-radius, var(--quickstart-control-border-radius-default, 8px));
-}
-
 .form-vertical {
   display: flex;
   flex-direction: column;
@@ -39,20 +65,75 @@ a.kcButtonClass:not(.kcButtonSecondaryClass) {
 #kc-form-buttons button:last-of-type {
   margin-left: 20px !important;
   background: transparent;
-  border: 1px solid var(--quickstart-primary-color, #667eea);
-  color: var(--quickstart-primary-color, #667eea);
+  border: 1px solid var(--quickstart-primary-color);
+  color: var(--quickstart-primary-color);
 }
 
 html.pf-v5-theme-dark p, 
 html.pf-v5-theme-dark ul {
-  color: var(--quickstart-text-primary-dark, #cbd5e1) !important;
+  color: var(--quickstart-text-primary-dark) !important;
 }
 
 p,
 ul {
-  color: var(--quickstart-text-primary-light, #374151) !important;
+  color: var(--quickstart-text-primary-light) !important;
 }
 
+html.pf-v5-theme-dark p {
+  color: var(--quickstart-text-primary-dark);
+}
+
+p {
+  color: var(--quickstart-text-primary-light);
+}
+
+.form-actions {
+  display: flex;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.form-actions input:last-of-type {
+  background: transparent;
+  border: 1px solid var(--quickstart-primary-color);
+  color: var(--quickstart-primary-color);
+}
+
+#kc-delete-text {
+  color: var(--quickstart-text-primary-light);
+}
+
+html.pf-v5-theme-dark  #kc-delete-text {
+  color: var(--quickstart-text-primary-dark);
+}
+
+#kc-link-text {
+  color: var(--quickstart-text-primary-light);
+}
+
+html.pf-v5-theme-dark #kc-link-text {
+  color: var(--quickstart-text-primary-dark);
+}
+
+.control-label {
+  display: inline;
+}
+
+span.required {
+  color: var(--quickstart-text-secondary-light);
+}
+
+html.pf-v5-theme-dark span.required {
+  color: var(--quickstart-text-secondary-dark);
+}
+
+li::marker {
+  color: var(--quickstart-text-primary-light);
+}
+
+html.pf-v5-theme-dark li::marker {
+  color: var(--quickstart-text-primary-dark);
+}
 
 .kcLogin {
   display: flex;
@@ -61,36 +142,67 @@ ul {
   min-height: 100vh;
   padding: 2rem;
   background-color: transparent;
-  background-image: var(--quickstart-bg-image, var(--quickstart-gradient-bg-default));
+  background-image: var(--quickstart-bg-image);
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
+}
+
+@media (max-width: 768px) {
+  .kcLogin {
+    padding: 1rem;
+  }
+}
+
+html:not(.pf-v5-theme-dark):not(.kcDarkModeClass) body .kcLogin,
+html:not(.pf-v5-theme-dark):not(.kcDarkModeClass) body#keycloak-bg .kcLogin,
+html:not(.pf-v5-theme-dark):not(.kcDarkModeClass) body .kcLoginClass,
+html:not(.pf-v5-theme-dark):not(.kcDarkModeClass) body#keycloak-bg .kcLoginClass,
+html.pf-v5-theme-dark body .kcLogin,
+html.pf-v5-theme-dark body#keycloak-bg .kcLogin,
+html.pf-v5-theme-dark body .kcLoginClass,
+html.pf-v5-theme-dark body#keycloak-bg .kcLoginClass,
+html.kcDarkModeClass body .kcLogin,
+html.kcDarkModeClass body#keycloak-bg .kcLogin,
+html.kcDarkModeClass body .kcLoginClass,
+html.kcDarkModeClass body#keycloak-bg .kcLoginClass {
+  background-color: var(--quickstart-bg-color);
+  background-image: var(--quickstart-bg-image);
+}
+
+.kcButtonClass:not(.kcButtonSecondaryClass),
+button:not(.kcButtonSecondaryClass),
+input[type="submit"],
+a.kcButtonClass:not(.kcButtonSecondaryClass) {
+  border-radius: var(--quickstart-border-radius);
+}
+
+#code {
+  background: transparent;
+  border: 1px solid var(--quickstart-primary-color);
+  border-radius: 8px;
+  padding: 12px 0px;
+  font-family: monospace;
+  font-size: 1.5rem;
+  color: var(--quickstart-primary-color);
+  text-align: center;
+  width: 100%;
+  max-width: 300px;
+  transition: all 0.3s ease;
+}
+
+#kc-code {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
 
 .kcLoginContainer {
   width: 100%;
   max-width: 500px;
   margin: 0 auto;
-}
-
-/* === White Card === */
-.kcLoginMain {
-  background: var(--quickstart-card-bg-color, #ffffff);
-  border-radius: var(--quickstart-border-radius, var(--quickstart-card-border-radius-default, 16px));
-  padding: 2rem 2rem;
-  box-shadow: var(--quickstart-card-shadow, var(--quickstart-card-shadow-default));
-  border: none;
-}
-
-/* === Dark Mode ===
- * The editor toggles dark mode via `pf-v5-theme-dark` on <html>/<body>.
- * Keycloak runtime (base themes) may toggle `kcDarkModeClass` on <html>.
- */
-html.pf-v5-theme-dark .kcLoginMain,
-body.pf-v5-theme-dark .kcLoginMain,
-html.kcDarkModeClass .kcLoginMain {
-  background: var(--quickstart-card-bg-color-dark, #0e0e0e);
-  box-shadow: var(--quickstart-card-shadow, var(--quickstart-card-shadow-default-dark, var(--quickstart-card-shadow-default)));
 }
 
 html.pf-v5-theme-dark #kc-realm-name,
@@ -118,6 +230,13 @@ html.kcDarkModeClass label {
   color: var(--quickstart-text-secondary-dark);
 }
 
+html.pf-v5-theme-dark .kcInputClass.kcError input,
+html.pf-v5-theme-dark .kcInputClass input[aria-invalid="true"],
+html.pf-v5-theme-dark form input.kcError,
+html.pf-v5-theme-dark form input[aria-invalid="true"] {
+  border-color: #ef4444;
+}
+
 html.pf-v5-theme-dark .kcInputClass input,
 html.pf-v5-theme-dark input[type="text"],
 html.pf-v5-theme-dark input[type="email"],
@@ -134,8 +253,8 @@ html.kcDarkModeClass input[type="tel"],
 html.kcDarkModeClass input[type="number"],
 html.kcDarkModeClass select,
 html.kcDarkModeClass textarea {
-  background: var(--quickstart-input-bg-color-dark, #141516);
-  border-color: var(--quickstart-input-border-color-dark, #2b2c2e);
+  background: var(--quickstart-input-bg-color-dark);
+  border-color: var(--quickstart-input-border-color-dark);
   color: var(--quickstart-text-primary-dark);
 }
 
@@ -145,10 +264,87 @@ html.pf-v5-theme-dark textarea::placeholder,
 html.kcDarkModeClass .kcInputClass input::placeholder,
 html.kcDarkModeClass input::placeholder,
 html.kcDarkModeClass textarea::placeholder {
-  color: var(--quickstart-muted-text-color-dark, #9aa0a6);
+  color: var(--quickstart-muted-text-color-dark);
 }
 
-/* === Header === */
+.kcInputClass {
+  display: block;
+  width: 100%;
+  position: relative;
+}
+
+.kcInputClass input,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="tel"],
+input[type="number"],
+select,
+textarea {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  color: #1a1a2e;
+  font-size: 15px;
+  font-family: system-ui, -apple-system, sans-serif;
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  box-sizing: border-box;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+.kcInputClass input::placeholder,
+input::placeholder,
+textarea::placeholder {
+  color: #9ca3af;
+}
+
+.kcInputClass input:hover,
+input:hover,
+select:hover,
+textarea:hover {
+  border-color: #9ca3af;
+}
+
+.kcInputClass.kcError input,
+.kcInputClass input[aria-invalid="true"],
+input.kcError,
+input[aria-invalid="true"] {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.kcInputClass input:focus,
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus {
+  border-bottom-color: var(--quickstart-primary-color);
+}
+
+.kcInputClass input:focus,
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--quickstart-primary-color);
+}
+
+:is(
+  input.kcInputClass,
+  .kcInputClass input,
+  select.kcInputClass,
+  textarea.kcInputClass,
+  .kcButtonClass,
+  .kcButtonPrimaryClass,
+  .kcButtonSecondaryClass,
+  .kcFormSocialAccountListButtonClass,
+  .kcPanelMainBodyClass
+) {
+  border-radius: var(--quickstart-border-radius);
+}
+
 .kcLoginMainHeader {
   border-top: none;
   padding-bottom: 0.5rem;
@@ -203,14 +399,12 @@ html.kcDarkModeClass textarea::placeholder {
   display: block;
 }
 
-/* Subtitle */
 .kcLoginMainHeader p {
   color: #6b7280;
   font-size: 15px;
   margin: 0.5rem 0 0 0;
 }
 
-/* === Form Elements === */
 .kcFormGroupClass {
   margin-bottom: 1.5rem;
 }
@@ -224,7 +418,6 @@ label {
   font-size: 14px;
 }
 
-/* TOTP setup page: preserve readable spacing like upstream Keycloak */
 #kc-totp-settings {
   margin: 0 0 1.25rem 1.25rem;
   padding: 0;
@@ -257,51 +450,6 @@ label {
   margin-top: 1rem;
 }
 
-/* === Input Wrapper (kcInputClass is a span wrapper) === */
-.kcInputClass {
-  display: block;
-  width: 100%;
-  position: relative;
-}
-
-/* === Actual Input Fields === */
-.kcInputClass input,
-input[type="text"],
-input[type="email"],
-input[type="password"],
-input[type="tel"],
-input[type="number"],
-select,
-textarea {
-  width: 100%;
-  padding: 0.875rem 1rem;
-  background: #ffffff;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  color: #1a1a2e;
-  font-size: 15px;
-  font-family: system-ui, -apple-system, sans-serif;
-  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
-  box-sizing: border-box;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-}
-
-.kcInputClass input::placeholder,
-input::placeholder,
-textarea::placeholder {
-  color: #9ca3af;
-}
-
-.kcInputClass input:hover,
-input:hover,
-select:hover,
-textarea:hover {
-  border-color: #9ca3af;
-}
-
-/* === Select Dropdown === */
 select {
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
   background-position: right 0.75rem center;
@@ -310,7 +458,6 @@ select {
   padding-right: 2.5rem;
 }
 
-/* === Buttons === */
 .kcButtonClass:not(.kcButtonSecondaryClass),
 button:not(.kcButtonSecondaryClass),
 input[type="submit"],
@@ -328,13 +475,12 @@ a.kcButtonClass:not(.kcButtonSecondaryClass) {
   text-align: center;
 }
 
-/* Primary Button */
 .kcButtonPrimaryClass,
 button[type="submit"],
 input[type="submit"],
 button.kcButtonPrimaryClass,
 a.kcButtonPrimaryClass {
-  background: linear-gradient(135deg, var(--quickstart-primary-color, #667eea) 0%, var(--quickstart-secondary-color, #764ba2) 100%);
+  background: linear-gradient(135deg, var(--quickstart-primary-color) 0%, var(--quickstart-secondary-color) 100%);
   color: #ffffff;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
@@ -344,7 +490,7 @@ button[type="submit"]:hover,
 input[type="submit"]:hover,
 button.kcButtonPrimaryClass:hover,
 a.kcButtonPrimaryClass:hover {
-  background: linear-gradient(135deg, var(--quickstart-primary-color, #667eea) 0%, var(--quickstart-secondary-color, #764ba2) 100%);
+  background: linear-gradient(135deg, var(--quickstart-primary-color) 0%, var(--quickstart-secondary-color) 100%);
   filter: brightness(0.95);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
@@ -359,14 +505,13 @@ a.kcButtonPrimaryClass:active {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-/* Secondary Button (Plain Link Style) */
 .kcButtonSecondaryClass,
 button.kcButtonSecondaryClass,
 a.kcButtonSecondaryClass,
 input[type="button"] {
   background: transparent;
   border: none;
-  color: var(--quickstart-primary-color, #667eea);
+  color: var(--quickstart-primary-color);
   text-decoration: none;
   padding: 0;
   font-weight: 500;
@@ -388,7 +533,6 @@ input[type="button"]:hover {
   text-decoration: underline;
 }
 
-/* Block Button (full width) */
 .kcButtonBlockClass,
 button.kcButtonBlockClass,
 a.kcButtonBlockClass {
@@ -396,7 +540,6 @@ a.kcButtonBlockClass {
   width: 100%;
 }
 
-/* === Password Toggle (Input Group) === */
 .kcInputGroup {
   display: flex;
   position: relative;
@@ -411,7 +554,6 @@ a.kcButtonBlockClass {
   flex: 1;
 }
 
-/* Input inside group - rounded left only */
 .kcInputGroup .kcInputClass {
   flex: 1;
 }
@@ -429,7 +571,6 @@ a.kcButtonBlockClass {
   border-right: none;
 }
 
-/* Password visibility button */
 .kcFormPasswordVisibilityButtonClass,
 button.kcFormPasswordVisibilityButtonClass {
   padding: 0.875rem 1rem;
@@ -454,7 +595,6 @@ button.kcFormPasswordVisibilityButtonClass {
   display: none;
 }
 
-/* Icon fallback (no Font Awesome required) */
 .kcFormPasswordVisibilityButtonClass::before {
   content: '';
   width: 1rem;
@@ -465,7 +605,6 @@ button.kcFormPasswordVisibilityButtonClass {
   mask: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='black'%3E%3Cpath%20d='M12%205c-5%200-9.27%203.11-11%207%201.73%203.89%206%207%2011%207s9.27-3.11%2011-7c-1.73-3.89-6-7-11-7zm0%2011a4%204%200%201%201%200-8%204%204%200%200%201%200%208z'/%3E%3C/svg%3E") no-repeat center / contain;
 }
 
-/* Switch icon when password is visible (preview sets data-password-visible; :has is progressive enhancement) */
 .kcFormPasswordVisibilityButtonClass[data-password-visible="true"]::before {
   -webkit-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2024%2024'%20fill%3D'black'%3E%3Cpath%20d%3D'M12%205c-5%200-9.27%203.11-11%207%201.73%203.89%206%207%2011%207s9.27-3.11%2011-7c-1.73-3.89-6-7-11-7zm0%2011a4%204%200%201%201%200-8%204%204%200%200%201%200%208z'%2F%3E%3Cpath%20d%3D'M3%203l18%2018'%20fill%3D'none'%20stroke%3D'black'%20stroke-width%3D'2'%20stroke-linecap%3D'round'%2F%3E%3C%2Fsvg%3E") no-repeat center / contain;
   mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2024%2024'%20fill%3D'black'%3E%3Cpath%20d%3D'M12%205c-5%200-9.27%203.11-11%207%201.73%203.89%206%207%2011%207s9.27-3.11%2011-7c-1.73-3.89-6-7-11-7zm0%2011a4%204%200%201%201%200-8%204%204%200%200%201%200%208z'%2F%3E%3Cpath%20d%3D'M3%203l18%2018'%20fill%3D'none'%20stroke%3D'black'%20stroke-width%3D'2'%20stroke-linecap%3D'round'%2F%3E%3C%2Fsvg%3E") no-repeat center / contain;
@@ -478,7 +617,6 @@ button.kcFormPasswordVisibilityButtonClass {
   }
 }
 
-/* Dark mode styling for the password toggle button */
 html.pf-v5-theme-dark .kcFormPasswordVisibilityButtonClass,
 body.pf-v5-theme-dark .kcFormPasswordVisibilityButtonClass,
 html.kcDarkModeClass .kcFormPasswordVisibilityButtonClass {
@@ -494,7 +632,6 @@ html.kcDarkModeClass .kcFormPasswordVisibilityButtonClass:hover {
   color: #e8eaed;
 }
 
-/* === Checkbox === */
 .kcCheckboxClass {
   display: flex;
   align-items: center;
@@ -507,7 +644,7 @@ html.kcDarkModeClass .kcFormPasswordVisibilityButtonClass:hover {
   height: 16px;
   border-radius: 4px;
   cursor: pointer;
-  accent-color: var(--quickstart-primary-color, #667eea);
+  accent-color: var(--quickstart-primary-color);
   margin: 0;
   flex-shrink: 0;
 }
@@ -520,9 +657,8 @@ html.kcDarkModeClass .kcFormPasswordVisibilityButtonClass:hover {
   margin: 0;
 }
 
-/* === Links === */
 a {
-  color: var(--quickstart-primary-color, #667eea);
+  color: var(--quickstart-primary-color);
   text-decoration: none;
   font-weight: 500;
   transition: opacity 0.2s ease;
@@ -533,7 +669,6 @@ a:hover {
   text-decoration: underline;
 }
 
-/* === Helper Text === */
 .kcInputHelperTextClass {
   display: flex;
   justify-content: space-between;
@@ -578,17 +713,6 @@ a:hover {
   line-height: 16px;
 }
 
-/* === Error/Invalid Input State === */
-.kcInputClass.kcError input,
-.kcInputClass input[aria-invalid="true"],
-input.kcError,
-input[aria-invalid="true"] {
-  border-color: #ef4444;
-  background: #fef2f2;
-}
-
-
-/* Error Icon */
 .kcFormControlUtilClass {
   position: absolute;
   right: 0.75rem;
@@ -602,7 +726,6 @@ input[aria-invalid="true"] {
   font-size: 1rem;
 }
 
-/* Error Messages */
 .kcInputErrorMessageClass {
   display: block;
   color: #dc2626;
@@ -611,7 +734,6 @@ input[aria-invalid="true"] {
   font-weight: 500;
 }
 
-/* === Alert Messages === */
 .kcAlertClass {
   display: flex;
   gap: 0.75rem;
@@ -652,7 +774,7 @@ input[aria-invalid="true"] {
 .kcAlertClass.pf-m-info,
 .kcAlertClass.kcInfo {
   background: #eff6ff;
-  border-left-color: #667eea;
+  border-left-color: #0f766e;
 }
 
 .kcAlertClass.pf-m-success,
@@ -674,7 +796,6 @@ input[aria-invalid="true"] {
   margin: 0;
 }
 
-/* === Footer === */
 .kcLoginMainFooter {
   text-align: center;
   display: flex;
@@ -683,7 +804,6 @@ input[aria-invalid="true"] {
   align-items: stretch;
 }
 
-/* === Registration Container === */
 #kc-registration-container {
   text-align: center;
   margin-top: 0;
@@ -700,7 +820,6 @@ input[aria-invalid="true"] {
   width: 100%;
 }
 
-/* Hide "New user?" text but keep the link */
 #kc-registration > span {
   font-size: 0;
 }
@@ -714,8 +833,8 @@ input[aria-invalid="true"] {
   width: 100%;
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
-  border: 1px solid var(--quickstart-primary-color, #667eea);
-  color: var(--quickstart-primary-color, #667eea);
+  border: 1px solid var(--quickstart-primary-color);
+  color: var(--quickstart-primary-color);
   font-weight: 600;
   font-size: 14px;
   text-decoration: none;
@@ -727,16 +846,15 @@ input[aria-invalid="true"] {
 }
 
 #kc-registration-container a:hover {
-  background: color-mix(in srgb, var(--quickstart-primary-color, #667eea) 8%, transparent);
+  background: color-mix(in srgb, var(--quickstart-primary-color) 8%, transparent);
   text-decoration: none;
   opacity: 1;
 }
 
 #kc-registration-container a:active {
-  background: color-mix(in srgb, var(--quickstart-primary-color, #667eea) 16%, transparent);
+  background: color-mix(in srgb, var(--quickstart-primary-color) 16%, transparent);
 }
 
-/* === Passkey Button === */
 #authenticateWebAuthnButton,
 a#authenticateWebAuthnButton,
 a#authenticateWebAuthnButton.kcButtonSecondaryClass,
@@ -745,8 +863,8 @@ a#authenticateWebAuthnButton.kcButtonSecondaryClass.kcButtonBlockClass {
   width: 100%;
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
-  border: 1px solid var(--quickstart-primary-color, #667eea);
-  color: var(--quickstart-primary-color, #667eea);
+  border: 1px solid var(--quickstart-primary-color);
+  color: var(--quickstart-primary-color);
   font-weight: 600;
   font-size: 14px;
   text-decoration: none;
@@ -761,7 +879,7 @@ a#authenticateWebAuthnButton.kcButtonSecondaryClass.kcButtonBlockClass {
 a#authenticateWebAuthnButton:hover,
 a#authenticateWebAuthnButton.kcButtonSecondaryClass:hover,
 a#authenticateWebAuthnButton.kcButtonSecondaryClass.kcButtonBlockClass:hover {
-  background: color-mix(in srgb, var(--quickstart-primary-color, #667eea) 8%, transparent);
+  background: color-mix(in srgb, var(--quickstart-primary-color) 8%, transparent);
   text-decoration: none;
   opacity: 1;
 }
@@ -770,10 +888,9 @@ a#authenticateWebAuthnButton.kcButtonSecondaryClass.kcButtonBlockClass:hover {
 a#authenticateWebAuthnButton:active,
 a#authenticateWebAuthnButton.kcButtonSecondaryClass:active,
 a#authenticateWebAuthnButton.kcButtonSecondaryClass.kcButtonBlockClass:active {
-  background: color-mix(in srgb, var(--quickstart-primary-color, #667eea) 16%, transparent);
+  background: color-mix(in srgb, var(--quickstart-primary-color) 16%, transparent);
 }
 
-/* === Footer Row (Legal Links + Language) === */
 .kc-footer-row {
   display: flex;
   align-items: center;
@@ -794,7 +911,6 @@ a#authenticateWebAuthnButton.kcButtonSecondaryClass.kcButtonBlockClass:active {
   gap: 0.35rem;
 }
 
-/* === Language Selector === */
 .kc-footer-language {
   display: inline-flex;
   align-items: center;
@@ -812,7 +928,7 @@ a#authenticateWebAuthnButton.kcButtonSecondaryClass.kcButtonBlockClass:active {
 select.kc-language-select {
   background: transparent;
   border: none;
-  color: var(--quickstart-primary-color, #667eea);
+  color: var(--quickstart-primary-color);
   font-weight: 500;
   font-size: 14px;
   padding: 0 0 0 1.25rem;
@@ -821,7 +937,7 @@ select.kc-language-select {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23667eea' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M8 6l4 4-4 4'/%3e%3c/svg%3e");
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%230f766e' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M8 6l4 4-4 4'/%3e%3c/svg%3e");
   background-position: left center;
   background-repeat: no-repeat;
   background-size: 1em;
@@ -829,7 +945,7 @@ select.kc-language-select {
 
 .kc-footer-language select:focus,
 select.kc-language-select:focus {
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23667eea' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%230f766e' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
 }
 
 .kc-footer-language select:hover,
@@ -842,8 +958,6 @@ select.kc-language-select:hover {
   text-underline-offset: 2px;
 }
 
-/* Keep language switcher visuals consistent in dark mode.
-   Generic dark select rules are more specific and can remove the chevron/background behavior. */
 html.pf-v5-theme-dark .kc-footer-language select,
 body.pf-v5-theme-dark .kc-footer-language select,
 html.kcDarkModeClass .kc-footer-language select,
@@ -852,9 +966,9 @@ body.pf-v5-theme-dark select.kc-language-select,
 html.kcDarkModeClass select.kc-language-select {
   background: transparent;
   border: none;
-  color: var(--quickstart-primary-color, #667eea);
+  color: var(--quickstart-primary-color);
   box-shadow: none;
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23667eea' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M8 6l4 4-4 4'/%3e%3c/svg%3e");
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%230f766e' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M8 6l4 4-4 4'/%3e%3c/svg%3e");
   background-position: left center;
   background-repeat: no-repeat;
   background-size: 1em;
@@ -874,12 +988,11 @@ html.kcDarkModeClass select.kc-language-select:hover {
   opacity: 0.8;
 }
 
-/* === Forgot Password Link === */
 .kcInputHelperTextItemClass a,
 .kcInputHelperTextClass a,
 .kcFormSettingClass a,
 .kcFormOptionsWrapperClass a {
-  color: var(--quickstart-primary-color, #667eea);
+  color: var(--quickstart-primary-color);
   font-weight: 500;
   font-size: 14px;
   line-height: 16px;
@@ -894,7 +1007,6 @@ html.kcDarkModeClass select.kc-language-select:hover {
   text-decoration: underline;
 }
 
-/* === Legal Links (Imprint / Data Protection) === */
 .kc-footer-legal-links {
   text-align: left;
   margin-top: 0;
@@ -907,13 +1019,12 @@ html.kcDarkModeClass select.kc-language-select:hover {
   flex-direction: row;
 }
 
-/* Hide when empty */
 .kc-footer-legal-links:empty {
   display: none;
 }
 
 .kc-footer-legal-links a {
-  color: var(--quickstart-primary-color, #667eea);
+  color: var(--quickstart-primary-color);
   font-weight: 500;
   text-decoration: none;
 }
@@ -923,7 +1034,6 @@ html.kcDarkModeClass select.kc-language-select:hover {
   text-decoration: underline;
 }
 
-/* === Footer Band (inside white card) === */
 .kcLoginMainFooterBand {
   margin-top: 0.75rem;
   text-align: center;
@@ -940,11 +1050,10 @@ html.kcDarkModeClass select.kc-language-select:hover {
 }
 
 .kcLoginMainFooterBandItem a {
-  color: var(--quickstart-primary-color, #667eea);
+  color: var(--quickstart-primary-color);
   font-weight: 500;
 }
 
-/* === Social Provider Buttons === */
 .kcFormSocialAccountSectionClass {
   width: 100%;
 }
@@ -1026,18 +1135,9 @@ body.pf-v5-theme-dark a.kcFormSocialAccountListButtonClass:focus-visible {
   text-align: left;
 }
 
-/* === Responsive === */
 @media (max-width: 768px) {
   .kcLoginContainer {
     max-width: 100%;
-  }
-
-  .kcLoginMain {
-    padding: 1.5rem 1.5rem;
-  }
-
-  .kcLogin {
-    padding: 1rem;
   }
 }
 
@@ -1046,16 +1146,11 @@ body.pf-v5-theme-dark a.kcFormSocialAccountListButtonClass:focus-visible {
     font-size: 28px;
   }
 
-  .kcLoginMain {
-    padding: 1.25rem 1rem;
-  }
-
   .kcFormSocialAccountListClass {
     grid-template-columns: 1fr;
   }
 }
 
-/* === Recovery Codes Panel === */
 #kc-recovery-codes-list {
   background: #f9fafb;
   border: 1px solid #e5e7eb;
@@ -1081,7 +1176,6 @@ body.pf-v5-theme-dark a.kcFormSocialAccountListButtonClass:focus-visible {
   min-width: 2ch;
 }
 
-/* === Recovery Code Action Buttons === */
 #printRecoveryCodes,
 #downloadRecoveryCodes,
 #copyRecoveryCodes {
@@ -1107,7 +1201,7 @@ body.pf-v5-theme-dark a.kcFormSocialAccountListButtonClass:focus-visible {
 #downloadRecoveryCodes:hover,
 #copyRecoveryCodes:hover {
   background: #f3f4f6;
-  color: var(--quickstart-primary-color, #667eea);
+  color: var(--quickstart-primary-color);
 }
 
 #printRecoveryCodes:active,
@@ -1116,14 +1210,12 @@ body.pf-v5-theme-dark a.kcFormSocialAccountListButtonClass:focus-visible {
   background: #e5e7eb;
 }
 
-/* Hide original icons and text */
 #printRecoveryCodes i,
 #downloadRecoveryCodes i,
 #copyRecoveryCodes i {
   display: none;
 }
 
-/* Print Icon */
 #printRecoveryCodes::before {
   content: '';
   display: block;
@@ -1134,7 +1226,6 @@ body.pf-v5-theme-dark a.kcFormSocialAccountListButtonClass:focus-visible {
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 6 2 18 2 18 9'%3E%3C/polyline%3E%3Cpath d='M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2'%3E%3C/path%3E%3Crect x='6' y='14' width='12' height='8'%3E%3C/rect%3E%3C/svg%3E") no-repeat center / contain;
 }
 
-/* Download Icon */
 #downloadRecoveryCodes::before {
   content: '';
   display: block;
@@ -1145,7 +1236,6 @@ body.pf-v5-theme-dark a.kcFormSocialAccountListButtonClass:focus-visible {
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'%3E%3C/path%3E%3Cpolyline points='7 10 12 15 17 10'%3E%3C/polyline%3E%3Cline x1='12' y1='15' x2='12' y2='3'%3E%3C/line%3E%3C/svg%3E") no-repeat center / contain;
 }
 
-/* Copy Icon */
 #copyRecoveryCodes::before {
   content: '';
   display: block;
@@ -1156,7 +1246,6 @@ body.pf-v5-theme-dark a.kcFormSocialAccountListButtonClass:focus-visible {
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='9' y='9' width='13' height='13' rx='2' ry='2'%3E%3C/rect%3E%3Cpath d='M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1'%3E%3C/path%3E%3C/svg%3E") no-repeat center / contain;
 }
 
-/* Recovery codes confirmation checkbox - ensure row layout */
 #kcRecoveryCodesConfirmationCheck,
 label[for="kcRecoveryCodesConfirmationCheck"] {
   display: inline-flex;
@@ -1188,8 +1277,6 @@ div#kc-social-providers > h2:nth-of-type(1) {
   margin-bottom: 1.5rem;
 }
 
-
-
 @media (max-width: 480px) {
   #kc-recovery-codes-list {
     grid-template-columns: 1fr;
@@ -1197,21 +1284,18 @@ div#kc-social-providers > h2:nth-of-type(1) {
   }
 }
 
-/* Quick Start variable hooks */
 .kc-horizontal-card-subtitle,
 .kc-horizontal-card-client-name,
 .kc-horizontal-card-realm-name {
   color: var(--quickstart-secondary-color);
 }
 
-/* Keep register CTA visible across Keycloak markup variants */
 #kc-registration > span > a,
 #kc-registration-container #kc-registration > a {
   font-size: 14px;
   color: var(--quickstart-primary-color);
 }
 
-/* Primary button - Keycloak theme class */
 .kcButtonPrimaryClass,
 button.kcButtonPrimaryClass,
 a.kcButtonPrimaryClass,
@@ -1220,7 +1304,6 @@ input[type="submit"] {
   border-color: var(--quickstart-primary-color);
 }
 
-/* Primary button hover/focus */
 .kcButtonPrimaryClass:hover,
 .kcButtonPrimaryClass:focus,
 button[type="submit"]:hover,
@@ -1228,15 +1311,6 @@ button[type="submit"]:focus {
   filter: brightness(0.9);
 }
 
-/* Input fields - focus bottom border */
-.kcInputClass input:focus,
-input[type="text"]:focus,
-input[type="email"]:focus,
-input[type="password"]:focus {
-  border-bottom-color: var(--quickstart-primary-color);
-}
-
-/* Secondary button - Keycloak theme class */
 .kcButtonSecondaryClass,
 a.kcButtonSecondaryClass,
 button.kcButtonSecondaryClass,
@@ -1245,21 +1319,18 @@ button.kcButtonSecondaryClass,
   color: var(--quickstart-primary-color);
 }
 
-/* Link-style buttons */
 .kcButtonLinkClass,
 a.kcButtonLinkClass,
 button.kcButtonLinkClass {
   color: var(--quickstart-primary-color);
 }
 
-/* Recovery code action buttons (hover state) */
 #printRecoveryCodes:hover,
 #downloadRecoveryCodes:hover,
 #copyRecoveryCodes:hover {
   color: var(--quickstart-secondary-color);
 }
 
-/* Checkboxes */
 .kcCheckboxInputClass,
 input[type="checkbox"].kcCheckboxInputClass,
 .kcCheckboxClass input[type="checkbox"],
@@ -1267,28 +1338,17 @@ input[type="checkbox"] {
   accent-color: var(--quickstart-secondary-color);
 }
 
-/* Links */
 a {
   color: var(--quickstart-primary-color);
 }
 
-/* Input focus color (for non-PatternFly presets) */
-.kcInputClass input:focus,
-input:focus,
-select:focus,
-textarea:focus {
-  border-color: var(--quickstart-primary-color);
-}
-
-/* Checkbox accent */
 .kcCheckboxInputClass,
 input[type="checkbox"] {
   accent-color: var(--quickstart-primary-color);
 }
 
-/* Quick Start optional variable hooks */
 body {
-  font-family: var(--quickstart-font-family, inherit);
+  font-family: var(--quickstart-font-family);
 }
 
 h1, h2, h3, h4, h5, h6,
@@ -1300,7 +1360,7 @@ html h1, html h2, html h3, html h4, html h5, html h6,
 #kc-header-wrapper span#kc-realm-name,
 #kc-header-wrapper span#kc-client-name,
 body .kcLoginMainTitle {
-  font-family: var(--quickstart-heading-font-family, inherit);
+  font-family: var(--quickstart-heading-font-family);
 }
 
 html:not(.pf-v5-theme-dark):not(.kcDarkModeClass),
@@ -1319,44 +1379,9 @@ html.kcDarkModeClass body#keycloak-bg {
   background-image: var(--quickstart-bg-image);
 }
 
-html:not(.pf-v5-theme-dark):not(.kcDarkModeClass) body .kcLogin,
-html:not(.pf-v5-theme-dark):not(.kcDarkModeClass) body#keycloak-bg .kcLogin,
-html:not(.pf-v5-theme-dark):not(.kcDarkModeClass) body .kcLoginClass,
-html:not(.pf-v5-theme-dark):not(.kcDarkModeClass) body#keycloak-bg .kcLoginClass,
-html.pf-v5-theme-dark body .kcLogin,
-html.pf-v5-theme-dark body#keycloak-bg .kcLogin,
-html.pf-v5-theme-dark body .kcLoginClass,
-html.pf-v5-theme-dark body#keycloak-bg .kcLoginClass,
-html.kcDarkModeClass body .kcLogin,
-html.kcDarkModeClass body#keycloak-bg .kcLogin,
-html.kcDarkModeClass body .kcLoginClass,
-html.kcDarkModeClass body#keycloak-bg .kcLoginClass {
-  background-color: var(--quickstart-bg-color);
-  background-image: var(--quickstart-bg-image, var(--quickstart-gradient-bg-default));
-}
-
-:is(
-  input.kcInputClass,
-  .kcInputClass input,
-  select.kcInputClass,
-  textarea.kcInputClass,
-  .kcButtonClass,
-  .kcButtonPrimaryClass,
-  .kcButtonSecondaryClass,
-  .kcFormSocialAccountListButtonClass,
-  .kcPanelMainBodyClass
-) {
-  border-radius: var(--quickstart-border-radius, var(--quickstart-control-border-radius-default, 8px));
-}
-
 #kc-registration-container a,
 #authenticateWebAuthnButton.kcButtonSecondaryClass {
-  border-radius: var(--quickstart-border-radius, var(--quickstart-control-border-radius-default, 8px));
-}
-
-.kcLoginMain,
-.kcFormCardClass {
-  border-radius: var(--quickstart-border-radius, var(--quickstart-card-border-radius-default, 16px));
+  border-radius: var(--quickstart-border-radius);
 }
 
 .kcInputGroup :is(
@@ -1371,8 +1396,8 @@ html.kcDarkModeClass body#keycloak-bg .kcLoginClass {
   input[type="tel"],
   input[type="number"]
 ) {
-  border-top-left-radius: var(--quickstart-border-radius, var(--quickstart-control-border-radius-default, 8px));
-  border-bottom-left-radius: var(--quickstart-border-radius, var(--quickstart-control-border-radius-default, 8px));
+  border-top-left-radius: var(--quickstart-border-radius);
+  border-bottom-left-radius: var(--quickstart-border-radius);
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
   border-right-width: 0;
@@ -1400,8 +1425,36 @@ html.kcDarkModeClass body#keycloak-bg .kcLoginClass {
 .kcInputGroup .kcFormPasswordVisibilityButtonClass {
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
-  border-top-right-radius: var(--quickstart-border-radius, var(--quickstart-control-border-radius-default, 8px));
-  border-bottom-right-radius: var(--quickstart-border-radius, var(--quickstart-control-border-radius-default, 8px));
+  border-top-right-radius: var(--quickstart-border-radius);
+  border-bottom-right-radius: var(--quickstart-border-radius);
 }
 
 
+/* Hide client name */
+#kc-client-name,
+.kc-client-name,
+.kc-horizontal-card-client-name,
+[data-kc-client="name"] {
+  display: none !important;
+}
+
+/* Hide info message */
+#kc-info-message.kcAlertClass,
+.kc-info-message,
+[data-kc-i18n-key="infoMessage"] {
+  display: none !important;
+}
+
+:root {
+  --quickstart-bg-logo-url: none;
+  --keycloak-bg-logo-url: none;
+}
+
+.kcLogin {
+  --quickstart-bg-logo-url: none;
+  --keycloak-bg-logo-url: none;
+}
+
+html body .pf-v5-c-login {
+  background-image: none;
+}
