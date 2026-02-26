@@ -1,9 +1,9 @@
 import type { UndoRedoAction } from '../stores/types'
 import { buildQuickSettingsStorageKey, DEFAULT_THEME_ID, getThemeStorageKey } from '../quick-settings'
+import { HISTORY_SCOPE_STORAGE_KEY } from '../storage-keys'
 import { coreStore } from '../stores/core-store'
 import { historyStore } from '../stores/history-store'
 import { presetStore } from '../stores/preset-store'
-import { HISTORY_SCOPE_STORAGE_KEY } from '../storage-keys'
 
 const MAX_UNDO_STACK_SIZE = 50
 const DEFAULT_COALESCE_WINDOW_MS = 1000
@@ -185,4 +185,3 @@ export const historyActions = {
     }))
   },
 }
-

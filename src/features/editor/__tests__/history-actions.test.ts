@@ -111,4 +111,3 @@ describe('historyActions coalescing', () => {
     expect(marker.value).toBe('light-undo')
   })
 })
-

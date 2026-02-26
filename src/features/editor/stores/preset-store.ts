@@ -1,7 +1,7 @@
 import type { PresetState, QuickSettingsStyle } from './types'
 import { DEFAULT_THEME_ID } from '../quick-settings'
-import { createPersistedEditorStore } from './create-editor-store'
 import { PRESET_STORE_STORAGE_KEY } from '../storage-keys'
+import { createPersistedEditorStore } from './create-editor-store'
 
 export const DEFAULT_QUICK_SETTINGS_STYLE: QuickSettingsStyle = {
   colorPresetId: 'keycloak-default',

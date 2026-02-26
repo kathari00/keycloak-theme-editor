@@ -118,4 +118,3 @@ describe('reset actions', () => {
     expect(coreStore.getState().activeStoryId).toBe('default')
   })
 })
-

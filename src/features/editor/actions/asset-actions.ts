@@ -162,4 +162,3 @@ export const assetActions = {
     assetStore.setState(current => ({ ...current, appliedAssets: nextAppliedAssets }))
   },
 }
-

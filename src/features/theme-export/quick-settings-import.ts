@@ -75,7 +75,7 @@ function collectQuickStartVariablesByMode(cssText: string): {
   const light: QuickSettingsVars = {}
   const dark: QuickSettingsVars = {}
   const blockPattern = /([^{}]+)\{([^{}]*)\}/g
-  const declPattern = /(--quickstart-[a-z0-9-]+)\s*:\s*([^;]+);/gi
+  const declPattern = /(--quickstart-[a-z0-9-]+)\s*:([^;]+);/gi
 
   for (const match of cssText.matchAll(blockPattern)) {
     const selector = match[1] || ''

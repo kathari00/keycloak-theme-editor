@@ -1,7 +1,7 @@
 import type { HistoryState } from './types'
 import { buildQuickSettingsStorageKey, DEFAULT_THEME_ID } from '../quick-settings'
-import { createEditorStore } from './create-editor-store'
 import { HISTORY_SCOPE_STORAGE_KEY } from '../storage-keys'
+import { createEditorStore } from './create-editor-store'
 
 const DEFAULT_HISTORY_SCOPE_KEY = buildQuickSettingsStorageKey(DEFAULT_THEME_ID, 'light')
 

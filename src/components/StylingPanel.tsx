@@ -17,11 +17,10 @@ interface CssEditorImageAsset {
 
 function resolveSelectedElement(doc: Document, selectedNodeId: string | null): Element | null {
   if (selectedNodeId) {
-      const selected = doc.querySelector(selectedNodeId)
-      if (selected) {
-        return selected
-      }
-    
+    const selected = doc.querySelector(selectedNodeId)
+    if (selected) {
+      return selected
+    }
   }
   return doc.querySelector('[data-preview-selected="true"]')
 }

@@ -9,7 +9,7 @@ const profileAttributes: Record<string, Omit<Attribute, 'group'>> = {
     readOnly: false,
     annotations: {},
     validators: {
-      length: { 'ignore.empty.value': true, min: '3', max: '255' },
+      length: { 'ignore.empty.value': true, 'min': '3', 'max': '255' },
     },
     values: [],
   },
@@ -21,7 +21,7 @@ const profileAttributes: Record<string, Omit<Attribute, 'group'>> = {
     readOnly: false,
     annotations: {},
     validators: {
-      length: { max: '255', 'ignore.empty.value': true },
+      length: { 'max': '255', 'ignore.empty.value': true },
       email: { 'ignore.empty.value': true },
     },
     values: [],
@@ -33,7 +33,7 @@ const profileAttributes: Record<string, Omit<Attribute, 'group'>> = {
     readOnly: false,
     annotations: {},
     validators: {
-      length: { max: '255', 'ignore.empty.value': true },
+      length: { 'max': '255', 'ignore.empty.value': true },
     },
     values: [],
   },
@@ -44,7 +44,7 @@ const profileAttributes: Record<string, Omit<Attribute, 'group'>> = {
     readOnly: false,
     annotations: {},
     validators: {
-      length: { max: '255', 'ignore.empty.value': true },
+      length: { 'max': '255', 'ignore.empty.value': true },
     },
     values: [],
   },
@@ -57,11 +57,11 @@ const userProfile = {
 }
 
 const commonMock: KcContext.Common = {
-  themeVersion: '0.0.0',
-  keycloakifyVersion: '0.0.0',
-  themeType: 'login',
-  themeName: 'my-theme-name',
-  url: {
+  'themeVersion': '0.0.0',
+  'keycloakifyVersion': '0.0.0',
+  'themeType': 'login',
+  'themeName': 'my-theme-name',
+  'url': {
     loginAction: '#',
     resourcesPath: '/keycloak-dev-resources',
     resourcesCommonPath: '/keycloak-dev-resources/resources-common',
@@ -69,39 +69,39 @@ const commonMock: KcContext.Common = {
     loginUrl: '#',
     ssoLoginInOtherTabsUrl: '#',
   },
-  realm: {
+  'realm': {
     name: 'myrealm',
     displayName: 'myrealm',
     displayNameHtml: 'myrealm',
     internationalizationEnabled: true,
     registrationEmailAsUsername: false,
   },
-  auth: {
+  'auth': {
     showUsername: false,
     showResetCredentials: false,
     showTryAnotherWayLink: false,
   },
-  client: {
+  'client': {
     clientId: 'myApp',
     name: 'Client name',
     attributes: {},
   },
-  scripts: [],
-  locale: {
+  'scripts': [],
+  'locale': {
     supported: [
       { languageTag: 'en', label: 'English', url: '#' },
       { languageTag: 'de', label: 'Deutsch', url: '#' },
     ],
     currentLanguageTag: 'en',
   },
-  messagesPerField: {
+  'messagesPerField': {
     printIfExists: (_fieldName, text) => text,
     existsError: () => false,
     get: () => '',
     exists: () => false,
     getFirstError: () => '',
   },
-  properties: {},
+  'properties': {},
   'x-keycloakify': {
     messages: {},
   },
@@ -169,7 +169,7 @@ type KcPageId = KcContext['pageId'] extends `${infer Name}.ftl` ? Name : never
 type PageMocks = Partial<Record<KcPageId, Record<string, unknown>>> & Record<string, Record<string, unknown>>
 
 const pageOverrides: PageMocks = {
-  login: {
+  'login': {
     authenticators: { authenticators: [] },
     challenge: '',
     userVerification: 'not specified',
@@ -178,12 +178,12 @@ const pageOverrides: PageMocks = {
     isUserIdentified: 'false',
     shouldDisplayAuthenticators: false,
   },
-  register: {
+  'register': {
     url: { registrationAction: '#' },
     passwordRequired: true,
     recaptchaRequired: false,
   },
-  info: {
+  'info': {
     messageHeader: '<Message header>',
     requiredActions: null,
     skipLink: false,
@@ -191,7 +191,7 @@ const pageOverrides: PageMocks = {
     message: { type: 'info', summary: 'This is the info message from the server' },
     client: { clientId: 'myApp', baseUrl: '#', attributes: {} },
   },
-  error: {
+  'error': {
     message: { type: 'error', summary: 'This is the error message from the server' },
     client: { clientId: 'myApp', baseUrl: '#', attributes: {} },
   },
@@ -336,7 +336,7 @@ const pageOverrides: PageMocks = {
   'delete-credential': {
     credentialLabel: 'myCredential',
   },
-  code: {
+  'code': {
     code: { success: true, code: '123456' },
   },
   'delete-account-confirm': {

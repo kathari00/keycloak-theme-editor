@@ -1,6 +1,6 @@
+import type { UploadedAsset } from '../types'
 import { describe, expect, it } from 'vitest'
 import { generateAppliedAssetsCSS, generateExportAppliedCSS } from '../font-css-generator'
-import type { UploadedAsset } from '../types'
 
 function makeLogoAsset(): UploadedAsset {
   return {

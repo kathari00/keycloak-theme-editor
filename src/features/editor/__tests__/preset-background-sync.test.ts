@@ -135,4 +135,3 @@ describe('preset background sync on preset selection', () => {
     expect(assetStore.getState().appliedAssets.background).toBe(REMOVED_ASSET_ID)
   })
 })
-

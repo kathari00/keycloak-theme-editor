@@ -311,7 +311,7 @@ body {
 }`)
 
       expect(next).toContain(`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');`)
-      expect(next).not.toContain("wght@300;\n400;500;600;700")
+      expect(next).not.toContain('wght@300;\n400;500;600;700')
       expect(next).toContain('#kc-code p {\n  color: black;\n}')
     })
 

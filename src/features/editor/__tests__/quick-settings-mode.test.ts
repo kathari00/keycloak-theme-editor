@@ -4,11 +4,11 @@ import { coreActions } from '../actions/core-actions'
 import { historyActions } from '../actions/history-actions'
 import { presetActions } from '../actions/preset-actions'
 import { buildQuickSettingsStorageKey } from '../quick-settings'
+import { DARK_MODE_STORAGE_KEY } from '../storage-keys'
 import { coreStore } from '../stores/core-store'
 import { historyStore } from '../stores/history-store'
 import { createDefaultPresetState, presetStore } from '../stores/preset-store'
 import { themeStore } from '../stores/theme-store'
-import { DARK_MODE_STORAGE_KEY } from '../storage-keys'
 
 const HORIZONTAL_CARD_THEME_CSS = `
 :root {
@@ -174,4 +174,3 @@ describe('quick settings mode separation', () => {
     expect(getModeSettings('v2', 'light')?.colorPresetPrimaryColor).toBe('#111111')
   })
 })
-

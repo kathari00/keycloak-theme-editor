@@ -1,7 +1,6 @@
 import type { UploadedAsset } from '../features/assets/types'
 import type { ThemeId } from '../features/presets/types'
 import type { JarImportResult as ThemeImportData } from '../features/theme-export/types'
-import { THEME_JAR_IMPORTED_EVENT } from '../features/theme-export/jar-import-service'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import ContextBar from '../components/ContextBar'
 import ErrorBoundary from '../components/ErrorBoundary'
@@ -15,6 +14,7 @@ import { getThemeCssStructuredCached, resolveThemeBaseIdFromConfig, resolveTheme
 import { ensureGeneratedPreviewPagesLoaded, getVariantPages, resolvePreviewVariantId } from '../features/preview/load-generated'
 import { PreviewProvider } from '../features/preview/PreviewProvider'
 import { PreviewShell } from '../features/preview/PreviewShell'
+import { THEME_JAR_IMPORTED_EVENT } from '../features/theme-export/jar-import-service'
 import { useResizableSidebar } from './hooks/useResizableSidebar'
 import '@patternfly/react-core/dist/styles/base.css'
 
@@ -295,4 +295,3 @@ export default function EditorContent() {
     </PreviewProvider>
   )
 }
-

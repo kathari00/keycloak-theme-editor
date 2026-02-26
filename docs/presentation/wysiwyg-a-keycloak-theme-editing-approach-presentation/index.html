@@ -238,10 +238,14 @@
         <section data-notes=”[19:30–22:30] Point at the tree: This is exactly what Keycloak expects in a theme JAR — nothing custom, nothing proprietary. Mention styles.css holds your CSS overrides, quick-start.css holds the generated quick-start variables. The same structure is used for folder export (without the JAR wrapper).”>
           <h3>What gets exported</h3>
           <pre><code class=”language-text”>my-theme.jar
+├─ META-INF/
+│   └─ keycloak-themes.json
 └─ theme/my-theme/login/
     ├─ theme.properties
     ├─ template.ftl
     ├─ messages/
+    │   ├─ messages.properties
+    │   └─ messages_en.properties
     └─ resources/
         ├─ css/  (styles.css + quick-start.css)
         ├─ fonts/

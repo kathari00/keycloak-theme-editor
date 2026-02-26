@@ -1,10 +1,5 @@
 import { getThemeCssStructuredCached } from '../../presets/queries'
 import { buildQuickSettingsStorageKey, DEFAULT_THEME_ID } from '../quick-settings'
-import { assetStore } from '../stores/asset-store'
-import { coreStore } from '../stores/core-store'
-import { historyStore } from '../stores/history-store'
-import { createDefaultPresetState, presetStore } from '../stores/preset-store'
-import { themeStore } from '../stores/theme-store'
 import {
   CORE_STORE_STORAGE_KEY,
   DARK_MODE_STORAGE_KEY,
@@ -13,6 +8,11 @@ import {
   THEME_STORE_STORAGE_KEY,
   USER_CSS_STORAGE_KEY,
 } from '../storage-keys'
+import { assetStore } from '../stores/asset-store'
+import { coreStore } from '../stores/core-store'
+import { historyStore } from '../stores/history-store'
+import { createDefaultPresetState, presetStore } from '../stores/preset-store'
+import { themeStore } from '../stores/theme-store'
 import { historyActions } from './history-actions'
 
 function clearPersistedEditorState() {
@@ -57,9 +57,9 @@ export const resetActions = {
     const currentCoreState = coreStore.getState()
     const nextActivePageId = 'login.html'
     const nextActiveStoryId = 'default'
-    const previewDocumentWillReload =
-      currentCoreState.activePageId !== nextActivePageId
-      || currentCoreState.activeStoryId !== nextActiveStoryId
+    const previewDocumentWillReload
+      = currentCoreState.activePageId !== nextActivePageId
+        || currentCoreState.activeStoryId !== nextActiveStoryId
 
     coreStore.setState(state => ({
       ...state,
@@ -102,4 +102,3 @@ export const resetActions = {
     }
   },
 }
-

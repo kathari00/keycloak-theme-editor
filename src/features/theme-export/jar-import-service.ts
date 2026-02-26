@@ -1,5 +1,5 @@
 import type { AppliedAssets, UploadedAsset } from '../assets/types'
-import type { ImportedQuickSettingsByMode, JarImportResult } from './types'
+import type { JarImportResult } from './types'
 import { processUploadedFile } from '../assets/upload-service'
 import { stripQuickStartImportLine } from '../editor/css-source-sanitizer'
 import { getFilename, parseAppliedAssetsFromCss } from './css-export-utils'
@@ -124,7 +124,6 @@ export async function importJarFile(file: File): Promise<JarImportResult> {
   let messagesProperties = ''
   let themeName = ''
   let themeId: string | null = null
-  let quickSettingsByMode: ImportedQuickSettingsByMode | undefined
   const importedAssets: UploadedAsset[] = []
 
   for (const [filename, data] of Object.entries(entries)) {
@@ -173,7 +172,7 @@ export async function importJarFile(file: File): Promise<JarImportResult> {
   }
 
   const combinedCss = joinCssBlocks([quickStartCss, stylesCss, customCss])
-  quickSettingsByMode = parseQuickSettingsFromImportedTheme({
+  const quickSettingsByMode = parseQuickSettingsFromImportedTheme({
     quickStartCss,
     stylesCss,
     customCss,
