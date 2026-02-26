@@ -1,38 +1,19 @@
-import type { PresetState } from '../stores/types'
 import { getThemeCssStructuredCached } from '../../presets/queries'
+import { buildQuickSettingsStorageKey, DEFAULT_THEME_ID } from '../quick-settings'
 import { assetStore } from '../stores/asset-store'
 import { coreStore } from '../stores/core-store'
 import { historyStore } from '../stores/history-store'
-import { presetStore } from '../stores/preset-store'
+import { createDefaultPresetState, presetStore } from '../stores/preset-store'
 import { themeStore } from '../stores/theme-store'
+import {
+  CORE_STORE_STORAGE_KEY,
+  DARK_MODE_STORAGE_KEY,
+  HISTORY_SCOPE_STORAGE_KEY,
+  PRESET_STORE_STORAGE_KEY,
+  THEME_STORE_STORAGE_KEY,
+  USER_CSS_STORAGE_KEY,
+} from '../storage-keys'
 import { historyActions } from './history-actions'
-
-const THEME_STORE_STORAGE_KEY = 'keycloak-editor-theme'
-const PRESET_STORE_STORAGE_KEY = 'keycloak-editor-preset'
-const CORE_STORE_STORAGE_KEY = 'keycloak-editor-core'
-const HISTORY_SCOPE_STORAGE_KEY = 'keycloak-editor-history-scope'
-const USER_CSS_STORAGE_KEY = 'keycloak-editor-user-css'
-const DARK_MODE_STORAGE_KEY = 'keycloak-editor-dark-mode'
-const DEFAULT_THEME_ID = 'v2'
-
-const DEFAULT_PRESET_STATE: PresetState = {
-  selectedThemeId: 'v2',
-  presetCss: '',
-  colorPresetId: 'keycloak-default',
-  colorPresetPrimaryColor: '#0066cc',
-  colorPresetSecondaryColor: '#c0c0c0',
-  colorPresetFontFamily: 'custom',
-  colorPresetBgColor: '',
-  colorPresetBorderRadius: 'default',
-  colorPresetCardShadow: 'default',
-  colorPresetHeadingFontFamily: 'custom',
-  showClientName: false,
-  showRealmName: true,
-  infoMessage: '',
-  imprintUrl: '',
-  dataProtectionUrl: '',
-  presetQuickSettings: {},
-}
 
 function clearPersistedEditorState() {
   if (typeof window === 'undefined') {
@@ -57,52 +38,55 @@ export const resetActions = {
   resetAll: async () => {
     clearPersistedEditorState()
 
-    const defaultAssets = assetStore.getState().uploadedAssets.filter(asset => asset.isDefault)
+    const defaultAssets = assetStore.state.uploadedAssets.filter(asset => asset.isDefault)
     const defaultBackground = defaultAssets.find(asset => asset.category === 'background')
-    assetStore.setState({
+    assetStore.setState(() => ({
       uploadedAssets: defaultAssets,
       appliedAssets: defaultBackground ? { background: defaultBackground.id } : {},
-    })
+    }))
 
-    presetStore.setState({
-      ...DEFAULT_PRESET_STATE,
-      presetQuickSettings: {},
-    })
+    presetStore.setState(() => createDefaultPresetState())
 
-    themeStore.setState({
+    themeStore.setState(state => ({
+      ...state,
       stylesCss: '',
       stylesCssByTheme: {},
       themeQuickStartDefaults: '',
-    })
+    }))
 
-    coreStore.setState({
+    coreStore.setState(state => ({
+      ...state,
       isDarkMode: false,
       activePageId: 'login.html',
       activeStoryId: 'default',
       selectedNodeId: null,
       previewReady: false,
       deviceId: 'desktop',
-    })
+    }))
 
-    historyStore.setState({
-      activeScopeKey: 'v2::light',
+    historyStore.setState(() => ({
+      activeScopeKey: buildQuickSettingsStorageKey(DEFAULT_THEME_ID, 'light'),
       stacksByScope: {},
       undoStack: [],
       redoStack: [],
       canUndo: false,
       canRedo: false,
-    })
+    }))
 
     historyActions.syncActiveScopeFromEditor()
 
     try {
       const { quickStartDefaults, stylesCss } = await getThemeCssStructuredCached(DEFAULT_THEME_ID)
-      presetStore.setState({ presetCss: stylesCss })
-      themeStore.setState({
+      presetStore.setState(state => ({
+        ...state,
+        presetCss: stylesCss,
+      }))
+      themeStore.setState(state => ({
+        ...state,
         stylesCss,
         stylesCssByTheme: { [DEFAULT_THEME_ID]: stylesCss },
         themeQuickStartDefaults: quickStartDefaults,
-      })
+      }))
     }
     catch {
       // Ignore CSS loading failures; reset still applies structural defaults.

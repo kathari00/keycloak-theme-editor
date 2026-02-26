@@ -1,6 +1,6 @@
 import { Button, Form, FormGroup } from '@patternfly/react-core'
 import { useState } from 'react'
-import { importJarFile } from '../features/theme-export/jar-import-service'
+import { importJarFile, THEME_JAR_IMPORTED_EVENT } from '../features/theme-export/jar-import-service'
 
 interface ImportStatus {
   tone: 'idle' | 'loading' | 'success' | 'error'
@@ -27,7 +27,7 @@ export default function ThemeImportHelper() {
     try {
       const result = await importJarFile(selectedFile)
       if (typeof window !== 'undefined' && window.dispatchEvent) {
-        window.dispatchEvent(new CustomEvent('themeJarImported', { detail: result }))
+        window.dispatchEvent(new CustomEvent(THEME_JAR_IMPORTED_EVENT, { detail: result }))
       }
       const label = result.themeName ? `Imported theme: ${result.themeName}` : 'Theme imported'
       setStatus({ tone: 'success', message: label })

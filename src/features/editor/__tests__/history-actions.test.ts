@@ -50,7 +50,7 @@ describe('historyActions coalescing', () => {
       createdAt: 2500,
     })
 
-    expect(historyStore.getState().undoStack).toHaveLength(1)
+    expect(historyStore.state.undoStack).toHaveLength(1)
     historyActions.undo()
     expect(marker.value).toBe('undo-1')
     historyActions.redo()
@@ -74,7 +74,7 @@ describe('historyActions coalescing', () => {
       createdAt: 7001,
     })
 
-    expect(historyStore.getState().undoStack).toHaveLength(2)
+    expect(historyStore.state.undoStack).toHaveLength(2)
   })
 
   it('keeps undo stacks isolated per preset and mode scope', () => {
@@ -91,7 +91,7 @@ describe('historyActions coalescing', () => {
 
     coreStore.setState(state => ({ ...state, isDarkMode: true }))
     historyActions.syncActiveScopeFromEditor()
-    expect(historyStore.getState().canUndo).toBe(false)
+    expect(historyStore.state.canUndo).toBe(false)
 
     historyActions.addUndoRedoAction({
       undo: () => {

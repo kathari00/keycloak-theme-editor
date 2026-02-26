@@ -32,6 +32,40 @@ Open the URL shown in terminal (default: `http://localhost:5173`).
 | `npm run sync:keycloak` | Sync upstream Keycloak templates into `public/keycloak-upstream/` |
 | `npm run generate:preview` | Regenerate preview `pages.json` (with embedded scenarios) |
 
+## Add Custom Preview Page (FTL + Mocks)
+
+Use this when you add a custom login page and want it selectable in the preview editor.
+
+1. Checkout the repository locally.
+2. Add your custom FTL page in theme override folders:
+   `public/keycloak-dev-resources/themes/base/login/<your-page>.ftl`
+   `public/keycloak-dev-resources/themes/v2/login/<your-page>.ftl`
+3. Render it through Keycloak layout template (recommended pattern):
+
+```ftl
+<#import "template.ftl" as layout>
+<@layout.registrationLayout displayMessage=false displayInfo=false; section>
+  <#if section = "header">
+    My Custom Page
+  <#elseif section = "form">
+    <div id="kc-form">...</div>
+  </#if>
+</@layout.registrationLayout>
+```
+
+4. Add page mocks in `tools/kc-context-mocks.ts` under `pageOverrides` with key `<your-page>` (without `.ftl`).
+5. Optional: add extra states (stories):
+   `tools/preview-renderer/scenario-stories/<your-page>.stories.json`
+   `tools/preview-renderer/scenario-html/<variant>/<your-page>/<state>.html`
+6. Regenerate preview artifacts:
+   `npm run generate:preview`
+7. Start dev server and open preview:
+   `npm run dev`
+
+Notes:
+- Custom templates from theme overrides are discovered by the preview renderer.
+- You can layer user-specific JSON overrides via `--custom-mocks` (or `PREVIEW_CUSTOM_MOCKS` in tooling).
+
 ## Requirements
 
 - **Node.js 18+** (20+ recommended), npm
@@ -40,6 +74,28 @@ Open the URL shown in terminal (default: `http://localhost:5173`).
 ## Tech Stack
 
 React 19 and PatternFly
+
+## Architecture Diagram
+
+```mermaid
+flowchart TB
+  User[Designer in Browser] --> UI[React UI Shell<br/>EditorContent + panels]
+
+  UI --> Actions[editorActions]
+  Actions --> Stores[Zustand Stores<br/>core, preset, theme, asset, history]
+  Stores --> LocalStorage[(localStorage persistence)]
+
+  UI --> Preview[PreviewShell]
+  Preview --> Iframe[Sandboxed iframe]
+  Preview --> GeneratedPages[generated/pages.json]
+  Preview --> ThemeResources[Theme files in public/keycloak-dev-resources]
+
+  UI --> ExportImport[Import/Export services]
+  ExportImport --> Output[Theme artifacts: .jar / folder / .zip]
+
+  Tooling[Node + Java tooling<br/>sync-keycloak + generate-preview] --> ThemeResources
+  Tooling --> GeneratedPages
+```
 
 ## Project Structure
 

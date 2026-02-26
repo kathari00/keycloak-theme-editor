@@ -13,7 +13,7 @@ export interface UndoRedoAction {
   coalesceWindowMs?: number
 }
 
-export interface QuickSettings {
+export interface QuickSettingsStyle {
   colorPresetId: string
   colorPresetPrimaryColor: string
   colorPresetSecondaryColor: string
@@ -22,6 +22,9 @@ export interface QuickSettings {
   colorPresetBorderRadius: 'default' | 'sharp' | 'rounded' | 'pill'
   colorPresetCardShadow: 'default' | 'none' | 'subtle' | 'strong'
   colorPresetHeadingFontFamily: string
+}
+
+export interface QuickStartContentSettings {
   showClientName: boolean
   showRealmName: boolean
   infoMessage: string
@@ -29,24 +32,18 @@ export interface QuickSettings {
   dataProtectionUrl: string
 }
 
+export interface QuickSettings extends QuickSettingsStyle, QuickStartContentSettings {}
+
 export interface PresetState {
   selectedThemeId: string
   presetCss: string
-  colorPresetId: string
-  colorPresetPrimaryColor: string
-  colorPresetSecondaryColor: string
-  colorPresetFontFamily: string
-  colorPresetBgColor: string
-  colorPresetBorderRadius: 'default' | 'sharp' | 'rounded' | 'pill'
-  colorPresetCardShadow: 'default' | 'none' | 'subtle' | 'strong'
-  colorPresetHeadingFontFamily: string
-  showClientName: boolean
-  showRealmName: boolean
-  infoMessage: string
-  imprintUrl: string
-  dataProtectionUrl: string
+  showClientName: QuickStartContentSettings['showClientName']
+  showRealmName: QuickStartContentSettings['showRealmName']
+  infoMessage: QuickStartContentSettings['infoMessage']
+  imprintUrl: QuickStartContentSettings['imprintUrl']
+  dataProtectionUrl: QuickStartContentSettings['dataProtectionUrl']
   // Key format: `${themeId}::light|dark`.
-  presetQuickSettings: Record<string, QuickSettings>
+  quickSettingsByThemeMode: Record<string, QuickSettingsStyle>
 }
 
 export interface ThemeState {

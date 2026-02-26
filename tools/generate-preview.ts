@@ -1,11 +1,14 @@
-import fs from 'node:fs'
 import { spawnSync } from 'node:child_process'
+import fs from 'node:fs'
+import os from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
+import { resolveContextMocks } from './kc-context-mocks'
 
 const ROOT = process.cwd()
 const pomPath = path.join(ROOT, 'tools', 'preview-renderer', 'pom.xml')
 const generatedPagesPath = path.join(ROOT, 'src', 'features', 'preview', 'generated', 'pages.json')
+const defaultCustomMocksPath = path.join(ROOT, 'tools', 'preview-renderer', 'custom-pages.json')
 const MIN_JAVA = 25
 const isWindows = process.platform === 'win32'
 const SCRIPT_TAG_PATTERN = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi
@@ -46,7 +49,41 @@ function getJavaMajorVersion(): number | null {
   return Number.isFinite(major) ? major : null
 }
 
-function runMaven() {
+function toMavenArgPath(filePath: string): string {
+  return filePath.replaceAll('\\', '/')
+}
+
+function writeTempContextMocksFile(): { tempDir: string, filePath: string } {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'preview-context-mocks-'))
+  const filePath = path.join(tempDir, 'kc-context-mocks.json')
+  fs.writeFileSync(filePath, `${JSON.stringify(resolveContextMocks(), null, 2)}\n`, 'utf8')
+  return { tempDir, filePath }
+}
+
+function resolveCustomMocksPath(): string | undefined {
+  const envPath = process.env.PREVIEW_CUSTOM_MOCKS
+  if (envPath) {
+    const resolvedPath = path.isAbsolute(envPath) ? envPath : path.resolve(ROOT, envPath)
+    if (fs.existsSync(resolvedPath)) {
+      return resolvedPath
+    }
+  }
+
+  if (fs.existsSync(defaultCustomMocksPath)) {
+    return defaultCustomMocksPath
+  }
+
+  return undefined
+}
+
+function runMaven(contextMocksPath: string, customMocksPath?: string) {
+  const execArgs = [
+    `--context-mocks=${toMavenArgPath(contextMocksPath)}`,
+    ...(customMocksPath
+      ? [`--custom-mocks=${toMavenArgPath(customMocksPath)}`]
+      : []),
+  ].join(' ')
+
   const mavenOpts = [
     process.env.MAVEN_OPTS || '',
     '--enable-native-access=ALL-UNNAMED',
@@ -59,6 +96,7 @@ function runMaven() {
     'compile',
     'exec:java',
     '-Dexec.mainClass=com.keycloaktheme.preview.PreviewRendererMain',
+    `-Dexec.args="${execArgs}"`,
   ], {
     stdio: 'inherit',
     shell: isWindows,
@@ -72,24 +110,6 @@ function getPreviousStories(previous: any, variantId: string, pageId: string): R
     return previous?.scenarios?.[variantId]?.[pageId] ?? {}
   }
 
-  // Legacy shape: { html: "...", scenarios: { scenarioA: "..." } }
-  const legacyPage = page as { html?: unknown, scenarios?: Record<string, unknown> }
-  if (Object.prototype.hasOwnProperty.call(legacyPage, 'html') || Object.prototype.hasOwnProperty.call(legacyPage, 'scenarios')) {
-    const legacyStories: Record<string, string> = {}
-    if (typeof legacyPage.html === 'string') {
-      legacyStories.default = legacyPage.html
-    }
-    for (const [storyId, storyHtml] of Object.entries(legacyPage.scenarios ?? {})) {
-      if (typeof storyHtml === 'string') {
-        legacyStories[storyId] = storyHtml
-      }
-    }
-    if (Object.keys(legacyStories).length > 0) {
-      return legacyStories
-    }
-  }
-
-  // Current shape: { default: "...", scenarioA: "..." }
   const currentStories: Record<string, string> = {}
   for (const [storyId, storyHtml] of Object.entries(page as Record<string, unknown>)) {
     if (typeof storyHtml === 'string') {
@@ -113,7 +133,11 @@ function main() {
   }
 
   process.stdout.write(`Generating preview artifacts (Java ${javaVersion})...\n`)
-  const result = runMaven()
+  const { tempDir, filePath } = writeTempContextMocksFile()
+  const customMocksPath = resolveCustomMocksPath()
+  const result = runMaven(filePath, customMocksPath)
+  fs.rmSync(tempDir, { recursive: true, force: true })
+
   if (result.status !== 0) {
     process.exitCode = result.status ?? 1
     return
@@ -129,24 +153,35 @@ function main() {
   const variants: Record<string, Record<string, Record<string, string>>> = {}
   for (const [variantId, pages] of Object.entries(raw.variants as Record<string, Record<string, string>>)) {
     const variantPages: Record<string, Record<string, string>> = {}
-    for (const [pageId, html] of Object.entries(pages ?? {})) {
-      const currentStories = raw.scenarios?.[variantId]?.[pageId] ?? {}
+    for (const [pageId, rawHtml] of Object.entries((pages ?? {}) as Record<string, unknown>)) {
+      if (typeof rawHtml !== 'string') {
+        continue
+      }
+
+      const html = rawHtml
+      const currentStories = (raw.scenarios?.[variantId]?.[pageId] ?? {}) as Record<string, unknown>
       const previousStories = getPreviousStories(previous, variantId, pageId)
       const sanitizedBaseHtml = stripScriptTags(html)
       const stories: Record<string, string> = { default: sanitizedBaseHtml }
 
-      for (const [storyId, storyHtml] of Object.entries(currentStories)) {
+      for (const [storyId, rawStoryHtml] of Object.entries(currentStories)) {
         if (storyId === 'default') {
           continue
         }
-        const sanitizedStoryHtml = stripScriptTags(storyHtml)
-        const sanitizedPreviousStoryHtml = stripScriptTags(previousStories[storyId] || '')
-        if (sanitizedStoryHtml && sanitizedStoryHtml !== sanitizedBaseHtml) {
-          stories[storyId] = sanitizedStoryHtml
+        if (typeof rawStoryHtml !== 'string') {
           continue
         }
+
+        const sanitizedStoryHtml = stripScriptTags(rawStoryHtml)
+        const sanitizedPreviousStoryHtml = stripScriptTags(previousStories[storyId] || '')
+
         if (sanitizedPreviousStoryHtml && sanitizedPreviousStoryHtml !== sanitizedBaseHtml) {
           stories[storyId] = sanitizedPreviousStoryHtml
+          continue
+        }
+
+        if (sanitizedStoryHtml) {
+          stories[storyId] = sanitizedStoryHtml
         }
       }
 

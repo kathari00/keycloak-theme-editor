@@ -1,11 +1,11 @@
-import type { PresetState, QuickSettings } from '../stores/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { REMOVED_ASSET_ID } from '../../assets/types'
 import { presetActions } from '../actions/preset-actions'
+import { buildQuickSettingsStorageKey } from '../quick-settings'
 import { assetStore } from '../stores/asset-store'
 import { coreStore } from '../stores/core-store'
 import { historyStore } from '../stores/history-store'
-import { presetStore } from '../stores/preset-store'
+import { createDefaultPresetState, presetStore } from '../stores/preset-store'
 
 vi.mock('../../presets/queries', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../presets/queries')>()
@@ -22,7 +22,8 @@ vi.mock('../../presets/queries', async (importOriginal) => {
     })),
     getThemeCssStructuredCached: vi.fn(async (themeId: string) => {
       if (themeId === 'horizontal-card') {
-        const quickStartDefaults = `
+        return {
+          quickStartDefaults: `
 :root {
   --quickstart-primary-color: #0b57d0;
   --quickstart-primary-color-dark: #a8c7fa;
@@ -32,72 +33,34 @@ vi.mock('../../presets/queries', async (importOriginal) => {
   --quickstart-bg-color-dark: #1e1f20;
   --quickstart-card-shadow-default: none;
 }
-      `.trim()
-        return {
-          quickStartDefaults,
+          `.trim(),
           stylesCss: '.kcFormCardClass { display: grid; }',
         }
       }
 
-      const quickStartDefaults = `
+      return {
+        quickStartDefaults: `
 :root {
   --quickstart-primary-color: #0066cc;
   --quickstart-primary-color-dark: #0066cc;
   --quickstart-secondary-color: #c0c0c0;
   --quickstart-font-family: custom;
 }
-    `.trim()
-      return {
-        quickStartDefaults,
+        `.trim(),
         stylesCss: '.pf-v5-c-login__main-header { border-top-color: var(--quickstart-primary-color); }',
       }
     }),
   }
 })
 
-function createQuickSettings(overrides: Partial<QuickSettings> = {}): QuickSettings {
-  return {
-    colorPresetId: 'custom',
-    colorPresetPrimaryColor: '#123456',
-    colorPresetSecondaryColor: '#654321',
-    colorPresetFontFamily: 'custom',
-    colorPresetBgColor: '',
-    colorPresetBorderRadius: 'default',
-    colorPresetCardShadow: 'default',
-    colorPresetHeadingFontFamily: 'custom',
-    showClientName: false,
-    showRealmName: true,
-    infoMessage: '',
-    imprintUrl: '',
-    dataProtectionUrl: '',
-    ...overrides,
-  }
-}
-
-function createPresetState(overrides: Partial<PresetState> = {}): PresetState {
-  return {
-    selectedThemeId: 'base',
-    presetCss: '',
-    colorPresetId: 'keycloak-default',
-    colorPresetPrimaryColor: '#0066cc',
-    colorPresetSecondaryColor: '#c0c0c0',
-    colorPresetFontFamily: 'custom',
-    colorPresetBgColor: '',
-    colorPresetBorderRadius: 'default',
-    colorPresetCardShadow: 'default',
-    colorPresetHeadingFontFamily: 'custom',
-    showClientName: false,
-    showRealmName: true,
-    infoMessage: '',
-    imprintUrl: '',
-    dataProtectionUrl: '',
-    presetQuickSettings: {},
-    ...overrides,
-  }
+function getModePrimaryColor(themeId: string, mode: 'light' | 'dark'): string | undefined {
+  return presetStore.state.quickSettingsByThemeMode[buildQuickSettingsStorageKey(themeId, mode)]?.colorPresetPrimaryColor
 }
 
 describe('preset background sync on preset selection', () => {
   beforeEach(() => {
+    presetStore.setState(() => createDefaultPresetState())
+
     coreStore.setState(() => ({
       isDarkMode: false,
       activePageId: 'login.html',
@@ -136,67 +99,39 @@ describe('preset background sync on preset selection', () => {
   })
 
   it('disables default background when selecting a non-v2 theme', async () => {
-    presetStore.setState(() =>
-      createPresetState({
-        selectedThemeId: 'base',
-        presetQuickSettings: {
-          'horizontal-card::light': createQuickSettings({
-            colorPresetPrimaryColor: '#0057d8',
-          }),
-        },
-      }),
-    )
-
     await presetActions.applyThemeSelection('horizontal-card')
 
-    expect(presetStore.getState().selectedThemeId).toBe('horizontal-card')
-    expect(assetStore.getState().appliedAssets.background).toBe(REMOVED_ASSET_ID)
+    expect(presetStore.state.selectedThemeId).toBe('horizontal-card')
+    expect(assetStore.state.appliedAssets.background).toBe(REMOVED_ASSET_ID)
   })
 
-  it('uses horizontal-card defaults in dark mode without saved settings', async () => {
+  it('uses horizontal-card dark defaults when no saved dark settings exist', async () => {
     coreStore.setState(state => ({ ...state, isDarkMode: true }))
-    presetStore.setState(() =>
-      createPresetState({
-        selectedThemeId: 'base',
-        presetQuickSettings: {},
-      }),
-    )
+    presetStore.setState(state => ({
+      ...state,
+      quickSettingsByThemeMode: {},
+    }))
 
     await presetActions.applyThemeSelection('horizontal-card')
 
-    expect(presetStore.getState().colorPresetPrimaryColor).toBe('#a8c7fa')
-    expect(presetStore.getState().colorPresetBgColor).toBe('#1e1f20')
-    expect(assetStore.getState().appliedAssets.background).toBe(REMOVED_ASSET_ID)
+    expect(getModePrimaryColor('horizontal-card', 'dark')).toBe('#a8c7fa')
+    expect(assetStore.state.appliedAssets.background).toBe(REMOVED_ASSET_ID)
   })
 
   it('keeps default background active when selecting v2', async () => {
     assetStore.setState(state => ({ ...state, appliedAssets: {} }))
-    presetStore.setState(() =>
-      createPresetState({
-        selectedThemeId: 'v2',
-        presetQuickSettings: {
-          'v2::light': createQuickSettings({
-            colorPresetPrimaryColor: '#1a73e8',
-          }),
-        },
-      }),
-    )
 
     await presetActions.applyThemeSelection('v2')
 
-    expect(presetStore.getState().selectedThemeId).toBe('v2')
-    expect(assetStore.getState().appliedAssets.background).toBe('default-bg')
+    expect(presetStore.state.selectedThemeId).toBe('v2')
+    expect(assetStore.state.appliedAssets.background).toBe('default-bg')
   })
 
   it('clears persisted default background when current theme base is non-v2', async () => {
-    presetStore.setState(() =>
-      createPresetState({
-        selectedThemeId: 'modern-gradient',
-      }),
-    )
+    presetStore.setState(state => ({ ...state, selectedThemeId: 'modern-gradient' }))
 
     await presetActions.syncBackgroundForCurrentTheme()
 
-    expect(assetStore.getState().appliedAssets.background).toBe(REMOVED_ASSET_ID)
+    expect(assetStore.state.appliedAssets.background).toBe(REMOVED_ASSET_ID)
   })
 })

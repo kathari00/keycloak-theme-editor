@@ -19,4 +19,3 @@ export function readMessageProperty(text: string, key: string): string | undefin
   }
   return decodeJavaPropertiesValue(match[1].trim())
 }
-

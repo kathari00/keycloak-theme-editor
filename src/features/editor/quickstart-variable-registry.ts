@@ -39,4 +39,3 @@ export const QUICK_START_EDITOR_CSS_VARIABLES: CssEditorVariable[] = QUICK_START
 export const QUICK_START_GENERATED_ROOT_VARIABLE_NAMES = QUICK_START_VARIABLE_DEFINITIONS
   .filter(definition => definition.includeInGeneratedRoot)
   .map(definition => definition.name)
-

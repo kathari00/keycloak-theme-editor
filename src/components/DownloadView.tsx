@@ -1,10 +1,10 @@
 import type { DirectoryWriteParams, EditorCssContext, ImportedQuickSettingsByMode, JarBuildParams } from '../features/theme-export/types'
 import { Button, Card, CardBody, CardTitle, FormGroup, Grid, GridItem, TextInput } from '@patternfly/react-core'
 import { useState } from 'react'
-import { useStore } from 'zustand'
 import { buildModeDefaultsSnapshot } from '../features/editor/actions/preset-actions'
+import { sanitizeThemeCssSourceForEditor } from '../features/editor/css-source-sanitizer'
 import { presetStore } from '../features/editor/stores/preset-store'
-import { useDarkModeState, usePresetState, useQuickStartColorsState, useQuickStartContentState, useStylesCssState, useUploadedAssetsState } from '../features/editor/use-editor'
+import { useDarkModeState, usePresetState, useQuickSettingsByThemeModeState, useQuickStartColorsState, useQuickStartContentState, useStylesCssState, useUploadedAssetsState } from '../features/editor/use-editor'
 import { getThemeCssStructuredCached, resolveThemeBaseIdFromConfig, resolveThemeIdFromConfig, useThemeConfig } from '../features/presets/queries'
 import { getThemeQuickStartCssPath } from '../features/presets/theme-paths'
 import { themeResourcePath } from '../features/presets/types'
@@ -12,7 +12,6 @@ import { normalizeExternalLegalLinkUrl } from '../features/preview/legal-link-ur
 import {
   assembleExportPayload,
   buildModeAwareQuickStartCssParts,
-  buildQuickSettingsSnapshot,
   extractCssImports,
   fetchFooterFtl,
   fetchTemplateFtl,
@@ -51,8 +50,23 @@ function withInfoMessage(messagesContent: string, infoMessage: string): string {
 }
 
 function withMessageProperty(messagesContent: string, key: 'imprintUrl' | 'dataProtectionUrl', value: string): string {
-  const normalized = value.trim()
-  const escaped = escapeJavaPropertiesValue(normalized)
+  return withMessageLine(messagesContent, key, value)
+}
+
+function withLegalLinkMessages(messagesContent: string, imprintUrl: string, dataProtectionUrl: string): string {
+  const withImprint = withMessageProperty(messagesContent, 'imprintUrl', imprintUrl)
+  return withMessageProperty(withImprint, 'dataProtectionUrl', dataProtectionUrl)
+}
+
+function withLegalLinkLabels(messagesContent: string): string {
+  let result = messagesContent
+  result = withMessageLine(result, 'imprintLabel', 'Imprint')
+  result = withMessageLine(result, 'dataProtectionLabel', 'Data Protection')
+  return result
+}
+
+function withMessageLine(messagesContent: string, key: string, value: string): string {
+  const escaped = escapeJavaPropertiesValue(value.trim())
   const propertyLine = `${key}=${escaped}`
   const propertyPattern = new RegExp(`^\\s*${key}\\s*=.*$`, 'm')
 
@@ -64,9 +78,14 @@ function withMessageProperty(messagesContent: string, key: 'imprintUrl' | 'dataP
   return `${messagesContent}${suffix}${propertyLine}\n`
 }
 
-function withLegalLinkMessages(messagesContent: string, imprintUrl: string, dataProtectionUrl: string): string {
-  const withImprint = withMessageProperty(messagesContent, 'imprintUrl', imprintUrl)
-  return withMessageProperty(withImprint, 'dataProtectionUrl', dataProtectionUrl)
+function buildOverriddenMessages(params: {
+  infoMessage: string
+  imprintUrl: string
+  dataProtectionUrl: string
+}): string {
+  const withInfo = withInfoMessage('', params.infoMessage)
+  const withLegalLinks = withLegalLinkMessages(withInfo, params.imprintUrl, params.dataProtectionUrl)
+  return withLegalLinkLabels(withLegalLinks)
 }
 
 export default function DownloadView({ onExportComplete }: DownloadViewProps) {
@@ -82,7 +101,7 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
   const { selectedThemeId } = usePresetState()
   const { stylesCss } = useStylesCssState()
   const { isDarkMode } = useDarkModeState()
-  const presetQuickSettings = useStore(presetStore, state => state.presetQuickSettings)
+  const { quickSettingsByThemeMode } = useQuickSettingsByThemeModeState()
   const themeConfig = useThemeConfig()
   const resolvedThemeId = resolveThemeIdFromConfig(themeConfig, selectedThemeId)
   const baseIdForExport: 'base' | 'v2' = resolveThemeBaseIdFromConfig(themeConfig, selectedThemeId)
@@ -106,16 +125,15 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
   } = useQuickStartContentState()
   const exportImprintUrl = normalizeExternalLegalLinkUrl(imprintUrl)
   const exportDataProtectionUrl = normalizeExternalLegalLinkUrl(dataProtectionUrl)
-  const messagesPath = themeResourcePath(resolvedThemeId, 'messages/messages_en.properties')
   const bgImagePath = '/keycloak-dev-resources/themes/v2/login/resources/img/keycloak-bg-darken.svg'
   const logoImagePath = '/keycloak-dev-resources/themes/v2/login/resources/img/keycloak-logo-text.svg'
 
   const extractEditorCssContext = async (quickStartSharedCss: string): Promise<EditorCssContext> => {
-    let presetCss = stylesCss
+    let presetCss = sanitizeThemeCssSourceForEditor(stylesCss)
 
     if (resolvedThemeId && !presetCss.trim()) {
       const baselineThemeCss = (await getThemeCssStructuredCached(resolvedThemeId).catch(() => ({ stylesCss: '' }))).stylesCss
-      presetCss = (baselineThemeCss || '').trim()
+      presetCss = sanitizeThemeCssSourceForEditor((baselineThemeCss || '').trim())
     }
 
     return {
@@ -126,7 +144,7 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
 
   const prepareExportFiles = async (): Promise<DirectoryWriteParams> => {
     const themeQuickStartCssPath = getThemeQuickStartCssPath(resolvedThemeId)
-    const currentSnapshot = buildQuickSettingsSnapshot({
+    const currentSnapshot = {
       colorPresetId,
       colorPresetPrimaryColor,
       colorPresetSecondaryColor,
@@ -140,32 +158,42 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
       infoMessage,
       imprintUrl: exportImprintUrl,
       dataProtectionUrl: exportDataProtectionUrl,
-    })
+    }
 
-    const [templateFtl, footerFtl, messagesResponse, themeQuickStartCssResponse, propertiesResponse] = await Promise.all([
+    const [templateFtl, footerFtl, themeQuickStartCssResponse, propertiesResponse] = await Promise.all([
       fetchTemplateFtl(resolvedThemeId),
       fetchFooterFtl(resolvedThemeId),
-      fetch(messagesPath),
       fetch(themeQuickStartCssPath),
       fetch(themeResourcePath(resolvedThemeId, 'theme.properties')),
     ])
 
     const properties = await propertiesResponse.text()
 
-    let messagesContent = withInfoMessage(await messagesResponse.text(), infoMessage)
-    messagesContent = withLegalLinkMessages(messagesContent, exportImprintUrl, exportDataProtectionUrl)
+    const messagesContent = buildOverriddenMessages({
+      infoMessage,
+      imprintUrl: exportImprintUrl,
+      dataProtectionUrl: exportDataProtectionUrl,
+    })
     const themeQuickStartDefaultsCss = themeQuickStartCssResponse.ok
       ? (await themeQuickStartCssResponse.text()).trim()
       : ''
     const lightStorageKey = `${resolvedThemeId}::light`
     const darkStorageKey = `${resolvedThemeId}::dark`
-    const lightFallback = presetQuickSettings[lightStorageKey]
-      ?? buildModeDefaultsSnapshot(presetStore.getState(), 'light')
-    const darkFallback = presetQuickSettings[darkStorageKey]
-      ?? buildModeDefaultsSnapshot(presetStore.getState(), 'dark')
+    const lightFallback = quickSettingsByThemeMode[lightStorageKey]
+      ?? buildModeDefaultsSnapshot(presetStore.state, 'light')
+    const darkFallback = quickSettingsByThemeMode[darkStorageKey]
+      ?? buildModeDefaultsSnapshot(presetStore.state, 'dark')
+    const toExportSnapshot = (settings: typeof lightFallback) => ({
+      ...settings,
+      showClientName,
+      showRealmName,
+      infoMessage,
+      imprintUrl: exportImprintUrl,
+      dataProtectionUrl: exportDataProtectionUrl,
+    })
     const exportQuickSettingsByMode: ImportedQuickSettingsByMode = {
-      light: isDarkMode ? lightFallback : currentSnapshot,
-      dark: isDarkMode ? currentSnapshot : darkFallback,
+      light: isDarkMode ? toExportSnapshot(lightFallback) : currentSnapshot,
+      dark: isDarkMode ? currentSnapshot : toExportSnapshot(darkFallback),
     }
     const quickStartCssParts = buildModeAwareQuickStartCssParts(exportQuickSettingsByMode)
     const editorCss = await extractEditorCssContext(quickStartCssParts.sharedCss)
@@ -184,8 +212,9 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
       templateFtl: stripDataKcStateAttributes(templateFtl),
       footerFtl: footerFtl ? stripDataKcStateAttributes(footerFtl) : footerFtl,
       quickStartCss: [themeQuickStartDefaultsCss, quickStartCssParts.variablesCss].filter(Boolean).join('\n\n'),
+      // Keep export CSS loading deterministic: template links quick-start.css and styles.css
+      // via theme.properties, so styles.css must not re-import quick-start.css.
       stylesCss: [
-        '@import "./quick-start.css";',
         topLevelImportsCss,
         payloadCssParts.cssWithoutImports,
       ].filter(Boolean).join('\n\n'),

@@ -1,5 +1,6 @@
 import type { AssetState } from './types'
 import { createPersistedEditorStore } from './create-editor-store'
+import { ASSET_STORE_STORAGE_KEY } from '../storage-keys'
 
 /**
  * Asset Store - Manages uploaded and applied theme assets
@@ -15,7 +16,7 @@ export const assetStore = createPersistedEditorStore<AssetState>({
   uploadedAssets: [],
   appliedAssets: {},
 }, {
-  name: 'keycloak-editor-assets',
+  name: ASSET_STORE_STORAGE_KEY,
   version: 1,
   partialize: state => ({
     appliedAssets: state.appliedAssets,

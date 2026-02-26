@@ -19,4 +19,3 @@ username=Username`
     expect(readMessageProperty(text, 'username')).toBe('Username')
   })
 })
-

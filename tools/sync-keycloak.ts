@@ -102,7 +102,7 @@ function parseThemeProperties(text: string) {
 async function syncTheme(theme: SyncConfig['themes'][number], config: SyncConfig, rootDir: string) {
   const targetThemeRoot = path.join(rootDir, config.targetDir, theme.id)
   const targetLoginRoot = path.join(targetThemeRoot, 'login')
-  const targetMessagesRoot = path.join(targetLoginRoot, 'messages')
+  const targetMessagesRoot = path.join(targetThemeRoot, 'messages')
   await rm(targetThemeRoot, { recursive: true, force: true })
   await mkdir(targetLoginRoot, { recursive: true })
   await mkdir(targetMessagesRoot, { recursive: true })

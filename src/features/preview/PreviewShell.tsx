@@ -9,15 +9,15 @@ import {
 import { buildQuickStartCss } from '../editor/quick-start-css'
 import { useDarkModeState, usePresetState, usePreviewState, useQuickStartColorsState, useQuickStartContentState, useStylesCssState, useUploadedAssetsState } from '../editor/use-editor'
 import { resolveThemeBaseIdFromConfig, resolveThemeIdFromConfig, useThemeConfig } from '../presets/queries'
-import { themeResourcePath } from '../presets/types'
 import { getThemePreviewCssPath, getThemePreviewStylesPath, getThemeQuickStartCssPath } from '../presets/theme-paths'
+import { themeResourcePath } from '../presets/types'
 import { resolveOpenableLegalLinkUrl } from './legal-link-url'
 import { getVariantPages, resolveScenarioHtml } from './load-generated'
 import { readMessageProperty } from './message-properties'
-import { usePreviewRuntime } from './PreviewProvider'
 import { applyQuickStartTemplateContent } from './quickstart-template-content'
 import { sanitizePreviewHtml } from './sanitize-preview-html'
 import { createElementSelector } from './selector-utils'
+import { usePreviewRuntime } from './use-preview-context'
 
 const deviceWidthMap: Record<'desktop' | 'tablet' | 'mobile', string> = {
   desktop: '100%',

@@ -23,4 +23,3 @@ describe('quick settings metadata', () => {
     expect(parsed).toBeUndefined()
   })
 })
-

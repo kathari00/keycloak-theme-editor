@@ -1,4 +1,59 @@
 
+.kcLoginMain,
+.kcFormCardClass {
+  box-shadow: var(--quickstart-card-shadow, var(--quickstart-card-shadow-default));
+}
+
+.alert-warning {
+  border-left: 4px solid;
+  gap: 12px;
+  display: flex;
+  border-radius: var(--quickstart-border-radius);
+}
+
+.alert-warning {
+  background-color: #fffbeb;
+  border-left-color: #f59e0b;
+  padding: 12px 16px;
+  color: #92400e;
+}
+
+.kcButtonClass:not(.kcButtonSecondaryClass),
+button:not(.kcButtonSecondaryClass),
+input[type="submit"],
+a.kcButtonClass:not(.kcButtonSecondaryClass) {
+  border-radius: var(--quickstart-border-radius, var(--quickstart-control-border-radius-default, 8px));
+}
+
+.form-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+#kc-form-buttons {
+  display: flex;
+  margin-top: 20px;
+}
+
+#kc-form-buttons button:last-of-type {
+  margin-left: 20px !important;
+  background: transparent;
+  border: 1px solid var(--quickstart-primary-color, #667eea);
+  color: var(--quickstart-primary-color, #667eea);
+}
+
+html.pf-v5-theme-dark p, 
+html.pf-v5-theme-dark ul {
+  color: var(--quickstart-text-primary-dark, #cbd5e1) !important;
+}
+
+p,
+ul {
+  color: var(--quickstart-text-primary-light, #374151) !important;
+}
+
+
 .kcLogin {
   display: flex;
   align-items: center;
@@ -1349,7 +1404,4 @@ html.kcDarkModeClass body#keycloak-bg .kcLoginClass {
   border-bottom-right-radius: var(--quickstart-border-radius, var(--quickstart-control-border-radius-default, 8px));
 }
 
-.kcLoginMain,
-.kcFormCardClass {
-  box-shadow: var(--quickstart-card-shadow, var(--quickstart-card-shadow-default));
-}
+

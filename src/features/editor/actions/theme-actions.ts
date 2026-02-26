@@ -5,7 +5,7 @@ import { themeStore } from '../stores/theme-store'
 const DEFAULT_THEME_ID = 'v2'
 
 function getActiveThemeStorageKey(): string {
-  const selectedThemeId = (presetStore.getState().selectedThemeId || '').trim()
+  const selectedThemeId = (presetStore.state.selectedThemeId || '').trim()
   return selectedThemeId || DEFAULT_THEME_ID
 }
 
@@ -28,7 +28,7 @@ function setStylesCssForActiveTheme(stylesCss: string) {
 
 export const themeActions = {
   setBaseCss: (baseCss: string) => {
-    themeStore.setState({ baseCss })
+    themeStore.setState(state => ({ ...state, baseCss }))
   },
 
   setStylesCss: (stylesCss: string) => {
@@ -36,10 +36,11 @@ export const themeActions = {
   },
 
   setThemeQuickStartDefaults: (themeQuickStartDefaults: string) => {
-    themeStore.setState({ themeQuickStartDefaults })
+    themeStore.setState(state => ({ ...state, themeQuickStartDefaults }))
   },
 
   setPages: (pages: KeycloakPage[]) => {
-    themeStore.setState({ pages })
+    themeStore.setState(state => ({ ...state, pages }))
   },
+
 }

@@ -1,0 +1,7 @@
+export const THEME_STORE_STORAGE_KEY = 'keycloak-editor-theme'
+export const PRESET_STORE_STORAGE_KEY = 'keycloak-editor-preset'
+export const CORE_STORE_STORAGE_KEY = 'keycloak-editor-core'
+export const ASSET_STORE_STORAGE_KEY = 'keycloak-editor-assets'
+export const HISTORY_SCOPE_STORAGE_KEY = 'keycloak-editor-history-scope'
+export const USER_CSS_STORAGE_KEY = 'keycloak-editor-user-css'
+export const DARK_MODE_STORAGE_KEY = 'keycloak-editor-dark-mode'

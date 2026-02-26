@@ -1,7 +1,6 @@
-import type { QuickSettings } from '../editor/stores/types'
 import type { AppliedAssets, UploadedAsset } from '../assets/types'
+import type { QuickSettings } from '../editor/stores/types'
 import type { EditorCssContext, ImportedQuickSettingsByMode, ThemeExportPayload } from './types'
-import { themeResourcePath } from '../presets/types'
 import {
   generateExportAppliedCSS,
   generateExportFontCSS,
@@ -22,6 +21,7 @@ import {
   COLOR_REGEX,
   CUSTOM_PRESET_ID,
 } from '../editor/quick-start-css'
+import { themeResourcePath } from '../presets/types'
 
 /** Remove editor-only data-kc-state attributes from exported templates */
 export function stripDataKcStateAttributes(markup: string): string {
@@ -186,14 +186,15 @@ export function parseAppliedAssetsFromCss(
   }
 
   cleanedCss = cleanedCss
-    .replace(/\.kcLogin\s*\{[^{}]*--(?:keycloak|quickstart)-bg-logo-url\s*:\s*(?:none|url\([^;]+?\))\s*;?[^{}]*\}\s*/gi, '')
     .replace(/(?:body:not\(#\\9\)\s*,\s*html:not\(#\\9\)|html:not\(#\\9\)\s*,\s*body:not\(#\\9\))\s*\{[^{}]*background\s*:\s*url\([^)]*\)[^{}]*\}\s*/gi, '')
     .replace(/(?:body\s*,\s*html|html\s*,\s*body)\s*\{[^{}]*background\s*:\s*url\([^)]*\.\.\/img\/backgrounds\/[^)]*\)[^{}]*\}\s*/gi, '')
     .replace(/(?:body\s*,\s*html|html\s*,\s*body|body|html)\s*\{[^{}]*background(?:-image)?\s*:\s*url\([^)]*\)[^{}]*\}\s*/gi, '')
     .replace(/body[^{}]*\.kcLogin\s*\{[^{}]*background(?:-image)?\s*:[^{}]*\}\s*/gi, '')
-    .replace(/html\s+body\s+\.pf-v5-c-login\s*\{[^{}]*background-image\s*:\s*none\s*;?[^{}]*\}\s*/gi, '')
-    .replace(/--(?:keycloak|quickstart)-bg-logo-url\s*:\s*(?:none|url\([^;]+?\))\s*;?/gi, '')
-    .replace(/--(?:keycloak|quickstart)-logo-url\s*:\s*(?:none|url\([^;]+?\))\s*;?/gi, '')
+    .replace(/html\s+body\s+\.pf-v5-c-login\s*\{[^{}]*background-image\s*:\s*none[^{}]*\}\s*/gi, '')
+    .replace(/--(?:keycloak|quickstart)-bg-logo-url\s*:\s*none\s*;?/gi, '')
+    .replace(/--(?:keycloak|quickstart)-bg-logo-url\s*:\s*url\([^)]*\)\s*;?/gi, '')
+    .replace(/--(?:keycloak|quickstart)-logo-url\s*:\s*none\s*;?/gi, '')
+    .replace(/--(?:keycloak|quickstart)-logo-url\s*:\s*url\([^)]*\)\s*;?/gi, '')
 
   return { applied, cleanedCss }
 }
@@ -294,24 +295,6 @@ export function mergeCssImports(imports: string[]): string {
       .filter(Boolean),
   ))
   return uniqueImports.join('\n')
-}
-
-export function buildQuickSettingsSnapshot(params: {
-  colorPresetId: string
-  colorPresetPrimaryColor: string
-  colorPresetSecondaryColor: string
-  colorPresetFontFamily: string
-  colorPresetBgColor: string
-  colorPresetBorderRadius: QuickSettings['colorPresetBorderRadius']
-  colorPresetCardShadow: QuickSettings['colorPresetCardShadow']
-  colorPresetHeadingFontFamily: string
-  showClientName: boolean
-  showRealmName: boolean
-  infoMessage: string
-  imprintUrl: string
-  dataProtectionUrl: string
-}): QuickSettings {
-  return { ...params }
 }
 
 function buildQuickStartVariableMap(settings: QuickSettings): Record<string, string> {

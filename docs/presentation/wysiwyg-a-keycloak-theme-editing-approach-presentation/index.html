@@ -134,6 +134,7 @@
           <ol>
             <li>Keycloak login theming</li>
             <li>What the editor does</li>
+            <li>Preview generation logic</li>
             <li>Live demo</li>
             <li>Import/export</li>
             <li>Gotchas + FAQ</li>
@@ -210,7 +211,7 @@
         <section>
           <h3>Workflow overview</h3>
           <div class="demo-step"><strong>Option A:</strong> Start from a base/preset → customize → export</div>
-          <div class="demo-step"><strong>Option B:</strong> Import existing theme JAR → adjust → export</div>
+          <div class="demo-step"><strong>Option B:</strong> Checkout repo locally → add custom FTL page → provide mocks → style in editor</div>
           <ul>
             <li>Quick start to get 80% of the look fast</li>
             <li>Fine-tune specific elements when needed</li>
@@ -218,6 +219,25 @@
           </ul>
           <aside class="notes">
             Timing: 1:30. Set up the demo path: we’ll do Option A and show where Option B fits.
+          </aside>
+        </section>
+
+        <section>
+          <h3>Preview generation logic</h3>
+          <pre><code class="language-text">keycloakify types (compile-time checks)
+  -> tools/kc-context-mocks.ts (typed built-in mocks)
+  -> tools/generate-preview.ts (writes temp context JSON)
+  -> Java PreviewRenderer (FreeMarker render)
+  -> src/features/preview/generated/pages.json
+  -> Preview UI loads pages + states</code></pre>
+          <ul>
+            <li><strong>Built-in mocks:</strong> typed and validated in TypeScript</li>
+            <li><strong>Custom mocks:</strong> optional JSON merged with <code>--custom-mocks</code></li>
+            <li><strong>States:</strong> scenario manifests + scenario HTML stay separate from mocks</li>
+          </ul>
+          <aside class="notes">
+            Timing: 2:00. Explain that preview generation is deterministic and file-based.
+            Emphasize separation: typed context data, optional custom overrides, and independent scenario states.
           </aside>
         </section>
 
@@ -234,26 +254,6 @@
           <p class="timebox">Time: 0:30</p>
           <aside class="notes">
             Timing: 0:30. Tell the room: if anything fails mid-demo, you’ll switch to prepared checkpoints.
-          </aside>
-        </section>
-
-        <!-- 8) Park slide: demo checklist (10:00 live demo) -->
-        <section>
-          <h3>Live demo: step checklist</h3>
-          <div class="demo-step">1) Choose base / preset</div>
-          <div class="demo-step">2) Quick colors + font family</div>
-          <div class="demo-step">3) Upload/apply assets (logo, background, favicon)</div>
-          <div class="demo-step">4) Select an element → tweak spacing/typography/shadow</div>
-          <div class="demo-step">5) Export theme JAR + show “quick export” option</div>
-          <aside class="notes">
-            Timing: 10:00. Demo script:
-            - Start on login page, show device selector + sidebar tabs.
-            - Quick start panel: pick design preset, set primary/secondary colors, choose font.
-            - Upload logo/background; apply; mention favicon.
-            - Switch to Styles: select header/button; adjust one obvious property.
-            - Undo/redo once to show safety.
-            - Export: set theme name, download .jar. Mention quick export uses File System Access API (Chrome/Edge).
-            Fallback: if demo breaks, show prepared export artifact and screenshots of before/after.
           </aside>
         </section>
 

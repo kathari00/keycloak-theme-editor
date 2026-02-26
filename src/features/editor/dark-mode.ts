@@ -1,4 +1,4 @@
-const DARK_MODE_STORAGE_KEY = 'keycloak-editor-dark-mode'
+import { DARK_MODE_STORAGE_KEY } from './storage-keys'
 
 /**
  * Toggle dark mode and persist to localStorage

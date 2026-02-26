@@ -69,4 +69,3 @@ export function withQuickSettingsMetadata(
   }
   return `${lines.join('\n')}\n`
 }
-

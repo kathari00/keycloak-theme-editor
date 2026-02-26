@@ -78,9 +78,11 @@ function shouldTreatAsRuleBlock(cssText: string): boolean {
   return depth === 0
 }
 
-/** Strip any trailing text after the last top-level closing brace.
+/**
+ * Strip any trailing text after the last top-level closing brace.
  *  This discards unfinished selectors that the user started typing
- *  but never completed with a `{ ... }` block. */
+ *  but never completed with a `{ ... }` block.
+ */
 function stripTrailingIncompleteRule(cssText: string): string {
   const trimmed = cssText.trim()
   let depth = 0
@@ -172,9 +174,7 @@ function resolveCommittedCss(context: CommitDraftContext): string | null {
     return null
   }
 
-  const nextCss = userCssStore.doesCssTargetElement(cleanedDraft, scopedElement)
-    ? userCssStore.replaceCssForElementInText(sourceCss, scopedElement, cleanedDraft, scopedInsertOptions)
-    : userCssStore.replaceCssBySelectorInText(sourceCss, cleanedDraft, scopedInsertOptions)
+  const nextCss = userCssStore.replaceCssForElementInText(sourceCss, scopedElement, cleanedDraft, scopedInsertOptions)
 
   return nextCss === sourceCss ? null : nextCss
 }
@@ -188,6 +188,7 @@ export function useStyleWorkspace({
   setStylesCss,
 }: UseStyleWorkspaceOptions): UseStyleWorkspaceResult {
   const sourceCss = stylesCss
+  const lastSelfCommittedCssRef = useRef<string | null>(null)
 
   const applySourceCss = useCallback((nextCss: string) => {
     if (nextCss === sourceCss) {
@@ -204,6 +205,7 @@ export function useStyleWorkspace({
       coalesceKey: 'css-editor-user',
     })
 
+    lastSelfCommittedCssRef.current = nextCss
     setStylesCss(nextCss)
   }, [addUndoRedoAction, setStylesCss, sourceCss])
 
@@ -233,30 +235,38 @@ export function useStyleWorkspace({
 
   useEffect(() => {
     const previousContext = previousContextRef.current
-    const contextChanged
-      = previousContext.sourceEditorCss !== sourceEditorCss
-        || previousContext.showAllStyles !== showAllStyles
+    const elementOrModeChanged
+      = previousContext.showAllStyles !== showAllStyles
         || previousContext.scopedElement !== effectiveScopedElement
+    const sourceChanged = previousContext.sourceEditorCss !== sourceEditorCss
+    const contextChanged = elementOrModeChanged || sourceChanged
 
     if (contextChanged) {
-      const hasPendingDraft
-        = normalizeCss(draftState.editorCssDraft) !== normalizeCss(previousContext.sourceEditorCss)
+      const isSelfEdit = !elementOrModeChanged
+        && lastSelfCommittedCssRef.current !== null
+        && sourceCss === lastSelfCommittedCssRef.current
+      lastSelfCommittedCssRef.current = null
 
-      if (hasPendingDraft) {
-        const nextCss = resolveCommittedCss({
-          sourceCss,
-          sourceEditorCss: previousContext.sourceEditorCss,
-          cssDraftToCommit: draftState.editorCssDraft,
-          showAllStyles: previousContext.showAllStyles,
-          scopedElement: previousContext.scopedElement,
-        })
+      if (!isSelfEdit) {
+        const hasPendingDraft
+          = normalizeCss(draftState.editorCssDraft) !== normalizeCss(previousContext.sourceEditorCss)
 
-        if (nextCss && nextCss !== sourceCss) {
-          applySourceCss(nextCss)
+        if (hasPendingDraft) {
+          const nextCss = resolveCommittedCss({
+            sourceCss,
+            sourceEditorCss: previousContext.sourceEditorCss,
+            cssDraftToCommit: draftState.editorCssDraft,
+            showAllStyles: previousContext.showAllStyles,
+            scopedElement: previousContext.scopedElement,
+          })
+
+          if (nextCss && nextCss !== sourceCss) {
+            applySourceCss(nextCss)
+          }
         }
-      }
 
-      dispatchDraft({ type: 'syncFromSource', sourceEditorCss })
+        dispatchDraft({ type: 'syncFromSource', sourceEditorCss })
+      }
     }
 
     previousContextRef.current = {

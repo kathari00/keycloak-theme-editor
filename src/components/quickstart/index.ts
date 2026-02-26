@@ -1,5 +1,0 @@
-export { AssetsPanel } from './AssetsPanel'
-export { ColorPicker } from './ColorPicker'
-export { ColorSettingsPanel } from './ColorSettingsPanel'
-export { TemplateContentPanel } from './TemplateContentPanel'
-export { useQuickStartSettings } from './useQuickStartSettings'

@@ -20,3 +20,4 @@ export const editorActions = {
 
 // Re-export for direct imports
 export { assetActions, coreActions, historyActions, presetActions, resetActions, themeActions }
+export { buildQuickSettingsStorageKey } from './preset-actions'

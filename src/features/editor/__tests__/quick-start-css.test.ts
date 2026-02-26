@@ -7,7 +7,7 @@ function build(overrides: Partial<QuickStartCssOptions> = {}) {
 }
 
 describe('quick-start-css', () => {
-  describe('COLOR_REGEX', () => {
+  describe('cOLOR_REGEX', () => {
     it('accepts 3 and 6 char hex', () => {
       expect(COLOR_REGEX.test('#abc')).toBe(true)
       expect(COLOR_REGEX.test('#abcdef')).toBe(true)

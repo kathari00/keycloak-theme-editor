@@ -98,7 +98,6 @@ body .kcLogin {
     const result = parseAppliedAssetsFromCss(css, [])
     expect(result.applied.bodyFont).toBe('google:Inter')
   })
-
 })
 
 describe('assembleExportPayload', () => {

@@ -1,4 +1,4 @@
-import type { PresetState } from './stores/types'
+import type { QuickSettingsStyle } from './stores/types'
 import {
   buildGoogleFontsImportCSS,
   normalizeGoogleFontFamily,
@@ -10,7 +10,7 @@ export const CUSTOM_PRESET_ID = 'custom'
 export const COLOR_REGEX = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i
 
 export const BORDER_RADIUS_OPTIONS: {
-  value: PresetState['colorPresetBorderRadius']
+  value: QuickSettingsStyle['colorPresetBorderRadius']
   label: string
   px: string
 }[] = [
@@ -21,7 +21,7 @@ export const BORDER_RADIUS_OPTIONS: {
 ]
 
 export const CARD_SHADOW_OPTIONS: {
-  value: PresetState['colorPresetCardShadow']
+  value: QuickSettingsStyle['colorPresetCardShadow']
   label: string
   css: string
 }[] = [
@@ -36,8 +36,8 @@ export interface QuickStartCssOptions {
   secondaryColor: string
   fontFamily?: string
   bgColor?: string
-  borderRadius?: PresetState['colorPresetBorderRadius']
-  cardShadow?: PresetState['colorPresetCardShadow']
+  borderRadius?: QuickSettingsStyle['colorPresetBorderRadius']
+  cardShadow?: QuickSettingsStyle['colorPresetCardShadow']
   headingFontFamily?: string
   showClientName?: boolean
   showRealmName?: boolean
@@ -50,21 +50,6 @@ interface QuickStartVisibilityState {
   showClientName: boolean
   effectiveShowRealmName: boolean
   hasInfoMessage: boolean
-}
-
-function isValidExternalLegalUrl(url: string): boolean {
-  const normalized = (url || '').trim()
-  if (!normalized) {
-    return false
-  }
-
-  try {
-    const parsed = new URL(normalized)
-    return parsed.protocol === 'http:' || parsed.protocol === 'https:'
-  }
-  catch {
-    return false
-  }
 }
 
 function extractPrimaryFontFamily(fontFamily: string): string | null {
@@ -114,8 +99,6 @@ function buildQuickStartCssParts(options: QuickStartCssOptions): QuickStartCssPa
     cardShadow = 'default',
     headingFontFamily = '',
     showRealmName,
-    imprintUrl = '',
-    dataProtectionUrl = '',
   } = options
 
   const {
@@ -123,7 +106,6 @@ function buildQuickStartCssParts(options: QuickStartCssOptions): QuickStartCssPa
     effectiveShowRealmName,
     hasInfoMessage,
   } = buildQuickStartVisibilityState(options)
-  const hasBothLegalLinks = isValidExternalLegalUrl(imprintUrl) && isValidExternalLegalUrl(dataProtectionUrl)
 
   const googleFontFamilies = new Set<string>()
   ;[fontFamily, headingFontFamily].forEach((selectedFont) => {
@@ -175,17 +157,8 @@ function buildQuickStartCssParts(options: QuickStartCssOptions): QuickStartCssPa
   const rootVariablesCss = buildQuickStartRootCss(quickStartRootVariableValues)
 
   const rulesCss = `${
-  hasBothLegalLinks
-    ? `
-.pf-v5-c-login .pf-v5-c-login__main {
-  --pf-v5-c-login__main-body--PaddingBottom: 0;
-  --pf-v5-c-login__main-footer--PaddingBottom: 0;
-}
-`
-    : ''
-}${
-  !effectiveShowRealmName
-    ? `
+    !effectiveShowRealmName
+      ? `
 /* Hide realm name */
 #kc-realm-name,
 .kc-realm-name,
@@ -193,10 +166,10 @@ function buildQuickStartCssParts(options: QuickStartCssOptions): QuickStartCssPa
   display: none !important;
 }
 `
-    : ''
-}${
-  !showClientName
-    ? `
+      : ''
+  }${
+    !showClientName
+      ? `
 /* Hide client name */
 #kc-client-name,
 .kc-client-name,
@@ -205,20 +178,20 @@ function buildQuickStartCssParts(options: QuickStartCssOptions): QuickStartCssPa
   display: none !important;
 }
 `
-    : ''
-}${
-  !showClientName && !effectiveShowRealmName
-    ? `
+      : ''
+  }${
+    !showClientName && !effectiveShowRealmName
+      ? `
 /* Hide subtitle row when both client and realm are disabled */
 .kc-horizontal-card-subtitle {
   display: none !important;
 }
 `
-    : ''
-}${
-  hasInfoMessage
-    ? ''
-    : `
+      : ''
+  }${
+    hasInfoMessage
+      ? ''
+      : `
 /* Hide info message */
 #kc-info-message.kcAlertClass,
 .kc-info-message,
@@ -226,17 +199,17 @@ function buildQuickStartCssParts(options: QuickStartCssOptions): QuickStartCssPa
   display: none !important;
 }
 `
-}${
-  showClientName || hasInfoMessage || (showRealmName !== undefined ? effectiveShowRealmName : false)
-    ? ''
-    : `
+  }${
+    showClientName || hasInfoMessage || (showRealmName !== undefined ? effectiveShowRealmName : false)
+      ? ''
+      : `
 /* Hide client container */
 #kc-client,
 .kc-client {
   display: none !important;
 }
 `
-}`.trim()
+  }`.trim()
 
   return { googleFontsImport, rootVariablesCss, rulesCss }
 }

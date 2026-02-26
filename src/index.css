@@ -83,8 +83,12 @@ p {
 
 /* Selection tree: compact layout with clearer click affordance */
 .selection-tree-view {
-    --pf-v6-c-tree-view__node--indent--base: 0.875rem;
-    --pf-v6-c-tree-view__node--nested-indent--base: 0.375rem;
+    --pf-v6-c-tree-view__node--indent--base: 0.375rem;
+    --pf-v6-c-tree-view__node--nested-indent--base: 0.125rem;
+    --pf-v6-c-tree-view--m-compact__node--indent--base: 0.375rem;
+    --pf-v6-c-tree-view--m-compact__node--nested-indent--base: 0.125rem;
+    --pf-v6-c-tree-view--m-compact--m-no-background__node--indent--base: 0.375rem;
+    --pf-v6-c-tree-view--m-compact--m-no-background__node--nested-indent--base: 0.125rem;
     --pf-v6-c-tree-view__node--PaddingBlockStart: 0.125rem;
     --pf-v6-c-tree-view__node--PaddingBlockEnd: 0.125rem;
     --pf-v6-c-tree-view__node--PaddingInlineEnd: 0.25rem;

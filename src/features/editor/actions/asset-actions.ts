@@ -1,26 +1,29 @@
 import type { AppliedAssets, ThemeAssetTarget, UploadedAsset } from '../../assets/types'
 import { REMOVED_ASSET_ID } from '../../assets/types'
+import { buildQuickSettingsStorageKey, resolveQuickSettingsMode } from '../quick-settings'
 import { assetStore } from '../stores/asset-store'
+import { coreStore } from '../stores/core-store'
 import { presetStore } from '../stores/preset-store'
 import { historyActions } from './history-actions'
 
 export const assetActions = {
   setUploadedAssets: (uploadedAssets: UploadedAsset[]) => {
-    assetStore.setState({ uploadedAssets })
+    assetStore.setState(state => ({ ...state, uploadedAssets }))
   },
 
   setAppliedAssets: (appliedAssets: AppliedAssets) => {
-    assetStore.setState({ appliedAssets })
+    assetStore.setState(state => ({ ...state, appliedAssets }))
   },
 
   addUploadedAsset: (asset: UploadedAsset) => {
     assetStore.setState(state => ({
+      ...state,
       uploadedAssets: [...state.uploadedAssets, asset],
     }))
   },
 
   removeUploadedAsset: (assetId: string) => {
-    const state = assetStore.getState()
+    const state = assetStore.state
     const asset = state.uploadedAssets.find(a => a.id === assetId)
     if (!asset)
       return
@@ -56,50 +59,86 @@ export const assetActions = {
 
     historyActions.addUndoRedoAction({
       undo: () => {
-        assetStore.setState({ uploadedAssets: prevUploadedAssets, appliedAssets: prevAppliedAssets })
+        assetStore.setState(current => ({
+          ...current,
+          uploadedAssets: prevUploadedAssets,
+          appliedAssets: prevAppliedAssets,
+        }))
       },
       redo: () => {
-        assetStore.setState({ uploadedAssets: nextUploadedAssets, appliedAssets: nextAppliedAssets })
+        assetStore.setState(current => ({
+          ...current,
+          uploadedAssets: nextUploadedAssets,
+          appliedAssets: nextAppliedAssets,
+        }))
       },
     })
 
-    assetStore.setState({ uploadedAssets: nextUploadedAssets, appliedAssets: nextAppliedAssets })
+    assetStore.setState(current => ({
+      ...current,
+      uploadedAssets: nextUploadedAssets,
+      appliedAssets: nextAppliedAssets,
+    }))
   },
 
+  // Cross-domain: applying a background image clears background color from presetStore
   applyAsset: (target: ThemeAssetTarget, assetId: string) => {
-    const state = assetStore.getState()
+    const state = assetStore.state
     const prevAppliedAssets = { ...state.appliedAssets }
     const nextAppliedAssets = { ...prevAppliedAssets, [target]: assetId }
 
     if (prevAppliedAssets[target] === assetId)
       return
 
-    const oldBgColor = presetStore.getState().colorPresetBgColor
+    const activeQuickSettingsKey = buildQuickSettingsStorageKey(
+      presetStore.state.selectedThemeId,
+      resolveQuickSettingsMode(coreStore.state.isDarkMode),
+    )
+    const oldBgColor = presetStore.state.quickSettingsByThemeMode[activeQuickSettingsKey]?.colorPresetBgColor || ''
     const clearBgColor = target === 'background' && Boolean(oldBgColor)
+
+    const setActiveModeBackgroundColor = (colorPresetBgColor: string) => {
+      presetStore.setState((current) => {
+        const activeQuickSettings = current.quickSettingsByThemeMode[activeQuickSettingsKey]
+        if (!activeQuickSettings || activeQuickSettings.colorPresetBgColor === colorPresetBgColor) {
+          return current
+        }
+        return {
+          ...current,
+          quickSettingsByThemeMode: {
+            ...current.quickSettingsByThemeMode,
+            [activeQuickSettingsKey]: {
+              ...activeQuickSettings,
+              colorPresetBgColor,
+            },
+          },
+        }
+      })
+    }
 
     historyActions.addUndoRedoAction({
       undo: () => {
-        assetStore.setState({ appliedAssets: prevAppliedAssets })
+        assetStore.setState(current => ({ ...current, appliedAssets: prevAppliedAssets }))
         if (clearBgColor) {
-          presetStore.setState({ colorPresetBgColor: oldBgColor })
+          setActiveModeBackgroundColor(oldBgColor)
         }
       },
       redo: () => {
-        assetStore.setState({ appliedAssets: nextAppliedAssets })
+        assetStore.setState(current => ({ ...current, appliedAssets: nextAppliedAssets }))
         if (clearBgColor) {
-          presetStore.setState({ colorPresetBgColor: '' })
+          setActiveModeBackgroundColor('')
         }
       },
     })
 
-    assetStore.setState({ appliedAssets: nextAppliedAssets })
+    assetStore.setState(current => ({ ...current, appliedAssets: nextAppliedAssets }))
     if (clearBgColor) {
-      presetStore.setState({ colorPresetBgColor: '' })
+      setActiveModeBackgroundColor('')
     }
   },
 
   unapplyAsset: (target: ThemeAssetTarget) => {
-    const state = assetStore.getState()
+    const state = assetStore.state
     const prevAppliedAssets = { ...state.appliedAssets }
     if (!prevAppliedAssets[target])
       return
@@ -109,13 +148,13 @@ export const assetActions = {
 
     historyActions.addUndoRedoAction({
       undo: () => {
-        assetStore.setState({ appliedAssets: prevAppliedAssets })
+        assetStore.setState(current => ({ ...current, appliedAssets: prevAppliedAssets }))
       },
       redo: () => {
-        assetStore.setState({ appliedAssets: nextAppliedAssets })
+        assetStore.setState(current => ({ ...current, appliedAssets: nextAppliedAssets }))
       },
     })
 
-    assetStore.setState({ appliedAssets: nextAppliedAssets })
+    assetStore.setState(current => ({ ...current, appliedAssets: nextAppliedAssets }))
   },
 }

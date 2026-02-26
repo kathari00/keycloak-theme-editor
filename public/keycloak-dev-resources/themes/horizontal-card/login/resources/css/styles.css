@@ -654,6 +654,10 @@ html.pf-v5-theme-dark :is(.kcInputErrorMessageClass, #input-error.kcInputErrorMe
 #kc-social-providers > h2, #kc-social-providers > h4{
   text-align: center;
   margin: 0 0 0.75rem;
+  font-size: 1rem;
+  line-height: 1.4;
+  font-weight: 500;
+  font-family: var(--quickstart-heading-font-family, var(--quickstart-font-family, inherit));
 }
 
 #kc-social-providers .kcFormSocialAccountListClass li{
@@ -1101,9 +1105,20 @@ html:not(.pf-v5-theme-dark):not(.kcDarkModeClass), html:not(.pf-v5-theme-dark):n
   background-color: var(--quickstart-bg-color);
 }
 
-html:not(.pf-v5-theme-dark):not(.kcDarkModeClass) body .kcLogin, html:not(.pf-v5-theme-dark):not(.kcDarkModeClass) body#keycloak-bg .kcLogin, html:not(.pf-v5-theme-dark):not(.kcDarkModeClass) body .kcLoginClass, html:not(.pf-v5-theme-dark):not(.kcDarkModeClass) body#keycloak-bg .kcLoginClass, html.pf-v5-theme-dark, html.pf-v5-theme-dark body, html.pf-v5-theme-dark body#keycloak-bg, html.pf-v5-theme-dark body .kcLogin, html.pf-v5-theme-dark body#keycloak-bg .kcLogin, html.pf-v5-theme-dark body .kcLoginClass, html.pf-v5-theme-dark body#keycloak-bg .kcLoginClass, html.kcDarkModeClass, html.kcDarkModeClass body, html.kcDarkModeClass body#keycloak-bg, html.kcDarkModeClass body .kcLogin, html.kcDarkModeClass body#keycloak-bg .kcLogin, html.kcDarkModeClass body .kcLoginClass, html.kcDarkModeClass body#keycloak-bg .kcLoginClass{
+html.pf-v5-theme-dark, html.pf-v5-theme-dark body, html.pf-v5-theme-dark body#keycloak-bg, html.kcDarkModeClass, html.kcDarkModeClass body, html.kcDarkModeClass body#keycloak-bg{
   background-color: var(--quickstart-bg-color);
   background-image: var(--quickstart-bg-image);
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
+}
+
+body .kcLogin, body#keycloak-bg .kcLogin, body .kcLoginClass, body#keycloak-bg .kcLoginClass{
+  background-color: var(--quickstart-bg-color);
+  background-image: var(--quickstart-bg-image);
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
 }
 
 .kcInputGroup .kcFormPasswordVisibilityButtonClass{

@@ -5,6 +5,8 @@ import { stripQuickStartImportLine } from '../editor/css-source-sanitizer'
 import { getFilename, parseAppliedAssetsFromCss } from './css-export-utils'
 import { parseQuickSettingsMetadataFromProperties } from './quick-settings-metadata'
 
+export const THEME_JAR_IMPORTED_EVENT = 'themeJarImported'
+
 interface ImportedEditorCssResolution {
   css: string
 }

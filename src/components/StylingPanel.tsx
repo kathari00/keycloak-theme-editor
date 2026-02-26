@@ -5,8 +5,8 @@ import { editorActions } from '../features/editor/actions'
 import { createCssEditorExtensions } from '../features/editor/codemirror-config'
 import { useStyleWorkspace } from '../features/editor/hooks/use-style-workspace'
 import { useDarkModeState, useStylesCssState, useUploadedAssetsState } from '../features/editor/use-editor'
-import { usePreviewContext } from '../features/preview/PreviewProvider'
 import { escapeCssIdentifier } from '../features/preview/selector-utils'
+import { usePreviewContext } from '../features/preview/use-preview-context'
 
 interface CssEditorImageAsset {
   name: string
@@ -17,15 +17,11 @@ interface CssEditorImageAsset {
 
 function resolveSelectedElement(doc: Document, selectedNodeId: string | null): Element | null {
   if (selectedNodeId) {
-    try {
       const selected = doc.querySelector(selectedNodeId)
       if (selected) {
         return selected
       }
-    }
-    catch {
-      // Ignore malformed selectors coming from selection state.
-    }
+    
   }
   return doc.querySelector('[data-preview-selected="true"]')
 }
@@ -78,7 +74,7 @@ export default function StylingPanel() {
     previewReady: isPreviewReady,
   } = usePreviewContext()
 
-  const [showAllStyles, setShowAllStyles] = useState(true)
+  const [showAllStyles, setShowAllStyles] = useState(false)
 
   const previewDocument = isPreviewReady ? getDocument() : null
 
@@ -134,7 +130,7 @@ export default function StylingPanel() {
   } = useStyleWorkspace({
     stylesCss,
     selectedElement,
-    hasActiveSelection: Boolean(selectedNodeId),
+    hasActiveSelection: Boolean(selectedElement),
     showAllStyles,
     addUndoRedoAction: editorActions.addUndoRedoAction,
     setStylesCss: editorActions.setStylesCss,

@@ -99,7 +99,7 @@ export function getVariantScenarioOptions(params: {
     ? ['default', ...storyIds.filter(storyId => storyId !== 'default')]
     : storyIds
 
-  return orderedStoryIds.map((storyId) => ({
+  return orderedStoryIds.map(storyId => ({
     id: storyId,
     name: formatScenarioName(storyId),
   }))

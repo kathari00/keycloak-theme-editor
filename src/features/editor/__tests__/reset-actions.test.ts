@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { getThemeCssStructuredCached } from '../../presets/queries'
 import { resetActions } from '../actions/reset-actions'
 import { assetStore } from '../stores/asset-store'
 import { coreStore } from '../stores/core-store'
 import { historyStore } from '../stores/history-store'
-import { presetStore } from '../stores/preset-store'
+import { createDefaultPresetState, presetStore } from '../stores/preset-store'
 import { themeStore } from '../stores/theme-store'
-import { getThemeCssStructuredCached } from '../../presets/queries'
 
 const MOCK_V2_THEME_CSS = ':root { --quickstart-primary-color: #0066cc; }'
 
@@ -47,22 +47,15 @@ describe('reset actions', () => {
     }))
 
     presetStore.setState(() => ({
+      ...createDefaultPresetState(),
       selectedThemeId: 'v2',
       presetCss: '.old-theme { color: red; }',
-      colorPresetId: 'custom',
-      colorPresetPrimaryColor: '#123456',
-      colorPresetSecondaryColor: '#abcdef',
-      colorPresetFontFamily: 'custom',
-      colorPresetBgColor: '#f5f5f5',
-      colorPresetBorderRadius: 'rounded',
-      colorPresetCardShadow: 'strong',
-      colorPresetHeadingFontFamily: 'custom',
       showClientName: true,
       showRealmName: false,
       infoMessage: 'old',
       imprintUrl: 'https://example.com/imprint',
       dataProtectionUrl: 'https://example.com/privacy',
-      presetQuickSettings: {},
+      quickSettingsByThemeMode: {},
     }))
 
     themeStore.setState(() => ({
@@ -100,10 +93,10 @@ describe('reset actions', () => {
     await resetActions.resetAll()
 
     expect(vi.mocked(getThemeCssStructuredCached)).toHaveBeenCalledWith('v2')
-    expect(presetStore.getState().selectedThemeId).toBe('v2')
-    expect(presetStore.getState().presetCss).toBe(MOCK_V2_THEME_CSS)
-    expect(themeStore.getState().stylesCss).toBe(MOCK_V2_THEME_CSS)
-    expect(themeStore.getState().stylesCssByTheme.v2).toBe(MOCK_V2_THEME_CSS)
-    expect(assetStore.getState().appliedAssets.background).toBe('default-bg')
+    expect(presetStore.state.selectedThemeId).toBe('v2')
+    expect(presetStore.state.presetCss).toBe(MOCK_V2_THEME_CSS)
+    expect(themeStore.state.stylesCss).toBe(MOCK_V2_THEME_CSS)
+    expect(themeStore.state.stylesCssByTheme.v2).toBe(MOCK_V2_THEME_CSS)
+    expect(assetStore.state.appliedAssets.background).toBe('default-bg')
   })
 })

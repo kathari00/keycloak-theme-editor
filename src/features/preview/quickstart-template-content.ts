@@ -113,10 +113,12 @@ function ensureInfoMessageNode(doc: Document, infoMessage: string) {
   if (!container) {
     if (isHorizontalCard) {
       insertRoot.appendChild(messageEl)
-    } else {
+    }
+    else {
       insertRoot.prepend(messageEl)
     }
-  } else if (isHorizontalCard && messageEl.parentElement === insertRoot) {
+  }
+  else if (isHorizontalCard && messageEl.parentElement === insertRoot) {
     insertRoot.appendChild(messageEl)
   }
 }
@@ -127,7 +129,7 @@ function isV2InfoBand(element: Element | null): boolean {
   return element.classList.contains('pf-v5-c-login__main-footer-band')
 }
 
-type LegalLinkConfig = {
+interface LegalLinkConfig {
   state: 'imprint-link' | 'data-protection-link'
   id: string
   placeholderHref: 'imprintUrl' | 'dataProtectionUrl'
@@ -274,7 +276,6 @@ function normalizeLegalPlaceholderAnchors(
   })
 }
 
-
 function ensureLegalLinks(doc: Document, imprintUrl: string, dataProtectionUrl: string) {
   const normalizedImprint = normalizeUrl(imprintUrl)
   const normalizedDataProtection = normalizeUrl(dataProtectionUrl)
@@ -312,7 +313,8 @@ function ensureLegalLinks(doc: Document, imprintUrl: string, dataProtectionUrl: 
     v2LegalFooter.classList.add('pf-v5-c-login__main-footer')
     if (v2Main && v2LegalFooter.parentElement !== v2Main) {
       v2Main.appendChild(v2LegalFooter)
-    } else if (!v2Main && v2MainBody && v2LegalFooter.parentElement !== v2MainBody) {
+    }
+    else if (!v2Main && v2MainBody && v2LegalFooter.parentElement !== v2MainBody) {
       v2MainBody.appendChild(v2LegalFooter)
     }
     if (v2Main && v2Main.lastElementChild !== v2LegalFooter) {
@@ -344,7 +346,8 @@ function ensureLegalLinks(doc: Document, imprintUrl: string, dataProtectionUrl: 
     el.className = 'kc-footer-legal-links'
     el.setAttribute('data-kc-state', 'footer-legal-links')
     wrapper = el
-  } else if (!wrapper && v2Band) {
+  }
+  else if (!wrapper && v2Band) {
     const el = doc.createElement('div')
     el.className = 'kc-footer-legal-links'
     el.setAttribute('data-kc-state', 'footer-legal-links')

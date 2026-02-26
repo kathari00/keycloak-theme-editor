@@ -1,5 +1,5 @@
-import type { BaseThemeId, EditorTheme, ThemeConfig, ThemeId } from './types'
 import type { ThemeCssStructured } from './preset-manager'
+import type { BaseThemeId, EditorTheme, ThemeConfig, ThemeId } from './types'
 import { use } from 'react'
 import { loadThemeCssStructured, loadThemes } from './preset-manager'
 

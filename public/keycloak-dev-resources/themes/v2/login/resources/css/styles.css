@@ -337,53 +337,17 @@ body {
   font-family: var(--quickstart-font-family, var(--pf-v5-global--FontFamily--text, var(--pf-v5-global--FontFamily--sans-serif, inherit)));
 }
 
-h1, h2, h3, h4, h5, h6,
-body h1, body h2, body h3, body h4, body h5, body h6,
-html h1, html h2, html h3, html h4, html h5, html h6,
+#kc-page-title,
 #kc-header-wrapper,
-#kc-header-wrapper #kc-realm-name,
-#kc-header-wrapper #kc-client-name,
-#kc-header-wrapper span#kc-realm-name,
-#kc-header-wrapper span#kc-client-name,
-.pf-v5-c-login .kcLoginMainTitle,
-.pf-v5-c-login__main-header h1.pf-v5-c-title,
-.pf-v5-c-login__main-header h1,
-.pf-v5-c-login__main-header-desc,
-.pf-v5-c-login__header h1,
-body .kcLoginMainTitle {
+#kc-realm-name,
+#kc-client-name,
+.kcLoginMainTitle {
   font-family: var(--quickstart-heading-font-family, var(--pf-v5-global--FontFamily--heading, var(--pf-v5-global--FontFamily--text, var(--pf-v5-global--FontFamily--sans-serif, inherit))));
 }
 
-html:not(.pf-v5-theme-dark):not(.kcDarkModeClass),
-html:not(.pf-v5-theme-dark):not(.kcDarkModeClass) body,
-html:not(.pf-v5-theme-dark):not(.kcDarkModeClass) body#keycloak-bg {
-  background-color: var(--quickstart-bg-color);
-}
-
-html:not(.pf-v5-theme-dark):not(.kcDarkModeClass) body .kcLogin,
-html:not(.pf-v5-theme-dark):not(.kcDarkModeClass) body#keycloak-bg .kcLogin,
-html:not(.pf-v5-theme-dark):not(.kcDarkModeClass) body .kcLoginClass,
-html:not(.pf-v5-theme-dark):not(.kcDarkModeClass) body#keycloak-bg .kcLoginClass,
-html:not(.pf-v5-theme-dark):not(.kcDarkModeClass) body .pf-v5-c-login,
-html:not(.pf-v5-theme-dark):not(.kcDarkModeClass) body#keycloak-bg .pf-v5-c-login,
-html.pf-v5-theme-dark,
-html.pf-v5-theme-dark body,
-html.pf-v5-theme-dark body#keycloak-bg,
-html.pf-v5-theme-dark body .kcLogin,
-html.pf-v5-theme-dark body#keycloak-bg .kcLogin,
-html.pf-v5-theme-dark body .kcLoginClass,
-html.pf-v5-theme-dark body#keycloak-bg .kcLoginClass,
-html.pf-v5-theme-dark body .pf-v5-c-login,
-html.pf-v5-theme-dark body#keycloak-bg .pf-v5-c-login,
-html.kcDarkModeClass,
-html.kcDarkModeClass body,
-html.kcDarkModeClass body#keycloak-bg,
-html.kcDarkModeClass body .kcLogin,
-html.kcDarkModeClass body#keycloak-bg .kcLogin,
-html.kcDarkModeClass body .kcLoginClass,
-html.kcDarkModeClass body#keycloak-bg .kcLoginClass,
-html.kcDarkModeClass body .pf-v5-c-login,
-html.kcDarkModeClass body#keycloak-bg .pf-v5-c-login {
+body#keycloak-bg,
+body#keycloak-bg .kcLogin,
+body#keycloak-bg .pf-v5-c-login {
   background-color: var(--quickstart-bg-color);
   background-image: var(--quickstart-bg-image);
   background-repeat: no-repeat;
@@ -398,27 +362,12 @@ html.kcDarkModeClass body#keycloak-bg .pf-v5-c-login {
   --pf-v5-c-button--after--BorderRadius: var(--quickstart-border-radius);
 }
 
-:is(
-  .pf-v5-c-form-control,
-  .pf-v5-c-form-control::before,
-  .pf-v5-c-form-control::after,
-  input.kcInputClass,
-  .kcInputClass input,
-  select.kcInputClass,
-  textarea.kcInputClass,
-  .kcButtonClass,
-  .kcButtonPrimaryClass,
-  .kcButtonSecondaryClass,
-  .kcFormSocialAccountListButtonClass,
-  .pf-v5-c-button.pf-m-primary,
-  .pf-v5-c-button.pf-m-secondary,
-  .kcPanelMainBodyClass,
-  .pf-v5-c-panel__main-body,
-  .kcPanelMainBodyClass.pf-v5-c-panel__main-body,
-  .kcLoginMain,
-  .pf-v5-c-login__main,
-  .kcFormCardClass
-) {
+.pf-v5-c-form-control,
+.pf-v5-c-button,
+.kcFormSocialAccountListButtonClass,
+.pf-v5-c-panel__main-body,
+.pf-v5-c-login__main,
+.kcFormCardClass {
   border-radius: var(--quickstart-border-radius);
 }
 
@@ -427,30 +376,19 @@ html.kcDarkModeClass body#keycloak-bg .pf-v5-c-login {
   border-radius: var(--quickstart-border-radius);
 }
 
-.kcInputGroup .pf-v5-c-button.pf-m-control,
-.kcInputGroup button.kcFormPasswordVisibilityButtonClass.pf-v5-c-button {
+.kcInputGroup .pf-v5-c-button.pf-m-control {
   --pf-v5-c-button--m-control--BorderRadius: 0;
   --pf-v5-c-button--BorderRadius: 0;
 }
 
 .kcInputGroup .pf-v5-c-form-control,
-.pf-v5-c-input-group .pf-v5-c-form-control,
 .kcInputGroup .pf-v5-c-form-control::before,
 .kcInputGroup .pf-v5-c-form-control::after,
-.pf-v5-c-input-group .pf-v5-c-form-control::before,
-.pf-v5-c-input-group .pf-v5-c-form-control::after,
-.kcInputGroup :is(
-  input.kcInputClass,
-  .kcInputClass input,
-  .kcInputGroupItemClass.kcFill > input,
-  .kcInputGroupItemClass.kcFill > .kcInputClass,
-  .kcInputGroupItemClass.kcFill > .kcInputClass input,
-  input[type="password"],
-  input[type="text"],
-  input[type="email"],
-  input[type="tel"],
-  input[type="number"]
-) {
+.kcInputGroup input.kcInputClass,
+.kcInputGroup .kcInputClass input,
+.kcInputGroup .kcInputGroupItemClass.kcFill > input,
+.kcInputGroup .kcInputGroupItemClass.kcFill > .kcInputClass,
+.kcInputGroup .kcInputGroupItemClass.kcFill > .kcInputClass input {
   border-top-left-radius: var(--quickstart-border-radius);
   border-bottom-left-radius: var(--quickstart-border-radius);
   border-top-right-radius: 0;
@@ -459,21 +397,16 @@ html.kcDarkModeClass body#keycloak-bg .pf-v5-c-login {
   border-inline-end-width: 0;
 }
 
-.kcInputGroup :is(
-  input.kcInputClass:focus,
-  .kcInputClass input:focus,
-  .kcInputGroupItemClass.kcFill > input:focus,
-  .kcInputGroupItemClass.kcFill > .kcInputClass input:focus,
-  input[type="password"]:focus,
-  input[type="text"]:focus,
-  input[type="email"]:focus,
-  input[type="tel"]:focus,
-  input[type="number"]:focus,
-  input.kcInputClass[aria-invalid="true"],
-  .kcInputClass input[aria-invalid="true"],
-  .kcInputGroupItemClass.kcFill > input[aria-invalid="true"],
-  .kcInputGroupItemClass.kcFill > .kcInputClass input[aria-invalid="true"]
-) {
+.kcInputGroup .pf-v5-c-form-control:focus,
+.kcInputGroup .pf-v5-c-form-control[aria-invalid="true"],
+.kcInputGroup input.kcInputClass:focus,
+.kcInputGroup input.kcInputClass[aria-invalid="true"],
+.kcInputGroup .kcInputClass input:focus,
+.kcInputGroup .kcInputClass input[aria-invalid="true"],
+.kcInputGroup .kcInputGroupItemClass.kcFill > input:focus,
+.kcInputGroup .kcInputGroupItemClass.kcFill > input[aria-invalid="true"],
+.kcInputGroup .kcInputGroupItemClass.kcFill > .kcInputClass input:focus,
+.kcInputGroup .kcInputGroupItemClass.kcFill > .kcInputClass input[aria-invalid="true"] {
   box-shadow: none;
 }
 

@@ -11,8 +11,8 @@ import {
   TreeViewSearch,
 } from '@patternfly/react-core'
 import { useEffect, useState } from 'react'
-import { usePreviewContext } from '../features/preview/PreviewProvider'
 import { createElementSelector } from '../features/preview/selector-utils'
+import { usePreviewContext } from '../features/preview/use-preview-context'
 
 interface SelectionTreeNode {
   selector: string
@@ -148,8 +148,9 @@ export default function SelectionTree() {
   const [nodes, setNodes] = useState<SelectionTreeNode[]>([])
   const [query, setQuery] = useState('')
 
+  const visibleNodes = previewReady ? nodes : []
   const normalizedQuery = query.trim().toLowerCase()
-  const filteredNodes = normalizedQuery ? filterNodes(nodes, normalizedQuery) : nodes
+  const filteredNodes = normalizedQuery ? filterNodes(visibleNodes, normalizedQuery) : visibleNodes
   const treeData = mapToTreeViewData(filteredNodes)
   const activeItems = selectedNodeId
     ? (findItemPath(treeData, selectedNodeId) || undefined)
@@ -157,13 +158,11 @@ export default function SelectionTree() {
 
   useEffect(() => {
     if (!previewReady) {
-      setNodes([])
       return
     }
 
     const doc = getDocument()
     if (!doc?.body) {
-      setNodes([])
       return
     }
 
@@ -181,7 +180,7 @@ export default function SelectionTree() {
       })
     }
 
-    rebuild()
+    scheduleRebuild()
 
     const observer = new MutationObserver(scheduleRebuild)
     observer.observe(doc.body, {

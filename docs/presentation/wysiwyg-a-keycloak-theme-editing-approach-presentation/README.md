@@ -28,4 +28,3 @@ npx serve docs/presentation/keycloak-theme-editor-30min
 - Press `S` to open speaker notes (requires popups to be allowed).
 - Use the browser zoom for room/projector sizing (deck is designed for 16:9).
 - This deck loads Reveal.js from a CDN. If you need offline presenting, vendor Reveal.js into this folder and update the links in `index.html`.
-

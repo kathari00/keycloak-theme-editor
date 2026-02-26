@@ -1,4 +1,4 @@
-import { Suspense, lazy } from 'react'
+import { lazy, Suspense } from 'react'
 
 const EditorContent = lazy(() => import('./app/EditorContent'))
 

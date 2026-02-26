@@ -1,0 +1,87 @@
+<div class="kcLoginClass">
+ <header id="kc-header" class="kcHeaderClass">
+  <div id="kc-header-wrapper">
+   <span id="kc-realm-name">myrealm</span> <span id="kc-client-name">Client name</span>
+  </div>
+ </header>
+ <div class="kcFormCardClass">
+  <header class="kcFormHeaderClass">
+   <div class="kc-horizontal-card-logo" aria-hidden="true"></div>
+   <h1 id="kc-page-title">Mobile Authenticator Setup</h1>
+   <p class="kc-horizontal-card-subtitle"><span class="kc-horizontal-card-client-name">Client name</span> <span class="kc-horizontal-card-realm-name">myrealm</span></p>
+  </header>
+  <div id="kc-content">
+   <div id="kc-content-wrapper">
+    <div id="kc-info-message" class="kcAlertClass pf-m-info">
+     <div class="kcAlertIconClass">
+      <span class="kcFeedbackInfoIcon"></span>
+     </div><span class="kcAlertTitleClass kc-feedback-text">infoMessage</span>
+    </div>
+    <ol id="kc-totp-settings">
+     <li>
+      <p>Install one of the following applications on your mobile:</p>
+      <ul id="kc-totp-supported-apps">
+       <li>FreeOTP</li>
+       <li>Google Authenticator</li>
+      </ul></li>
+     <li>
+      <p>Open the application and enter the key:</p>
+      <p><span id="kc-totp-secret-key">KVVF G2BY N4YX S6LB IUYT K2LH IFYE 4SBV</span></p>
+      <p><a href="#" id="mode-barcode">Scan barcode?</a></p></li>
+     <li>
+      <p>Use the following configuration values if the application allows setting them:</p>
+      <p></p>
+      <ul>
+       <li id="kc-totp-type">Type: Time-based</li>
+       <li id="kc-totp-algorithm">Algorithm: HmacSHA1</li>
+       <li id="kc-totp-digits">Digits: 6</li>
+       <li id="kc-totp-period">Interval: 30</li>
+      </ul>
+      <p></p></li>
+     <li>
+      <p>Enter the one-time code provided by the application and click Submit to finish the setup.</p>
+      <p>Provide a Device Name to help you manage your OTP devices.</p></li>
+    </ol>
+    <form action="#" class="kcFormClass" id="kc-totp-settings-form" method="post">
+     <div class="kcFormGroupClass">
+      <div class="">
+       <label for="totp" class="control-label">One-time code</label> <span class="required">*</span>
+      </div>
+      <div class="">
+       <input type="text" id="totp" name="totp" autocomplete="one-time-code" class="kcInputClass" aria-invalid="" inputmode="numeric" dir="ltr">
+      </div><input type="hidden" id="totpSecret" name="totpSecret" value="G4nsI8lQagRMUchH8jEG"> <input type="hidden" id="mode" name="mode" value="manual">
+     </div>
+     <div class="kcFormGroupClass">
+      <div class="">
+       <label for="userLabel" class="control-label">Device Name</label>
+      </div>
+      <div class="">
+       <input type="text" class="kcInputClass" id="userLabel" name="userLabel" autocomplete="off" aria-invalid="" dir="ltr">
+      </div>
+     </div>
+     <div class="kcFormGroupClass">
+      <div id="kc-form-options" class="">
+       <div class="kcFormOptionsWrapperClass">
+        <div class="checkbox">
+         <label> <input type="checkbox" id="logout-sessions" name="logout-sessions" value="on"> Sign out from other devices </label>
+        </div>
+       </div>
+      </div>
+     </div><input type="submit" class="kcButtonClass kcButtonPrimaryClass kcButtonBlockClass kcButtonLargeClass" id="saveTOTPBtn" value="Submit">
+    </form>
+   </div>
+  </div>
+ </div>
+ <div class="kc-horizontal-card-footer-under-card">
+  <div class="kc-horizontal-card-footer-row">
+   <div class="kc-horizontal-card-footer-language">
+    <div class="kcInputClass">
+     <select class="kcInputClass" aria-label="languages" id="login-select-toggle" onchange="if (this.value) { window.location.href = this.value; }"> <option value="#">Deutsch</option> <option value="#" selected>English</option> </select>
+    </div>
+   </div>
+   <div class="kc-footer-legal-links">
+    <a href="imprintUrl" target="_blank" rel="noopener noreferrer">imprintLabel</a> <a href="dataProtectionUrl" target="_blank" rel="noopener noreferrer">dataProtectionLabel</a>
+   </div>
+  </div>
+ </div>
+</div>
