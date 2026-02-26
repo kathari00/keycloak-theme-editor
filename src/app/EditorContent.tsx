@@ -1,7 +1,7 @@
 import type { ThemeId } from '../features/presets/types'
 import type { JarImportResult as ThemeImportData } from '../features/theme-export/types'
 import { THEME_JAR_IMPORTED_EVENT } from '../features/theme-export/jar-import-service'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import ContextBar from '../components/ContextBar'
 import ErrorBoundary from '../components/ErrorBoundary'
 import RightSidebar from '../components/RightSidebar'
@@ -14,6 +14,7 @@ import { getThemeCssStructuredCached, resolveThemeBaseIdFromConfig, resolveTheme
 import { ensureGeneratedPreviewPagesLoaded, getVariantPages, resolvePreviewVariantId } from '../features/preview/load-generated'
 import { PreviewProvider } from '../features/preview/PreviewProvider'
 import { PreviewShell } from '../features/preview/PreviewShell'
+import { useResizableSidebar } from './hooks/useResizableSidebar'
 import '@patternfly/react-core/dist/styles/base.css'
 
 function resolveThemeIdFromThemeProperties(propertiesText: string | undefined): ThemeId {
@@ -41,14 +42,6 @@ const loadingSpinner = (
   </div>
 )
 
-const RIGHT_SIDEBAR_DEFAULT_WIDTH = 450
-const RIGHT_SIDEBAR_MIN_WIDTH = 320
-const EDITOR_MAIN_MIN_WIDTH = 420
-
-function clamp(value: number, min: number, max: number) {
-  return Math.min(Math.max(value, min), max)
-}
-
 async function blobToBase64(blob: Blob): Promise<string> {
   return await new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -68,98 +61,8 @@ export default function EditorContent() {
   const { activePageId } = usePreviewState()
   const themeConfig = useThemeConfig()
   const [previewPagesReady, setPreviewPagesReady] = useState(false)
-  const [isDesktopLayout, setIsDesktopLayout] = useState(() => window.matchMedia('(min-width: 1024px)').matches)
-  const [rightSidebarWidth, setRightSidebarWidth] = useState(RIGHT_SIDEBAR_DEFAULT_WIDTH)
   const layoutRef = useRef<HTMLDivElement | null>(null)
-  const rightSidebarWidthRef = useRef(RIGHT_SIDEBAR_DEFAULT_WIDTH)
-
-  const getMaxRightSidebarWidth = useCallback(() => {
-    const layoutWidth = layoutRef.current?.getBoundingClientRect().width ?? window.innerWidth
-    return Math.max(RIGHT_SIDEBAR_MIN_WIDTH, layoutWidth - EDITOR_MAIN_MIN_WIDTH)
-  }, [])
-
-  const setSidebarWidth = useCallback((width: number) => {
-    rightSidebarWidthRef.current = width
-    setRightSidebarWidth(width)
-  }, [])
-
-  const handleSidebarResizeStart = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
-    if (!isDesktopLayout || event.button !== 0)
-      return
-    event.preventDefault()
-
-    const handle = event.currentTarget
-    handle.setPointerCapture(event.pointerId)
-
-    const startX = event.clientX
-    const startWidth = rightSidebarWidthRef.current
-    const maxWidth = getMaxRightSidebarWidth()
-
-    // Transparent overlay prevents iframe / preview content from stealing
-    // pointer events and triggering expensive layout recalculations.
-    const overlay = document.createElement('div')
-    overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;cursor:col-resize'
-    document.body.appendChild(overlay)
-    document.body.style.cursor = 'col-resize'
-    document.body.style.userSelect = 'none'
-
-    let rafId: number | null = null
-    let lastX = startX
-    let done = false
-
-    const commitWidth = () => {
-      rafId = null
-      setSidebarWidth(clamp(startWidth + (startX - lastX), RIGHT_SIDEBAR_MIN_WIDTH, maxWidth))
-    }
-
-    const onMove = (e: PointerEvent) => {
-      lastX = e.clientX
-      rafId ??= requestAnimationFrame(commitWidth)
-    }
-
-    const cleanup = () => {
-      if (done)
-        return
-      done = true
-      handle.removeEventListener('pointermove', onMove)
-      handle.removeEventListener('pointerup', cleanup)
-      handle.removeEventListener('lostpointercapture', cleanup)
-      if (rafId !== null)
-        cancelAnimationFrame(rafId)
-      setSidebarWidth(clamp(startWidth + (startX - lastX), RIGHT_SIDEBAR_MIN_WIDTH, maxWidth))
-      overlay.remove()
-      document.body.style.cursor = ''
-      document.body.style.userSelect = ''
-    }
-
-    handle.addEventListener('pointermove', onMove)
-    handle.addEventListener('pointerup', cleanup)
-    handle.addEventListener('lostpointercapture', cleanup)
-  }, [isDesktopLayout, getMaxRightSidebarWidth, setSidebarWidth])
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(min-width: 1024px)')
-    const handleLayoutModeChange = (event: MediaQueryListEvent) => setIsDesktopLayout(event.matches)
-    mediaQuery.addEventListener('change', handleLayoutModeChange)
-    return () => {
-      mediaQuery.removeEventListener('change', handleLayoutModeChange)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!isDesktopLayout) {
-      return
-    }
-
-    const clampWidth = () => {
-      const maxWidth = getMaxRightSidebarWidth()
-      setSidebarWidth(clamp(rightSidebarWidthRef.current, RIGHT_SIDEBAR_MIN_WIDTH, maxWidth))
-    }
-
-    clampWidth()
-    window.addEventListener('resize', clampWidth)
-    return () => window.removeEventListener('resize', clampWidth)
-  }, [isDesktopLayout, getMaxRightSidebarWidth, setSidebarWidth])
+  const { isDesktopLayout, sidebarWidth: rightSidebarWidth, handleResizeStart: handleSidebarResizeStart } = useResizableSidebar({ layoutRef })
 
   useEffect(() => {
     let cancelled = false
