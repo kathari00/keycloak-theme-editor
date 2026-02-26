@@ -1,34 +1,37 @@
 import type { BaseThemeId, ThemeId } from '../../presets/types'
-import type { QuickSettingsMode } from '../quick-settings'
-import type { PresetState, QuickSettings, QuickSettingsStyle, QuickStartContentSettings } from '../stores/types'
+import type { PresetState, QuickSettings } from '../stores/types'
 import { REMOVED_ASSET_ID } from '../../assets/types'
 import { getThemeConfigCached, getThemeCssStructuredCached, resolveThemeBaseIdFromConfig, resolveThemeIdFromConfig } from '../../presets/queries'
-import { buildQuickSettingsStorageKey, getThemeStorageKey, resolveQuickSettingsMode } from '../quick-settings'
+import { buildQuickSettingsStorageKey, getThemeStorageKey } from '../quick-settings'
 import { CUSTOM_PRESET_ID } from '../quick-start-css'
 import { assetStore } from '../stores/asset-store'
 import { coreStore } from '../stores/core-store'
-import { DEFAULT_QUICK_SETTINGS_STYLE, presetStore } from '../stores/preset-store'
+import { presetStore } from '../stores/preset-store'
 import { themeStore } from '../stores/theme-store'
 import { historyActions } from './history-actions'
 
+export type QuickSettingsMode = 'light' | 'dark'
 interface ImportedQuickSettingsByMode {
   light?: Partial<QuickSettings>
   dark?: Partial<QuickSettings>
 }
 
-export type { QuickSettingsMode }
 export { buildQuickSettingsStorageKey }
 
-type QuickStartStyleExtras = Pick<
-  QuickSettingsStyle,
+type QuickStartExtrasState = Pick<
+  PresetState,
   | 'colorPresetBgColor'
   | 'colorPresetBorderRadius'
   | 'colorPresetCardShadow'
   | 'colorPresetHeadingFontFamily'
+  | 'showClientName'
+  | 'showRealmName'
+  | 'infoMessage'
+  | 'imprintUrl'
+  | 'dataProtectionUrl'
 >
 
-type QuickStartExtrasUpdate = Partial<QuickStartStyleExtras & QuickStartContentSettings>
-
+type QuickStartExtrasUpdate = Partial<QuickStartExtrasState>
 interface HistoryOptions {
   recordHistory?: boolean
 }
@@ -37,47 +40,36 @@ interface SetColorPresetOptions extends HistoryOptions {
   headingFontFamily?: string
 }
 
-const STYLE_FIELD_KEYS = [
-  'colorPresetId',
-  'colorPresetPrimaryColor',
-  'colorPresetSecondaryColor',
-  'colorPresetFontFamily',
-  'colorPresetBgColor',
-  'colorPresetBorderRadius',
-  'colorPresetCardShadow',
-  'colorPresetHeadingFontFamily',
-] as const
-
-const CONTENT_FIELD_KEYS = [
-  'showClientName',
-  'showRealmName',
-  'infoMessage',
-  'imprintUrl',
-  'dataProtectionUrl',
-] as const
-
-const HEX_COLOR_REGEX = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i
+const DEFAULT_QUICK_START_EXTRAS: Omit<QuickStartExtrasState, 'colorPresetBgColor' | 'colorPresetCardShadow'> = {
+  colorPresetBorderRadius: 'default',
+  colorPresetHeadingFontFamily: CUSTOM_PRESET_ID,
+  showClientName: false,
+  showRealmName: true,
+  infoMessage: '',
+  imprintUrl: '',
+  dataProtectionUrl: '',
+}
 
 let applyThemeSelectionRequestVersion = 0
 
+function normalizeQuickSettingsMode(mode: QuickSettingsMode | undefined): QuickSettingsMode {
+  return mode === 'dark' ? 'dark' : 'light'
+}
+
 function getCurrentQuickSettingsMode(): QuickSettingsMode {
-  return resolveQuickSettingsMode(coreStore.getState().isDarkMode)
+  return coreStore.getState().isDarkMode ? 'dark' : 'light'
 }
 
-function getStyleSettingsKey(themeId: string | null | undefined, mode: QuickSettingsMode): string {
-  return buildQuickSettingsStorageKey(getThemeStorageKey(themeId), mode)
+function getOppositeQuickSettingsMode(mode: QuickSettingsMode): QuickSettingsMode {
+  return mode === 'dark' ? 'light' : 'dark'
 }
 
-function getStyleSettingsForMode(
-  state: PresetState,
-  themeId: string | null | undefined,
-  mode: QuickSettingsMode,
-): QuickSettingsStyle | undefined {
-  return state.quickSettingsByThemeMode[getStyleSettingsKey(themeId, mode)]
-}
-
-function getQuickStartContent(state: PresetState): QuickStartContentSettings {
+function getQuickStartExtrasState(state: PresetState): QuickStartExtrasState {
   return {
+    colorPresetBgColor: state.colorPresetBgColor,
+    colorPresetBorderRadius: state.colorPresetBorderRadius,
+    colorPresetCardShadow: state.colorPresetCardShadow,
+    colorPresetHeadingFontFamily: state.colorPresetHeadingFontFamily,
     showClientName: state.showClientName,
     showRealmName: state.showRealmName,
     infoMessage: state.infoMessage,
@@ -86,11 +78,67 @@ function getQuickStartContent(state: PresetState): QuickStartContentSettings {
   }
 }
 
-function updateQuickStartContent(
+function buildQuickSettingsSnapshot(state: PresetState): QuickSettings {
+  return {
+    colorPresetId: state.colorPresetId,
+    colorPresetPrimaryColor: state.colorPresetPrimaryColor,
+    colorPresetSecondaryColor: state.colorPresetSecondaryColor,
+    colorPresetFontFamily: state.colorPresetFontFamily,
+    colorPresetBgColor: state.colorPresetBgColor,
+    colorPresetBorderRadius: state.colorPresetBorderRadius,
+    colorPresetCardShadow: state.colorPresetCardShadow,
+    colorPresetHeadingFontFamily: state.colorPresetHeadingFontFamily,
+    showClientName: state.showClientName,
+    showRealmName: state.showRealmName,
+    infoMessage: state.infoMessage,
+    imprintUrl: state.imprintUrl,
+    dataProtectionUrl: state.dataProtectionUrl,
+  }
+}
+
+function withoutUndefinedValues<T extends Record<string, unknown>>(value: Partial<T>): Partial<T> {
+  return Object.fromEntries(
+    Object.entries(value).filter(([, entryValue]) => entryValue !== undefined),
+  ) as Partial<T>
+}
+
+function buildQuickSettingsKey(themeId: string, mode: QuickSettingsMode): string {
+  return buildQuickSettingsStorageKey(getThemeStorageKey(themeId), mode)
+}
+
+function seedOppositeModeSnapshotIfMissing(
   state: PresetState,
-  content: QuickStartContentSettings,
-): PresetState {
-  return { ...state, ...content }
+  enabled: boolean,
+): Record<string, QuickSettings> {
+  if (!enabled) {
+    return state.presetQuickSettings
+  }
+  const themeStorageKey = getThemeStorageKey(state.selectedThemeId)
+  const currentMode = getCurrentQuickSettingsMode()
+  const oppositeMode = getOppositeQuickSettingsMode(currentMode)
+  const oppositeModeKey = buildQuickSettingsKey(themeStorageKey, oppositeMode)
+  if (state.presetQuickSettings[oppositeModeKey]) {
+    return state.presetQuickSettings
+  }
+  return {
+    ...state.presetQuickSettings,
+    [oppositeModeKey]: buildModeDefaultsSnapshot(state, oppositeMode),
+  }
+}
+
+function buildModeScopedQuickSettingsMap(params: {
+  state: PresetState
+  nextSnapshot: QuickSettings
+  baseQuickSettingsMap?: Record<string, QuickSettings>
+}): Record<string, QuickSettings> {
+  const { state, nextSnapshot, baseQuickSettingsMap } = params
+  const themeStorageKey = getThemeStorageKey(state.selectedThemeId)
+  const currentMode = getCurrentQuickSettingsMode()
+  const currentModeKey = buildQuickSettingsKey(themeStorageKey, currentMode)
+  return {
+    ...(baseQuickSettingsMap ?? state.presetQuickSettings),
+    [currentModeKey]: nextSnapshot,
+  }
 }
 
 function readQuickStartVariable(cssText: string, variableName: string): string {
@@ -99,7 +147,6 @@ function readQuickStartVariable(cssText: string, variableName: string): string {
   if (markerIndex < 0) {
     return ''
   }
-
   const valueStartIndex = markerIndex + marker.length
   const valueEndIndex = cssText.indexOf(';', valueStartIndex)
   if (valueEndIndex < 0) {
@@ -124,13 +171,12 @@ function syncDefaultBackgroundForBaseTheme(baseThemeId: BaseThemeId): void {
       return
     }
     if (!currentBackground || currentBackground === REMOVED_ASSET_ID) {
-      assetStore.setState(state => ({
-        ...state,
+      assetStore.setState({
         appliedAssets: {
-          ...state.appliedAssets,
+          ...appliedAssets,
           background: defaultBackground.id,
         },
-      }))
+      })
     }
     return
   }
@@ -140,14 +186,22 @@ function syncDefaultBackgroundForBaseTheme(baseThemeId: BaseThemeId): void {
       || (defaultBackground ? currentBackground === defaultBackground.id : false)
 
   if (shouldDisableBackground && currentBackground !== REMOVED_ASSET_ID) {
-    assetStore.setState(state => ({
-      ...state,
-      appliedAssets: { ...state.appliedAssets, background: REMOVED_ASSET_ID },
-    }))
+    assetStore.setState({
+      appliedAssets: {
+        ...appliedAssets,
+        background: REMOVED_ASSET_ID,
+      },
+    })
   }
 }
 
-function buildThemeQuickStartDefaults(themeCss: string, mode: QuickSettingsMode): QuickSettingsStyle {
+function buildThemeQuickStartDefaults(themeCss: string, mode: QuickSettingsMode): {
+  colorPresetId: string
+  primaryColor: string
+  secondaryColor: string
+  fontFamily: string
+  extras: QuickStartExtrasUpdate
+} {
   const primaryColor = readQuickStartVariable(themeCss, getQuickStartVariableNameForMode(mode, '--quickstart-primary-color'))
   const secondaryColor = readQuickStartVariable(themeCss, '--quickstart-secondary-color')
   const fontFamilyRaw = readQuickStartVariable(themeCss, '--quickstart-font-family')
@@ -156,13 +210,14 @@ function buildThemeQuickStartDefaults(themeCss: string, mode: QuickSettingsMode)
   const cardShadowDefault = readQuickStartVariable(themeCss, '--quickstart-card-shadow-default')
   return {
     colorPresetId: CUSTOM_PRESET_ID,
-    colorPresetPrimaryColor: primaryColor,
-    colorPresetSecondaryColor: secondaryColor,
-    colorPresetFontFamily: fontFamily,
-    colorPresetBgColor: bgColor,
-    colorPresetBorderRadius: 'default',
-    colorPresetCardShadow: cardShadowDefault === 'none' ? 'none' : 'default',
-    colorPresetHeadingFontFamily: CUSTOM_PRESET_ID,
+    primaryColor,
+    secondaryColor,
+    fontFamily,
+    extras: {
+      ...DEFAULT_QUICK_START_EXTRAS,
+      colorPresetBgColor: bgColor,
+      colorPresetCardShadow: cardShadowDefault === 'none' ? 'none' : 'default',
+    },
   }
 }
 
@@ -180,66 +235,22 @@ function resolveQuickStartDefaultsCss(themeCssOverride: string | undefined, fall
   return fallbackCss
 }
 
-export function buildModeDefaultsSnapshot(
-  state: PresetState,
-  mode: QuickSettingsMode,
-  themeCssOverride?: string,
-): QuickSettingsStyle {
-  const currentSettings = getStyleSettingsForMode(state, state.selectedThemeId, mode) ?? DEFAULT_QUICK_SETTINGS_STYLE
-  const defaultsCss = resolveQuickStartDefaultsCss(themeCssOverride, state.presetCss)
+export function buildModeDefaultsSnapshot(state: PresetState, mode: QuickSettingsMode): QuickSettings {
+  const currentSnapshot = buildQuickSettingsSnapshot(state)
+  const defaultsCss = resolveQuickStartDefaultsCss(undefined, state.presetCss)
   const modeDefaults = buildThemeQuickStartDefaults(defaultsCss, mode)
 
   return {
-    ...currentSettings,
+    ...currentSnapshot,
     colorPresetId: modeDefaults.colorPresetId,
-    colorPresetPrimaryColor: modeDefaults.colorPresetPrimaryColor || currentSettings.colorPresetPrimaryColor,
-    colorPresetSecondaryColor: modeDefaults.colorPresetSecondaryColor || currentSettings.colorPresetSecondaryColor,
-    colorPresetFontFamily: modeDefaults.colorPresetFontFamily || currentSettings.colorPresetFontFamily,
-    colorPresetBgColor: modeDefaults.colorPresetBgColor,
-    colorPresetBorderRadius: modeDefaults.colorPresetBorderRadius,
-    colorPresetCardShadow: modeDefaults.colorPresetCardShadow,
-    colorPresetHeadingFontFamily: modeDefaults.colorPresetHeadingFontFamily,
+    colorPresetPrimaryColor: modeDefaults.primaryColor || currentSnapshot.colorPresetPrimaryColor,
+    colorPresetSecondaryColor: modeDefaults.secondaryColor || currentSnapshot.colorPresetSecondaryColor,
+    colorPresetFontFamily: modeDefaults.fontFamily || currentSnapshot.colorPresetFontFamily,
+    colorPresetBgColor: modeDefaults.extras.colorPresetBgColor ?? currentSnapshot.colorPresetBgColor,
+    colorPresetBorderRadius: modeDefaults.extras.colorPresetBorderRadius ?? currentSnapshot.colorPresetBorderRadius,
+    colorPresetCardShadow: modeDefaults.extras.colorPresetCardShadow ?? currentSnapshot.colorPresetCardShadow,
+    colorPresetHeadingFontFamily: modeDefaults.extras.colorPresetHeadingFontFamily ?? currentSnapshot.colorPresetHeadingFontFamily,
   }
-}
-
-function getActiveModeSettings(state: PresetState): QuickSettingsStyle {
-  const mode = getCurrentQuickSettingsMode()
-  return getStyleSettingsForMode(state, state.selectedThemeId, mode) ?? buildModeDefaultsSnapshot(state, mode)
-}
-
-function setStyleSettingsForMode(
-  state: PresetState,
-  themeId: string | null | undefined,
-  mode: QuickSettingsMode,
-  nextSettings: QuickSettingsStyle,
-): PresetState {
-  return {
-    ...state,
-    quickSettingsByThemeMode: {
-      ...state.quickSettingsByThemeMode,
-      [getStyleSettingsKey(themeId, mode)]: nextSettings,
-    },
-  }
-}
-
-function pickDefinedStyleFields(value: Partial<QuickSettings>): Partial<QuickSettingsStyle> {
-  const picked: Partial<QuickSettingsStyle> = {}
-  for (const key of STYLE_FIELD_KEYS) {
-    if (value[key] !== undefined) {
-      picked[key] = value[key] as never
-    }
-  }
-  return picked
-}
-
-function pickDefinedContentFields(value: Partial<QuickSettings>): Partial<QuickStartContentSettings> {
-  const picked: Partial<QuickStartContentSettings> = {}
-  for (const key of CONTENT_FIELD_KEYS) {
-    if (value[key] !== undefined) {
-      picked[key] = value[key] as never
-    }
-  }
-  return picked
 }
 
 export const presetActions = {
@@ -247,11 +258,7 @@ export const presetActions = {
     const previousThemeKey = getThemeStorageKey(presetStore.getState().selectedThemeId)
     const nextThemeKey = getThemeStorageKey(themeId)
 
-    presetStore.setState(state => ({
-      ...state,
-      selectedThemeId: themeId,
-      presetCss: themeCss,
-    }))
+    presetStore.setState({ selectedThemeId: themeId, presetCss: themeCss })
     themeStore.setState((state) => {
       const nextStylesCssByTheme = {
         ...state.stylesCssByTheme,
@@ -259,7 +266,6 @@ export const presetActions = {
       }
       const nextStylesCss = nextStylesCssByTheme[nextThemeKey] ?? themeCss
       return {
-        ...state,
         stylesCss: nextStylesCss,
         stylesCssByTheme: {
           ...nextStylesCssByTheme,
@@ -277,10 +283,15 @@ export const presetActions = {
   },
 
   applyThemeModeDefaults: (mode: QuickSettingsMode, themeCssOverride?: string) => {
-    const normalizedMode = resolveQuickSettingsMode(mode)
-    presetStore.setState((state) => {
-      const defaults = buildModeDefaultsSnapshot(state, normalizedMode, themeCssOverride)
-      return setStyleSettingsForMode(state, state.selectedThemeId, normalizedMode, defaults)
+    const state = presetStore.getState()
+    const defaultsCss = resolveQuickStartDefaultsCss(themeCssOverride, state.presetCss)
+    const defaults = buildThemeQuickStartDefaults(defaultsCss, mode)
+    presetStore.setState({
+      colorPresetId: defaults.colorPresetId,
+      colorPresetPrimaryColor: defaults.primaryColor,
+      colorPresetSecondaryColor: defaults.secondaryColor,
+      colorPresetFontFamily: defaults.fontFamily,
+      ...defaults.extras,
     })
   },
 
@@ -291,106 +302,124 @@ export const presetActions = {
     fontFamily: string,
     options?: SetColorPresetOptions,
   ) => {
-    const mode = getCurrentQuickSettingsMode()
-    const state = presetStore.getState()
-    const previousSettings = getStyleSettingsForMode(state, state.selectedThemeId, mode) ?? buildModeDefaultsSnapshot(state, mode)
-    const nextSettings: QuickSettingsStyle = {
-      ...previousSettings,
+    const prev = presetStore.getState()
+    const shouldSeedOppositeMode = options?.recordHistory !== false
+    const seededQuickSettingsMap = seedOppositeModeSnapshotIfMissing(prev, shouldSeedOppositeMode)
+    const previousQuickSettingsMap = seededQuickSettingsMap
+    const oldValues = {
+      colorPresetId: prev.colorPresetId,
+      colorPresetPrimaryColor: prev.colorPresetPrimaryColor,
+      colorPresetSecondaryColor: prev.colorPresetSecondaryColor,
+      colorPresetFontFamily: prev.colorPresetFontFamily,
+      colorPresetHeadingFontFamily: prev.colorPresetHeadingFontFamily,
+    }
+    const newValues = {
       colorPresetId: presetId,
       colorPresetPrimaryColor: primaryColor,
       colorPresetSecondaryColor: secondaryColor,
       colorPresetFontFamily: fontFamily,
-      colorPresetHeadingFontFamily: options?.headingFontFamily ?? previousSettings.colorPresetHeadingFontFamily,
+      colorPresetHeadingFontFamily: options?.headingFontFamily ?? prev.colorPresetHeadingFontFamily,
     }
-
-    const sameValues = JSON.stringify(previousSettings) === JSON.stringify(nextSettings)
+    const sameValues
+      = oldValues.colorPresetId === newValues.colorPresetId
+        && oldValues.colorPresetPrimaryColor === newValues.colorPresetPrimaryColor
+        && oldValues.colorPresetSecondaryColor === newValues.colorPresetSecondaryColor
+        && oldValues.colorPresetFontFamily === newValues.colorPresetFontFamily
+        && oldValues.colorPresetHeadingFontFamily === newValues.colorPresetHeadingFontFamily
     if (sameValues) {
       return
     }
-
     const onlyColorChanged
-      = previousSettings.colorPresetId === nextSettings.colorPresetId
-        && previousSettings.colorPresetFontFamily === nextSettings.colorPresetFontFamily
-        && previousSettings.colorPresetHeadingFontFamily === nextSettings.colorPresetHeadingFontFamily
+      = oldValues.colorPresetId === newValues.colorPresetId
+        && oldValues.colorPresetFontFamily === newValues.colorPresetFontFamily
+        && oldValues.colorPresetHeadingFontFamily === newValues.colorPresetHeadingFontFamily
+
+    const nextQuickSettingsSnapshot: QuickSettings = {
+      ...buildQuickSettingsSnapshot(prev),
+      ...newValues,
+    }
+    const nextPresetQuickSettings = buildModeScopedQuickSettingsMap({
+      state: prev,
+      nextSnapshot: nextQuickSettingsSnapshot,
+      baseQuickSettingsMap: seededQuickSettingsMap,
+    })
+
+    presetStore.setState({ ...newValues, presetQuickSettings: nextPresetQuickSettings })
 
     if (options?.recordHistory !== false) {
       historyActions.addUndoRedoAction({
         undo: () => {
-          presetStore.setState(s => setStyleSettingsForMode(s, s.selectedThemeId, mode, previousSettings))
+          presetStore.setState({ ...oldValues, presetQuickSettings: previousQuickSettingsMap })
         },
         redo: () => {
-          presetStore.setState(s => setStyleSettingsForMode(s, s.selectedThemeId, mode, nextSettings))
+          presetStore.setState({ ...newValues, presetQuickSettings: nextPresetQuickSettings })
         },
         coalesceKey: onlyColorChanged ? 'quickstart-color-picker' : undefined,
       })
     }
-
-    presetStore.setState(s => setStyleSettingsForMode(s, s.selectedThemeId, mode, nextSettings))
   },
 
   setQuickStartExtras: (update: QuickStartExtrasUpdate, options?: HistoryOptions) => {
-    const mode = getCurrentQuickSettingsMode()
-    const presetBefore = presetStore.getState()
-    const assetsBefore = assetStore.getState()
+    const prevPreset = presetStore.getState()
+    const prevAsset = assetStore.getState()
+    const shouldSeedOppositeMode = options?.recordHistory !== false
+    const seededQuickSettingsMap = seedOppositeModeSnapshotIfMissing(prevPreset, shouldSeedOppositeMode)
+    const previousQuickSettingsMap = seededQuickSettingsMap
 
-    const styleBefore = getStyleSettingsForMode(presetBefore, presetBefore.selectedThemeId, mode)
-      ?? buildModeDefaultsSnapshot(presetBefore, mode)
-    const stylePatch = pickDefinedStyleFields(update)
-    const styleAfter: QuickSettingsStyle = { ...styleBefore, ...stylePatch }
-
-    const contentBefore = getQuickStartContent(presetBefore)
-    const contentPatch = pickDefinedContentFields(update)
-    const contentAfter: QuickStartContentSettings = { ...contentBefore, ...contentPatch }
+    const presetOldValues = getQuickStartExtrasState(prevPreset)
+    const presetNewValues: QuickStartExtrasState = {
+      ...presetOldValues,
+      ...update,
+    }
 
     const hasBgColor = Boolean(
-      styleAfter.colorPresetBgColor
-      && HEX_COLOR_REGEX.test(styleAfter.colorPresetBgColor),
+      presetNewValues.colorPresetBgColor
+      && /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(presetNewValues.colorPresetBgColor),
     )
-    const assetsOldValues = { appliedAssets: assetsBefore.appliedAssets }
-    const assetsNewValues = hasBgColor
-      ? { appliedAssets: { ...assetsBefore.appliedAssets, background: REMOVED_ASSET_ID } }
-      : assetsOldValues
-
-    const sameStyleValues = JSON.stringify(styleBefore) === JSON.stringify(styleAfter)
-    const sameContentValues = JSON.stringify(contentBefore) === JSON.stringify(contentAfter)
-    const sameAssetValues = assetsOldValues.appliedAssets.background === assetsNewValues.appliedAssets.background
-    if (sameStyleValues && sameContentValues && sameAssetValues) {
+    const assetOldValues = { appliedAssets: prevAsset.appliedAssets }
+    const assetNewValues = hasBgColor
+      ? { appliedAssets: { ...prevAsset.appliedAssets, background: REMOVED_ASSET_ID } }
+      : assetOldValues
+    const { colorPresetBgColor: oldBgColor, ...oldPresetWithoutBg } = presetOldValues
+    const { colorPresetBgColor: newBgColor, ...newPresetWithoutBg } = presetNewValues
+    const samePresetValues = JSON.stringify(presetOldValues) === JSON.stringify(presetNewValues)
+    const onlyBgColorChanged
+      = oldBgColor !== newBgColor
+        && JSON.stringify(oldPresetWithoutBg) === JSON.stringify(newPresetWithoutBg)
+    const sameAssetValues = assetOldValues.appliedAssets.background === assetNewValues.appliedAssets.background
+    if (samePresetValues && sameAssetValues) {
       return
     }
 
-    const { colorPresetBgColor: oldBgColor, ...oldStyleWithoutBg } = styleBefore
-    const { colorPresetBgColor: newBgColor, ...newStyleWithoutBg } = styleAfter
-    const onlyBgColorChanged
-      = oldBgColor !== newBgColor
-        && JSON.stringify(oldStyleWithoutBg) === JSON.stringify(newStyleWithoutBg)
-        && sameContentValues
-
-    const applyPresetState = (nextStyle: QuickSettingsStyle, nextContent: QuickStartContentSettings) => {
-      presetStore.setState((state) => {
-        const withModeSettings = setStyleSettingsForMode(state, state.selectedThemeId, mode, nextStyle)
-        return updateQuickStartContent(withModeSettings, nextContent)
-      })
+    const nextQuickSettingsSnapshot: QuickSettings = {
+      ...buildQuickSettingsSnapshot(prevPreset),
+      ...presetNewValues,
     }
+    const nextPresetQuickSettings = buildModeScopedQuickSettingsMap({
+      state: prevPreset,
+      nextSnapshot: nextQuickSettingsSnapshot,
+      baseQuickSettingsMap: seededQuickSettingsMap,
+    })
 
     if (options?.recordHistory !== false) {
       historyActions.addUndoRedoAction({
         undo: () => {
-          applyPresetState(styleBefore, contentBefore)
-          assetStore.setState(s => ({ ...s, ...assetsOldValues }))
+          presetStore.setState({ ...presetOldValues, presetQuickSettings: previousQuickSettingsMap })
+          assetStore.setState(assetOldValues)
         },
         redo: () => {
-          applyPresetState(styleAfter, contentAfter)
+          presetStore.setState({ ...presetNewValues, presetQuickSettings: nextPresetQuickSettings })
           if (hasBgColor) {
-            assetStore.setState(s => ({ ...s, ...assetsNewValues }))
+            assetStore.setState(assetNewValues)
           }
         },
         coalesceKey: onlyBgColorChanged ? 'quickstart-bg-color-picker' : undefined,
       })
     }
 
-    applyPresetState(styleAfter, contentAfter)
+    presetStore.setState({ ...presetNewValues, presetQuickSettings: nextPresetQuickSettings })
     if (hasBgColor) {
-      assetStore.setState(state => ({ ...state, ...assetsNewValues }))
+      assetStore.setState(assetNewValues)
     }
   },
 
@@ -403,8 +432,10 @@ export const presetActions = {
 
     const themeId = resolveThemeIdFromConfig(themeConfig, value)
     const themeBaseId = resolveThemeBaseIdFromConfig(themeConfig, themeId)
+    const currentThemeKey = getThemeStorageKey(presetStore.getState().selectedThemeId)
     const quickSettingsMode = getCurrentQuickSettingsMode()
 
+    presetActions.saveQuickSettingsForPreset(currentThemeKey, quickSettingsMode)
     syncDefaultBackgroundForBaseTheme(themeBaseId)
 
     const { quickStartDefaults, stylesCss } = await getThemeCssStructuredCached(themeId)
@@ -412,14 +443,11 @@ export const presetActions = {
       return
     }
 
-    themeStore.setState(state => ({ ...state, themeQuickStartDefaults: quickStartDefaults }))
+    themeStore.setState({ themeQuickStartDefaults: quickStartDefaults })
     presetActions.setThemeData(themeId, stylesCss)
-
-    const hasModeSettings = Boolean(
-      getStyleSettingsForMode(presetStore.getState(), themeId, quickSettingsMode),
-    )
-    if (!hasModeSettings) {
+    if (!presetActions.restoreQuickSettingsForPreset(themeId, quickSettingsMode)) {
       presetActions.applyThemeModeDefaults(quickSettingsMode, quickStartDefaults)
+      presetActions.saveQuickSettingsForPreset(themeId, quickSettingsMode)
     }
   },
 
@@ -430,57 +458,61 @@ export const presetActions = {
 
     const normalizedThemeId = getThemeStorageKey(themeId)
     const currentMode = getCurrentQuickSettingsMode()
+    const currentModeKey = buildQuickSettingsKey(normalizedThemeId, currentMode)
 
     presetStore.setState((state) => {
-      const nextMap = { ...state.quickSettingsByThemeMode }
-      const fallbackState = { ...state, selectedThemeId: normalizedThemeId }
+      const nextPresetQuickSettings = { ...state.presetQuickSettings }
+      const fallbackSettings = buildQuickSettingsSnapshot(state)
 
-      const mergeModeSettings = (mode: QuickSettingsMode, partialSettings?: Partial<QuickSettings>) => {
+      const applyModeSettings = (mode: QuickSettingsMode, partialSettings?: Partial<QuickSettings>) => {
         if (!partialSettings) {
           return
         }
-        const key = getStyleSettingsKey(normalizedThemeId, mode)
-        const baseSettings = nextMap[key] ?? buildModeDefaultsSnapshot(fallbackState, mode)
-        nextMap[key] = {
+        const modeKey = buildQuickSettingsKey(normalizedThemeId, mode)
+        const baseSettings = nextPresetQuickSettings[modeKey] ?? fallbackSettings
+        nextPresetQuickSettings[modeKey] = {
           ...baseSettings,
-          ...pickDefinedStyleFields(partialSettings),
+          ...withoutUndefinedValues(partialSettings),
         }
       }
 
-      mergeModeSettings('light', quickSettingsByMode.light)
-      mergeModeSettings('dark', quickSettingsByMode.dark)
+      applyModeSettings('light', quickSettingsByMode.light)
+      applyModeSettings('dark', quickSettingsByMode.dark)
 
-      const activePartial = currentMode === 'dark'
-        ? quickSettingsByMode.dark
-        : quickSettingsByMode.light
-      const nextContent = {
-        ...getQuickStartContent(state),
-        ...pickDefinedContentFields(activePartial ?? {}),
+      const activeModeSettings = nextPresetQuickSettings[currentModeKey]
+      if (!activeModeSettings) {
+        return { presetQuickSettings: nextPresetQuickSettings }
       }
 
       return {
-        ...state,
-        ...nextContent,
-        quickSettingsByThemeMode: nextMap,
+        ...activeModeSettings,
+        presetQuickSettings: nextPresetQuickSettings,
       }
     })
   },
 
   saveQuickSettingsForPreset: (themeId: string, mode: QuickSettingsMode = 'light') => {
-    const state = presetStore.getState()
-    const normalizedMode = resolveQuickSettingsMode(mode)
-    const nextSettings = getActiveModeSettings(state)
-    const currentSettings = getStyleSettingsForMode(state, themeId, normalizedMode)
-    if (JSON.stringify(currentSettings) === JSON.stringify(nextSettings)) {
-      return
-    }
-
-    presetStore.setState(s => setStyleSettingsForMode(s, themeId, normalizedMode, nextSettings))
+    const s = presetStore.getState()
+    const normalizedMode = normalizeQuickSettingsMode(mode)
+    const storageKey = buildQuickSettingsKey(themeId, normalizedMode)
+    const settings = buildQuickSettingsSnapshot(s)
+    presetStore.setState(state => ({
+      presetQuickSettings: { ...state.presetQuickSettings, [storageKey]: settings },
+    }))
   },
 
   restoreQuickSettingsForPreset: (themeId: string, mode: QuickSettingsMode = 'light'): boolean => {
-    const normalizedMode = resolveQuickSettingsMode(mode)
-    return Boolean(getStyleSettingsForMode(presetStore.getState(), themeId, normalizedMode))
+    const normalizedMode = normalizeQuickSettingsMode(mode)
+    const storageKey = buildQuickSettingsKey(themeId, normalizedMode)
+    const state = presetStore.getState()
+    const saved = state.presetQuickSettings[storageKey]
+    if (!saved) {
+      return false
+    }
+    presetStore.setState(currentState => ({
+      ...saved,
+      presetQuickSettings: currentState.presetQuickSettings,
+    }))
+    return true
   },
 }
-

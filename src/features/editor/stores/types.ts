@@ -37,13 +37,21 @@ export interface QuickSettings extends QuickSettingsStyle, QuickStartContentSett
 export interface PresetState {
   selectedThemeId: string
   presetCss: string
+  colorPresetId: QuickSettingsStyle['colorPresetId']
+  colorPresetPrimaryColor: QuickSettingsStyle['colorPresetPrimaryColor']
+  colorPresetSecondaryColor: QuickSettingsStyle['colorPresetSecondaryColor']
+  colorPresetFontFamily: QuickSettingsStyle['colorPresetFontFamily']
+  colorPresetBgColor: QuickSettingsStyle['colorPresetBgColor']
+  colorPresetBorderRadius: QuickSettingsStyle['colorPresetBorderRadius']
+  colorPresetCardShadow: QuickSettingsStyle['colorPresetCardShadow']
+  colorPresetHeadingFontFamily: QuickSettingsStyle['colorPresetHeadingFontFamily']
   showClientName: QuickStartContentSettings['showClientName']
   showRealmName: QuickStartContentSettings['showRealmName']
   infoMessage: QuickStartContentSettings['infoMessage']
   imprintUrl: QuickStartContentSettings['imprintUrl']
   dataProtectionUrl: QuickStartContentSettings['dataProtectionUrl']
   // Key format: `${themeId}::light|dark`.
-  quickSettingsByThemeMode: Record<string, QuickSettingsStyle>
+  presetQuickSettings: Record<string, QuickSettings>
 }
 
 export interface ThemeState {

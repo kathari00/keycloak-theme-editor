@@ -54,7 +54,7 @@ vi.mock('../../presets/queries', async (importOriginal) => {
 })
 
 function getModePrimaryColor(themeId: string, mode: 'light' | 'dark'): string | undefined {
-  return presetStore.getState().quickSettingsByThemeMode[buildQuickSettingsStorageKey(themeId, mode)]?.colorPresetPrimaryColor
+  return presetStore.getState().presetQuickSettings[buildQuickSettingsStorageKey(themeId, mode)]?.colorPresetPrimaryColor
 }
 
 describe('preset background sync on preset selection', () => {
@@ -109,7 +109,7 @@ describe('preset background sync on preset selection', () => {
     coreStore.setState(state => ({ ...state, isDarkMode: true }))
     presetStore.setState(state => ({
       ...state,
-      quickSettingsByThemeMode: {},
+      presetQuickSettings: {},
     }))
 
     await presetActions.applyThemeSelection('horizontal-card')

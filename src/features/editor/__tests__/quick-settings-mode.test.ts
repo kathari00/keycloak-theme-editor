@@ -23,7 +23,7 @@ const HORIZONTAL_CARD_THEME_CSS = `
 `.trim()
 
 function getModeSettings(themeId: string, mode: 'light' | 'dark'): QuickSettingsStyle | undefined {
-  return presetStore.getState().quickSettingsByThemeMode[buildQuickSettingsStorageKey(themeId, mode)]
+  return presetStore.getState().presetQuickSettings[buildQuickSettingsStorageKey(themeId, mode)]
 }
 
 function resetStores() {
@@ -100,7 +100,15 @@ describe('quick settings mode separation', () => {
         ...state,
         selectedThemeId: 'horizontal-card',
         presetCss: HORIZONTAL_CARD_THEME_CSS,
-        quickSettingsByThemeMode: {
+        colorPresetId: 'custom',
+        colorPresetPrimaryColor: '#0b57d0',
+        colorPresetSecondaryColor: '#9aa0a6',
+        colorPresetFontFamily: 'custom',
+        colorPresetBgColor: '#f0f4f9',
+        colorPresetBorderRadius: 'rounded',
+        colorPresetCardShadow: 'strong',
+        colorPresetHeadingFontFamily: 'custom',
+        presetQuickSettings: {
           [lightKey]: {
             colorPresetId: 'custom',
             colorPresetPrimaryColor: '#0b57d0',
@@ -110,6 +118,11 @@ describe('quick settings mode separation', () => {
             colorPresetBorderRadius: 'rounded',
             colorPresetCardShadow: 'strong',
             colorPresetHeadingFontFamily: 'custom',
+            showClientName: state.showClientName,
+            showRealmName: state.showRealmName,
+            infoMessage: state.infoMessage,
+            imprintUrl: state.imprintUrl,
+            dataProtectionUrl: state.dataProtectionUrl,
           },
         },
       }

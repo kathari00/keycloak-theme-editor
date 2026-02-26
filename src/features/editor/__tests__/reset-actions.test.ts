@@ -55,7 +55,7 @@ describe('reset actions', () => {
       infoMessage: 'old',
       imprintUrl: 'https://example.com/imprint',
       dataProtectionUrl: 'https://example.com/privacy',
-      quickSettingsByThemeMode: {},
+      presetQuickSettings: {},
     }))
 
     themeStore.setState(() => ({

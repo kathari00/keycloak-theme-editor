@@ -22,10 +22,6 @@ export const DEFAULT_QUICK_START_CONTENT = {
   dataProtectionUrl: '',
 }
 
-function cloneDefaultQuickSettingsStyle(): QuickSettingsStyle {
-  return { ...DEFAULT_QUICK_SETTINGS_STYLE }
-}
-
 function toQuickSettingsStyle(value: unknown, fallback: QuickSettingsStyle): QuickSettingsStyle {
   const source = (typeof value === 'object' && value !== null) ? value as Partial<QuickSettings> : {}
   return {
@@ -52,6 +48,19 @@ function toQuickSettingsStyle(value: unknown, fallback: QuickSettingsStyle): Qui
   }
 }
 
+function toQuickSettings(value: unknown, styleFallback: QuickSettingsStyle, contentFallback: typeof DEFAULT_QUICK_START_CONTENT): QuickSettings {
+  const source = (typeof value === 'object' && value !== null) ? value as Partial<QuickSettings> : {}
+  const style = toQuickSettingsStyle(source, styleFallback)
+  return {
+    ...style,
+    showClientName: typeof source.showClientName === 'boolean' ? source.showClientName : contentFallback.showClientName,
+    showRealmName: typeof source.showRealmName === 'boolean' ? source.showRealmName : contentFallback.showRealmName,
+    infoMessage: typeof source.infoMessage === 'string' ? source.infoMessage : contentFallback.infoMessage,
+    imprintUrl: typeof source.imprintUrl === 'string' ? source.imprintUrl : contentFallback.imprintUrl,
+    dataProtectionUrl: typeof source.dataProtectionUrl === 'string' ? source.dataProtectionUrl : contentFallback.dataProtectionUrl,
+  }
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
 }
@@ -60,11 +69,9 @@ export function createDefaultPresetState(): PresetState {
   return {
     selectedThemeId: DEFAULT_THEME_ID,
     presetCss: '',
+    ...DEFAULT_QUICK_SETTINGS_STYLE,
     ...DEFAULT_QUICK_START_CONTENT,
-    quickSettingsByThemeMode: {
-      [buildQuickSettingsStorageKey(DEFAULT_THEME_ID, 'light')]: cloneDefaultQuickSettingsStyle(),
-      [buildQuickSettingsStorageKey(DEFAULT_THEME_ID, 'dark')]: cloneDefaultQuickSettingsStyle(),
-    },
+    presetQuickSettings: {},
   }
 }
 
@@ -81,37 +88,7 @@ export function migratePresetState(persistedState: unknown): Partial<PresetState
     ? persistedState.presetCss
     : defaults.presetCss
 
-  const migratedQuickSettingsByThemeMode: Record<string, QuickSettingsStyle> = {}
-  const quickSettingsByThemeMode = isRecord(persistedState.quickSettingsByThemeMode)
-    ? persistedState.quickSettingsByThemeMode
-    : null
-  const legacyPresetQuickSettings = isRecord((persistedState as any).presetQuickSettings)
-    ? (persistedState as any).presetQuickSettings as Record<string, unknown>
-    : null
-
-  const sourceMaps = [quickSettingsByThemeMode, legacyPresetQuickSettings].filter(
-    (value): value is Record<string, unknown> => value !== null,
-  )
-  for (const sourceMap of sourceMaps) {
-    for (const [key, value] of Object.entries(sourceMap)) {
-      const normalizedKey = key.trim()
-      if (!normalizedKey || !normalizedKey.includes('::')) {
-        continue
-      }
-      migratedQuickSettingsByThemeMode[normalizedKey] = toQuickSettingsStyle(value, DEFAULT_QUICK_SETTINGS_STYLE)
-    }
-  }
-
-  const legacyStyleFallback = toQuickSettingsStyle(persistedState, DEFAULT_QUICK_SETTINGS_STYLE)
-  if (Object.keys(migratedQuickSettingsByThemeMode).length === 0) {
-    const themeKey = getThemeStorageKey(selectedThemeId)
-    migratedQuickSettingsByThemeMode[buildQuickSettingsStorageKey(themeKey, 'light')] = { ...legacyStyleFallback }
-    migratedQuickSettingsByThemeMode[buildQuickSettingsStorageKey(themeKey, 'dark')] = { ...legacyStyleFallback }
-  }
-
-  return {
-    selectedThemeId,
-    presetCss,
+  const content = {
     showClientName: typeof persistedState.showClientName === 'boolean'
       ? persistedState.showClientName
       : defaults.showClientName,
@@ -127,7 +104,71 @@ export function migratePresetState(persistedState: unknown): Partial<PresetState
     dataProtectionUrl: typeof persistedState.dataProtectionUrl === 'string'
       ? persistedState.dataProtectionUrl
       : defaults.dataProtectionUrl,
-    quickSettingsByThemeMode: migratedQuickSettingsByThemeMode,
+  }
+
+  const legacyFlatStyle = toQuickSettingsStyle(persistedState, DEFAULT_QUICK_SETTINGS_STYLE)
+  const migratedPresetQuickSettings: Record<string, QuickSettings> = {}
+
+  const legacyPresetQuickSettings = isRecord((persistedState as { presetQuickSettings?: unknown }).presetQuickSettings)
+    ? (persistedState as { presetQuickSettings: Record<string, unknown> }).presetQuickSettings
+    : null
+  const legacyQuickSettingsByThemeMode = isRecord((persistedState as { quickSettingsByThemeMode?: unknown }).quickSettingsByThemeMode)
+    ? (persistedState as { quickSettingsByThemeMode: Record<string, unknown> }).quickSettingsByThemeMode
+    : null
+
+  if (legacyPresetQuickSettings) {
+    for (const [key, value] of Object.entries(legacyPresetQuickSettings)) {
+      const normalizedKey = key.trim()
+      if (!normalizedKey || !normalizedKey.includes('::')) {
+        continue
+      }
+      migratedPresetQuickSettings[normalizedKey] = toQuickSettings(value, legacyFlatStyle, content)
+    }
+  }
+
+  if (legacyQuickSettingsByThemeMode) {
+    for (const [key, value] of Object.entries(legacyQuickSettingsByThemeMode)) {
+      const normalizedKey = key.trim()
+      if (!normalizedKey || !normalizedKey.includes('::')) {
+        continue
+      }
+      if (migratedPresetQuickSettings[normalizedKey]) {
+        continue
+      }
+      migratedPresetQuickSettings[normalizedKey] = toQuickSettings(value, legacyFlatStyle, content)
+    }
+  }
+
+  if (Object.keys(migratedPresetQuickSettings).length === 0) {
+    const themeKey = getThemeStorageKey(selectedThemeId)
+    const snapshot: QuickSettings = {
+      ...legacyFlatStyle,
+      ...content,
+    }
+    migratedPresetQuickSettings[buildQuickSettingsStorageKey(themeKey, 'light')] = { ...snapshot }
+    migratedPresetQuickSettings[buildQuickSettingsStorageKey(themeKey, 'dark')] = { ...snapshot }
+  }
+
+  const selectedThemeKey = getThemeStorageKey(selectedThemeId)
+  const selectedLightKey = buildQuickSettingsStorageKey(selectedThemeKey, 'light')
+  const rootSettings
+    = migratedPresetQuickSettings[selectedLightKey]
+      ?? Object.values(migratedPresetQuickSettings)[0]
+      ?? { ...DEFAULT_QUICK_SETTINGS_STYLE, ...content }
+
+  return {
+    selectedThemeId,
+    presetCss,
+    colorPresetId: rootSettings.colorPresetId,
+    colorPresetPrimaryColor: rootSettings.colorPresetPrimaryColor,
+    colorPresetSecondaryColor: rootSettings.colorPresetSecondaryColor,
+    colorPresetFontFamily: rootSettings.colorPresetFontFamily,
+    colorPresetBgColor: rootSettings.colorPresetBgColor,
+    colorPresetBorderRadius: rootSettings.colorPresetBorderRadius,
+    colorPresetCardShadow: rootSettings.colorPresetCardShadow,
+    colorPresetHeadingFontFamily: rootSettings.colorPresetHeadingFontFamily,
+    ...content,
+    presetQuickSettings: migratedPresetQuickSettings,
   }
 }
 
@@ -136,16 +177,24 @@ export function migratePresetState(persistedState: unknown): Partial<PresetState
  */
 export const presetStore = createPersistedEditorStore<PresetState>(createDefaultPresetState(), {
   name: PRESET_STORE_STORAGE_KEY,
-  version: 6,
+  version: 7,
   migrate: migratePresetState,
   partialize: state => ({
     selectedThemeId: state.selectedThemeId,
     presetCss: state.presetCss,
+    colorPresetId: state.colorPresetId,
+    colorPresetPrimaryColor: state.colorPresetPrimaryColor,
+    colorPresetSecondaryColor: state.colorPresetSecondaryColor,
+    colorPresetFontFamily: state.colorPresetFontFamily,
+    colorPresetBgColor: state.colorPresetBgColor,
+    colorPresetBorderRadius: state.colorPresetBorderRadius,
+    colorPresetCardShadow: state.colorPresetCardShadow,
+    colorPresetHeadingFontFamily: state.colorPresetHeadingFontFamily,
     showClientName: state.showClientName,
     showRealmName: state.showRealmName,
     infoMessage: state.infoMessage,
     imprintUrl: state.imprintUrl,
     dataProtectionUrl: state.dataProtectionUrl,
-    quickSettingsByThemeMode: state.quickSettingsByThemeMode,
+    presetQuickSettings: state.presetQuickSettings,
   }),
 })

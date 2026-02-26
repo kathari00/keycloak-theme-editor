@@ -94,24 +94,28 @@ export const assetActions = {
       presetStore.getState().selectedThemeId,
       resolveQuickSettingsMode(coreStore.getState().isDarkMode),
     )
-    const oldBgColor = presetStore.getState().quickSettingsByThemeMode[activeQuickSettingsKey]?.colorPresetBgColor || ''
+    const oldBgColor = presetStore.getState().presetQuickSettings[activeQuickSettingsKey]?.colorPresetBgColor || ''
     const clearBgColor = target === 'background' && Boolean(oldBgColor)
 
     const setActiveModeBackgroundColor = (colorPresetBgColor: string) => {
       presetStore.setState((current) => {
-        const activeQuickSettings = current.quickSettingsByThemeMode[activeQuickSettingsKey]
-        if (!activeQuickSettings || activeQuickSettings.colorPresetBgColor === colorPresetBgColor) {
+        const activeQuickSettings = current.presetQuickSettings[activeQuickSettingsKey]
+        const nextRootBgColor = current.colorPresetBgColor === colorPresetBgColor ? current.colorPresetBgColor : colorPresetBgColor
+        if (!activeQuickSettings && current.colorPresetBgColor === nextRootBgColor) {
           return current
         }
         return {
           ...current,
-          quickSettingsByThemeMode: {
-            ...current.quickSettingsByThemeMode,
-            [activeQuickSettingsKey]: {
-              ...activeQuickSettings,
-              colorPresetBgColor,
-            },
-          },
+          colorPresetBgColor: nextRootBgColor,
+          presetQuickSettings: activeQuickSettings
+            ? {
+                ...current.presetQuickSettings,
+                [activeQuickSettingsKey]: {
+                  ...activeQuickSettings,
+                  colorPresetBgColor,
+                },
+              }
+            : current.presetQuickSettings,
         }
       })
     }

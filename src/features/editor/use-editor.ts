@@ -1,12 +1,10 @@
-import { useMemo } from 'react'
 import { useStore } from 'zustand'
 import type { EditorStore } from './stores/create-editor-store'
 import { useShallow } from 'zustand/react/shallow'
-import { buildQuickSettingsStorageKey, resolveQuickSettingsMode } from './quick-settings'
 import { assetStore } from './stores/asset-store'
 import { coreStore } from './stores/core-store'
 import { historyStore } from './stores/history-store'
-import { DEFAULT_QUICK_SETTINGS_STYLE, presetStore } from './stores/preset-store'
+import { presetStore } from './stores/preset-store'
 import { themeStore } from './stores/theme-store'
 
 function createShallowStoreHook<TState extends object>(store: EditorStore<TState>) {
@@ -64,18 +62,16 @@ export function usePresetState() {
 }
 
 export function useQuickStartColorsState() {
-  const { selectedThemeId, quickSettingsByThemeMode } = usePresetStoreSlice(state => ({
-    selectedThemeId: state.selectedThemeId,
-    quickSettingsByThemeMode: state.quickSettingsByThemeMode,
+  return usePresetStoreSlice(state => ({
+    colorPresetId: state.colorPresetId,
+    colorPresetPrimaryColor: state.colorPresetPrimaryColor,
+    colorPresetSecondaryColor: state.colorPresetSecondaryColor,
+    colorPresetFontFamily: state.colorPresetFontFamily,
+    colorPresetBgColor: state.colorPresetBgColor,
+    colorPresetBorderRadius: state.colorPresetBorderRadius,
+    colorPresetCardShadow: state.colorPresetCardShadow,
+    colorPresetHeadingFontFamily: state.colorPresetHeadingFontFamily,
   }))
-  const { isDarkMode } = useCoreStoreSlice(state => ({
-    isDarkMode: state.isDarkMode,
-  }))
-
-  return useMemo(() => {
-    const modeKey = buildQuickSettingsStorageKey(selectedThemeId, resolveQuickSettingsMode(isDarkMode))
-    return quickSettingsByThemeMode[modeKey] ?? DEFAULT_QUICK_SETTINGS_STYLE
-  }, [isDarkMode, quickSettingsByThemeMode, selectedThemeId])
 }
 
 export function useQuickStartContentState() {
@@ -90,7 +86,7 @@ export function useQuickStartContentState() {
 
 export function useQuickSettingsByThemeModeState() {
   return usePresetStoreSlice(state => ({
-    quickSettingsByThemeMode: state.quickSettingsByThemeMode,
+    quickSettingsByThemeMode: state.presetQuickSettings,
   }))
 }
 
