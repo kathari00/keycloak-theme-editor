@@ -38,7 +38,7 @@ export const resetActions = {
   resetAll: async () => {
     clearPersistedEditorState()
 
-    const defaultAssets = assetStore.state.uploadedAssets.filter(asset => asset.isDefault)
+    const defaultAssets = assetStore.getState().uploadedAssets.filter(asset => asset.isDefault)
     const defaultBackground = defaultAssets.find(asset => asset.category === 'background')
     assetStore.setState(() => ({
       uploadedAssets: defaultAssets,
@@ -93,3 +93,4 @@ export const resetActions = {
     }
   },
 }
+

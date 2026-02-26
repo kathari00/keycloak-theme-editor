@@ -5,7 +5,7 @@ import { themeStore } from '../stores/theme-store'
 const DEFAULT_THEME_ID = 'v2'
 
 function getActiveThemeStorageKey(): string {
-  const selectedThemeId = (presetStore.state.selectedThemeId || '').trim()
+  const selectedThemeId = (presetStore.getState().selectedThemeId || '').trim()
   return selectedThemeId || DEFAULT_THEME_ID
 }
 
@@ -44,3 +44,4 @@ export const themeActions = {
   },
 
 }
+

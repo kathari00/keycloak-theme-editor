@@ -1,3 +1,4 @@
+import type { UploadedAsset } from '../features/assets/types'
 import type { ThemeId } from '../features/presets/types'
 import type { JarImportResult as ThemeImportData } from '../features/theme-export/types'
 import { THEME_JAR_IMPORTED_EVENT } from '../features/theme-export/jar-import-service'
@@ -157,7 +158,7 @@ export default function EditorContent() {
         ]
 
         const managedDefaultPrefix = '__default__:'
-        const preservedAssets = assetStore.state.uploadedAssets.filter(
+        const preservedAssets = assetStore.getState().uploadedAssets.filter(
           asset => !asset.id.startsWith(managedDefaultPrefix),
         )
         if (baseId !== 'v2') {
@@ -169,7 +170,7 @@ export default function EditorContent() {
           preservedAssets.some(asset =>
             asset.category === category && asset.name.toLowerCase() === name.toLowerCase(),
           )
-        const rebuiltDefaultAssets: typeof assetStore.state.uploadedAssets = []
+        const rebuiltDefaultAssets: UploadedAsset[] = []
         const now = Date.now()
 
         for (const item of defaults) {
@@ -294,3 +295,4 @@ export default function EditorContent() {
     </PreviewProvider>
   )
 }
+

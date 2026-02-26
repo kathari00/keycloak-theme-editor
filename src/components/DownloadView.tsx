@@ -180,9 +180,9 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
     const lightStorageKey = `${resolvedThemeId}::light`
     const darkStorageKey = `${resolvedThemeId}::dark`
     const lightFallback = quickSettingsByThemeMode[lightStorageKey]
-      ?? buildModeDefaultsSnapshot(presetStore.state, 'light')
+      ?? buildModeDefaultsSnapshot(presetStore.getState(), 'light')
     const darkFallback = quickSettingsByThemeMode[darkStorageKey]
-      ?? buildModeDefaultsSnapshot(presetStore.state, 'dark')
+      ?? buildModeDefaultsSnapshot(presetStore.getState(), 'dark')
     const toExportSnapshot = (settings: typeof lightFallback) => ({
       ...settings,
       showClientName,
@@ -425,3 +425,4 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
     </div>
   )
 }
+

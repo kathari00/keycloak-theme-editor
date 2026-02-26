@@ -23,7 +23,7 @@ const HORIZONTAL_CARD_THEME_CSS = `
 `.trim()
 
 function getModeSettings(themeId: string, mode: 'light' | 'dark'): QuickSettingsStyle | undefined {
-  return presetStore.state.quickSettingsByThemeMode[buildQuickSettingsStorageKey(themeId, mode)]
+  return presetStore.getState().quickSettingsByThemeMode[buildQuickSettingsStorageKey(themeId, mode)]
 }
 
 function resetStores() {
@@ -64,14 +64,14 @@ describe('quick settings mode separation', () => {
     presetActions.setColorPreset('custom', '#111111', '#222222', 'custom')
 
     coreActions.toggleDarkMode()
-    expect(coreStore.state.isDarkMode).toBe(true)
+    expect(coreStore.getState().isDarkMode).toBe(true)
     expect(getModeSettings('v2', 'dark')?.colorPresetPrimaryColor).toBe('#0066cc')
 
     presetActions.setColorPreset('custom', '#aaaaaa', '#bbbbbb', 'custom')
     expect(getModeSettings('v2', 'dark')?.colorPresetPrimaryColor).toBe('#aaaaaa')
 
     coreActions.toggleDarkMode()
-    expect(coreStore.state.isDarkMode).toBe(false)
+    expect(coreStore.getState().isDarkMode).toBe(false)
     expect(getModeSettings('v2', 'light')?.colorPresetPrimaryColor).toBe('#111111')
   })
 
@@ -85,12 +85,12 @@ describe('quick settings mode separation', () => {
     })
 
     coreActions.toggleDarkMode()
-    expect(coreStore.state.isDarkMode).toBe(true)
-    expect(presetStore.state.showRealmName).toBe(false)
-    expect(presetStore.state.showClientName).toBe(true)
-    expect(presetStore.state.infoMessage).toBe('global-info')
-    expect(presetStore.state.imprintUrl).toBe('https://example.com/imprint')
-    expect(presetStore.state.dataProtectionUrl).toBe('https://example.com/privacy')
+    expect(coreStore.getState().isDarkMode).toBe(true)
+    expect(presetStore.getState().showRealmName).toBe(false)
+    expect(presetStore.getState().showClientName).toBe(true)
+    expect(presetStore.getState().infoMessage).toBe('global-info')
+    expect(presetStore.getState().imprintUrl).toBe('https://example.com/imprint')
+    expect(presetStore.getState().dataProtectionUrl).toBe('https://example.com/privacy')
   })
 
   it('seeds missing dark mode settings from theme defaults', () => {
@@ -118,7 +118,7 @@ describe('quick settings mode separation', () => {
     coreActions.toggleDarkMode()
 
     const darkSettings = getModeSettings('horizontal-card', 'dark')
-    expect(coreStore.state.isDarkMode).toBe(true)
+    expect(coreStore.getState().isDarkMode).toBe(true)
     expect(darkSettings?.colorPresetPrimaryColor).toBe('#a8c7fa')
     expect(darkSettings?.colorPresetBgColor).toBe('#1e1f20')
     expect(darkSettings?.colorPresetBorderRadius).toBe('default')
@@ -143,7 +143,7 @@ describe('quick settings mode separation', () => {
 
     expect(getModeSettings('v2', 'light')?.colorPresetPrimaryColor).toBe('#123456')
     expect(getModeSettings('v2', 'dark')?.colorPresetPrimaryColor).toBe('#a8c7fa')
-    expect(presetStore.state.infoMessage).toBe('light-message')
+    expect(presetStore.getState().infoMessage).toBe('light-message')
   })
 
   it('keeps undo/redo scoped per mode', () => {
@@ -161,3 +161,4 @@ describe('quick settings mode separation', () => {
     expect(getModeSettings('v2', 'light')?.colorPresetPrimaryColor).toBe('#111111')
   })
 })
+

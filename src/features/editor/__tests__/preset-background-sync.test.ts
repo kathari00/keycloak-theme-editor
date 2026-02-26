@@ -54,7 +54,7 @@ vi.mock('../../presets/queries', async (importOriginal) => {
 })
 
 function getModePrimaryColor(themeId: string, mode: 'light' | 'dark'): string | undefined {
-  return presetStore.state.quickSettingsByThemeMode[buildQuickSettingsStorageKey(themeId, mode)]?.colorPresetPrimaryColor
+  return presetStore.getState().quickSettingsByThemeMode[buildQuickSettingsStorageKey(themeId, mode)]?.colorPresetPrimaryColor
 }
 
 describe('preset background sync on preset selection', () => {
@@ -101,8 +101,8 @@ describe('preset background sync on preset selection', () => {
   it('disables default background when selecting a non-v2 theme', async () => {
     await presetActions.applyThemeSelection('horizontal-card')
 
-    expect(presetStore.state.selectedThemeId).toBe('horizontal-card')
-    expect(assetStore.state.appliedAssets.background).toBe(REMOVED_ASSET_ID)
+    expect(presetStore.getState().selectedThemeId).toBe('horizontal-card')
+    expect(assetStore.getState().appliedAssets.background).toBe(REMOVED_ASSET_ID)
   })
 
   it('uses horizontal-card dark defaults when no saved dark settings exist', async () => {
@@ -115,7 +115,7 @@ describe('preset background sync on preset selection', () => {
     await presetActions.applyThemeSelection('horizontal-card')
 
     expect(getModePrimaryColor('horizontal-card', 'dark')).toBe('#a8c7fa')
-    expect(assetStore.state.appliedAssets.background).toBe(REMOVED_ASSET_ID)
+    expect(assetStore.getState().appliedAssets.background).toBe(REMOVED_ASSET_ID)
   })
 
   it('keeps default background active when selecting v2', async () => {
@@ -123,8 +123,8 @@ describe('preset background sync on preset selection', () => {
 
     await presetActions.applyThemeSelection('v2')
 
-    expect(presetStore.state.selectedThemeId).toBe('v2')
-    expect(assetStore.state.appliedAssets.background).toBe('default-bg')
+    expect(presetStore.getState().selectedThemeId).toBe('v2')
+    expect(assetStore.getState().appliedAssets.background).toBe('default-bg')
   })
 
   it('clears persisted default background when current theme base is non-v2', async () => {
@@ -132,6 +132,7 @@ describe('preset background sync on preset selection', () => {
 
     await presetActions.syncBackgroundForCurrentTheme()
 
-    expect(assetStore.state.appliedAssets.background).toBe(REMOVED_ASSET_ID)
+    expect(assetStore.getState().appliedAssets.background).toBe(REMOVED_ASSET_ID)
   })
 })
+

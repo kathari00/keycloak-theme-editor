@@ -61,7 +61,7 @@ const HEX_COLOR_REGEX = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i
 let applyThemeSelectionRequestVersion = 0
 
 function getCurrentQuickSettingsMode(): QuickSettingsMode {
-  return resolveQuickSettingsMode(coreStore.state.isDarkMode)
+  return resolveQuickSettingsMode(coreStore.getState().isDarkMode)
 }
 
 function getStyleSettingsKey(themeId: string | null | undefined, mode: QuickSettingsMode): string {
@@ -113,7 +113,7 @@ function getQuickStartVariableNameForMode(mode: QuickSettingsMode, baseVariableN
 }
 
 function syncDefaultBackgroundForBaseTheme(baseThemeId: BaseThemeId): void {
-  const { uploadedAssets, appliedAssets } = assetStore.state
+  const { uploadedAssets, appliedAssets } = assetStore.getState()
   const defaultBackground = uploadedAssets.find(
     asset => asset.category === 'background' && asset.isDefault,
   )
@@ -172,7 +172,7 @@ function resolveQuickStartDefaultsCss(themeCssOverride: string | undefined, fall
     return overrideCss
   }
 
-  const themeQuickStartDefaults = (themeStore.state.themeQuickStartDefaults || '').trim()
+  const themeQuickStartDefaults = (themeStore.getState().themeQuickStartDefaults || '').trim()
   if (themeQuickStartDefaults) {
     return themeQuickStartDefaults
   }
@@ -244,7 +244,7 @@ function pickDefinedContentFields(value: Partial<QuickSettings>): Partial<QuickS
 
 export const presetActions = {
   setThemeData: (themeId: ThemeId, themeCss: string) => {
-    const previousThemeKey = getThemeStorageKey(presetStore.state.selectedThemeId)
+    const previousThemeKey = getThemeStorageKey(presetStore.getState().selectedThemeId)
     const nextThemeKey = getThemeStorageKey(themeId)
 
     presetStore.setState(state => ({
@@ -272,7 +272,7 @@ export const presetActions = {
 
   syncBackgroundForCurrentTheme: async () => {
     const themeConfig = await getThemeConfigCached()
-    const currentThemeBaseId = resolveThemeBaseIdFromConfig(themeConfig, presetStore.state.selectedThemeId)
+    const currentThemeBaseId = resolveThemeBaseIdFromConfig(themeConfig, presetStore.getState().selectedThemeId)
     syncDefaultBackgroundForBaseTheme(currentThemeBaseId)
   },
 
@@ -292,7 +292,7 @@ export const presetActions = {
     options?: SetColorPresetOptions,
   ) => {
     const mode = getCurrentQuickSettingsMode()
-    const state = presetStore.state
+    const state = presetStore.getState()
     const previousSettings = getStyleSettingsForMode(state, state.selectedThemeId, mode) ?? buildModeDefaultsSnapshot(state, mode)
     const nextSettings: QuickSettingsStyle = {
       ...previousSettings,
@@ -330,8 +330,8 @@ export const presetActions = {
 
   setQuickStartExtras: (update: QuickStartExtrasUpdate, options?: HistoryOptions) => {
     const mode = getCurrentQuickSettingsMode()
-    const presetBefore = presetStore.state
-    const assetsBefore = assetStore.state
+    const presetBefore = presetStore.getState()
+    const assetsBefore = assetStore.getState()
 
     const styleBefore = getStyleSettingsForMode(presetBefore, presetBefore.selectedThemeId, mode)
       ?? buildModeDefaultsSnapshot(presetBefore, mode)
@@ -416,7 +416,7 @@ export const presetActions = {
     presetActions.setThemeData(themeId, stylesCss)
 
     const hasModeSettings = Boolean(
-      getStyleSettingsForMode(presetStore.state, themeId, quickSettingsMode),
+      getStyleSettingsForMode(presetStore.getState(), themeId, quickSettingsMode),
     )
     if (!hasModeSettings) {
       presetActions.applyThemeModeDefaults(quickSettingsMode, quickStartDefaults)
@@ -467,7 +467,7 @@ export const presetActions = {
   },
 
   saveQuickSettingsForPreset: (themeId: string, mode: QuickSettingsMode = 'light') => {
-    const state = presetStore.state
+    const state = presetStore.getState()
     const normalizedMode = resolveQuickSettingsMode(mode)
     const nextSettings = getActiveModeSettings(state)
     const currentSettings = getStyleSettingsForMode(state, themeId, normalizedMode)
@@ -480,6 +480,7 @@ export const presetActions = {
 
   restoreQuickSettingsForPreset: (themeId: string, mode: QuickSettingsMode = 'light'): boolean => {
     const normalizedMode = resolveQuickSettingsMode(mode)
-    return Boolean(getStyleSettingsForMode(presetStore.state, themeId, normalizedMode))
+    return Boolean(getStyleSettingsForMode(presetStore.getState(), themeId, normalizedMode))
   },
 }
+

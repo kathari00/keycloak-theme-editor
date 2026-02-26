@@ -23,7 +23,7 @@ export const assetActions = {
   },
 
   removeUploadedAsset: (assetId: string) => {
-    const state = assetStore.state
+    const state = assetStore.getState()
     const asset = state.uploadedAssets.find(a => a.id === assetId)
     if (!asset)
       return
@@ -83,7 +83,7 @@ export const assetActions = {
 
   // Cross-domain: applying a background image clears background color from presetStore
   applyAsset: (target: ThemeAssetTarget, assetId: string) => {
-    const state = assetStore.state
+    const state = assetStore.getState()
     const prevAppliedAssets = { ...state.appliedAssets }
     const nextAppliedAssets = { ...prevAppliedAssets, [target]: assetId }
 
@@ -91,10 +91,10 @@ export const assetActions = {
       return
 
     const activeQuickSettingsKey = buildQuickSettingsStorageKey(
-      presetStore.state.selectedThemeId,
-      resolveQuickSettingsMode(coreStore.state.isDarkMode),
+      presetStore.getState().selectedThemeId,
+      resolveQuickSettingsMode(coreStore.getState().isDarkMode),
     )
-    const oldBgColor = presetStore.state.quickSettingsByThemeMode[activeQuickSettingsKey]?.colorPresetBgColor || ''
+    const oldBgColor = presetStore.getState().quickSettingsByThemeMode[activeQuickSettingsKey]?.colorPresetBgColor || ''
     const clearBgColor = target === 'background' && Boolean(oldBgColor)
 
     const setActiveModeBackgroundColor = (colorPresetBgColor: string) => {
@@ -138,7 +138,7 @@ export const assetActions = {
   },
 
   unapplyAsset: (target: ThemeAssetTarget) => {
-    const state = assetStore.state
+    const state = assetStore.getState()
     const prevAppliedAssets = { ...state.appliedAssets }
     if (!prevAppliedAssets[target])
       return
@@ -158,3 +158,4 @@ export const assetActions = {
     assetStore.setState(current => ({ ...current, appliedAssets: nextAppliedAssets }))
   },
 }
+

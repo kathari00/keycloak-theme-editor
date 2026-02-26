@@ -23,12 +23,12 @@ function buildHistoryScopeKey(params?: {
 
 function resolveEditorScopeKey(): string {
   return buildHistoryScopeKey({
-    themeId: presetStore.state.selectedThemeId,
-    isDarkMode: coreStore.state.isDarkMode,
+    themeId: presetStore.getState().selectedThemeId,
+    isDarkMode: coreStore.getState().isDarkMode,
   })
 }
 
-function getScopeStacks(state = historyStore.state, scopeKey = state.activeScopeKey): HistoryScopeStacks {
+function getScopeStacks(state = historyStore.getState(), scopeKey = state.activeScopeKey): HistoryScopeStacks {
   return state.stacksByScope[scopeKey] ?? { undoStack: [], redoStack: [] }
 }
 
@@ -47,7 +47,7 @@ function persistActiveScopeKey(scopeKey: string) {
 
 function setActiveScopeInternal(scopeKey: string) {
   const normalizedScopeKey = scopeKey.trim() || DEFAULT_HISTORY_SCOPE_KEY
-  const currentScopeKey = historyStore.state.activeScopeKey
+  const currentScopeKey = historyStore.getState().activeScopeKey
   if (currentScopeKey !== normalizedScopeKey) {
     persistActiveScopeKey(normalizedScopeKey)
   }
@@ -67,7 +67,7 @@ function setActiveScopeInternal(scopeKey: string) {
 
 function ensureActiveScopeInSync(): string {
   const scopeKey = resolveEditorScopeKey()
-  if (scopeKey !== historyStore.state.activeScopeKey) {
+  if (scopeKey !== historyStore.getState().activeScopeKey) {
     setActiveScopeInternal(scopeKey)
   }
   return scopeKey
@@ -80,7 +80,7 @@ export const historyActions = {
 
   undo: (): boolean => {
     ensureActiveScopeInSync()
-    const state = historyStore.state
+    const state = historyStore.getState()
     const scopeKey = state.activeScopeKey
     const scopeStacks = getScopeStacks(state, scopeKey)
 
@@ -110,7 +110,7 @@ export const historyActions = {
 
   redo: (): boolean => {
     ensureActiveScopeInSync()
-    const state = historyStore.state
+    const state = historyStore.getState()
     const scopeKey = state.activeScopeKey
     const scopeStacks = getScopeStacks(state, scopeKey)
 
@@ -140,7 +140,7 @@ export const historyActions = {
 
   addUndoRedoAction: (action: UndoRedoAction) => {
     ensureActiveScopeInSync()
-    const state = historyStore.state
+    const state = historyStore.getState()
     const scopeKey = state.activeScopeKey
     const scopeStacks = getScopeStacks(state, scopeKey)
     const nextAction: UndoRedoAction = {
@@ -185,3 +185,4 @@ export const historyActions = {
     }))
   },
 }
+

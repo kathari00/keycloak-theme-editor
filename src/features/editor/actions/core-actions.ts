@@ -28,16 +28,17 @@ export const coreActions = {
   },
 
   toggleDarkMode: () => {
-    const currentThemeKey = presetStore.state.selectedThemeId || 'v2'
+    const currentThemeKey = presetStore.getState().selectedThemeId || 'v2'
     const newMode = toggleDarkModeUtil()
     coreStore.setState({ isDarkMode: newMode })
     historyActions.syncActiveScopeFromEditor()
 
     const nextMode = resolveQuickSettingsMode(newMode)
     const nextModeStorageKey = buildQuickSettingsStorageKey(currentThemeKey, nextMode)
-    const hasSettings = Boolean(presetStore.state.quickSettingsByThemeMode[nextModeStorageKey])
+    const hasSettings = Boolean(presetStore.getState().quickSettingsByThemeMode[nextModeStorageKey])
     if (!hasSettings) {
-      presetActions.applyThemeModeDefaults(nextMode, themeStore.state.themeQuickStartDefaults)
+      presetActions.applyThemeModeDefaults(nextMode, themeStore.getState().themeQuickStartDefaults)
     }
   },
 }
+
