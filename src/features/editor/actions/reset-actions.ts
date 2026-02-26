@@ -54,13 +54,22 @@ export const resetActions = {
       themeQuickStartDefaults: '',
     }))
 
+    const currentCoreState = coreStore.getState()
+    const nextActivePageId = 'login.html'
+    const nextActiveStoryId = 'default'
+    const previewDocumentWillReload =
+      currentCoreState.activePageId !== nextActivePageId
+      || currentCoreState.activeStoryId !== nextActiveStoryId
+
     coreStore.setState(state => ({
       ...state,
       isDarkMode: false,
-      activePageId: 'login.html',
-      activeStoryId: 'default',
+      activePageId: nextActivePageId,
+      activeStoryId: nextActiveStoryId,
       selectedNodeId: null,
-      previewReady: false,
+      // If page/story are unchanged, the iframe srcDoc does not reload and no onLoad fires.
+      // Keeping previewReady avoids leaving selection/styling panels stuck in loading state.
+      previewReady: previewDocumentWillReload ? false : state.previewReady,
       deviceId: 'desktop',
     }))
 

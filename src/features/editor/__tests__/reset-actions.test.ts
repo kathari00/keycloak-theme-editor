@@ -99,5 +99,23 @@ describe('reset actions', () => {
     expect(themeStore.getState().stylesCssByTheme.v2).toBe(MOCK_V2_THEME_CSS)
     expect(assetStore.getState().appliedAssets.background).toBe('default-bg')
   })
+
+  it('keeps preview ready when reset does not change the preview document', async () => {
+    coreStore.setState(() => ({
+      isDarkMode: true,
+      activePageId: 'login.html',
+      activeStoryId: 'default',
+      selectedNodeId: 'body',
+      previewReady: true,
+      deviceId: 'mobile',
+    }))
+
+    await resetActions.resetAll()
+
+    expect(coreStore.getState().previewReady).toBe(true)
+    expect(coreStore.getState().selectedNodeId).toBeNull()
+    expect(coreStore.getState().activePageId).toBe('login.html')
+    expect(coreStore.getState().activeStoryId).toBe('default')
+  })
 })
 
