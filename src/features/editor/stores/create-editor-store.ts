@@ -1,5 +1,6 @@
 import type { StoreApi } from 'zustand/vanilla'
 import { createJSONStorage, persist } from 'zustand/middleware'
+import { immer } from 'zustand/middleware/immer'
 import { createStore } from 'zustand/vanilla'
 
 export interface EditorStore<T extends object> extends StoreApi<T> {
@@ -37,7 +38,7 @@ function getLocalStorage(): Storage | null {
 }
 
 export function createEditorStore<T extends object>(initialState: T): EditorStore<T> {
-  return withStateGetter(createStore<T>()(() => initialState))
+  return withStateGetter(createStore<T>()(immer(() => initialState)) as unknown as StoreApi<T>)
 }
 
 export function createPersistedEditorStore<T extends object>(
@@ -52,7 +53,7 @@ export function createPersistedEditorStore<T extends object>(
   return withStateGetter(
     createStore<T>()(
       persist(
-        () => initialState,
+        immer(() => initialState),
         {
           name: options.name,
           version: options.version,
@@ -61,6 +62,6 @@ export function createPersistedEditorStore<T extends object>(
           partialize: options.partialize,
         },
       ),
-    ),
+    ) as unknown as StoreApi<T>,
   )
 }
