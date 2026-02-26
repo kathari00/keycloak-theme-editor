@@ -1,7 +1,7 @@
-:root {
-  --quickstart-primary-color: #667eea;
-  --quickstart-primary-color-dark: #667eea;
-  --quickstart-secondary-color: #764ba2;
+﻿:root {
+  --quickstart-primary-color: #6074A1;
+  --quickstart-primary-color-dark: #6074A1;
+  --quickstart-secondary-color: #A0BCAC;
   --quickstart-font-family: 'Inter', sans-serif;
   --quickstart-logo-url: none;
   --quickstart-bg-logo-url: none;
@@ -15,7 +15,8 @@
   --quickstart-text-primary-dark: #e8eaed;
   --quickstart-text-secondary-light: #374151;
   --quickstart-text-secondary-dark: #cbd5e1;
-  --quickstart-gradient-bg-default: linear-gradient(135deg, var(--quickstart-primary-color, #667eea) 0%, var(--quickstart-secondary-color, #764ba2) 100%);
+  --quickstart-gradient-bg-default: linear-gradient(135deg, var(--quickstart-primary-color) 0%, var(--quickstart-secondary-color) 100%);
+  --quickstart-bg-image: var(--quickstart-gradient-bg-default);
   --quickstart-card-bg-color: #ffffff;
   --quickstart-card-bg-color-dark: #0e0e0e;
   --quickstart-input-bg-color-dark: #141516;

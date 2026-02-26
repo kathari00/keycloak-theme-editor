@@ -334,6 +334,9 @@ function ensureLegalLinks(doc: Document, imprintUrl: string, dataProtectionUrl: 
     const footerRow = doc.querySelector('.kc-horizontal-card-footer-row')
     if (footerRow)
       return footerRow
+    const mainFooterRow = doc.querySelector('.kcLoginMainFooterBand.kc-footer-row, .kc-footer-row')
+    if (mainFooterRow)
+      return mainFooterRow
     const formCard = doc.querySelector('.kcFormCardClass')
     if (formCard)
       return formCard
