@@ -149,8 +149,8 @@ describe('preset background sync on preset selection', () => {
 
     await presetActions.applyThemeSelection('horizontal-card')
 
-    expect(presetStore.state.selectedThemeId).toBe('horizontal-card')
-    expect(assetStore.state.appliedAssets.background).toBe(REMOVED_ASSET_ID)
+    expect(presetStore.getState().selectedThemeId).toBe('horizontal-card')
+    expect(assetStore.getState().appliedAssets.background).toBe(REMOVED_ASSET_ID)
   })
 
   it('uses horizontal-card defaults in dark mode without saved settings', async () => {
@@ -164,9 +164,9 @@ describe('preset background sync on preset selection', () => {
 
     await presetActions.applyThemeSelection('horizontal-card')
 
-    expect(presetStore.state.colorPresetPrimaryColor).toBe('#a8c7fa')
-    expect(presetStore.state.colorPresetBgColor).toBe('#1e1f20')
-    expect(assetStore.state.appliedAssets.background).toBe(REMOVED_ASSET_ID)
+    expect(presetStore.getState().colorPresetPrimaryColor).toBe('#a8c7fa')
+    expect(presetStore.getState().colorPresetBgColor).toBe('#1e1f20')
+    expect(assetStore.getState().appliedAssets.background).toBe(REMOVED_ASSET_ID)
   })
 
   it('keeps default background active when selecting v2', async () => {
@@ -184,8 +184,8 @@ describe('preset background sync on preset selection', () => {
 
     await presetActions.applyThemeSelection('v2')
 
-    expect(presetStore.state.selectedThemeId).toBe('v2')
-    expect(assetStore.state.appliedAssets.background).toBe('default-bg')
+    expect(presetStore.getState().selectedThemeId).toBe('v2')
+    expect(assetStore.getState().appliedAssets.background).toBe('default-bg')
   })
 
   it('clears persisted default background when current theme base is non-v2', async () => {
@@ -197,6 +197,6 @@ describe('preset background sync on preset selection', () => {
 
     await presetActions.syncBackgroundForCurrentTheme()
 
-    expect(assetStore.state.appliedAssets.background).toBe(REMOVED_ASSET_ID)
+    expect(assetStore.getState().appliedAssets.background).toBe(REMOVED_ASSET_ID)
   })
 })

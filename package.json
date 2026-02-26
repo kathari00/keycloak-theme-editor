@@ -25,6 +25,7 @@
     "@uiw/react-codemirror": "4.25.4",
     "fflate": "0.8.2",
     "file-selector": "2.1.2",
+    "immer": "^11.1.4",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "zustand": "5.0.11"

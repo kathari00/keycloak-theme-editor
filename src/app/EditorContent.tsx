@@ -297,7 +297,7 @@ export default function EditorContent() {
         ]
 
         const managedDefaultPrefix = '__default__:'
-        const preservedAssets = assetStore.state.uploadedAssets.filter(
+        const preservedAssets = assetStore.getState().uploadedAssets.filter(
           asset => !asset.id.startsWith(managedDefaultPrefix),
         )
         if (baseId !== 'v2') {
@@ -309,7 +309,7 @@ export default function EditorContent() {
           preservedAssets.some(asset =>
             asset.category === category && asset.name.toLowerCase() === name.toLowerCase(),
           )
-        const rebuiltDefaultAssets: typeof assetStore.state.uploadedAssets = []
+        const rebuiltDefaultAssets: typeof preservedAssets = []
         const now = Date.now()
 
         for (const item of defaults) {

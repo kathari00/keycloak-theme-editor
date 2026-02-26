@@ -160,9 +160,9 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
     const lightStorageKey = `${resolvedThemeId}::light`
     const darkStorageKey = `${resolvedThemeId}::dark`
     const lightFallback = presetQuickSettings[lightStorageKey]
-      ?? buildModeDefaultsSnapshot(presetStore.state, 'light')
+      ?? buildModeDefaultsSnapshot(presetStore.getState(), 'light')
     const darkFallback = presetQuickSettings[darkStorageKey]
-      ?? buildModeDefaultsSnapshot(presetStore.state, 'dark')
+      ?? buildModeDefaultsSnapshot(presetStore.getState(), 'dark')
     const exportQuickSettingsByMode: ImportedQuickSettingsByMode = {
       light: isDarkMode ? lightFallback : currentSnapshot,
       dark: isDarkMode ? currentSnapshot : darkFallback,
