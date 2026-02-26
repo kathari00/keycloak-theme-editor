@@ -53,8 +53,9 @@ describe('quick-start-css', () => {
         fontFamily: CUSTOM_PRESET_ID,
         headingFontFamily: CUSTOM_PRESET_ID,
         bgColor: '',
-        borderRadius: 'default',
-        cardShadow: 'default',
+        // Legacy imported themes may still contain "default" values at runtime.
+        borderRadius: 'default' as never,
+        cardShadow: 'default' as never,
       })
 
       expect(result).not.toContain('--quickstart-font-family:')
