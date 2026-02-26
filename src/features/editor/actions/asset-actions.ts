@@ -6,22 +6,21 @@ import { historyActions } from './history-actions'
 
 export const assetActions = {
   setUploadedAssets: (uploadedAssets: UploadedAsset[]) => {
-    assetStore.setState(state => ({ ...state, uploadedAssets }))
+    assetStore.setState({ uploadedAssets })
   },
 
   setAppliedAssets: (appliedAssets: AppliedAssets) => {
-    assetStore.setState(state => ({ ...state, appliedAssets }))
+    assetStore.setState({ appliedAssets })
   },
 
   addUploadedAsset: (asset: UploadedAsset) => {
     assetStore.setState(state => ({
-      ...state,
       uploadedAssets: [...state.uploadedAssets, asset],
     }))
   },
 
   removeUploadedAsset: (assetId: string) => {
-    const state = assetStore.state
+    const state = assetStore.getState()
     const asset = state.uploadedAssets.find(a => a.id === assetId)
     if (!asset)
       return
@@ -57,63 +56,50 @@ export const assetActions = {
 
     historyActions.addUndoRedoAction({
       undo: () => {
-        assetStore.setState(current => ({
-          ...current,
-          uploadedAssets: prevUploadedAssets,
-          appliedAssets: prevAppliedAssets,
-        }))
+        assetStore.setState({ uploadedAssets: prevUploadedAssets, appliedAssets: prevAppliedAssets })
       },
       redo: () => {
-        assetStore.setState(current => ({
-          ...current,
-          uploadedAssets: nextUploadedAssets,
-          appliedAssets: nextAppliedAssets,
-        }))
+        assetStore.setState({ uploadedAssets: nextUploadedAssets, appliedAssets: nextAppliedAssets })
       },
     })
 
-    assetStore.setState(current => ({
-      ...current,
-      uploadedAssets: nextUploadedAssets,
-      appliedAssets: nextAppliedAssets,
-    }))
+    assetStore.setState({ uploadedAssets: nextUploadedAssets, appliedAssets: nextAppliedAssets })
   },
 
-  // Cross-domain: applying a background image clears background color from presetStore
   applyAsset: (target: ThemeAssetTarget, assetId: string) => {
-    const state = assetStore.state
+    const state = assetStore.getState()
     const prevAppliedAssets = { ...state.appliedAssets }
     const nextAppliedAssets = { ...prevAppliedAssets, [target]: assetId }
 
     if (prevAppliedAssets[target] === assetId)
       return
 
-    const oldBgColor = presetStore.state.colorPresetBgColor
+    const oldBgColor = presetStore.getState().colorPresetBgColor
     const clearBgColor = target === 'background' && Boolean(oldBgColor)
 
     historyActions.addUndoRedoAction({
       undo: () => {
-        assetStore.setState(current => ({ ...current, appliedAssets: prevAppliedAssets }))
+        assetStore.setState({ appliedAssets: prevAppliedAssets })
         if (clearBgColor) {
-          presetStore.setState(current => ({ ...current, colorPresetBgColor: oldBgColor }))
+          presetStore.setState({ colorPresetBgColor: oldBgColor })
         }
       },
       redo: () => {
-        assetStore.setState(current => ({ ...current, appliedAssets: nextAppliedAssets }))
+        assetStore.setState({ appliedAssets: nextAppliedAssets })
         if (clearBgColor) {
-          presetStore.setState(current => ({ ...current, colorPresetBgColor: '' }))
+          presetStore.setState({ colorPresetBgColor: '' })
         }
       },
     })
 
-    assetStore.setState(current => ({ ...current, appliedAssets: nextAppliedAssets }))
+    assetStore.setState({ appliedAssets: nextAppliedAssets })
     if (clearBgColor) {
-      presetStore.setState(current => ({ ...current, colorPresetBgColor: '' }))
+      presetStore.setState({ colorPresetBgColor: '' })
     }
   },
 
   unapplyAsset: (target: ThemeAssetTarget) => {
-    const state = assetStore.state
+    const state = assetStore.getState()
     const prevAppliedAssets = { ...state.appliedAssets }
     if (!prevAppliedAssets[target])
       return
@@ -123,13 +109,13 @@ export const assetActions = {
 
     historyActions.addUndoRedoAction({
       undo: () => {
-        assetStore.setState(current => ({ ...current, appliedAssets: prevAppliedAssets }))
+        assetStore.setState({ appliedAssets: prevAppliedAssets })
       },
       redo: () => {
-        assetStore.setState(current => ({ ...current, appliedAssets: nextAppliedAssets }))
+        assetStore.setState({ appliedAssets: nextAppliedAssets })
       },
     })
 
-    assetStore.setState(current => ({ ...current, appliedAssets: nextAppliedAssets }))
+    assetStore.setState({ appliedAssets: nextAppliedAssets })
   },
 }

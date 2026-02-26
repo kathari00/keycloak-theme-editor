@@ -148,12 +148,12 @@ describe('quick settings mode separation', () => {
 
     applyQuickSettings(createQuickSettings({ colorPresetPrimaryColor: '#ff00ff' }))
     expect(presetActions.restoreQuickSettingsForPreset('v2', 'light')).toBe(true)
-    expect(presetStore.state.colorPresetPrimaryColor).toBe(lightSettings.colorPresetPrimaryColor)
-    expect(presetStore.state.colorPresetSecondaryColor).toBe(lightSettings.colorPresetSecondaryColor)
+    expect(presetStore.getState().colorPresetPrimaryColor).toBe(lightSettings.colorPresetPrimaryColor)
+    expect(presetStore.getState().colorPresetSecondaryColor).toBe(lightSettings.colorPresetSecondaryColor)
 
     expect(presetActions.restoreQuickSettingsForPreset('v2', 'dark')).toBe(true)
-    expect(presetStore.state.colorPresetPrimaryColor).toBe(darkSettings.colorPresetPrimaryColor)
-    expect(presetStore.state.colorPresetSecondaryColor).toBe(darkSettings.colorPresetSecondaryColor)
+    expect(presetStore.getState().colorPresetPrimaryColor).toBe(darkSettings.colorPresetPrimaryColor)
+    expect(presetStore.getState().colorPresetSecondaryColor).toBe(darkSettings.colorPresetSecondaryColor)
   })
 
   it('ignores preset-only key without mode suffix', () => {
@@ -167,8 +167,8 @@ describe('quick settings mode separation', () => {
     }))
 
     expect(presetActions.restoreQuickSettingsForPreset('v2', 'dark')).toBe(false)
-    expect(presetStore.state.colorPresetPrimaryColor).not.toBe('#13579b')
-    expect(presetStore.state.presetQuickSettings['v2::dark']).toBeUndefined()
+    expect(presetStore.getState().colorPresetPrimaryColor).not.toBe('#13579b')
+    expect(presetStore.getState().presetQuickSettings['v2::dark']).toBeUndefined()
   })
 
   it('restores mode-specific quick settings when toggling dark mode', () => {
@@ -184,12 +184,12 @@ describe('quick settings mode separation', () => {
     coreStore.setState(state => ({ ...state, isDarkMode: false }))
 
     coreActions.toggleDarkMode()
-    expect(coreStore.state.isDarkMode).toBe(true)
-    expect(presetStore.state.colorPresetPrimaryColor).toBe('#a8c7fa')
+    expect(coreStore.getState().isDarkMode).toBe(true)
+    expect(presetStore.getState().colorPresetPrimaryColor).toBe('#a8c7fa')
 
     coreActions.toggleDarkMode()
-    expect(coreStore.state.isDarkMode).toBe(false)
-    expect(presetStore.state.colorPresetPrimaryColor).toBe('#0057d8')
+    expect(coreStore.getState().isDarkMode).toBe(false)
+    expect(presetStore.getState().colorPresetPrimaryColor).toBe('#0057d8')
   })
 
   it('keeps template content global when toggling dark mode', () => {
@@ -216,18 +216,18 @@ describe('quick settings mode separation', () => {
     coreStore.setState(state => ({ ...state, isDarkMode: false }))
 
     coreActions.toggleDarkMode()
-    expect(coreStore.state.isDarkMode).toBe(true)
-    expect(presetStore.state.colorPresetBgColor).toBe('#1e1f20')
-    expect(presetStore.state.showRealmName).toBe(true)
-    expect(presetStore.state.showClientName).toBe(false)
-    expect(presetStore.state.infoMessage).toBe('light')
+    expect(coreStore.getState().isDarkMode).toBe(true)
+    expect(presetStore.getState().colorPresetBgColor).toBe('#1e1f20')
+    expect(presetStore.getState().showRealmName).toBe(true)
+    expect(presetStore.getState().showClientName).toBe(false)
+    expect(presetStore.getState().infoMessage).toBe('light')
 
     coreActions.toggleDarkMode()
-    expect(coreStore.state.isDarkMode).toBe(false)
-    expect(presetStore.state.colorPresetBgColor).toBe('#f0f4f9')
-    expect(presetStore.state.showRealmName).toBe(true)
-    expect(presetStore.state.showClientName).toBe(false)
-    expect(presetStore.state.infoMessage).toBe('light')
+    expect(coreStore.getState().isDarkMode).toBe(false)
+    expect(presetStore.getState().colorPresetBgColor).toBe('#f0f4f9')
+    expect(presetStore.getState().showRealmName).toBe(true)
+    expect(presetStore.getState().showClientName).toBe(false)
+    expect(presetStore.getState().infoMessage).toBe('light')
   })
 
   it('keeps first quick settings edit scoped to active mode', () => {
@@ -235,13 +235,13 @@ describe('quick settings mode separation', () => {
 
     presetActions.setColorPreset('custom', '#123456', '#abcdef', 'custom')
 
-    expect(presetStore.state.presetQuickSettings['v2::light']?.colorPresetPrimaryColor).toBe('#123456')
-    expect(presetStore.state.presetQuickSettings['v2::dark']?.colorPresetPrimaryColor).toBe('#0066cc')
+    expect(presetStore.getState().presetQuickSettings['v2::light']?.colorPresetPrimaryColor).toBe('#123456')
+    expect(presetStore.getState().presetQuickSettings['v2::dark']?.colorPresetPrimaryColor).toBe('#0066cc')
 
     coreActions.toggleDarkMode()
-    expect(coreStore.state.isDarkMode).toBe(true)
-    expect(presetStore.state.colorPresetPrimaryColor).toBe('#0066cc')
-    expect(presetStore.state.presetQuickSettings['v2::dark']?.colorPresetPrimaryColor).toBe('#0066cc')
+    expect(coreStore.getState().isDarkMode).toBe(true)
+    expect(presetStore.getState().colorPresetPrimaryColor).toBe('#0066cc')
+    expect(presetStore.getState().presetQuickSettings['v2::dark']?.colorPresetPrimaryColor).toBe('#0066cc')
   })
 
   it('seeds horizontal-card dark defaults on first dark toggle', () => {
@@ -258,11 +258,11 @@ describe('quick settings mode separation', () => {
 
     coreActions.toggleDarkMode()
 
-    expect(coreStore.state.isDarkMode).toBe(true)
-    expect(presetStore.state.colorPresetPrimaryColor).toBe('#a8c7fa')
-    expect(presetStore.state.colorPresetBgColor).toBe('#1e1f20')
-    expect(presetStore.state.presetQuickSettings['horizontal-card::dark']?.colorPresetPrimaryColor).toBe('#a8c7fa')
-    expect(presetStore.state.presetQuickSettings['horizontal-card::dark']?.colorPresetBgColor).toBe('#1e1f20')
+    expect(coreStore.getState().isDarkMode).toBe(true)
+    expect(presetStore.getState().colorPresetPrimaryColor).toBe('#a8c7fa')
+    expect(presetStore.getState().colorPresetBgColor).toBe('#1e1f20')
+    expect(presetStore.getState().presetQuickSettings['horizontal-card::dark']?.colorPresetPrimaryColor).toBe('#a8c7fa')
+    expect(presetStore.getState().presetQuickSettings['horizontal-card::dark']?.colorPresetBgColor).toBe('#1e1f20')
   })
 
   it('uses quick-start defaults when styles CSS has no quick-start variables', () => {
@@ -283,9 +283,9 @@ describe('quick settings mode separation', () => {
 
     coreActions.toggleDarkMode()
 
-    expect(coreStore.state.isDarkMode).toBe(true)
-    expect(presetStore.state.colorPresetPrimaryColor).toBe('#a8c7fa')
-    expect(presetStore.state.colorPresetBgColor).toBe('#1e1f20')
+    expect(coreStore.getState().isDarkMode).toBe(true)
+    expect(presetStore.getState().colorPresetPrimaryColor).toBe('#a8c7fa')
+    expect(presetStore.getState().colorPresetBgColor).toBe('#1e1f20')
   })
 
   it('keeps horizontal-card dark defaults after first light edit', () => {
@@ -303,9 +303,9 @@ describe('quick settings mode separation', () => {
     presetActions.setColorPreset('custom', '#13579b', '#9aa0a6', 'custom')
     coreActions.toggleDarkMode()
 
-    expect(coreStore.state.isDarkMode).toBe(true)
-    expect(presetStore.state.colorPresetPrimaryColor).toBe('#a8c7fa')
-    expect(presetStore.state.colorPresetBgColor).toBe('#1e1f20')
+    expect(coreStore.getState().isDarkMode).toBe(true)
+    expect(presetStore.getState().colorPresetPrimaryColor).toBe('#a8c7fa')
+    expect(presetStore.getState().colorPresetBgColor).toBe('#1e1f20')
   })
 
   it('seeds horizontal-card light defaults on first light toggle from dark mode', () => {
@@ -323,11 +323,11 @@ describe('quick settings mode separation', () => {
 
     coreActions.toggleDarkMode()
 
-    expect(coreStore.state.isDarkMode).toBe(false)
-    expect(presetStore.state.colorPresetPrimaryColor).toBe('#0b57d0')
-    expect(presetStore.state.colorPresetBgColor).toBe('#f0f4f9')
-    expect(presetStore.state.presetQuickSettings['horizontal-card::light']?.colorPresetPrimaryColor).toBe('#0b57d0')
-    expect(presetStore.state.presetQuickSettings['horizontal-card::light']?.colorPresetBgColor).toBe('#f0f4f9')
+    expect(coreStore.getState().isDarkMode).toBe(false)
+    expect(presetStore.getState().colorPresetPrimaryColor).toBe('#0b57d0')
+    expect(presetStore.getState().colorPresetBgColor).toBe('#f0f4f9')
+    expect(presetStore.getState().presetQuickSettings['horizontal-card::light']?.colorPresetPrimaryColor).toBe('#0b57d0')
+    expect(presetStore.getState().presetQuickSettings['horizontal-card::light']?.colorPresetBgColor).toBe('#f0f4f9')
   })
 
   it('applies imported quick settings to both modes and activates current mode values', () => {
@@ -344,10 +344,10 @@ describe('quick settings mode separation', () => {
       },
     })
 
-    expect(presetStore.state.presetQuickSettings['v2::light']?.colorPresetPrimaryColor).toBe('#123456')
-    expect(presetStore.state.presetQuickSettings['v2::dark']?.colorPresetPrimaryColor).toBe('#a8c7fa')
-    expect(presetStore.state.colorPresetPrimaryColor).toBe('#123456')
-    expect(presetStore.state.colorPresetSecondaryColor).toBe('#abcdef')
+    expect(presetStore.getState().presetQuickSettings['v2::light']?.colorPresetPrimaryColor).toBe('#123456')
+    expect(presetStore.getState().presetQuickSettings['v2::dark']?.colorPresetPrimaryColor).toBe('#a8c7fa')
+    expect(presetStore.getState().colorPresetPrimaryColor).toBe('#123456')
+    expect(presetStore.getState().colorPresetSecondaryColor).toBe('#abcdef')
   })
 
   it('keeps light snapshot stable after dark undo/redo and mode switch', () => {
@@ -355,18 +355,18 @@ describe('quick settings mode separation', () => {
     presetActions.saveQuickSettingsForPreset('v2', 'light')
 
     coreActions.toggleDarkMode()
-    expect(coreStore.state.isDarkMode).toBe(true)
-    expect(presetStore.state.colorPresetPrimaryColor).toBe('#0066cc')
+    expect(coreStore.getState().isDarkMode).toBe(true)
+    expect(presetStore.getState().colorPresetPrimaryColor).toBe('#0066cc')
 
     presetActions.setColorPreset('custom', '#222222', '#bbbbbb', 'custom')
-    expect(presetStore.state.colorPresetPrimaryColor).toBe('#222222')
+    expect(presetStore.getState().colorPresetPrimaryColor).toBe('#222222')
     expect(historyActions.undo()).toBe(true)
-    expect(presetStore.state.colorPresetPrimaryColor).toBe('#0066cc')
+    expect(presetStore.getState().colorPresetPrimaryColor).toBe('#0066cc')
     expect(historyActions.redo()).toBe(true)
-    expect(presetStore.state.colorPresetPrimaryColor).toBe('#222222')
+    expect(presetStore.getState().colorPresetPrimaryColor).toBe('#222222')
 
     coreActions.toggleDarkMode()
-    expect(coreStore.state.isDarkMode).toBe(false)
-    expect(presetStore.state.colorPresetPrimaryColor).toBe('#111111')
+    expect(coreStore.getState().isDarkMode).toBe(false)
+    expect(presetStore.getState().colorPresetPrimaryColor).toBe('#111111')
   })
 })

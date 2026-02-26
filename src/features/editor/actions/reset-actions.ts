@@ -57,58 +57,52 @@ export const resetActions = {
   resetAll: async () => {
     clearPersistedEditorState()
 
-    const defaultAssets = assetStore.state.uploadedAssets.filter(asset => asset.isDefault)
+    const defaultAssets = assetStore.getState().uploadedAssets.filter(asset => asset.isDefault)
     const defaultBackground = defaultAssets.find(asset => asset.category === 'background')
-    assetStore.setState(() => ({
+    assetStore.setState({
       uploadedAssets: defaultAssets,
       appliedAssets: defaultBackground ? { background: defaultBackground.id } : {},
-    }))
+    })
 
-    presetStore.setState(() => ({
+    presetStore.setState({
       ...DEFAULT_PRESET_STATE,
       presetQuickSettings: {},
-    }))
+    })
 
-    themeStore.setState(state => ({
-      ...state,
+    themeStore.setState({
       stylesCss: '',
       stylesCssByTheme: {},
       themeQuickStartDefaults: '',
-    }))
+    })
 
-    coreStore.setState(state => ({
-      ...state,
+    coreStore.setState({
       isDarkMode: false,
       activePageId: 'login.html',
       activeStoryId: 'default',
       selectedNodeId: null,
       previewReady: false,
       deviceId: 'desktop',
-    }))
+    })
 
-    historyStore.setState(() => ({
+    historyStore.setState({
       activeScopeKey: 'v2::light',
       stacksByScope: {},
       undoStack: [],
       redoStack: [],
       canUndo: false,
       canRedo: false,
-    }))
+    })
 
     historyActions.syncActiveScopeFromEditor()
 
     try {
       const { quickStartDefaults, stylesCss } = await getThemeCssStructuredCached(DEFAULT_THEME_ID)
-      presetStore.setState(state => ({
-        ...state,
-        presetCss: stylesCss,
-      }))
-      themeStore.setState(state => ({
-        ...state,
+      presetStore.setState({ presetCss: stylesCss })
+      themeStore.setState({
         stylesCss,
         stylesCssByTheme: { [DEFAULT_THEME_ID]: stylesCss },
         themeQuickStartDefaults: quickStartDefaults,
-      }))
+      })
     }
     catch {
       // Ignore CSS loading failures; reset still applies structural defaults.

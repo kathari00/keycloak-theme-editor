@@ -12,45 +12,46 @@ function resolveQuickSettingsMode(isDarkMode: boolean): QuickSettingsMode {
 
 export const coreActions = {
   setActivePage: (activePageId: string) => {
-    coreStore.setState(state => ({ ...state, activePageId }))
+    coreStore.setState({ activePageId })
   },
 
   setActiveStoryId: (activeStoryId: string) => {
-    coreStore.setState(state => ({ ...state, activeStoryId }))
+    coreStore.setState({ activeStoryId })
   },
 
   setSelectedNodeId: (selectedNodeId: string | null) => {
-    coreStore.setState(state => ({ ...state, selectedNodeId }))
+    coreStore.setState({ selectedNodeId })
   },
 
   setPreviewReady: (previewReady: boolean) => {
-    coreStore.setState(state => ({ ...state, previewReady }))
+    coreStore.setState({ previewReady })
   },
 
   setDeviceId: (deviceId: 'desktop' | 'tablet' | 'mobile') => {
-    coreStore.setState(state => ({ ...state, deviceId }))
+    coreStore.setState({ deviceId })
   },
 
   toggleDarkMode: () => {
+    const presetState = presetStore.getState()
     const {
       showClientName,
       showRealmName,
       infoMessage,
       imprintUrl,
       dataProtectionUrl,
-    } = presetStore.state
-    const currentThemeKey = presetStore.state.selectedThemeId || 'v2'
-    const currentMode = resolveQuickSettingsMode(coreStore.state.isDarkMode)
+    } = presetState
+    const currentThemeKey = presetState.selectedThemeId || 'v2'
+    const currentMode = resolveQuickSettingsMode(coreStore.getState().isDarkMode)
     presetActions.saveQuickSettingsForPreset(currentThemeKey, currentMode)
 
     const newMode = toggleDarkModeUtil()
-    coreStore.setState(state => ({ ...state, isDarkMode: newMode }))
+    coreStore.setState({ isDarkMode: newMode })
     historyActions.syncActiveScopeFromEditor()
 
     const nextMode = resolveQuickSettingsMode(newMode)
     const hasRestoredSettings = presetActions.restoreQuickSettingsForPreset(currentThemeKey, nextMode)
     if (!hasRestoredSettings) {
-      presetActions.applyThemeModeDefaults(nextMode, themeStore.state.themeQuickStartDefaults)
+      presetActions.applyThemeModeDefaults(nextMode, themeStore.getState().themeQuickStartDefaults)
       presetActions.saveQuickSettingsForPreset(currentThemeKey, nextMode)
       return
     }
