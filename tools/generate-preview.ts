@@ -8,7 +8,6 @@ import { resolveContextMocks } from './kc-context-mocks'
 const ROOT = process.cwd()
 const pomPath = path.join(ROOT, 'tools', 'preview-renderer', 'pom.xml')
 const generatedPagesPath = path.join(ROOT, 'src', 'features', 'preview', 'generated', 'pages.json')
-const defaultCustomMocksPath = path.join(ROOT, 'tools', 'preview-renderer', 'custom-pages.json')
 const MIN_JAVA = 25
 const isWindows = process.platform === 'win32'
 const SCRIPT_TAG_PATTERN = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi
@@ -68,11 +67,6 @@ function resolveCustomMocksPath(): string | undefined {
       return resolvedPath
     }
   }
-
-  if (fs.existsSync(defaultCustomMocksPath)) {
-    return defaultCustomMocksPath
-  }
-
   return undefined
 }
 
@@ -175,15 +169,21 @@ function main() {
       const sanitizedBaseHtml = stripScriptTags(html)
       const stories: Record<string, string> = { default: sanitizedBaseHtml }
 
-      for (const [storyId, rawStoryHtml] of Object.entries(currentStories)) {
+      const storyIds = new Set([
+        ...Object.keys(currentStories),
+        ...Object.keys(previousStories),
+      ])
+
+      for (const storyId of storyIds) {
         if (storyId === 'default') {
           continue
         }
-        if (typeof rawStoryHtml !== 'string') {
-          continue
-        }
 
-        const sanitizedStoryHtml = stripScriptTags(rawStoryHtml)
+        const rawStoryHtml = currentStories[storyId]
+
+        const sanitizedStoryHtml = typeof rawStoryHtml === 'string'
+          ? stripScriptTags(rawStoryHtml)
+          : ''
         const sanitizedPreviousStoryHtml = stripScriptTags(previousStories[storyId] || '')
 
         if (sanitizedPreviousStoryHtml && sanitizedPreviousStoryHtml !== sanitizedBaseHtml) {

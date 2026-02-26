@@ -14,8 +14,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public final class PreviewRendererMain {
   private final Arguments arguments;
@@ -50,7 +48,6 @@ public final class PreviewRendererMain {
         builtInOverrides,
         arguments.customMocksPath
     );
-    Map<String, List<ScenarioSpec>> scenarioSpecsByPage = readScenarioSpecs(arguments.scenarioManifestRoot);
 
     for (VariantSpec variant : getVariants()) {
       VariantLoader.VariantInputs inputs = variantLoader.loadVariantInputs(
@@ -62,7 +59,7 @@ public final class PreviewRendererMain {
         continue;
       }
 
-      VariantRenderResult result = renderVariantPages(variant, inputs, contextOverrides, scenarioSpecsByPage);
+      VariantRenderResult result = renderVariantPages(variant, inputs, contextOverrides);
       logSkippedTemplates(variant.id, result.skippedTemplates);
 
       if (!result.variantPages.isEmpty()) {
@@ -86,8 +83,7 @@ public final class PreviewRendererMain {
   private VariantRenderResult renderVariantPages(
       VariantSpec variant,
       VariantLoader.VariantInputs inputs,
-      ContextBuilder.ContextOverrides contextOverrides,
-      Map<String, List<ScenarioSpec>> scenarioSpecsByPage
+      ContextBuilder.ContextOverrides contextOverrides
   ) {
     Map<String, Map<String, String>> variantPages = new LinkedHashMap<String, Map<String, String>>();
     List<String> skippedTemplates = new ArrayList<String>();
@@ -114,16 +110,6 @@ public final class PreviewRendererMain {
 
         Map<String, String> pageStories = new LinkedHashMap<String, String>();
         pageStories.put("default", html);
-        List<ScenarioSpec> pageScenarios = scenarioSpecsByPage.get(pageName);
-        if (pageScenarios != null && !pageScenarios.isEmpty()) {
-          for (ScenarioSpec scenario : pageScenarios) {
-            if (!pageStories.containsKey(scenario.id)) {
-              // Scenario variants are generated directly into pages.json.
-              // Without scenario-specific context data, seed each scenario with the base render.
-              pageStories.put(scenario.id, html);
-            }
-          }
-        }
         variantPages.put(pageId, pageStories);
       } catch (Exception error) {
         skippedTemplates.add(pageTemplate + ": " + summarizeError(error));
@@ -161,62 +147,6 @@ public final class PreviewRendererMain {
     return firstLine;
   }
 
-  private Map<String, List<ScenarioSpec>> readScenarioSpecs(Path storiesRoot) throws IOException {
-    Map<String, List<ScenarioSpec>> scenariosByPage = new LinkedHashMap<String, List<ScenarioSpec>>();
-    if (storiesRoot == null || !Files.exists(storiesRoot)) {
-      return scenariosByPage;
-    }
-
-    List<Path> storyFiles;
-    try (Stream<Path> stream = Files.list(storiesRoot)) {
-      storyFiles = stream
-          .filter(Files::isRegularFile)
-          .filter(path -> path.getFileName().toString().endsWith(".stories.json"))
-          .sorted()
-          .collect(Collectors.toList());
-    }
-
-    for (Path storyFile : storyFiles) {
-      String json = readUtf8(storyFile);
-      if (!json.isEmpty() && json.charAt(0) == '\uFEFF') {
-        json = json.substring(1);
-      }
-
-      @SuppressWarnings("unchecked")
-      Map<String, Object> rawStoryFile = objectMapper.readValue(json, Map.class);
-      String page = normalizePageName(asString(rawStoryFile.get("page")));
-      if (page.isEmpty()) {
-        throw new IllegalStateException("Scenario stories file is missing \"page\": " + storyFile.toString());
-      }
-
-      Object rawStories = rawStoryFile.get("stories");
-      if (!(rawStories instanceof List)) {
-        throw new IllegalStateException("Scenario stories file must include a \"stories\" array: " + storyFile.toString());
-      }
-
-      int scenarioIndex = 0;
-      for (Object rawStory : (List<?>) rawStories) {
-        scenarioIndex++;
-        Map<String, Object> story = asMap(rawStory);
-
-        String id = asString(story.get("id")).trim();
-        if (id.isEmpty()) {
-          throw new IllegalStateException("Scenario " + scenarioIndex + " in " + storyFile.toString() + " is missing \"id\".");
-        }
-
-        List<ScenarioSpec> specs = scenariosByPage.get(page);
-        if (specs == null) {
-          specs = new ArrayList<ScenarioSpec>();
-          scenariosByPage.put(page, specs);
-        }
-
-        specs.add(new ScenarioSpec(id));
-      }
-    }
-
-    return scenariosByPage;
-  }
-
   private void writeOutputs(Map<String, Object> pagesOutput) throws IOException {
     Files.createDirectories(arguments.outputRoot);
     writeJson(arguments.outputRoot.resolve("pages.json"), buildPagesOutputEnvelope(pagesOutput));
@@ -244,23 +174,6 @@ public final class PreviewRendererMain {
     return value;
   }
 
-  private String asString(Object value) {
-    return value == null ? "" : String.valueOf(value);
-  }
-
-  private Map<String, Object> asMap(Object value) {
-    if (!(value instanceof Map)) {
-      return new LinkedHashMap<String, Object>();
-    }
-    @SuppressWarnings("unchecked")
-    Map<String, Object> map = (Map<String, Object>) value;
-    return new LinkedHashMap<String, Object>(map);
-  }
-
-  private String readUtf8(Path path) throws IOException {
-    return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
-  }
-
   private static final class VariantSpec {
     private final String id;
     private final String baseTheme;
@@ -286,14 +199,6 @@ public final class PreviewRendererMain {
     }
   }
 
-  private static final class ScenarioSpec {
-    private final String id;
-
-    private ScenarioSpec(String id) {
-      this.id = id;
-    }
-  }
-
   private static final class Arguments {
     private final Path inputRoot;
     private final Path overrideRoot;
@@ -301,7 +206,6 @@ public final class PreviewRendererMain {
     private final Path outputRoot;
     private final Path contextMocksPath;
     private final Path customMocksPath;
-    private final Path scenarioManifestRoot;
     private final String keycloakTag;
 
     private Arguments(
@@ -311,7 +215,6 @@ public final class PreviewRendererMain {
         Path outputRoot,
         Path contextMocksPath,
         Path customMocksPath,
-        Path scenarioManifestRoot,
         String keycloakTag
     ) {
       this.inputRoot = inputRoot;
@@ -320,7 +223,6 @@ public final class PreviewRendererMain {
       this.outputRoot = outputRoot;
       this.contextMocksPath = contextMocksPath;
       this.customMocksPath = customMocksPath;
-      this.scenarioManifestRoot = scenarioManifestRoot;
       this.keycloakTag = keycloakTag;
     }
 
@@ -362,7 +264,6 @@ public final class PreviewRendererMain {
         customMocksPath = Paths.get(customMocksValue.trim());
       }
 
-      Path scenarioManifestRoot = Paths.get(values.getOrDefault("scenario-stories", "tools/preview-renderer/scenario-stories"));
       String keycloakTag = values.getOrDefault("tag", "26.x");
 
       return new Arguments(
@@ -372,7 +273,6 @@ public final class PreviewRendererMain {
           outputRoot,
           contextMocksPath,
           customMocksPath,
-          scenarioManifestRoot,
           keycloakTag
       );
     }

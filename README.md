@@ -54,9 +54,9 @@ Use this when you add a custom login page and want it selectable in the preview 
 ```
 
 4. Add page mocks in `tools/kc-context-mocks.ts` under `pageOverrides` with key `<your-page>` (without `.ftl`).
-5. Optional: add extra states (stories) by declaring them in:
-   `tools/preview-renderer/scenario-stories/<your-page>.stories.json`
-   (stories are generated directly into `src/features/preview/generated/pages.json`)
+5. Optional: add extra states (stories) by editing
+   `src/features/preview/generated/pages.json`
+   (custom stories are preserved on `npm run generate:preview` when they differ from the base render)
 6. Regenerate preview artifacts:
    `npm run generate:preview`
 7. Start dev server and open preview:
