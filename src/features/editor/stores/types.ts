@@ -19,8 +19,8 @@ export interface QuickSettingsStyle {
   colorPresetSecondaryColor: string
   colorPresetFontFamily: string
   colorPresetBgColor: string
-  colorPresetBorderRadius: 'default' | 'sharp' | 'rounded' | 'pill'
-  colorPresetCardShadow: 'default' | 'none' | 'subtle' | 'strong'
+  colorPresetBorderRadius: 'sharp' | 'rounded' | 'pill'
+  colorPresetCardShadow: 'none' | 'subtle' | 'strong'
   colorPresetHeadingFontFamily: string
 }
 

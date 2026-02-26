@@ -48,7 +48,7 @@ describe('quick-start-css', () => {
       expect(result).not.toContain('--pf-v5-global--FontFamily--heading:')
     })
 
-    it('omits optional quickstart variables when defaults are selected', () => {
+    it('normalizes legacy default radius/shadow values to explicit quickstart variables', () => {
       const result = build({
         fontFamily: CUSTOM_PRESET_ID,
         headingFontFamily: CUSTOM_PRESET_ID,
@@ -61,8 +61,8 @@ describe('quick-start-css', () => {
       expect(result).not.toContain('--quickstart-heading-font-family:')
       expect(result).not.toContain('--quickstart-bg-color:')
       expect(result).not.toContain('--quickstart-bg-image:')
-      expect(result).not.toContain('--quickstart-border-radius:')
-      expect(result).not.toContain('--quickstart-card-shadow:')
+      expect(result).toContain('--quickstart-border-radius: 8px;')
+      expect(result).toContain('--quickstart-card-shadow: 0 2px 8px rgba(0,0,0,0.10);')
     })
 
     it('does not emit bg variable for invalid color', () => {
@@ -92,20 +92,6 @@ describe('quick-start-css', () => {
   })
 
   describe('template-content and legal toggles', () => {
-    it('adds legal-footer padding compaction only when both links are valid external urls', () => {
-      const valid = build({
-        imprintUrl: 'https://example.com/imprint',
-        dataProtectionUrl: 'https://example.com/privacy',
-      })
-      expect(valid).toContain('--pf-v5-c-login__main-body--PaddingBottom: 0;')
-
-      const invalid = build({
-        imprintUrl: 'example.com/imprint',
-        dataProtectionUrl: 'https://example.com/privacy',
-      })
-      expect(invalid).not.toContain('--pf-v5-c-login__main-body--PaddingBottom: 0;')
-    })
-
     it('emits realm hide rules when realm is disabled', () => {
       const result = build({ showRealmName: false, showClientName: true, infoMessage: 'x' })
       expect(result).toContain('Hide realm name')

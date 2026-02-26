@@ -41,7 +41,7 @@ interface SetColorPresetOptions extends HistoryOptions {
 }
 
 const DEFAULT_QUICK_START_EXTRAS: Omit<QuickStartExtrasState, 'colorPresetBgColor' | 'colorPresetCardShadow'> = {
-  colorPresetBorderRadius: 'default',
+  colorPresetBorderRadius: 'rounded',
   colorPresetHeadingFontFamily: CUSTOM_PRESET_ID,
   showClientName: false,
   showRealmName: true,
@@ -159,6 +159,31 @@ function getQuickStartVariableNameForMode(mode: QuickSettingsMode, baseVariableN
   return mode === 'dark' ? `${baseVariableName}-dark` : baseVariableName
 }
 
+function mapQuickStartBorderRadius(value: string): PresetState['colorPresetBorderRadius'] {
+  const normalized = value.trim().toLowerCase()
+  if (normalized === '0' || normalized === '0px') {
+    return 'sharp'
+  }
+  if (normalized === '24px') {
+    return 'pill'
+  }
+  return 'rounded'
+}
+
+function mapQuickStartCardShadow(value: string): PresetState['colorPresetCardShadow'] {
+  const normalized = value.trim().toLowerCase().replace(/\s+/g, ' ')
+  if (!normalized) {
+    return 'subtle'
+  }
+  if (normalized === 'none') {
+    return 'none'
+  }
+  if (normalized.includes('0 8px 32px')) {
+    return 'strong'
+  }
+  return 'subtle'
+}
+
 function syncDefaultBackgroundForBaseTheme(baseThemeId: BaseThemeId): void {
   const { uploadedAssets, appliedAssets } = assetStore.getState()
   const defaultBackground = uploadedAssets.find(
@@ -166,11 +191,14 @@ function syncDefaultBackgroundForBaseTheme(baseThemeId: BaseThemeId): void {
   )
 
   const currentBackground = appliedAssets.background
+  const hasCurrentBackgroundAsset = currentBackground
+    ? uploadedAssets.some(asset => asset.id === currentBackground)
+    : false
   if (baseThemeId === 'v2') {
     if (!defaultBackground) {
       return
     }
-    if (!currentBackground || currentBackground === REMOVED_ASSET_ID) {
+    if (!currentBackground || currentBackground === REMOVED_ASSET_ID || !hasCurrentBackgroundAsset) {
       assetStore.setState({
         appliedAssets: {
           ...appliedAssets,
@@ -207,7 +235,12 @@ function buildThemeQuickStartDefaults(themeCss: string, mode: QuickSettingsMode)
   const fontFamilyRaw = readQuickStartVariable(themeCss, '--quickstart-font-family')
   const fontFamily = fontFamilyRaw.includes('var(') ? '' : fontFamilyRaw
   const bgColor = readQuickStartVariable(themeCss, getQuickStartVariableNameForMode(mode, '--quickstart-bg-color'))
-  const cardShadowDefault = readQuickStartVariable(themeCss, '--quickstart-card-shadow-default')
+  const borderRadiusValue
+    = readQuickStartVariable(themeCss, '--quickstart-border-radius')
+      || readQuickStartVariable(themeCss, '--quickstart-control-border-radius-default')
+  const cardShadowValue
+    = readQuickStartVariable(themeCss, '--quickstart-card-shadow')
+      || readQuickStartVariable(themeCss, '--quickstart-card-shadow-default')
   return {
     colorPresetId: CUSTOM_PRESET_ID,
     primaryColor,
@@ -216,7 +249,8 @@ function buildThemeQuickStartDefaults(themeCss: string, mode: QuickSettingsMode)
     extras: {
       ...DEFAULT_QUICK_START_EXTRAS,
       colorPresetBgColor: bgColor,
-      colorPresetCardShadow: cardShadowDefault === 'none' ? 'none' : 'default',
+      colorPresetBorderRadius: mapQuickStartBorderRadius(borderRadiusValue),
+      colorPresetCardShadow: mapQuickStartCardShadow(cardShadowValue),
     },
   }
 }
@@ -260,10 +294,12 @@ export const presetActions = {
 
     presetStore.setState({ selectedThemeId: themeId, presetCss: themeCss })
     themeStore.setState((state) => {
-      const nextStylesCssByTheme = {
-        ...state.stylesCssByTheme,
-        [previousThemeKey]: state.stylesCss,
-      }
+      const nextStylesCssByTheme = previousThemeKey === nextThemeKey
+        ? { ...state.stylesCssByTheme }
+        : {
+            ...state.stylesCssByTheme,
+            [previousThemeKey]: state.stylesCss,
+          }
       const nextStylesCss = nextStylesCssByTheme[nextThemeKey] ?? themeCss
       return {
         stylesCss: nextStylesCss,

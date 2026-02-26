@@ -3,7 +3,7 @@ import type { ImportedQuickSettingsByMode, JarImportResult } from './types'
 import { processUploadedFile } from '../assets/upload-service'
 import { stripQuickStartImportLine } from '../editor/css-source-sanitizer'
 import { getFilename, parseAppliedAssetsFromCss } from './css-export-utils'
-import { parseQuickSettingsMetadataFromProperties } from './quick-settings-metadata'
+import { parseQuickSettingsFromImportedTheme } from './quick-settings-import'
 
 export const THEME_JAR_IMPORTED_EVENT = 'themeJarImported'
 
@@ -98,13 +98,9 @@ function normalizeImportedAppliedAssets(
 ): AppliedAssets {
   const normalized: AppliedAssets = { ...appliedAssets }
 
-  const defaultBackground = importedAssets.find(
-    asset => asset.category === 'background' && asset.isDefault,
-  )
-  if (defaultBackground && normalized.background === defaultBackground.id) {
-    delete normalized.background
-  }
-
+  // Keep the default background binding to avoid preview quick-start overrides
+  // (e.g. a persisted bg color) hiding the imported v2 background on import.
+  // For logos, keep CSS as source of truth and avoid auto-applying the default.
   const defaultLogo = importedAssets.find(
     asset => asset.category === 'logo' && asset.isDefault,
   )
@@ -125,6 +121,7 @@ export async function importJarFile(file: File): Promise<JarImportResult> {
   let quickStartCss = ''
   let stylesCss = ''
   let themeProps = ''
+  let messagesProperties = ''
   let themeName = ''
   let themeId: string | null = null
   let quickSettingsByMode: ImportedQuickSettingsByMode | undefined
@@ -155,8 +152,17 @@ export async function importJarFile(file: File): Promise<JarImportResult> {
       themeProps = readEntryText(data)
       const themeIdMatch = themeProps.match(THEME_ID_PATTERN)
       themeId = themeIdMatch?.[1]?.trim() || null
-      quickSettingsByMode = parseQuickSettingsMetadataFromProperties(themeProps)
       themeName = extractThemeNameFromPath(filename)
+      continue
+    }
+
+    if (filename.includes('/login/messages/messages.properties')) {
+      messagesProperties = readEntryText(data)
+      continue
+    }
+
+    if (!messagesProperties && filename.includes('/login/messages/messages_en.properties')) {
+      messagesProperties = readEntryText(data)
       continue
     }
 
@@ -167,6 +173,12 @@ export async function importJarFile(file: File): Promise<JarImportResult> {
   }
 
   const combinedCss = joinCssBlocks([quickStartCss, stylesCss, customCss])
+  quickSettingsByMode = parseQuickSettingsFromImportedTheme({
+    quickStartCss,
+    stylesCss,
+    customCss,
+    messagesPropertiesText: messagesProperties,
+  })
 
   // Parse applied assets from full CSS so imported asset bindings are preserved.
   const parsedForAssets = combinedCss

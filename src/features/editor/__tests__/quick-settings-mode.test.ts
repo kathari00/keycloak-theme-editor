@@ -134,7 +134,7 @@ describe('quick settings mode separation', () => {
     expect(coreStore.getState().isDarkMode).toBe(true)
     expect(darkSettings?.colorPresetPrimaryColor).toBe('#a8c7fa')
     expect(darkSettings?.colorPresetBgColor).toBe('#1e1f20')
-    expect(darkSettings?.colorPresetBorderRadius).toBe('default')
+    expect(darkSettings?.colorPresetBorderRadius).toBe('rounded')
     expect(darkSettings?.colorPresetCardShadow).toBe('none')
   })
 

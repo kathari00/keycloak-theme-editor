@@ -89,10 +89,10 @@ export async function buildJarBlob(params: JarBuildParams): Promise<Blob> {
   addTextEntry(files, `${themeLoginRoot}/resources/css/styles.css`, stylesCss)
 
   if (bgImageBlob) {
-    await addBlobEntry(files, `${themeLoginRoot}/resources/img/keycloak-bg-darken.svg`, bgImageBlob)
+    await addBlobEntry(files, `${themeLoginRoot}/resources/img/backgrounds/keycloak-bg-darken.svg`, bgImageBlob)
   }
   if (logoImageBlob) {
-    await addBlobEntry(files, `${themeLoginRoot}/resources/img/keycloak-logo-text.svg`, logoImageBlob)
+    await addBlobEntry(files, `${themeLoginRoot}/resources/img/logos/keycloak-logo-text.svg`, logoImageBlob)
   }
 
   await addAssetsToZip(files, `${themeLoginRoot}/resources`, payload)

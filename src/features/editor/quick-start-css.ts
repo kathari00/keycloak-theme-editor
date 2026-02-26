@@ -14,7 +14,6 @@ export const BORDER_RADIUS_OPTIONS: {
   label: string
   px: string
 }[] = [
-  { value: 'default', label: 'Default', px: '' },
   { value: 'sharp', label: 'Sharp', px: '0px' },
   { value: 'rounded', label: 'Rounded', px: '8px' },
   { value: 'pill', label: 'Pill', px: '24px' },
@@ -25,7 +24,6 @@ export const CARD_SHADOW_OPTIONS: {
   label: string
   css: string
 }[] = [
-  { value: 'default', label: 'Default', css: '' },
   { value: 'none', label: 'None', css: 'none' },
   { value: 'subtle', label: 'Subtle', css: '0 2px 8px rgba(0,0,0,0.10)' },
   { value: 'strong', label: 'Strong', css: '0 8px 32px rgba(0,0,0,0.25)' },
@@ -95,8 +93,8 @@ function buildQuickStartCssParts(options: QuickStartCssOptions): QuickStartCssPa
     secondaryColor,
     fontFamily = '',
     bgColor = '',
-    borderRadius = 'default',
-    cardShadow = 'default',
+    borderRadius = 'rounded',
+    cardShadow = 'subtle',
     headingFontFamily = '',
     showRealmName,
   } = options
@@ -125,8 +123,12 @@ function buildQuickStartCssParts(options: QuickStartCssOptions): QuickStartCssPa
   })
 
   const googleFontsImport = buildGoogleFontsImportCSS(Array.from(googleFontFamilies))
-  const radiusEntry = BORDER_RADIUS_OPTIONS.find(option => option.value === borderRadius)
-  const shadowEntry = CARD_SHADOW_OPTIONS.find(option => option.value === cardShadow)
+  const radiusEntry
+    = BORDER_RADIUS_OPTIONS.find(option => option.value === borderRadius)
+      || BORDER_RADIUS_OPTIONS.find(option => option.value === 'rounded')
+  const shadowEntry
+    = CARD_SHADOW_OPTIONS.find(option => option.value === cardShadow)
+      || CARD_SHADOW_OPTIONS.find(option => option.value === 'subtle')
 
   const quickStartRootVariableValues: Partial<Record<string, string>> = {
     '--quickstart-primary-color': primaryColor,
@@ -146,11 +148,11 @@ function buildQuickStartCssParts(options: QuickStartCssOptions): QuickStartCssPa
     quickStartRootVariableValues['--quickstart-bg-image'] = 'none'
   }
 
-  if (radiusEntry?.px) {
+  if (radiusEntry) {
     quickStartRootVariableValues['--quickstart-border-radius'] = radiusEntry.px
   }
 
-  if (shadowEntry?.css) {
+  if (shadowEntry) {
     quickStartRootVariableValues['--quickstart-card-shadow'] = shadowEntry.css
   }
 
