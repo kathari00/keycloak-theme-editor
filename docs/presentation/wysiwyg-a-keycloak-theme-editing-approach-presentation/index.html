@@ -12,7 +12,7 @@
       href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/white.css"
       id="theme"
     />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/monokai.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/github.css" />
 
     <style>
       /* Removed custom slide width CSS; use Reveal config instead */
@@ -54,6 +54,10 @@
       li {
         line-height: 1.75;
       }
+
+      .reveal aside.notes {
+        display: none !important;
+      }
     </style>
   </head>
 
@@ -65,14 +69,12 @@
           <h2 style="margin-bottom: 2rem;">
             <span class="title-accent">WYSIWYG - A Keycloak theme editing approach</span>
           </h2>
-          <div>
-            <strong>What you will learn:</strong>
-            <ul>
-              <li>Use a visual editor for Keycloak theme editing</li>
-              <li>Different ways to customize the look and feel</li>
-              <li>How to export a deployable artifact from the editor</li>
-            </ul>
-          </div>
+          <p><strong>What you will learn:</strong></p>
+          <ul>
+            <li>Use a visual editor for Keycloak theme editing</li>
+            <li>Different ways to customize the look and feel</li>
+            <li>How to export a deployable artifact from the editor</li>
+          </ul>
           <aside class="notes">
             [0:00–1:00] Set expectations: practical workflow, not a deep code walk-through.
             One sentence on who this is for: Keycloak admins / IAM engineers responsible for branding the login experience.
@@ -228,14 +230,14 @@
             <li><strong>FreeMarker rendering</strong> — a Java tool compiles <code>.ftl</code> templates with the mock data into static HTML</li>
             <li><strong>Pages JSON</strong> — the rendered HTML is saved as a JSON artifact the editor loads at runtime</li>
           </ol>
-          <aside class="notes">
+          <aside class=”notes”>
             [17:30–19:30] Explain that preview generation is deterministic and file-based.
             The pipeline: TS mocks → JSON → Java FreeMarker renderer → pages.json → editor UI.
           </aside>
         </section>
 
         <!-- 9) What gets exported -->
-        <section data-notes=”[19:30–22:30] Point at the tree: This is exactly what Keycloak expects in a theme JAR — nothing custom, nothing proprietary. Mention styles.css holds your CSS overrides, quick-start.css holds the generated quick-start variables. The same structure is used for folder export (without the JAR wrapper).”>
+        <section>
           <h3>What gets exported</h3>
           <pre><code class=”language-text”>my-theme.jar
 ├─ META-INF/
@@ -251,26 +253,30 @@
         ├─ fonts/
         └─ img/  (backgrounds, logos, favicon)</code></pre>
           <p>Standard Keycloak theme structure — deploy it like any other theme.</p>
+          <aside class=”notes”>
+            [19:30–22:30] Point at the tree: “This is exactly what Keycloak expects in a theme JAR — nothing custom, nothing proprietary.”
+            Mention styles.css holds your CSS overrides, quick-start.css holds the generated quick-start variables.
+            The same structure is used for folder export (without the JAR wrapper).
+          </aside>
         </section>
 
         <!-- 10) Import story -->
         <section>
           <h3>Import an existing theme JAR</h3>
+          <p>What gets extracted:</p>
           <ul>
-            <li>Load a theme JAR and extract theme CSS + properties</li>
-            <li>Bring along uploaded assets (fonts/backgrounds/logos/favicon)</li>
-            <li>Keep iterating visually, then export again</li>
+            <li>CSS (styles.css + quick-start.css)</li>
+            <li>Quick-start settings (colors, fonts, border radius, ...)</li>
+            <li>Assets (fonts, backgrounds, logos, favicon)</li>
+            <li>Theme properties + messages</li>
           </ul>
           <p>
-            Note: Import is best-effort in this client-only app. CSS usually imports; custom
-            <code>template.ftl</code> edits and non-standard properties may not.
+            Best-effort: custom <code>template.ftl</code> edits do not round-trip.
           </p>
-          <p>
-            Useful when you already have a working theme and want to change branding without hand-editing everything.
-          </p>
-          <aside class="notes">
+          <aside class=”notes”>
             [22:30–24:30] Keep it simple: “import → tweak → export”.
-            Callout: this is a client-only app; import is best-effort. Template (FTL) customizations are not guaranteed to round-trip.
+            The import parses quick-start CSS variables back into editor settings, so colors/fonts/radius are restored.
+            Template (FTL) customizations are not imported — only CSS-based styling.
           </aside>
         </section>
 
@@ -299,14 +305,17 @@
 
         <!-- 12) Gotchas / best practices -->
         <section>
-          <h3>Gotchas &amp; best practices</h3>
+          <h3>Gotchas</h3>
           <ul>
-            <li>Prefer small, scoped overrides over “rewrite everything”</li>
-            <li>Keep contrast/accessibility in mind (especially error states)</li>
-            <li>Use undo/redo to explore safely</li>
+            <li><strong>Preview is static</strong> — no JavaScript runs, so interactive flows (OTP, WebAuthn, password toggle) must be tested in real Keycloak</li>
+            <li><strong>Check accessibility</strong> — the editor does not validate contrast ratios or focus indicators; verify error states and color choices yourself</li>
+            <li><strong>Keycloak version matters</strong> — the editor targets Keycloak 26.x; older or newer versions may render templates differently</li>
           </ul>
-          <aside class="notes">
-            [26:30–28:30] Emphasize safety and iteration: export+test early.
+          <aside class=”notes”>
+            [26:30–28:30] These are the three things most likely to bite you in production.
+            Static preview: the editor strips all scripts for safety — anything dynamic won't show.
+            Accessibility: especially error messages and low-contrast text on colored backgrounds.
+            Version: if your cluster runs a different major version, always do a final check there.
           </aside>
         </section>
 
@@ -314,13 +323,10 @@
         <section>
           <h3>FAQ + close</h3>
           <ul>
-            <li><strong>Does this upload my theme?</strong> The workflow is local/in-browser (no server required for edit/import/export).</li>
-            <li><strong>Can I export a deployable JAR?</strong> Yes—export as <code>.jar</code>.</li>
-            <li>
-              <strong>Can I start from an existing theme?</strong> Partially—import is best-effort. CSS usually imports;
-              custom <code>template.ftl</code> edits and custom properties may not.
-            </li>
-            <li><strong>How do I deploy?</strong> Use your org’s established theme packaging path (files or artifact).</li>
+            <li><strong>Does my data leave the browser?</strong> keep this one, rephrase slightly</li>
+            <li><strong>Does this work for account/email themes?</strong> not yet, only login (ties into "What's next")</li>
+            <li><strong>Can I use my own FreeMarker templates?</strong> yes, that's the Option B workflow</li>
+            <li><strong>Can our team collaborate on a theme?</strong> no built-in collab, but export → git → import works</li>
           </ul>
           <p style="margin-top: 1.5rem; font-weight: 500; color: var(--kc-blue);">
             Takeaway: export early, test in Keycloak, iterate fast.
