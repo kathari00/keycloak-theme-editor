@@ -1,6 +1,6 @@
 import type { ThemeId } from '../features/presets/types'
 import type { JarImportResult as ThemeImportData } from '../features/theme-export/types'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import ContextBar from '../components/ContextBar'
 import ErrorBoundary from '../components/ErrorBoundary'
 import RightSidebar from '../components/RightSidebar'
@@ -13,6 +13,7 @@ import { getThemeCssStructuredCached, resolveThemeBaseIdFromConfig, resolveTheme
 import { ensureGeneratedPreviewPagesLoaded, getVariantPages, resolvePreviewVariantId } from '../features/preview/load-generated'
 import { PreviewProvider } from '../features/preview/PreviewProvider'
 import { PreviewShell } from '../features/preview/PreviewShell'
+import { useResizableSidebar } from './hooks/useResizableSidebar'
 import '@patternfly/react-core/dist/styles/base.css'
 
 function resolveThemeIdFromThemeProperties(propertiesText: string | undefined): ThemeId {
@@ -40,14 +41,6 @@ const loadingSpinner = (
   </div>
 )
 
-const RIGHT_SIDEBAR_DEFAULT_WIDTH = 450
-const RIGHT_SIDEBAR_MIN_WIDTH = 320
-const EDITOR_MAIN_MIN_WIDTH = 420
-
-function clamp(value: number, min: number, max: number) {
-  return Math.min(Math.max(value, min), max)
-}
-
 async function blobToBase64(blob: Blob): Promise<string> {
   return await new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -67,145 +60,12 @@ export default function EditorContent() {
   const { activePageId } = usePreviewState()
   const themeConfig = useThemeConfig()
   const [previewPagesReady, setPreviewPagesReady] = useState(false)
-  const [isDesktopLayout, setIsDesktopLayout] = useState(false)
   const layoutRef = useRef<HTMLDivElement | null>(null)
-  const rightSidebarRef = useRef<HTMLDivElement | null>(null)
-  const rightSidebarWidthRef = useRef(RIGHT_SIDEBAR_DEFAULT_WIDTH)
-  const sidebarResizeRef = useRef<{ startX: number, startWidth: number, maxWidth: number } | null>(null)
-  const sidebarResizeControllerRef = useRef<AbortController | null>(null)
-  const resizeRafRef = useRef<number | null>(null)
-  const pendingPointerXRef = useRef<number | null>(null)
 
-  const getMaxRightSidebarWidth = useCallback(() => {
-    const layoutWidth = layoutRef.current?.getBoundingClientRect().width ?? window.innerWidth
-    return Math.max(RIGHT_SIDEBAR_MIN_WIDTH, layoutWidth - EDITOR_MAIN_MIN_WIDTH)
-  }, [])
-
-  const removeSidebarResizeListeners = useCallback(() => {
-    sidebarResizeControllerRef.current?.abort()
-    sidebarResizeControllerRef.current = null
-  }, [])
-
-  const applyRightSidebarWidth = useCallback((nextWidth: number) => {
-    rightSidebarWidthRef.current = nextWidth
-    if (rightSidebarRef.current) {
-      rightSidebarRef.current.style.width = `${nextWidth}px`
-    }
-  }, [])
-
-  const stopSidebarResize = useCallback(() => {
-    removeSidebarResizeListeners()
-    if (resizeRafRef.current !== null) {
-      cancelAnimationFrame(resizeRafRef.current)
-      resizeRafRef.current = null
-    }
-    pendingPointerXRef.current = null
-    sidebarResizeRef.current = null
-    document.body.style.cursor = ''
-    document.body.style.userSelect = ''
-  }, [removeSidebarResizeListeners])
-
-  const applySidebarWidthFromPointerX = useCallback((clientX: number) => {
-    const resizeState = sidebarResizeRef.current
-    if (!resizeState) {
-      return
-    }
-
-    const deltaX = resizeState.startX - clientX
-    const nextWidth = clamp(
-      resizeState.startWidth + deltaX,
-      RIGHT_SIDEBAR_MIN_WIDTH,
-      resizeState.maxWidth,
-    )
-    applyRightSidebarWidth(nextWidth)
-  }, [applyRightSidebarWidth])
-
-  const handleSidebarResizeMove = useCallback((event: PointerEvent) => {
-    if (!sidebarResizeRef.current) {
-      return
-    }
-
-    pendingPointerXRef.current = event.clientX
-    if (resizeRafRef.current !== null) {
-      return
-    }
-
-    resizeRafRef.current = requestAnimationFrame(() => {
-      resizeRafRef.current = null
-      const pointerX = pendingPointerXRef.current
-      if (pointerX !== null) {
-        applySidebarWidthFromPointerX(pointerX)
-      }
-    })
-  }, [applySidebarWidthFromPointerX])
-
-  const handleSidebarResizeEnd = useCallback(() => {
-    const pointerX = pendingPointerXRef.current
-    if (pointerX !== null) {
-      applySidebarWidthFromPointerX(pointerX)
-    }
-    stopSidebarResize()
-    applyRightSidebarWidth(rightSidebarWidthRef.current)
-  }, [applyRightSidebarWidth, applySidebarWidthFromPointerX, stopSidebarResize])
-
-  const handleSidebarResizeStart = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
-    if (!isDesktopLayout || event.button !== 0) {
-      return
-    }
-
-    event.preventDefault()
-    removeSidebarResizeListeners()
-    const maxWidth = getMaxRightSidebarWidth()
-    sidebarResizeRef.current = {
-      startX: event.clientX,
-      startWidth: rightSidebarWidthRef.current,
-      maxWidth,
-    }
-    document.body.style.cursor = 'col-resize'
-    document.body.style.userSelect = 'none'
-    const resizeController = new AbortController()
-    sidebarResizeControllerRef.current = resizeController
-    window.addEventListener('pointermove', handleSidebarResizeMove, { signal: resizeController.signal })
-    window.addEventListener('pointerup', handleSidebarResizeEnd, { signal: resizeController.signal })
-    window.addEventListener('pointercancel', handleSidebarResizeEnd, { signal: resizeController.signal })
-  }, [getMaxRightSidebarWidth, handleSidebarResizeEnd, handleSidebarResizeMove, isDesktopLayout, removeSidebarResizeListeners])
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(min-width: 1024px)')
-    const applyLayoutMode = () => setIsDesktopLayout(mediaQuery.matches)
-    applyLayoutMode()
-    mediaQuery.addEventListener('change', applyLayoutMode)
-    return () => {
-      mediaQuery.removeEventListener('change', applyLayoutMode)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!isDesktopLayout) {
-      stopSidebarResize()
-      if (rightSidebarRef.current) {
-        rightSidebarRef.current.style.width = ''
-      }
-      return
-    }
-
-    const clampSidebarWidth = () => {
-      const maxWidth = getMaxRightSidebarWidth()
-      applyRightSidebarWidth(clamp(rightSidebarWidthRef.current, RIGHT_SIDEBAR_MIN_WIDTH, maxWidth))
-    }
-
-    clampSidebarWidth()
-    window.addEventListener('resize', clampSidebarWidth)
-    return () => {
-      window.removeEventListener('resize', clampSidebarWidth)
-    }
-  }, [applyRightSidebarWidth, getMaxRightSidebarWidth, isDesktopLayout, stopSidebarResize])
-
-  useEffect(() => {
-    return () => {
-      stopSidebarResize()
-    }
-  }, [stopSidebarResize])
+  const {
+    sidebarRef: rightSidebarRef,
+    handleResizeStart: handleSidebarResizeStart,
+  } = useResizableSidebar({ layoutRef })
 
   useEffect(() => {
     let cancelled = false
