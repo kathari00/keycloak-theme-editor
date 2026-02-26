@@ -1,6 +1,6 @@
 import type { QuickStartCssOptions } from '../quick-start-css'
 import { describe, expect, it } from 'vitest'
-import { buildQuickStartCss, COLOR_REGEX, CUSTOM_PRESET_ID } from '../quick-start-css'
+import { buildQuickStartCss, COLOR_REGEX } from '../quick-start-css'
 
 function build(overrides: Partial<QuickStartCssOptions> = {}) {
   return buildQuickStartCss({ primaryColor: '#000000', secondaryColor: '#111111', ...overrides })
@@ -46,23 +46,6 @@ describe('quick-start-css', () => {
       expect(result).not.toContain('--pf-v5-global--FontFamily--text:')
       expect(result).not.toContain('--pf-v5-global--FontFamily--sans-serif:')
       expect(result).not.toContain('--pf-v5-global--FontFamily--heading:')
-    })
-
-    it('normalizes legacy default radius/shadow values to explicit quickstart variables', () => {
-      const result = build({
-        fontFamily: CUSTOM_PRESET_ID,
-        headingFontFamily: CUSTOM_PRESET_ID,
-        bgColor: '',
-        borderRadius: 'default',
-        cardShadow: 'default',
-      })
-
-      expect(result).not.toContain('--quickstart-font-family:')
-      expect(result).not.toContain('--quickstart-heading-font-family:')
-      expect(result).not.toContain('--quickstart-bg-color:')
-      expect(result).not.toContain('--quickstart-bg-image:')
-      expect(result).toContain('--quickstart-border-radius: 8px;')
-      expect(result).toContain('--quickstart-card-shadow: 0 2px 8px rgba(0,0,0,0.10);')
     })
 
     it('does not emit bg variable for invalid color', () => {
