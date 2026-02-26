@@ -271,19 +271,8 @@ class UserCssStore {
       }
     }
 
-    const nearestAncestorWithIdentity = this.findNearestAncestorWithIdentity(element)
     return (selectorList: string) => {
-      if (!nearestAncestorWithIdentity) {
-        return this.elementMatchesSelectorList(element, selectorList)
-      }
-
-      const ancestorTokens = this.getElementIdentityTokens(nearestAncestorWithIdentity)
-      if (!this.selectorReferencesAnyIdentityToken(selectorList, ancestorTokens)) {
-        return false
-      }
-
       return this.elementMatchesSelectorList(element, selectorList)
-        || this.elementMatchesSelectorList(nearestAncestorWithIdentity, selectorList)
     }
   }
 
@@ -298,15 +287,6 @@ class UserCssStore {
       }
     })
     return tokens
-  }
-
-  private findNearestAncestorWithIdentity(element: Element): Element | null {
-    for (let ancestor = element.parentElement; ancestor; ancestor = ancestor.parentElement) {
-      if (ancestor.id || ancestor.classList.length > 0) {
-        return ancestor
-      }
-    }
-    return null
   }
 
   private selectorReferencesAnyIdentityToken(selectorList: string, identityTokens: string[]): boolean {
@@ -373,7 +353,7 @@ class UserCssStore {
 
   private parseBlock(text: string, start: number): { block: ParsedBlock, endIndex: number } | null {
     // At-rule terminated by ; (e.g. @import url(...);)
-    const semiIdx = text.indexOf(';', start)
+    const semiIdx = this.findTopLevelSemicolon(text, start)
     const braceIdx = text.indexOf('{', start)
     if (text[start] === '@' && semiIdx !== -1 && (braceIdx === -1 || semiIdx < braceIdx)) {
       return {
@@ -424,6 +404,41 @@ class UserCssStore {
 
     // Regular rule
     return { block: { type: 'rule', selector: prelude, raw }, endIndex: i }
+  }
+
+  private findTopLevelSemicolon(text: string, start: number): number {
+    let quote: '"' | '\'' | null = null
+    let parenDepth = 0
+
+    for (let i = start; i < text.length; i++) {
+      const ch = text[i]
+      const prev = i > start ? text[i - 1] : ''
+
+      if (quote) {
+        if (ch === quote && prev !== '\\') {
+          quote = null
+        }
+        continue
+      }
+
+      if (ch === '"' || ch === '\'') {
+        quote = ch
+        continue
+      }
+      if (ch === '(') {
+        parenDepth++
+        continue
+      }
+      if (ch === ')' && parenDepth > 0) {
+        parenDepth--
+        continue
+      }
+      if (ch === ';' && parenDepth === 0) {
+        return i
+      }
+    }
+
+    return -1
   }
 
   private skipWhitespaceAndComments(text: string, start: number): number {

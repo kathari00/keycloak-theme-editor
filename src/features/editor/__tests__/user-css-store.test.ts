@@ -165,7 +165,7 @@ body {
       expect(result).not.toContain('#kc-content-wrapper {\n  display: flex;\n}')
     })
 
-    it('falls back to nearest identifiable ancestor for anonymous selected elements', () => {
+    it('does not include ancestor rules for anonymous selected elements', () => {
       const css = `#kc-code {
   color: black;
 }
@@ -182,11 +182,11 @@ body {
       anonymousSelected.className = ''
 
       const result = userCssStore.getCssForElementFromText(css, anonymousSelected)
-      expect(result).toContain('#kc-code {')
+      expect(result).not.toContain('#kc-code {')
       expect(result).not.toContain('body {')
     })
 
-    it('excludes generic element selectors for anonymous selection when no ancestor token is referenced', () => {
+    it('includes generic element selectors when they directly target an anonymous selected element', () => {
       const css = `a {
   color: red;
 }
@@ -198,7 +198,22 @@ body {
       anchor.removeAttribute('id')
       const result = userCssStore.getCssForElementFromText(css, anchor)
       expect(result).toContain('#kc-registration > span > a')
-      expect(result).not.toContain('\na {\n')
+      expect(result).toContain('a {\n  color: red;\n}')
+    })
+
+    it('includes generic heading selectors for anonymous heading selection', () => {
+      const css = `h2 {
+  color: red;
+}
+
+.other {
+  color: blue;
+}`
+      const heading = getElement('<div id="kc-content"><h2>Title</h2></div>', 'h2')
+      const result = userCssStore.getCssForElementFromText(css, heading)
+      expect(result).toContain('h2 {')
+      expect(result).toContain('color: red;')
+      expect(result).not.toContain('.other')
     })
 
     it('excludes generic focus rules for identified input selection when selector does not reference that input', () => {
@@ -281,6 +296,22 @@ body {
 
       expect(next).toContain('@supports selector(.foo:has(.bar)) {')
       expect(next).toContain('.foo {')
+      expect(next).toContain('#kc-code p {\n  color: black;\n}')
+    })
+
+    it('preserves google fonts @import rules with semicolons inside url', () => {
+      const css = `@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+#kc-code p {
+  color: red;
+}`
+      const element = getElement('<div id="kc-code"><p id="demo-p">Demo</p></div>', '#demo-p')
+      const next = userCssStore.replaceCssForElementInText(css, element, `#kc-code p {
+  color: black;
+}`)
+
+      expect(next).toContain(`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');`)
+      expect(next).not.toContain("wght@300;\n400;500;600;700")
       expect(next).toContain('#kc-code p {\n  color: black;\n}')
     })
 
