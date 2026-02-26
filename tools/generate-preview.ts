@@ -153,13 +153,24 @@ function main() {
   const variants: Record<string, Record<string, Record<string, string>>> = {}
   for (const [variantId, pages] of Object.entries(raw.variants as Record<string, Record<string, string>>)) {
     const variantPages: Record<string, Record<string, string>> = {}
-    for (const [pageId, rawHtml] of Object.entries((pages ?? {}) as Record<string, unknown>)) {
-      if (typeof rawHtml !== 'string') {
+    for (const [pageId, rawPage] of Object.entries((pages ?? {}) as Record<string, unknown>)) {
+      let html = ''
+      let currentStories: Record<string, unknown> = {}
+      if (typeof rawPage === 'string') {
+        html = rawPage
+        currentStories = (raw.scenarios?.[variantId]?.[pageId] ?? {}) as Record<string, unknown>
+      }
+      else if (rawPage && typeof rawPage === 'object' && !Array.isArray(rawPage)) {
+        currentStories = rawPage as Record<string, unknown>
+        if (typeof currentStories.default !== 'string') {
+          continue
+        }
+        html = currentStories.default
+      }
+      else {
         continue
       }
 
-      const html = rawHtml
-      const currentStories = (raw.scenarios?.[variantId]?.[pageId] ?? {}) as Record<string, unknown>
       const previousStories = getPreviousStories(previous, variantId, pageId)
       const sanitizedBaseHtml = stripScriptTags(html)
       const stories: Record<string, string> = { default: sanitizedBaseHtml }

@@ -44,7 +44,6 @@ public final class PreviewRendererMain {
     }
 
     Map<String, Object> pagesOutput = new LinkedHashMap<String, Object>();
-    Map<String, Object> scenariosOutput = new LinkedHashMap<String, Object>();
 
     ContextBuilder.ContextOverrides builtInOverrides = contextBuilder.readContextOverrides(arguments.contextMocksPath);
     ContextBuilder.ContextOverrides contextOverrides = contextBuilder.mergeCustomMocks(
@@ -69,12 +68,9 @@ public final class PreviewRendererMain {
       if (!result.variantPages.isEmpty()) {
         pagesOutput.put(variant.id, result.variantPages);
       }
-      if (!result.variantScenarios.isEmpty()) {
-        scenariosOutput.put(variant.id, result.variantScenarios);
-      }
     }
 
-    writeOutputs(pagesOutput, scenariosOutput);
+    writeOutputs(pagesOutput);
     System.out.println("Generated preview artifacts in " + arguments.outputRoot);
   }
 
@@ -93,8 +89,7 @@ public final class PreviewRendererMain {
       ContextBuilder.ContextOverrides contextOverrides,
       Map<String, List<ScenarioSpec>> scenarioSpecsByPage
   ) {
-    Map<String, String> variantPages = new LinkedHashMap<String, String>();
-    Map<String, Map<String, String>> variantScenarios = new LinkedHashMap<String, Map<String, String>>();
+    Map<String, Map<String, String>> variantPages = new LinkedHashMap<String, Map<String, String>>();
     List<String> skippedTemplates = new ArrayList<String>();
 
     for (String pageTemplate : inputs.getPageTemplates()) {
@@ -117,32 +112,25 @@ public final class PreviewRendererMain {
           continue;
         }
 
-        variantPages.put(pageId, html);
+        Map<String, String> pageStories = new LinkedHashMap<String, String>();
+        pageStories.put("default", html);
         List<ScenarioSpec> pageScenarios = scenarioSpecsByPage.get(pageName);
         if (pageScenarios != null && !pageScenarios.isEmpty()) {
-          Map<String, String> renderedScenarioHtml = new LinkedHashMap<String, String>();
           for (ScenarioSpec scenario : pageScenarios) {
-            try {
-              renderedScenarioHtml.put(scenario.id, loadScenarioHtml(variant.id, scenario));
-            } catch (Exception scenarioError) {
-              skippedTemplates.add(
-                  pageTemplate + " [" + scenario.id + "]: " + summarizeError(scenarioError)
-                      + " (falling back to rendered page HTML)"
-              );
-              renderedScenarioHtml.put(scenario.id, html);
+            if (!pageStories.containsKey(scenario.id)) {
+              // Scenario variants are generated directly into pages.json.
+              // Without scenario-specific context data, seed each scenario with the base render.
+              pageStories.put(scenario.id, html);
             }
           }
-
-          if (!renderedScenarioHtml.isEmpty()) {
-            variantScenarios.put(pageId, renderedScenarioHtml);
-          }
         }
+        variantPages.put(pageId, pageStories);
       } catch (Exception error) {
         skippedTemplates.add(pageTemplate + ": " + summarizeError(error));
       }
     }
 
-    return new VariantRenderResult(variantPages, variantScenarios, skippedTemplates);
+    return new VariantRenderResult(variantPages, skippedTemplates);
   }
 
   private void logSkippedTemplates(String variantId, List<String> skippedTemplates) {
@@ -216,48 +204,29 @@ public final class PreviewRendererMain {
           throw new IllegalStateException("Scenario " + scenarioIndex + " in " + storyFile.toString() + " is missing \"id\".");
         }
 
-        String htmlFile = asString(story.get("htmlFile")).trim();
-        if (htmlFile.isEmpty()) {
-          htmlFile = page + "/" + id + ".html";
-        }
-
         List<ScenarioSpec> specs = scenariosByPage.get(page);
         if (specs == null) {
           specs = new ArrayList<ScenarioSpec>();
           scenariosByPage.put(page, specs);
         }
 
-        specs.add(new ScenarioSpec(id, htmlFile));
+        specs.add(new ScenarioSpec(id));
       }
     }
 
     return scenariosByPage;
   }
 
-  private String loadScenarioHtml(String variantId, ScenarioSpec scenario) throws IOException {
-    if (arguments.scenarioHtmlRoot == null) {
-      throw new IllegalStateException("Scenario HTML root is not configured.");
-    }
-
-    Path resolvedPath = arguments.scenarioHtmlRoot.resolve(variantId).resolve(scenario.htmlFile).normalize();
-    if (!Files.exists(resolvedPath) || !Files.isRegularFile(resolvedPath)) {
-      throw new IllegalStateException("Missing pre-rendered scenario HTML: " + resolvedPath);
-    }
-
-    return readUtf8(resolvedPath);
-  }
-
-  private void writeOutputs(Map<String, Object> pagesOutput, Map<String, Object> scenariosOutput) throws IOException {
+  private void writeOutputs(Map<String, Object> pagesOutput) throws IOException {
     Files.createDirectories(arguments.outputRoot);
-    writeJson(arguments.outputRoot.resolve("pages.json"), buildPagesOutputEnvelope(pagesOutput, scenariosOutput));
+    writeJson(arguments.outputRoot.resolve("pages.json"), buildPagesOutputEnvelope(pagesOutput));
   }
 
-  private Map<String, Object> buildPagesOutputEnvelope(Map<String, Object> pageVariants, Map<String, Object> scenarioVariants) {
+  private Map<String, Object> buildPagesOutputEnvelope(Map<String, Object> pageVariants) {
     Map<String, Object> output = new LinkedHashMap<String, Object>();
     output.put("generatedAt", Instant.now().toString());
     output.put("keycloakTag", arguments.keycloakTag);
     output.put("variants", pageVariants);
-    output.put("scenarios", scenarioVariants);
     return output;
   }
 
@@ -305,28 +274,23 @@ public final class PreviewRendererMain {
   }
 
   private static final class VariantRenderResult {
-    private final Map<String, String> variantPages;
-    private final Map<String, Map<String, String>> variantScenarios;
+    private final Map<String, Map<String, String>> variantPages;
     private final List<String> skippedTemplates;
 
     private VariantRenderResult(
-        Map<String, String> variantPages,
-        Map<String, Map<String, String>> variantScenarios,
+        Map<String, Map<String, String>> variantPages,
         List<String> skippedTemplates
     ) {
       this.variantPages = variantPages;
-      this.variantScenarios = variantScenarios;
       this.skippedTemplates = skippedTemplates;
     }
   }
 
   private static final class ScenarioSpec {
     private final String id;
-    private final String htmlFile;
 
-    private ScenarioSpec(String id, String htmlFile) {
+    private ScenarioSpec(String id) {
       this.id = id;
-      this.htmlFile = htmlFile;
     }
   }
 
@@ -338,7 +302,6 @@ public final class PreviewRendererMain {
     private final Path contextMocksPath;
     private final Path customMocksPath;
     private final Path scenarioManifestRoot;
-    private final Path scenarioHtmlRoot;
     private final String keycloakTag;
 
     private Arguments(
@@ -349,7 +312,6 @@ public final class PreviewRendererMain {
         Path contextMocksPath,
         Path customMocksPath,
         Path scenarioManifestRoot,
-        Path scenarioHtmlRoot,
         String keycloakTag
     ) {
       this.inputRoot = inputRoot;
@@ -359,7 +321,6 @@ public final class PreviewRendererMain {
       this.contextMocksPath = contextMocksPath;
       this.customMocksPath = customMocksPath;
       this.scenarioManifestRoot = scenarioManifestRoot;
-      this.scenarioHtmlRoot = scenarioHtmlRoot;
       this.keycloakTag = keycloakTag;
     }
 
@@ -402,7 +363,6 @@ public final class PreviewRendererMain {
       }
 
       Path scenarioManifestRoot = Paths.get(values.getOrDefault("scenario-stories", "tools/preview-renderer/scenario-stories"));
-      Path scenarioHtmlRoot = Paths.get(values.getOrDefault("scenario-html", "tools/preview-renderer/scenario-html"));
       String keycloakTag = values.getOrDefault("tag", "26.x");
 
       return new Arguments(
@@ -413,7 +373,6 @@ public final class PreviewRendererMain {
           contextMocksPath,
           customMocksPath,
           scenarioManifestRoot,
-          scenarioHtmlRoot,
           keycloakTag
       );
     }
