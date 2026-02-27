@@ -1,7 +1,7 @@
 import type { UploadedAsset } from '../features/assets/types'
 import type { ThemeId } from '../features/presets/types'
 import type { JarImportResult as ThemeImportData } from '../features/theme-export/types'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import ContextBar from '../components/ContextBar'
 import ErrorBoundary from '../components/ErrorBoundary'
 import RightSidebar from '../components/RightSidebar'
@@ -87,10 +87,7 @@ export default function EditorContent() {
 
   const resolvedThemeId = resolveThemeIdFromConfig(themeConfig, selectedThemeId)
   const variantId = resolvePreviewVariantId({ selectedThemeId: resolvedThemeId })
-  const pageMap = useMemo(
-    () => (previewPagesReady ? getVariantPages(variantId) : {}),
-    [previewPagesReady, variantId],
-  )
+  const pageMap = previewPagesReady ? getVariantPages(variantId) : {}
   const pageIds = Object.keys(pageMap)
   const initialPageId = (() => {
     if (activePageId && pageMap[activePageId]) {

@@ -1,6 +1,6 @@
 import patternflyAddonsCssUrl from '@patternfly-v5/patternfly/patternfly-addons.css?url'
 import patternflyCssUrl from '@patternfly-v5/patternfly/patternfly.min.css?url'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   generateAppliedAssetsCSS,
   generateFontFaceCSS,
@@ -262,7 +262,7 @@ export function PreviewShell() {
   const themeQuickStartCssPath = getThemeQuickStartCssPath(resolvedThemeId)
   const themeStylesPath = getThemePreviewStylesPath(resolvedThemeId)
   const themePreviewCssPath = getThemePreviewCssPath(resolvedThemeId)
-  const quickStartOverridesCss = useMemo(() => buildQuickStartCss({
+  const quickStartOverridesCss = buildQuickStartCss({
     primaryColor: colorPresetPrimaryColor,
     secondaryColor: colorPresetSecondaryColor,
     fontFamily: colorPresetFontFamily,
@@ -275,30 +275,14 @@ export function PreviewShell() {
     infoMessage,
     imprintUrl,
     dataProtectionUrl,
-  }), [
-    colorPresetPrimaryColor,
-    colorPresetSecondaryColor,
-    colorPresetFontFamily,
-    colorPresetBgColor,
-    colorPresetBorderRadius,
-    colorPresetCardShadow,
-    colorPresetHeadingFontFamily,
-    showClientName,
-    showRealmName,
-    infoMessage,
-    imprintUrl,
-    dataProtectionUrl,
-  ])
-  const uploadedFontsCss = useMemo(() => generateFontFaceCSS(uploadedAssets), [uploadedAssets])
-  const uploadedImagesCss = useMemo(() => generateImageCSSVars(uploadedAssets), [uploadedAssets])
-  const appliedAssetsCss = useMemo(
-    () => generateAppliedAssetsCSS(appliedAssets, uploadedAssets),
-    [appliedAssets, uploadedAssets],
-  )
+  })
+  const uploadedFontsCss = generateFontFaceCSS(uploadedAssets)
+  const uploadedImagesCss = generateImageCSSVars(uploadedAssets)
+  const appliedAssetsCss = generateAppliedAssetsCSS(appliedAssets, uploadedAssets)
   const [frameLoadVersion, setFrameLoadVersion] = useState(0)
   const [messageOverrides, setMessageOverrides] = useState<{ noAccount?: string, doRegister?: string }>({})
 
-  const srcDoc = useMemo(() => sanitizePreviewHtml(pageHtml), [pageHtml])
+  const srcDoc = sanitizePreviewHtml(pageHtml)
 
   useEffect(() => {
     let isDisposed = false

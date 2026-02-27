@@ -1,4 +1,3 @@
-import { useMemo } from 'react'
 import { buildGoogleFontOptions } from '../../features/assets/google-fonts'
 import { CUSTOM_PRESET_ID } from '../../features/editor/quick-start-css'
 import {
@@ -39,7 +38,7 @@ export function useQuickStartSettings() {
     dataProtectionUrl,
   } = useQuickStartContentState()
 
-  const fontOptions = useMemo<FontOption[]>(() => {
+  const fontOptions: FontOption[] = (() => {
     const googleOptions = buildGoogleFontOptions().map(option => ({
       value: option.id,
       label: option.label,
@@ -71,7 +70,7 @@ export function useQuickStartSettings() {
     })
 
     return options
-  }, [uploadedAssets, effectiveFontFamily, effectiveHeadingFontFamily])
+  })()
 
   return {
     selectedThemeId,

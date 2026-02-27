@@ -1,5 +1,5 @@
 import type { RefObject } from 'react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 export interface UseResizableSidebarOptions {
   layoutRef: RefObject<HTMLDivElement | null>
@@ -34,17 +34,17 @@ export function useResizableSidebar(options: UseResizableSidebarOptions): UseRes
   const [sidebarWidth, setSidebarWidth] = useState(defaultWidth)
   const sidebarWidthRef = useRef(defaultWidth)
 
-  const getMaxSidebarWidth = useCallback(() => {
+  const getMaxSidebarWidth = () => {
     const layoutWidth = layoutRef.current?.getBoundingClientRect().width ?? window.innerWidth
     return Math.max(minWidth, layoutWidth - mainMinWidth)
-  }, [layoutRef, mainMinWidth, minWidth])
+  }
 
-  const setWidth = useCallback((width: number) => {
+  const setWidth = (width: number) => {
     sidebarWidthRef.current = width
     setSidebarWidth(width)
-  }, [])
+  }
 
-  const handleResizeStart = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+  const handleResizeStart = (event: React.PointerEvent<HTMLDivElement>) => {
     if (!isDesktopLayout || event.button !== 0) {
       return
     }
@@ -98,7 +98,7 @@ export function useResizableSidebar(options: UseResizableSidebarOptions): UseRes
     handle.addEventListener('pointermove', onMove)
     handle.addEventListener('pointerup', cleanup)
     handle.addEventListener('lostpointercapture', cleanup)
-  }, [getMaxSidebarWidth, isDesktopLayout, minWidth, setWidth])
+  }
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(min-width: 1024px)')

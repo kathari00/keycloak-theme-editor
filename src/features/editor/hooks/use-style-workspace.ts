@@ -1,5 +1,5 @@
 import type { UndoRedoAction } from '../stores/types'
-import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react'
+import { useEffect, useReducer, useRef } from 'react'
 import { normalizeCss } from '../style-editor-utils'
 import { userCssStore } from '../user-css-store'
 
@@ -190,7 +190,7 @@ export function useStyleWorkspace({
   const sourceCss = stylesCss
   const lastSelfCommittedCssRef = useRef<string | null>(null)
 
-  const applySourceCss = useCallback((nextCss: string) => {
+  const applySourceCss = (nextCss: string) => {
     if (nextCss === sourceCss) {
       return
     }
@@ -207,19 +207,15 @@ export function useStyleWorkspace({
 
     lastSelfCommittedCssRef.current = nextCss
     setStylesCss(nextCss)
-  }, [addUndoRedoAction, setStylesCss, sourceCss])
+  }
 
   const effectiveScopedElement = hasActiveSelection ? selectedElement : null
 
-  const sourceEditorCss = useMemo(() => {
-    if (showAllStyles) {
-      return sourceCss
-    }
-    if (!effectiveScopedElement) {
-      return ''
-    }
-    return userCssStore.getCssForElementFromText(sourceCss, effectiveScopedElement)
-  }, [showAllStyles, effectiveScopedElement, sourceCss])
+  const sourceEditorCss = showAllStyles
+    ? sourceCss
+    : effectiveScopedElement
+      ? userCssStore.getCssForElementFromText(sourceCss, effectiveScopedElement)
+      : ''
 
   const [draftState, dispatchDraft] = useReducer(
     styleWorkspaceDraftReducer,
@@ -283,7 +279,7 @@ export function useStyleWorkspace({
     sourceEditorCss,
   ])
 
-  const commitEditorCssDraft = useCallback((cssDraftToCommit: string) => {
+  const commitEditorCssDraft = (cssDraftToCommit: string) => {
     const nextCss = resolveCommittedCss({
       sourceCss,
       sourceEditorCss,
@@ -295,13 +291,13 @@ export function useStyleWorkspace({
       return
     }
     applySourceCss(nextCss)
-  }, [showAllStyles, effectiveScopedElement, applySourceCss, sourceCss, sourceEditorCss])
+  }
 
-  const commitEditorCss = useCallback(() => {
+  const commitEditorCss = () => {
     commitEditorCssDraft(draftState.editorCssDraft)
-  }, [commitEditorCssDraft, draftState.editorCssDraft])
+  }
 
-  const setEditorCss = useCallback((nextCss: string) => {
+  const setEditorCss = (nextCss: string) => {
     dispatchDraft({ type: 'setDraft', editorCssDraft: nextCss })
 
     if (showAllStyles) {
@@ -329,7 +325,7 @@ export function useStyleWorkspace({
     if (!nextCss.trim() && sourceEditorCss.trim()) {
       commitEditorCssDraft(nextCss)
     }
-  }, [commitEditorCssDraft, effectiveScopedElement, showAllStyles, sourceEditorCss])
+  }
 
   return {
     editorCss: draftState.editorCssDraft,

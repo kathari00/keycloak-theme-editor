@@ -1,5 +1,5 @@
 import CodeMirror from '@uiw/react-codemirror'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { getAssetDataUrl, getUploadedImageCssVarName } from '../features/assets/font-css-generator'
 import { editorActions } from '../features/editor/actions'
 import { createCssEditorExtensions } from '../features/editor/codemirror-config'
@@ -81,45 +81,31 @@ export default function StylingPanel() {
     ? resolveSelectedElement(previewDocument, selectedNodeId)
     : null
 
-  const customFontFamilies = useMemo(
-    () =>
-      uploadedAssets.flatMap(asset =>
-        asset.category === 'font' && asset.fontFamily ? [asset.fontFamily] : [],
-      ),
-    [uploadedAssets],
+  const customFontFamilies = uploadedAssets.flatMap(asset =>
+    asset.category === 'font' && asset.fontFamily ? [asset.fontFamily] : [],
   )
 
-  const uploadedImages = useMemo<CssEditorImageAsset[]>(
-    () =>
-      uploadedAssets
-        .filter(asset => asset.category === 'background' || asset.category === 'logo' || asset.category === 'image')
-        .map(asset => ({
-          name: asset.name,
-          category: asset.category,
-          dataUrl: getAssetDataUrl(asset),
-          cssVar: getUploadedImageCssVarName(asset) ?? undefined,
-        })),
-    [uploadedAssets],
-  )
+  const uploadedImages: CssEditorImageAsset[] = uploadedAssets
+    .filter(asset => asset.category === 'background' || asset.category === 'logo' || asset.category === 'image')
+    .map(asset => ({
+      name: asset.name,
+      category: asset.category,
+      dataUrl: getAssetDataUrl(asset),
+      cssVar: getUploadedImageCssVarName(asset) ?? undefined,
+    }))
 
-  const availableIdentifiers = useMemo(() => {
-    return collectIdentifiersForSelectedElement(previewDocument, selectedNodeId)
-  }, [previewDocument, selectedNodeId])
+  const availableIdentifiers = collectIdentifiersForSelectedElement(previewDocument, selectedNodeId)
 
-  const extensions = useMemo(
-    () =>
-      createCssEditorExtensions(
-        isDarkMode,
-        customFontFamilies,
-        uploadedImages,
-        availableIdentifiers,
-        selectedNodeId,
-        {
-          undo: editorActions.undo,
-          redo: editorActions.redo,
-        },
-      ),
-    [isDarkMode, customFontFamilies, uploadedImages, availableIdentifiers, selectedNodeId],
+  const extensions = createCssEditorExtensions(
+    isDarkMode,
+    customFontFamilies,
+    uploadedImages,
+    availableIdentifiers,
+    selectedNodeId,
+    {
+      undo: editorActions.undo,
+      redo: editorActions.redo,
+    },
   )
 
   const {

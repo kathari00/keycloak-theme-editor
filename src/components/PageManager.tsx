@@ -1,5 +1,5 @@
 import { TreeViewSearch } from '@patternfly/react-core'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useEditorStore } from '../features/editor/use-editor'
 import { usePreviewContext } from '../features/preview/use-preview-context'
 
@@ -9,16 +9,12 @@ export default function PageManager() {
   const [query, setQuery] = useState('')
 
   const normalizedQuery = query.trim().toLowerCase()
-  const filteredPages = useMemo(() => {
-    if (!normalizedQuery) {
-      return pages
-    }
-
-    return pages.filter((page) => {
-      const searchableText = `${page.name || ''} ${page.id}`.toLowerCase()
-      return searchableText.includes(normalizedQuery)
-    })
-  }, [normalizedQuery, pages])
+  const filteredPages = normalizedQuery
+    ? pages.filter((page) => {
+        const searchableText = `${page.name || ''} ${page.id}`.toLowerCase()
+        return searchableText.includes(normalizedQuery)
+      })
+    : pages
 
   if (!pages.length) {
     return (
