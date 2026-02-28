@@ -3,10 +3,6 @@ services:
     image: quay.io/keycloak/keycloak:latest
     container_name: keycloak-theme-test
     environment:
-      # Disable theme caching for hot reload
-      KC_SPI_THEME_CACHE_THEMES: 'false'
-      KC_SPI_THEME_CACHE_TEMPLATES: 'false'
-      KC_SPI_THEME_STATIC_MAX_AGE: '-1'
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: admin
     ports:
