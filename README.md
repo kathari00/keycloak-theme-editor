@@ -11,6 +11,14 @@ npm run dev
 
 Open the URL shown in terminal (default: `http://localhost:5173`).
 
+### Docker Image
+
+If you want to run the theme editor in a Docker container, you can use the following command:
+
+```shell
+docker run --name keycloak-theme-editor -p 5173:5173 -v $(pwd):/app -w /app node:alpine sh -c "npm install && npm run dev -- --host"
+```
+
 ## Features
 
 | | |
