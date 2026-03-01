@@ -295,11 +295,11 @@ function openBrowser(url: string) {
 
   try {
     const child = spawn(command, args, { detached: true, stdio: 'ignore' })
+    child.on('error', () => {})
     child.unref()
   }
-  catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
-    console.warn(`Unable to open browser automatically: ${message}`)
+  catch {
+    // ignore — browser open is best-effort
   }
 }
 
