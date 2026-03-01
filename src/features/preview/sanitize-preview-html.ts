@@ -7,14 +7,13 @@ export function sanitizePreviewHtml(html: string): string {
     return '<!doctype html><html><body></body></html>'
   }
 
-  const template = document.createElement('template')
-  template.innerHTML = html
+  const doc = new DOMParser().parseFromString(html, 'text/html')
 
-  template.content.querySelectorAll('link[rel="stylesheet"], script').forEach((element) => {
+  doc.querySelectorAll('link[rel="stylesheet"], script').forEach((element) => {
     element.remove()
   })
 
-  template.content.querySelectorAll('*').forEach((element) => {
+  doc.querySelectorAll('*').forEach((element) => {
     for (const attributeName of element.getAttributeNames()) {
       if (attributeName.toLowerCase().startsWith('on')) {
         element.removeAttribute(attributeName)
@@ -22,6 +21,6 @@ export function sanitizePreviewHtml(html: string): string {
     }
   })
 
-  return template.innerHTML
+  return doc.documentElement.outerHTML
     .replace(/(data:[^"'\\s>]*;base64,)\s+/gi, '$1')
 }

@@ -286,7 +286,9 @@ function ensureLegalLinks(doc: Document, imprintUrl: string, dataProtectionUrl: 
   const existingWrapper = doc.querySelector<HTMLElement>('[data-kc-state="footer-legal-links"]')
     ?? doc.querySelector<HTMLElement>('.kc-footer-legal-links')
   const kcInfo = doc.getElementById('kc-info')
-  const v2Band = Boolean(existingWrapper?.classList.contains('pf-v5-c-login__main-footer-band')) || isV2InfoBand(kcInfo)
+  const v2Band = Boolean(existingWrapper?.classList.contains('pf-v5-c-login__main-footer-band'))
+    || isV2InfoBand(kcInfo)
+    || Boolean(doc.querySelector('.pf-v5-c-login__main-footer-band'))
   const v2MainBody = v2Band
     ? (doc.querySelector<HTMLElement>('.pf-v5-c-login__main-body') ?? doc.querySelector<HTMLElement>('.kcLoginMainBody'))
     : null
@@ -309,6 +311,7 @@ function ensureLegalLinks(doc: Document, imprintUrl: string, dataProtectionUrl: 
   }
 
   if (v2Band && v2LegalFooter) {
+    v2LegalFooter.removeAttribute('hidden')
     v2LegalFooter.classList.add('kc-legal-footer')
     v2LegalFooter.classList.add('pf-v5-c-login__main-footer')
     if (v2Main && v2LegalFooter.parentElement !== v2Main) {

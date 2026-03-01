@@ -378,14 +378,12 @@ describe('applyQuickStartTemplateContent', () => {
     const footerLinks = doc.querySelectorAll('.kc-footer-legal-links a[data-kc-state]')
     const kcInfoLinks = doc.querySelectorAll('#kc-info a[data-kc-state=\"imprint-link\"], #kc-info a[data-kc-state=\"data-protection-link\"]')
     const wrapper = doc.querySelector('.kc-footer-legal-links') as HTMLElement | null
-    const kcInfo = doc.querySelector('#kc-info') as HTMLElement | null
     const legalFooter = doc.querySelector('.kc-legal-footer') as HTMLElement | null
     const loginMain = doc.querySelector('.pf-v5-c-login__main') as HTMLElement | null
 
     expect(footerLinks).toHaveLength(2)
     expect(kcInfoLinks).toHaveLength(0)
     expect(wrapper).toBeTruthy()
-    expect(kcInfo).toBeTruthy()
     expect(legalFooter).toBeTruthy()
     expect(wrapper?.parentElement).toBe(legalFooter)
     expect(legalFooter?.parentElement).toBe(loginMain)

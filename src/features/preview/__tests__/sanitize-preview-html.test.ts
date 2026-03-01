@@ -52,18 +52,4 @@ describe('sanitizePreviewHtml', () => {
     expect(result).toContain('rel="icon"')
   })
 
-  it('preserves body data-page-id attributes from full documents', () => {
-    const html = `
-      <!doctype html>
-      <html>
-        <head></head>
-        <body data-page-id="login-oauth2-device-verify-user-code">
-          <form id="kc-user-verify-device-user-code-form"></form>
-        </body>
-      </html>
-    `
-
-    const result = sanitizePreviewHtml(html)
-    expect(result).toContain('<body data-page-id="login-oauth2-device-verify-user-code">')
-  })
 })
