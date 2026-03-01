@@ -482,8 +482,9 @@ function startWatcher(opts: {
   outputPath: string
   additionalMocks?: ContextMocks
   requiredVariantId?: string
+  userThemeDir?: string
 }) {
-  const { pagesDir, jarPath, outputPath, additionalMocks, requiredVariantId } = opts
+  const { pagesDir, jarPath, outputPath, additionalMocks, requiredVariantId, userThemeDir } = opts
   let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
   const watcher = watch(pagesDir, {
@@ -502,6 +503,7 @@ function startWatcher(opts: {
       jarPath,
       outputPath,
       additionalMocks,
+      userThemeDir,
       quiet: true,
     })
 
@@ -700,6 +702,7 @@ async function startEditor(opts: { pages?: string, port: string, open: boolean }
       outputPath: pagesJsonPath,
       additionalMocks,
       requiredVariantId: path.basename(userPagesDir),
+      userThemeDir: userPagesDir,
     })
     console.log(`  Watching for changes in: ${userPagesDir}`)
   }
