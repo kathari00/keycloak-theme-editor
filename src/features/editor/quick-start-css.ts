@@ -59,7 +59,7 @@ function extractPrimaryFontFamily(fontFamily: string): string | null {
   return first.replace(/^['"]|['"]$/g, '')
 }
 
-function buildQuickStartRootCss(variableValues: Partial<Record<string, string>>): string {
+export function buildQuickStartRootCss(variableValues: Partial<Record<string, string>>): string {
   const lines = QUICK_START_GENERATED_ROOT_VARIABLE_NAMES
     .flatMap((variableName) => {
       const variableValue = variableValues[variableName]
