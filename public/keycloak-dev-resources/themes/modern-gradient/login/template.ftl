@@ -246,42 +246,46 @@
             </div>
           </#if>
 
-               <div class="${properties.kcLoginMainFooter!}">
-              <#nested "socialProviders">
-          </div>
-          <div class="${properties.kcLoginMainFooter!}">
-            <div class="${properties.kcLoginMainFooterBand!} kc-footer-row" data-kc-state="footer-row">
-              <#if realm.internationalizationEnabled  && locale.supported?size gt 1>
-                <div class="${properties.kcLoginMainFooterBandItem!} kc-footer-language" data-kc-state="language-selector">
-                  <select
-                    aria-label="${msg("languages")}"
-                    id="login-select-toggle"
-                    class="kc-language-select"
-                    onchange="if (this.value) window.location.href=this.value"
-                  >
-                    <#list locale.supported?sort_by("label") as l>
-                      <option
-                        value="${l.url}"
-                        ${(l.languageTag == locale.currentLanguageTag)?then('selected','')}
-                      >
-                        ${l.label}
-                      </option>
-                    </#list>
-                  </select>
-                </div>
-              </#if>
-              <#if msg("imprintUrl")?has_content || msg("dataProtectionUrl")?has_content>
-              <div class="kc-footer-legal-links ${properties.kcLoginMainFooterBandItem!}">
-                <#if msg("imprintUrl")?has_content>
-                  <a data-kc-state="imprint-link" href="${msg("imprintUrl")}" target="_blank" rel="noopener noreferrer">${msg("imprintLabel")}</a>
+            <div class="${properties.kcLoginMainFooter!}">
+            </div>
+
+          <#assign hasLanguageSelector = realm.internationalizationEnabled && locale.supported?size gt 1>
+          <#assign hasLegalLinks = msg("imprintUrl")?has_content || msg("dataProtectionUrl")?has_content>
+          <#if hasLanguageSelector || hasLegalLinks>
+            <div class="${properties.kcLoginMainFooter!}">
+              <div class="${properties.kcLoginMainFooterBand!} kc-footer-row" data-kc-state="footer-row">
+                <#if hasLanguageSelector>
+                  <div class="${properties.kcLoginMainFooterBandItem!} kc-footer-language" data-kc-state="language-selector">
+                    <select
+                      aria-label="${msg("languages")}"
+                      id="login-select-toggle"
+                      class="kc-language-select"
+                      onchange="if (this.value) window.location.href=this.value"
+                    >
+                      <#list locale.supported?sort_by("label") as l>
+                        <option
+                          value="${l.url}"
+                          ${(l.languageTag == locale.currentLanguageTag)?then('selected','')}
+                        >
+                          ${l.label}
+                        </option>
+                      </#list>
+                    </select>
+                  </div>
                 </#if>
-                <#if msg("dataProtectionUrl")?has_content>
-                  <a data-kc-state="data-protection-link" href="${msg("dataProtectionUrl")}" target="_blank" rel="noopener noreferrer">${msg("dataProtectionLabel")}</a>
+                <#if hasLegalLinks>
+                  <div class="kc-footer-legal-links ${properties.kcLoginMainFooterBandItem!}">
+                    <#if msg("imprintUrl")?has_content>
+                      <a data-kc-state="imprint-link" href="${msg("imprintUrl")}" target="_blank" rel="noopener noreferrer">${msg("imprintLabel")}</a>
+                    </#if>
+                    <#if msg("dataProtectionUrl")?has_content>
+                      <a data-kc-state="data-protection-link" href="${msg("dataProtectionUrl")}" target="_blank" rel="noopener noreferrer">${msg("dataProtectionLabel")}</a>
+                    </#if>
+                  </div>
                 </#if>
               </div>
-              </#if>
             </div>
-          </div>
+          </#if>
       </div>
     </main>
   </div>

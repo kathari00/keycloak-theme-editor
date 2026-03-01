@@ -23,3 +23,17 @@
   --quickstart-input-border-color-dark: #2b2c2e;
   --quickstart-muted-text-color-dark: #9aa0a6;
 }
+
+body,
+body#keycloak-bg {
+  margin: 0;
+}
+
+.kcLogin,
+.kcLoginClass {
+  box-sizing: border-box;
+  background-image: var(--quickstart-bg-image);
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
+}
