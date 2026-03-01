@@ -43,17 +43,14 @@ public final class PreviewRendererMain {
 
     Map<String, Object> pagesOutput = new LinkedHashMap<String, Object>();
 
-    ContextBuilder.ContextOverrides builtInOverrides = contextBuilder.readContextOverrides(arguments.contextMocksPath);
-    ContextBuilder.ContextOverrides contextOverrides = contextBuilder.mergeCustomMocks(
-        builtInOverrides,
-        arguments.customMocksPath
-    );
+    ContextBuilder.ContextOverrides contextOverrides = contextBuilder.readContextOverrides(arguments.contextMocksPath);
 
     for (VariantSpec variant : getVariants()) {
       VariantLoader.VariantInputs inputs = variantLoader.loadVariantInputs(
           arguments.inputRoot,
           variant.baseTheme,
-          variant.overlayDir
+          variant.overlayDir,
+          variant.userOverlayDir
       );
       if (inputs == null) {
         continue;
@@ -71,13 +68,54 @@ public final class PreviewRendererMain {
     System.out.println("Generated preview artifacts in " + arguments.outputRoot);
   }
 
-  private List<VariantSpec> getVariants() {
-    return Arrays.asList(
-        new VariantSpec("base", "base", null),
-        new VariantSpec("v2", "v2", null),
-        new VariantSpec("modern-gradient", "base", arguments.presetRoot.resolve("modern-gradient").resolve("login")),
-        new VariantSpec("horizontal-card", "base", arguments.presetRoot.resolve("horizontal-card").resolve("login"))
-    );
+  private List<VariantSpec> getVariants() throws IOException {
+    List<VariantSpec> variants = new ArrayList<VariantSpec>(Arrays.asList(
+        new VariantSpec("base", "base", null, null),
+        new VariantSpec("v2", "v2", null, null),
+        new VariantSpec("modern-gradient", "base", arguments.presetRoot.resolve("modern-gradient").resolve("login"), null),
+        new VariantSpec("horizontal-card", "base", arguments.presetRoot.resolve("horizontal-card").resolve("login"), null)
+    ));
+
+    if (arguments.userThemeDir != null) {
+      Path userLogin = arguments.userThemeDir.resolve("login");
+      Path userThemeProps = userLogin.resolve("theme.properties");
+      String baseTheme = "base";
+      String presetId = null;
+      if (Files.exists(userThemeProps)) {
+        String content = new String(Files.readAllBytes(userThemeProps), StandardCharsets.UTF_8);
+        for (String line : content.split("\\R")) {
+          String trimmed = line.trim();
+          if (trimmed.startsWith("preset=")) {
+            presetId = trimmed.substring(7).trim();
+          } else if (trimmed.startsWith("parent=")) {
+            String parent = trimmed.substring(7).trim();
+            if (parent.contains("v2")) {
+              baseTheme = "v2";
+            }
+          }
+        }
+      }
+
+      String variantId = arguments.userThemeDir.getFileName().toString();
+      if (presetId != null && !presetId.isEmpty()) {
+        // User extends a built-in preset: preset files are the overlay, user files override them
+        Path presetLogin = arguments.presetRoot.resolve(presetId).resolve("login");
+        if (Files.exists(presetLogin)) {
+          // Inherit base theme from the preset
+          if (presetId.contains("v2")) {
+            baseTheme = "v2";
+          }
+          variants.add(new VariantSpec(variantId, baseTheme, presetLogin, userLogin));
+        } else {
+          System.err.println("Warning: preset '" + presetId + "' not found, ignoring preset= directive.");
+          variants.add(new VariantSpec(variantId, baseTheme, userLogin, null));
+        }
+      } else {
+        variants.add(new VariantSpec(variantId, baseTheme, userLogin, null));
+      }
+    }
+
+    return variants;
   }
 
   private VariantRenderResult renderVariantPages(
@@ -91,32 +129,73 @@ public final class PreviewRendererMain {
     for (String pageTemplate : inputs.getPageTemplates()) {
       String pageId = pageTemplate.replace(".ftl", ".html");
       String pageName = normalizePageName(pageTemplate);
-      Map<String, Object> pageContextOverride = contextBuilder.buildPageContextOverride(contextOverrides, pageName);
 
-      try {
-        String html = pageRenderer.renderPage(
-            pageTemplate,
-            pageId,
-            variant.id,
-            variant.overlayDir,
-            inputs,
-            pageContextOverride
-        );
+      Map<String, String> pageStories = renderPageWithStories(
+          variant, inputs, contextOverrides, pageTemplate, pageId, pageName, skippedTemplates
+      );
 
-        if (html.trim().isEmpty()) {
-          skippedTemplates.add(pageTemplate + ": renders empty output (macro-only template)");
-          continue;
-        }
-
-        Map<String, String> pageStories = new LinkedHashMap<String, String>();
-        pageStories.put("default", html);
+      if (pageStories != null && !pageStories.isEmpty()) {
         variantPages.put(pageId, pageStories);
-      } catch (Exception error) {
-        skippedTemplates.add(pageTemplate + ": " + summarizeError(error));
       }
     }
 
     return new VariantRenderResult(variantPages, skippedTemplates);
+  }
+
+  private Map<String, String> renderPageWithStories(
+      VariantSpec variant,
+      VariantLoader.VariantInputs inputs,
+      ContextBuilder.ContextOverrides contextOverrides,
+      String pageTemplate,
+      String pageId,
+      String pageName,
+      List<String> skippedTemplates
+  ) {
+    Map<String, Object> defaultContext = contextBuilder.buildPageContextOverride(contextOverrides, pageName);
+    // If no page-specific mock exists, fall back to the login page context.
+    // Most custom pages extend the login template and need url, realm, etc.
+    if (defaultContext.isEmpty() && !pageName.equals("login")) {
+      defaultContext = contextBuilder.buildPageContextOverride(contextOverrides, "login");
+    }
+
+    String defaultHtml;
+    try {
+      defaultHtml = pageRenderer.renderPage(
+          pageTemplate, pageId, variant.id, variant.overlayDir, variant.userOverlayDir, inputs, defaultContext
+      );
+    } catch (Exception error) {
+      skippedTemplates.add(pageTemplate + ": " + summarizeError(error));
+      return null;
+    }
+
+    if (defaultHtml.trim().isEmpty()) {
+      skippedTemplates.add(pageTemplate + ": renders empty output (macro-only template)");
+      return null;
+    }
+
+    Map<String, String> stories = new LinkedHashMap<String, String>();
+    stories.put("default", defaultHtml);
+
+    String storyKeyPrefix = pageName + "@";
+    for (String pageKey : contextOverrides.getPages().keySet()) {
+      if (!pageKey.startsWith(storyKeyPrefix)) {
+        continue;
+      }
+      String storyId = pageKey.substring(storyKeyPrefix.length());
+      try {
+        Map<String, Object> storyContext = contextBuilder.buildPageContextOverride(contextOverrides, pageKey);
+        String storyHtml = pageRenderer.renderPage(
+            pageTemplate, pageId, variant.id, variant.overlayDir, variant.userOverlayDir, inputs, storyContext
+        );
+        if (!storyHtml.trim().isEmpty()) {
+          stories.put(storyId, storyHtml);
+        }
+      } catch (Exception storyError) {
+        skippedTemplates.add(pageTemplate + "/" + storyId + ": " + summarizeError(storyError));
+      }
+    }
+
+    return stories;
   }
 
   private void logSkippedTemplates(String variantId, List<String> skippedTemplates) {
@@ -178,11 +257,13 @@ public final class PreviewRendererMain {
     private final String id;
     private final String baseTheme;
     private final Path overlayDir;
+    private final Path userOverlayDir;
 
-    private VariantSpec(String id, String baseTheme, Path overlayDir) {
+    private VariantSpec(String id, String baseTheme, Path overlayDir, Path userOverlayDir) {
       this.id = id;
       this.baseTheme = baseTheme;
       this.overlayDir = overlayDir;
+      this.userOverlayDir = userOverlayDir;
     }
   }
 
@@ -205,7 +286,7 @@ public final class PreviewRendererMain {
     private final Path presetRoot;
     private final Path outputRoot;
     private final Path contextMocksPath;
-    private final Path customMocksPath;
+    private final Path userThemeDir;
     private final String keycloakTag;
 
     private Arguments(
@@ -214,7 +295,7 @@ public final class PreviewRendererMain {
         Path presetRoot,
         Path outputRoot,
         Path contextMocksPath,
-        Path customMocksPath,
+        Path userThemeDir,
         String keycloakTag
     ) {
       this.inputRoot = inputRoot;
@@ -222,7 +303,7 @@ public final class PreviewRendererMain {
       this.presetRoot = presetRoot;
       this.outputRoot = outputRoot;
       this.contextMocksPath = contextMocksPath;
-      this.customMocksPath = customMocksPath;
+      this.userThemeDir = userThemeDir;
       this.keycloakTag = keycloakTag;
     }
 
@@ -258,10 +339,10 @@ public final class PreviewRendererMain {
       }
       Path contextMocksPath = Paths.get(contextMocks.trim());
 
-      Path customMocksPath = null;
-      String customMocksValue = values.get("custom-mocks");
-      if (customMocksValue != null && !customMocksValue.trim().isEmpty()) {
-        customMocksPath = Paths.get(customMocksValue.trim());
+      Path userThemeDir = null;
+      String userThemeValue = values.get("user-theme");
+      if (userThemeValue != null && !userThemeValue.trim().isEmpty()) {
+        userThemeDir = Paths.get(userThemeValue.trim());
       }
 
       String keycloakTag = values.getOrDefault("tag", "26.x");
@@ -272,7 +353,7 @@ public final class PreviewRendererMain {
           presetRoot,
           outputRoot,
           contextMocksPath,
-          customMocksPath,
+          userThemeDir,
           keycloakTag
       );
     }

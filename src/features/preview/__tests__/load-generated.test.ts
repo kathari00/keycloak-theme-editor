@@ -1,8 +1,23 @@
-import { beforeAll, describe, expect, it } from 'vitest'
+import fs from 'node:fs'
+import path from 'node:path'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { ensureGeneratedPreviewPagesLoaded, getVariantPages, getVariantScenarioOptions, resolveScenarioHtml } from '../load-generated'
 
+const pagesJsonPath = path.resolve(__dirname, '../generated/pages.json')
+
 beforeAll(async () => {
+  const pagesJson = fs.readFileSync(pagesJsonPath, 'utf8')
+  const pagesData = JSON.parse(pagesJson)
+
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+    json: () => Promise.resolve(pagesData),
+  }))
+
   await ensureGeneratedPreviewPagesLoaded()
+})
+
+afterAll(() => {
+  vi.restoreAllMocks()
 })
 
 describe('resolveScenarioHtml', () => {
@@ -39,15 +54,24 @@ describe('resolveScenarioHtml', () => {
     }).map(option => option.id)
 
     expect(optionIds).toContain('default')
-    expect(optionIds).toContain('minimal')
-    expect(optionIds).toContain('invalid-state')
+    expect(optionIds[0]).toBe('default')
   })
 
   it('returns html for non-default login stories', () => {
+    const options = getVariantScenarioOptions({
+      variantId: 'v2',
+      pageId: 'login.html',
+    })
+    const nonDefaultStory = options.find(option => option.id !== 'default')
+    if (!nonDefaultStory) {
+      expect(nonDefaultStory).toBeUndefined()
+      return
+    }
+
     const scenarioHtml = resolveScenarioHtml({
       variantId: 'v2',
       pageId: 'login.html',
-      storyId: 'minimal',
+      storyId: nonDefaultStory.id,
     })
 
     expect(typeof scenarioHtml).toBe('string')

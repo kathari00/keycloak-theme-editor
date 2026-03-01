@@ -1,6 +1,12 @@
 export type BaseThemeId = 'base' | 'v2'
 export type ThemeId = 'base' | 'v2' | 'modern-gradient' | 'horizontal-card'
 
+const BUILTIN_THEME_IDS: ReadonlySet<string> = new Set<string>(['base', 'v2', 'modern-gradient', 'horizontal-card'])
+
+export function isBuiltinTheme(themeId: string): boolean {
+  return BUILTIN_THEME_IDS.has(themeId)
+}
+
 export interface EditorTheme {
   id: ThemeId
   name: string

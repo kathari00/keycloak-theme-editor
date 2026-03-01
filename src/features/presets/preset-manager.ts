@@ -1,5 +1,6 @@
-import type { ThemeConfig, ThemeId } from './types'
+import type { BaseThemeId, ThemeConfig, ThemeId } from './types'
 import { sanitizeThemeCssSourceForEditor, stripQuickStartImportLine } from '../editor/css-source-sanitizer'
+import { isBuiltinTheme } from './types'
 import { getThemePreviewStylesPath, getThemeQuickStartCssPath } from './theme-paths'
 
 export interface ThemeCssStructured {
@@ -27,11 +28,30 @@ async function fetchCssFile(path: string): Promise<string> {
 
 export async function loadThemes(): Promise<ThemeConfig> {
   try {
-    const response = await fetch('/keycloak-dev-resources/themes/themes.json')
-    if (!response.ok) {
-      throw new Error(`Failed to load themes.json: ${response.statusText}`)
+    const [themesResponse, pagesResponse] = await Promise.all([
+      fetch('/keycloak-dev-resources/themes/themes.json'),
+      fetch('/api/pages.json').catch(() => null),
+    ])
+    if (!themesResponse.ok) {
+      throw new Error(`Failed to load themes.json: ${themesResponse.statusText}`)
     }
-    return await response.json() as ThemeConfig
+    const config = await themesResponse.json() as ThemeConfig
+    // Discover user theme variants from pages.json and add them to the theme list
+    if (pagesResponse?.ok) {
+      const pages = await pagesResponse.json()
+      const knownIds = new Set<string>(config.themes.map(t => t.id))
+      for (const variantId of Object.keys(pages.variants ?? {})) {
+        if (!knownIds.has(variantId)) {
+          config.themes.push({
+            id: variantId as ThemeId,
+            name: variantId,
+            description: 'Imported theme',
+            baseId: (isBuiltinTheme(variantId) ? variantId : 'base') as BaseThemeId,
+          })
+        }
+      }
+    }
+    return config
   }
   catch (error) {
     console.error('Error loading themes:', error)

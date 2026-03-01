@@ -36,47 +36,20 @@ public final class ContextBuilder {
     Map<String, Object> rawPages = asMap(raw.get("pages"));
 
     for (Map.Entry<String, Object> entry : rawPages.entrySet()) {
-      String normalizedPage = normalizePageName(entry.getKey());
-      if (normalizedPage.isEmpty()) {
+      String key = entry.getKey();
+      if (key == null || key.trim().isEmpty()) {
         continue;
       }
-      pages.put(normalizedPage, asMap(entry.getValue()));
+      String normalizedKey = normalizePageKey(key.trim());
+      pages.put(normalizedKey, asMap(entry.getValue()));
     }
 
     return new ContextOverrides(common, pages);
   }
 
-  public ContextOverrides mergeCustomMocks(ContextOverrides builtIn, Path customMocksPath) throws IOException {
-    if (customMocksPath == null || !Files.exists(customMocksPath)) {
-      return builtIn;
-    }
-
-    ContextOverrides custom = readContextOverrides(customMocksPath);
-    Map<String, Object> mergedCommon = deepCopyMap(builtIn.getCommon());
-    deepMergeMap(mergedCommon, custom.getCommon());
-
-    Map<String, Map<String, Object>> mergedPages = deepCopyPages(builtIn.getPages());
-    for (Map.Entry<String, Map<String, Object>> entry : custom.getPages().entrySet()) {
-      String pageName = normalizePageName(entry.getKey());
-      if (pageName.isEmpty()) {
-        continue;
-      }
-
-      Map<String, Object> pageTarget = mergedPages.get(pageName);
-      if (pageTarget == null) {
-        mergedPages.put(pageName, deepCopyMap(entry.getValue()));
-        continue;
-      }
-
-      deepMergeMap(pageTarget, entry.getValue());
-    }
-
-    return new ContextOverrides(mergedCommon, mergedPages);
-  }
-
-  public Map<String, Object> buildPageContextOverride(ContextOverrides overrides, String pageName) {
+  public Map<String, Object> buildPageContextOverride(ContextOverrides overrides, String pageKey) {
     Map<String, Object> merged = deepCopyMap(overrides.getCommon());
-    Map<String, Object> pageOverride = overrides.getPages().get(normalizePageName(pageName));
+    Map<String, Object> pageOverride = overrides.getPages().get(pageKey);
     if (pageOverride != null && !pageOverride.isEmpty()) {
       deepMergeMap(merged, pageOverride);
     }
@@ -118,18 +91,6 @@ public final class ContextBuilder {
     return copy;
   }
 
-  private Map<String, Map<String, Object>> deepCopyPages(Map<String, Map<String, Object>> source) {
-    Map<String, Map<String, Object>> copy = new LinkedHashMap<String, Map<String, Object>>();
-    if (source == null) {
-      return copy;
-    }
-
-    for (Map.Entry<String, Map<String, Object>> entry : source.entrySet()) {
-      copy.put(entry.getKey(), deepCopyMap(entry.getValue()));
-    }
-    return copy;
-  }
-
   private List<Object> deepCopyList(List<?> source) {
     List<Object> copy = new ArrayList<Object>();
     if (source == null) {
@@ -153,12 +114,11 @@ public final class ContextBuilder {
     return value;
   }
 
-  private String normalizePageName(String pageTemplateName) {
-    String value = pageTemplateName == null ? "" : pageTemplateName.trim();
-    if (value.endsWith(".ftl")) {
-      value = value.substring(0, value.length() - 4);
+  private String normalizePageKey(String key) {
+    if (key.endsWith(".ftl")) {
+      key = key.substring(0, key.length() - 4);
     }
-    return value;
+    return key;
   }
 
   private Map<String, Object> asMap(Object value) {
@@ -178,7 +138,10 @@ public final class ContextBuilder {
     private final Map<String, Object> common;
     private final Map<String, Map<String, Object>> pages;
 
-    public ContextOverrides(Map<String, Object> common, Map<String, Map<String, Object>> pages) {
+    public ContextOverrides(
+        Map<String, Object> common,
+        Map<String, Map<String, Object>> pages
+    ) {
       this.common = common;
       this.pages = pages;
     }

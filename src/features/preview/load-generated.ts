@@ -39,9 +39,14 @@ export async function ensureGeneratedPreviewPagesLoaded(): Promise<void> {
     return previewPagesLoadPromise
   }
 
-  previewPagesLoadPromise = import('./generated/pages.json')
-    .then((module) => {
-      const previewPages = module.default as PreviewPageHtmlMap
+  previewPagesLoadPromise = fetch('/api/pages.json')
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error(`Failed to load pages.json: ${res.status}`)
+      }
+      return res.json()
+    })
+    .then((previewPages: PreviewPageHtmlMap) => {
       applyPreviewPages(previewPages)
     })
     .finally(() => {
@@ -49,6 +54,31 @@ export async function ensureGeneratedPreviewPagesLoaded(): Promise<void> {
     })
 
   return previewPagesLoadPromise
+}
+
+export async function reloadPreviewPages(): Promise<void> {
+  const res = await fetch('/api/pages.json')
+  const previewPages = await res.json() as PreviewPageHtmlMap
+  applyPreviewPages(previewPages)
+}
+
+let sseConnected = false
+
+export function connectLiveReload(onPagesUpdated: () => void): void {
+  if (sseConnected) {
+    return
+  }
+  sseConnected = true
+
+  const source = new EventSource('/api/events')
+  source.addEventListener('pages-updated', () => {
+    reloadPreviewPages().then(onPagesUpdated).catch(() => {})
+  })
+  source.onerror = () => {
+    // SSE not available (e.g. Vite dev server) — silently ignore
+    source.close()
+    sseConnected = false
+  }
 }
 
 export function resolvePreviewVariantId(params: {
@@ -59,7 +89,12 @@ export function resolvePreviewVariantId(params: {
   if (normalizedThemeId && previewVariants[normalizedThemeId]) {
     return normalizedThemeId as PreviewVariantId
   }
-  return 'v2'
+  // Fall back to first available variant instead of hardcoded 'v2'
+  const availableVariants = Object.keys(previewVariants)
+  if (availableVariants.includes('v2')) {
+    return 'v2'
+  }
+  return (availableVariants[0] ?? 'v2') as PreviewVariantId
 }
 
 export function getVariantPages(variantId: PreviewVariantId): Record<string, string> {
