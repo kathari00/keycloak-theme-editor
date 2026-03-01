@@ -32,7 +32,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "build:jar": "mvn -f tools/preview-renderer/pom.xml clean package -q && node -e \"const fs=require('fs'),p=require('path'),lib=p.join('tools/preview-renderer','lib');fs.rmSync(lib,{recursive:true,force:true});fs.copyFileSync('tools/preview-renderer/target/preview-renderer.jar','tools/preview-renderer/preview-renderer.jar');fs.cpSync('tools/preview-renderer/target/lib',lib,{recursive:true})\"",
-    "build:cli": "tsup bin/cli.ts --format esm --out-dir bin --target node18 --no-clean --no-splitting --external keycloakify && node -e \"const f='bin/cli.js';require('fs').writeFileSync(f,'#!/usr/bin/env node\\n'+require('fs').readFileSync(f,'utf8'))\"",
+    "build:cli": "tsup bin/cli.ts --format esm --out-dir bin --target node18 --no-clean --no-splitting --external keycloakify --banner.js '#!/usr/bin/env node'",
     "prepublishOnly": "npm run build && npm run build:jar && npm run build:cli",
     "lint": "eslint .",
     "prepare": "husky",
