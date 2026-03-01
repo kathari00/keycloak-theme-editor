@@ -95,6 +95,9 @@ export function generateKeycloakThemesJson(themeName: string): string {
 /** Fetch the correct template.ftl for a theme */
 export async function fetchTemplateFtl(themeId: string): Promise<string> {
   const response = await fetch(themeResourcePath(themeId, 'template.ftl'))
+  if (!response.ok) {
+    throw new Error(`Failed to load template.ftl for "${themeId}" (${response.status})`)
+  }
   return await response.text()
 }
 

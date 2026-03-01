@@ -166,6 +166,9 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
       fetch(themeQuickStartCssPath),
       fetch(themeResourcePath(resolvedThemeId, 'theme.properties')),
     ])
+    if (!propertiesResponse.ok) {
+      throw new Error(`Failed to load theme.properties for "${resolvedThemeId}" (${propertiesResponse.status})`)
+    }
 
     const properties = await propertiesResponse.text()
 
