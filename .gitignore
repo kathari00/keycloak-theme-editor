@@ -34,3 +34,10 @@ tools/preview-renderer/lib/
 public/keycloak-upstream/
 bin
 *.tgz
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example
