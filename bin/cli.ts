@@ -674,13 +674,13 @@ async function startEditor(opts: { pages?: string, port: string, open: boolean }
     process.exit(1)
   }
 
-  // Build user theme resource mapping for the dev server
+  // Build user theme mapping for the dev server
   let userThemeMapping: { urlPrefix: string, localDir: string } | undefined
   if (userPagesDir) {
     const variantId = path.basename(userPagesDir)
-    const urlPrefix = `/keycloak-dev-resources/themes/${variantId}/login/resources`
-    const localDir = path.join(userPagesDir, 'login', 'resources')
-    if (fs.existsSync(localDir)) {
+    const urlPrefix = `/keycloak-dev-resources/themes/${variantId}`
+    const localDir = userPagesDir
+    if (fs.existsSync(path.join(localDir, 'login'))) {
       userThemeMapping = { urlPrefix, localDir }
     }
   }
