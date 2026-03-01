@@ -729,4 +729,3 @@ function buildThemeExtensions(isDarkMode: boolean): Extension[] {
     ),
   ]
 }
-

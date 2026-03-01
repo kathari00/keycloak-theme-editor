@@ -4,6 +4,40 @@ A browser-based visual editor for designing, previewing, and exporting Keycloak 
 
 ## Quick Start
 
+### Using the CLI (recommended)
+
+The CLI auto-discovers your Keycloak theme directory and starts the editor with live reload:
+
+```bash
+npx keycloak-theme-editor
+```
+
+Or point it at a specific theme directory:
+
+```bash
+npx keycloak-theme-editor --pages ./path/to/theme
+```
+
+The CLI automatically discovers all theme variants within the given directory.
+
+#### CLI Options
+
+| Option | Description |
+|---|---|
+| `--pages <dir>` | Path to your theme directory (auto-discovered if omitted) |
+| `--port <number>` | Port to run the editor on (default: 4800) |
+| `--no-open` | Don't open browser automatically |
+
+#### Init command
+
+Scaffold `kc-page.ts` and `kc-page-story.ts` for custom page mocks:
+
+```bash
+npx keycloak-theme-editor init [pages-dir]
+```
+
+### Development
+
 ```bash
 npm install
 npm run dev
@@ -35,44 +69,12 @@ docker run --name keycloak-theme-editor -p 5173:5173 -v $(pwd):/app -w /app node
 |---|---|
 | `npm run dev` | Dev server |
 | `npm run build` | Type-check + production build |
+| `npm run build:cli` | Build the CLI bundle |
+| `npm run build:jar` | Build the Java preview renderer JAR |
 | `npm run test:run` | Run tests once |
 | `npm run lint` | ESLint |
 | `npm run sync:keycloak` | Sync upstream Keycloak templates into `public/keycloak-upstream/` |
 | `npm run generate:preview` | Regenerate preview `pages.json` (with embedded scenarios) |
-
-## Add Custom Preview Page (FTL + Mocks)
-
-Use this when you add a custom login page and want it selectable in the preview editor.
-
-1. Checkout the repository locally.
-2. Add your custom FTL page in theme override folders:
-   `public/keycloak-dev-resources/themes/base/login/<your-page>.ftl`
-   `public/keycloak-dev-resources/themes/v2/login/<your-page>.ftl`
-3. Render it through Keycloak layout template (recommended pattern):
-
-```ftl
-<#import "template.ftl" as layout>
-<@layout.registrationLayout displayMessage=false displayInfo=false; section>
-  <#if section = "header">
-    My Custom Page
-  <#elseif section = "form">
-    <div id="kc-form">...</div>
-  </#if>
-</@layout.registrationLayout>
-```
-
-4. Add page mocks in `tools/kc-context-mocks.ts` under `pageOverrides` with key `<your-page>` (without `.ftl`).
-5. Optional: add extra states (stories) by editing
-   `src/features/preview/generated/pages.json`
-   (custom stories are preserved on `npm run generate:preview` when they differ from the base render)
-6. Regenerate preview artifacts:
-   `npm run generate:preview`
-7. Start dev server and open preview:
-   `npm run dev`
-
-Notes:
-- Custom templates from theme overrides are discovered by the preview renderer.
-- You can layer user-specific JSON overrides via `--custom-mocks` (or `PREVIEW_CUSTOM_MOCKS` in tooling).
 
 ## Requirements
 
@@ -125,7 +127,12 @@ public/
                             # - styles.css + quick-start.css: export/runtime CSS
                             # - preview.css: editor-preview-only CSS (never exported)
 
+bin/
+  cli.ts              # CLI entry point
+  tsup.config.ts      # CLI build configuration
+
 tools/
   keycloak-sync/        # Upstream template sync
   preview-renderer/     # Java-based preview generation
+  generate-preview.ts   # Preview generation script
 ```

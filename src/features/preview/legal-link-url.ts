@@ -1,38 +1,23 @@
-function parseAbsoluteHttpUrl(url: string): URL | null {
+function isHttpUrl(url: string): boolean {
   try {
     const parsed = new URL(url)
-    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
-      return parsed
-    }
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:'
   }
   catch {
-    return null
+    return false
   }
-  return null
 }
 
 export function isValidExternalLegalLinkUrl(url: string): boolean {
-  const normalized = (url || '').trim()
-  if (!normalized) {
-    return false
-  }
-  return Boolean(parseAbsoluteHttpUrl(normalized))
+  return isHttpUrl(url.trim())
 }
 
 export function normalizeExternalLegalLinkUrl(url: string): string {
-  const normalized = (url || '').trim()
-  if (!normalized) {
-    return ''
-  }
-
-  if (isValidExternalLegalLinkUrl(normalized)) {
-    return normalized
-  }
-
-  return ''
+  const trimmed = url.trim()
+  return isHttpUrl(trimmed) ? trimmed : ''
 }
 
 export function resolveOpenableLegalLinkUrl(url: string): string | null {
-  const normalized = normalizeExternalLegalLinkUrl(url)
-  return normalized || null
+  const trimmed = url.trim()
+  return isHttpUrl(trimmed) ? trimmed : null
 }

@@ -1,7 +1,7 @@
 import type { BaseThemeId, ThemeConfig, ThemeId } from './types'
 import { sanitizeThemeCssSourceForEditor, stripQuickStartImportLine } from '../editor/css-source-sanitizer'
-import { isBuiltinTheme } from './types'
 import { getThemePreviewStylesPath, getThemeQuickStartCssPath } from './theme-paths'
+import { isBuiltinTheme } from './types'
 
 export interface ThemeCssStructured {
   quickStartDefaults: string
@@ -37,7 +37,7 @@ export async function loadThemes(): Promise<ThemeConfig> {
     }
     const config = await themesResponse.json() as ThemeConfig
     // Discover user theme variants from pages.json and add them to the theme list
-    if (pagesResponse?.ok) {
+    if (pagesResponse?.ok && pagesResponse.headers.get('content-type')?.includes('application/json')) {
       const pages = await pagesResponse.json()
       const knownIds = new Set<string>(config.themes.map(t => t.id))
       for (const variantId of Object.keys(pages.variants ?? {})) {

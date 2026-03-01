@@ -76,8 +76,8 @@ public final class PreviewRendererMain {
         new VariantSpec("horizontal-card", "base", arguments.presetRoot.resolve("horizontal-card").resolve("login"), null)
     ));
 
-    if (arguments.userThemeDir != null) {
-      Path userLogin = arguments.userThemeDir.resolve("login");
+    for (Path userThemeDir : arguments.userThemeDirs) {
+      Path userLogin = userThemeDir.resolve("login");
       Path userThemeProps = userLogin.resolve("theme.properties");
       String baseTheme = "base";
       String presetId = null;
@@ -96,12 +96,10 @@ public final class PreviewRendererMain {
         }
       }
 
-      String variantId = arguments.userThemeDir.getFileName().toString();
+      String variantId = userThemeDir.getFileName().toString();
       if (presetId != null && !presetId.isEmpty()) {
-        // User extends a built-in preset: preset files are the overlay, user files override them
         Path presetLogin = arguments.presetRoot.resolve(presetId).resolve("login");
         if (Files.exists(presetLogin)) {
-          // Inherit base theme from the preset
           if (presetId.contains("v2")) {
             baseTheme = "v2";
           }
@@ -286,7 +284,7 @@ public final class PreviewRendererMain {
     private final Path presetRoot;
     private final Path outputRoot;
     private final Path contextMocksPath;
-    private final Path userThemeDir;
+    private final List<Path> userThemeDirs;
     private final String keycloakTag;
 
     private Arguments(
@@ -295,7 +293,7 @@ public final class PreviewRendererMain {
         Path presetRoot,
         Path outputRoot,
         Path contextMocksPath,
-        Path userThemeDir,
+        List<Path> userThemeDirs,
         String keycloakTag
     ) {
       this.inputRoot = inputRoot;
@@ -303,8 +301,38 @@ public final class PreviewRendererMain {
       this.presetRoot = presetRoot;
       this.outputRoot = outputRoot;
       this.contextMocksPath = contextMocksPath;
-      this.userThemeDir = userThemeDir;
+      this.userThemeDirs = userThemeDirs;
       this.keycloakTag = keycloakTag;
+    }
+
+    private static final int MAX_DISCOVERY_DEPTH = 5;
+
+    private static List<Path> discoverThemeDirs(Path dir) {
+      return discoverThemeDirs(dir, MAX_DISCOVERY_DEPTH);
+    }
+
+    private static List<Path> discoverThemeDirs(Path dir, int depth) {
+      List<Path> result = new ArrayList<Path>();
+      if (dir == null || depth <= 0 || !Files.isDirectory(dir)) {
+        return result;
+      }
+      if (Files.exists(dir.resolve("login").resolve("theme.properties"))) {
+        result.add(dir);
+        return result;
+      }
+      try {
+        for (Path child : Files.newDirectoryStream(dir)) {
+          if (Files.isDirectory(child)) {
+            String name = child.getFileName().toString();
+            if (name.startsWith(".") || name.equals("node_modules") || name.equals("dist") || name.equals("build") || name.equals("target")) {
+              continue;
+            }
+            result.addAll(discoverThemeDirs(child, depth - 1));
+          }
+        }
+      } catch (IOException ignored) {
+      }
+      return result;
     }
 
     private static Arguments from(String[] args) {
@@ -339,10 +367,10 @@ public final class PreviewRendererMain {
       }
       Path contextMocksPath = Paths.get(contextMocks.trim());
 
-      Path userThemeDir = null;
+      List<Path> userThemeDirs = new ArrayList<Path>();
       String userThemeValue = values.get("user-theme");
       if (userThemeValue != null && !userThemeValue.trim().isEmpty()) {
-        userThemeDir = Paths.get(userThemeValue.trim());
+        userThemeDirs = discoverThemeDirs(Paths.get(userThemeValue.trim()));
       }
 
       String keycloakTag = values.getOrDefault("tag", "26.x");
@@ -353,7 +381,7 @@ public final class PreviewRendererMain {
           presetRoot,
           outputRoot,
           contextMocksPath,
-          userThemeDir,
+          userThemeDirs,
           keycloakTag
       );
     }

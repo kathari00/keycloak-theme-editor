@@ -1,10 +1,10 @@
+import type { Attribute } from 'keycloakify/login/KcContext'
 import { spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
 import { createJiti } from 'jiti'
-import type { Attribute } from 'keycloakify/login/KcContext'
 
 const MIN_JAVA = 25
 const isWindows = process.platform === 'win32'
@@ -79,19 +79,21 @@ function profileAttributesArray(byName: Record<string, Partial<Attribute>>): Rec
   }))
 }
 
+/* eslint-disable no-template-curly-in-string -- FreeMarker placeholders */
 const defaultProfileAttributes = profileAttributesArray({
   username: { displayName: '${username}', required: true, autocomplete: 'username' },
   email: { displayName: '${email}', required: true, autocomplete: 'email' },
   firstName: { displayName: '${firstName}', required: true },
   lastName: { displayName: '${lastName}', required: true },
 })
+/* eslint-enable no-template-curly-in-string */
 
 const profileOverride = {
   profile: { attributes: defaultProfileAttributes, html5DataAnnotations: {} },
 }
 
 const stories: Record<string, Record<string, Record<string, unknown>>> = {
-  'login': {
+  login: {
     'minimal': {
       realm: { internationalizationEnabled: false, rememberMe: false, registrationAllowed: false, resetPasswordAllowed: false },
       social: { displayInfo: false, providers: [] },
@@ -251,7 +253,8 @@ function runJar(params: {
 }) {
   const { jarPath, contextMocksPath, packageRoot, outputDir, userThemeDir } = params
   const args = [
-    '-jar', jarPath,
+    '-jar',
+    jarPath,
     `--context-mocks=${toForwardSlashPath(contextMocksPath)}`,
     `--input=${toForwardSlashPath(path.join(packageRoot, 'public/keycloak-upstream'))}`,
     `--overrides=${toForwardSlashPath(path.join(packageRoot, 'public/keycloak-dev-resources/themes'))}`,
@@ -311,7 +314,7 @@ function validateStoryHtmlContract(params: {
     )
   }
 
-  const match = trimmed.match(/<body\b[^>]*\bdata-page-id\s*=\s*(['"])([^'"]+)\1/i)
+  const match = trimmed.match(/<body\b[^>]+\bdata-page-id\s*=\s*(['"])([^'"]+)\1/i)
   if (!match) {
     throw new Error(
       `Invalid preview story markup for ${variantId}/${pageId}/${storyId}: missing body[data-page-id].`,
@@ -339,13 +342,13 @@ function normalizeStoriesForPage(params: {
 
   const rawStories = rawPage as Record<string, unknown>
   if (typeof rawStories.default !== 'string') {
-    throw new Error(`Invalid preview page payload for ${variantId}/${pageId}: missing default story.`)
+    throw new TypeError(`Invalid preview page payload for ${variantId}/${pageId}: missing default story.`)
   }
 
   const normalizedStories: Record<string, string> = {}
   for (const [storyId, storyHtml] of Object.entries(rawStories)) {
     if (typeof storyHtml !== 'string') {
-      throw new Error(`Invalid preview story payload for ${variantId}/${pageId}/${storyId}: expected string HTML.`)
+      throw new TypeError(`Invalid preview story payload for ${variantId}/${pageId}/${storyId}: expected string HTML.`)
     }
     const sanitizedStoryHtml = stripScriptTags(storyHtml)
     validateStoryHtmlContract({

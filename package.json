@@ -1,11 +1,39 @@
 {
-  "name": "my-keycloak-theme",
+  "name": "keycloak-theme-editor",
   "type": "module",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.12",
+  "description": "Visual theme editor for Keycloak login pages. Style, preview, and export Keycloak themes without cloning or forking.",
+  "license": "Apache-2.0",
+  "keywords": [
+    "keycloak",
+    "theme",
+    "editor",
+    "login",
+    "freemarker",
+    "css",
+    "visual-editor"
+  ],
+  "bin": {
+    "keycloak-theme-editor": "./bin/cli.js"
+  },
+  "files": [
+    "bin/cli.js",
+    "dist/",
+    "public/keycloak-dev-resources/",
+    "public/keycloak-upstream/",
+    "tools/generate-preview.ts",
+    "tools/preview-renderer/lib/",
+    "tools/preview-renderer/preview-renderer.jar"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:jar": "mvn -f tools/preview-renderer/pom.xml clean package -q",
+    "build:cli": "tsup --config bin/tsup.config.ts",
+    "prepublishOnly": "npm run build && npm run build:jar && npm run build:cli",
     "lint": "eslint .",
     "prepare": "husky",
     "preview": "vite preview",
@@ -24,9 +52,13 @@
     "@patternfly/react-icons": "6.3.1",
     "@patternfly/react-styles": "6.3.1",
     "@uiw/react-codemirror": "4.25.4",
+    "chokidar": "^5.0.0",
+    "commander": "^14.0.3",
     "fflate": "0.8.2",
     "file-selector": "2.1.2",
     "immer": "^11.1.4",
+    "jiti": "^2.6.1",
+    "keycloakify": "^11.15.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "zustand": "5.0.11"
@@ -45,10 +77,10 @@
     "eslint-plugin-react-refresh": "0.5.0",
     "husky": "^9.1.7",
     "jsdom": "^25.0.1",
-    "keycloakify": "^11.15.1",
     "postcss": "8.5.6",
     "prettier": "3.8.1",
     "tailwindcss": "4.1.18",
+    "tsup": "^8.5.1",
     "tsx": "4.20.6",
     "typescript": "~5.8.3",
     "vite": "^7.0.4",
