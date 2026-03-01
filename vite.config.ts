@@ -1,31 +1,9 @@
-import fs from 'node:fs'
-import path from 'node:path'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
-import type { Plugin } from 'vite'
 import { viteStaticCopy } from 'vite-plugin-static-copy'
-
-function serveGeneratedPagesJson(): Plugin {
-  return {
-    name: 'serve-generated-pages-json',
-    configureServer(server) {
-      server.middlewares.use('/api/pages.json', (_req, res) => {
-        const filePath = path.resolve(import.meta.dirname, 'src/features/preview/generated/pages.json')
-        if (!fs.existsSync(filePath)) {
-          res.statusCode = 404
-          res.end(JSON.stringify({ error: 'pages.json not generated yet. Run: npm run generate:preview' }))
-          return
-        }
-        res.setHeader('Content-Type', 'application/json')
-        fs.createReadStream(filePath).pipe(res)
-      })
-    },
-  }
-}
 
 export default defineConfig({
   plugins: [
-    serveGeneratedPagesJson(),
     react({
       babel: {
         plugins: [
