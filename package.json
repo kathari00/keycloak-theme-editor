@@ -1,7 +1,7 @@
 {
   "name": "keycloak-theme-editor",
   "type": "module",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "Visual theme editor for Keycloak login pages. Style, preview, and export Keycloak themes without cloning or forking.",
   "license": "Apache-2.0",
   "bin": {
