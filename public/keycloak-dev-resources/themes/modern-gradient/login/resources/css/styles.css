@@ -1,8 +1,21 @@
 ﻿@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-.kcLoginMain,
+#kc-otp-reset-form-description {
+  margin-bottom: 1rem;
+}
+
+.kcFormGroupClass hr {
+  display: none
+}
+
+label.kcLoginOTPListClass {
+  display: inline;
+  margin-right: 1rem;
+}
+
 .kcFormCardClass {
   box-shadow: var(--quickstart-card-shadow);
+  border-radius: var(--quickstart-border-radius);
 }
 
 .kcLoginMain {
@@ -32,23 +45,37 @@ html.kcDarkModeClass .kcLoginMain {
   }
 }
 
-.kcLoginMain,
-.kcFormCardClass {
-  border-radius: var(--quickstart-border-radius);
-}
-
+.pf-c-alert.pf-m-warning,
 .alert-warning {
-  border-left: 4px solid;
+  border-left: 4px solid #f59e0b;
   gap: 12px;
-  display: flex;
-  border-radius: var(--quickstart-border-radius);
-}
 
-.alert-warning {
+  border-radius: var(--quickstart-border-radius);
   background-color: #fffbeb;
-  border-left-color: #f59e0b;
   padding: 12px 16px;
   color: #92400e;
+}
+
+html.pf-v5-theme-dark .pf-c-alert.pf-m-warning p,
+html.pf-v5-theme-dark .alert-warning p {
+  color: var(--quickstart-text-primary-light) !important;
+}
+
+html.pf-v5-theme-dark #kc-recovery-codes-list {
+  background: var(--quickstart-input-bg-color-dark);
+}
+
+html.pf-v5-theme-dark #kc-recovery-codes-list li span {
+  color: var(--quickstart-text-secondary-dark);
+}
+
+.pf-c-alert__icon {
+  display: inline;
+}
+
+.pf-c-alert.pf-m-warning h4  {
+  color: #92400e;
+  display: inline;
 }
 
 .form-vertical {
@@ -74,17 +101,17 @@ html.pf-v5-theme-dark ul {
   color: var(--quickstart-text-primary-dark) !important;
 }
 
+div:nth-of-type(2) > p:nth-of-type(1) {
+  margin-bottom: 1rem;
+}
+
 p,
 ul {
   color: var(--quickstart-text-primary-light) !important;
 }
 
-html.pf-v5-theme-dark p {
-  color: var(--quickstart-text-primary-dark);
-}
-
-p {
-  color: var(--quickstart-text-primary-light);
+#instruction1 {
+  line-height: 2rem;
 }
 
 .form-actions {
@@ -127,12 +154,33 @@ html.pf-v5-theme-dark span.required {
   color: var(--quickstart-text-secondary-dark);
 }
 
-li::marker {
-  color: var(--quickstart-text-primary-light);
+#kc-totp-supported-apps,
+ul {
+  list-style: disc inside;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-html.pf-v5-theme-dark li::marker {
-  color: var(--quickstart-text-primary-dark);
+#kc-totp-supported-apps > li{
+  background: color-mix(in srgb, var(--quickstart-secondary-color) 8%, transparent);
+  border-radius: var(--quickstart-border-radius);
+  padding: 0.75rem 1rem;
+}
+
+html.pf-v5-theme-dark #kc-totp-supported-apps > li,
+html.pf-v5-theme-dark form > ul > li,
+html.pf-v5-theme-dark form > div > ul > li,
+html.pf-v5-theme-dark #kc-content-wrapper > ul > li,
+html.pf-v5-theme-dark #kc-content-wrapper > div > ul > li,
+html.kcDarkModeClass #kc-totp-supported-apps > li,
+html.kcDarkModeClass form > ul > li,
+html.kcDarkModeClass form > div > ul > li,
+html.kcDarkModeClass #kc-content-wrapper > ul > li,
+html.kcDarkModeClass #kc-content-wrapper > div > ul > li {
+  background: color-mix(in srgb, var(--quickstart-secondary-color) 12%, transparent);
 }
 
 .kcLogin {
@@ -140,6 +188,8 @@ html.pf-v5-theme-dark li::marker {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
+  min-height: 100dvh;
+  box-sizing: border-box;
   padding: 2rem;
   background-color: transparent;
   background-image: var(--quickstart-bg-image);
@@ -170,11 +220,493 @@ html.kcDarkModeClass body#keycloak-bg .kcLoginClass {
   background-image: var(--quickstart-bg-image);
 }
 
+#confirmOverride {
+  margin-top: 1rem;
+}
+
+#updateProfile {
+  margin-bottom: 1rem;
+}
+
 .kcButtonClass:not(.kcButtonSecondaryClass),
 button:not(.kcButtonSecondaryClass),
 input[type="submit"],
 a.kcButtonClass:not(.kcButtonSecondaryClass) {
   border-radius: var(--quickstart-border-radius);
+}
+
+.kcButtonClass:not(.kcButtonSecondaryClass),
+button:not(.kcButtonSecondaryClass),
+input[type="submit"],
+a.kcButtonClass:not(.kcButtonSecondaryClass) {
+  display: inline-block;
+  padding: 0.875rem 1.5rem;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: var(--quickstart-border-radius);
+  cursor: pointer;
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  border: none;
+  font-family: system-ui, -apple-system, sans-serif;
+  text-decoration: none;
+  text-align: center;
+}
+
+#printRecoveryCodes,
+#downloadRecoveryCodes,
+#copyRecoveryCodes {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  margin: 0 0 1rem;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: #6b7280;
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+  font-size: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+#printRecoveryCodes:hover,
+#downloadRecoveryCodes:hover,
+#copyRecoveryCodes:hover {
+  background: #f3f4f6;
+}
+
+#printRecoveryCodes:active,
+#downloadRecoveryCodes:active,
+#copyRecoveryCodes:active {
+  background: #e5e7eb;
+}
+
+#printRecoveryCodes::before {
+  content: '';
+  display: block;
+  width: 20px;
+  height: 20px;
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 6 2 18 2 18 9'%3E%3C/polyline%3E%3Cpath d='M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2'%3E%3C/path%3E%3Crect x='6' y='14' width='12' height='8'%3E%3C/rect%3E%3C/svg%3E") no-repeat center / contain;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 6 2 18 2 18 9'%3E%3C/polyline%3E%3Cpath d='M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2'%3E%3C/path%3E%3Crect x='6' y='14' width='12' height='8'%3E%3C/rect%3E%3C/svg%3E") no-repeat center / contain;
+}
+
+#printRecoveryCodes:hover,
+#downloadRecoveryCodes:hover,
+#copyRecoveryCodes:hover {
+  color: var(--quickstart-secondary-color);
+}
+
+.
+
+:is(
+  input.kcInputClass,
+  .kcInputClass input,
+  select.kcInputClass,
+  textarea.kcInputClass,
+  .kcButtonClass,
+  .kcButtonPrimaryClass,
+  .kcButtonSecondaryClass,
+  .kcFormSocialAccountListButtonClass,
+  .kcPanelMainBodyClass
+) {
+  border-radius: var(--quickstart-border-radius);
+}
+
+.k
+
+:is(
+  input.kcInputClass,
+  .kcInputClass input,
+  select.kcInputClass,
+  textarea.kcInputClass,
+  .kcButtonClass,
+  .kcButtonPrimaryClass,
+  .kcButtonSecondaryClass,
+  .kcFormSocialAccountListButtonClass,
+  .kcPanelMainBodyClass
+) {
+  border-radius: var(--quickstart-border-radius);
+}
+
+.kc
+
+:is(
+  input.kcInputClass,
+  .kcInputClass input,
+  select.kcInputClass,
+  textarea.kcInputClass,
+  .kcButtonClass,
+  .kcButtonPrimaryClass,
+  .kcButtonSecondaryClass,
+  .kcFormSocialAccountListButtonClass,
+  .kcPanelMainBodyClass
+) {
+  border-radius: var(--quickstart-border-radius);
+}
+
+.kcF
+
+:is(
+  input.kcInputClass,
+  .kcInputClass input,
+  select.kcInputClass,
+  textarea.kcInputClass,
+  .kcButtonClass,
+  .kcButtonPrimaryClass,
+  .kcButtonSecondaryClass,
+  .kcFormSocialAccountListButtonClass,
+  .kcPanelMainBodyClass
+) {
+  border-radius: var(--quickstart-border-radius);
+}
+
+.kcFo
+
+:is(
+  input.kcInputClass,
+  .kcInputClass input,
+  select.kcInputClass,
+  textarea.kcInputClass,
+  .kcButtonClass,
+  .kcButtonPrimaryClass,
+  .kcButtonSecondaryClass,
+  .kcFormSocialAccountListButtonClass,
+  .kcPanelMainBodyClass
+) {
+  border-radius: var(--quickstart-border-radius);
+}
+
+.kcFor
+
+:is(
+  input.kcInputClass,
+  .kcInputClass input,
+  select.kcInputClass,
+  textarea.kcInputClass,
+  .kcButtonClass,
+  .kcButtonPrimaryClass,
+  .kcButtonSecondaryClass,
+  .kcFormSocialAccountListButtonClass,
+  .kcPanelMainBodyClass
+) {
+  border-radius: var(--quickstart-border-radius);
+}
+
+.kcForm
+
+:is(
+  input.kcInputClass,
+  .kcInputClass input,
+  select.kcInputClass,
+  textarea.kcInputClass,
+  .kcButtonClass,
+  .kcButtonPrimaryClass,
+  .kcButtonSecondaryClass,
+  .kcFormSocialAccountListButtonClass,
+  .kcPanelMainBodyClass
+) {
+  border-radius: var(--quickstart-border-radius);
+}
+
+.kcFormG
+
+:is(
+  input.kcInputClass,
+  .kcInputClass input,
+  select.kcInputClass,
+  textarea.kcInputClass,
+  .kcButtonClass,
+  .kcButtonPrimaryClass,
+  .kcButtonSecondaryClass,
+  .kcFormSocialAccountListButtonClass,
+  .kcPanelMainBodyClass
+) {
+  border-radius: var(--quickstart-border-radius);
+}
+
+.kcFormGr
+
+:is(
+  input.kcInputClass,
+  .kcInputClass input,
+  select.kcInputClass,
+  textarea.kcInputClass,
+  .kcButtonClass,
+  .kcButtonPrimaryClass,
+  .kcButtonSecondaryClass,
+  .kcFormSocialAccountListButtonClass,
+  .kcPanelMainBodyClass
+) {
+  border-radius: var(--quickstart-border-radius);
+}
+
+.kcFormGro
+
+:is(
+  input.kcInputClass,
+  .kcInputClass input,
+  select.kcInputClass,
+  textarea.kcInputClass,
+  .kcButtonClass,
+  .kcButtonPrimaryClass,
+  .kcButtonSecondaryClass,
+  .kcFormSocialAccountListButtonClass,
+  .kcPanelMainBodyClass
+) {
+  border-radius: var(--quickstart-border-radius);
+}
+
+.kcFormGrou
+
+:is(
+  input.kcInputClass,
+  .kcInputClass input,
+  select.kcInputClass,
+  textarea.kcInputClass,
+  .kcButtonClass,
+  .kcButtonPrimaryClass,
+  .kcButtonSecondaryClass,
+  .kcFormSocialAccountListButtonClass,
+  .kcPanelMainBodyClass
+) {
+  border-radius: var(--quickstart-border-radius);
+}
+
+.kcFormGroup
+
+:is(
+  input.kcInputClass,
+  .kcInputClass input,
+  select.kcInputClass,
+  textarea.kcInputClass,
+  .kcButtonClass,
+  .kcButtonPrimaryClass,
+  .kcButtonSecondaryClass,
+  .kcFormSocialAccountListButtonClass,
+  .kcPanelMainBodyClass
+) {
+  border-radius: var(--quickstart-border-radius);
+}
+
+.kcFormGroupC
+
+:is(
+  input.kcInputClass,
+  .kcInputClass input,
+  select.kcInputClass,
+  textarea.kcInputClass,
+  .kcButtonClass,
+  .kcButtonPrimaryClass,
+  .kcButtonSecondaryClass,
+  .kcFormSocialAccountListButtonClass,
+  .kcPanelMainBodyClass
+) {
+  border-radius: var(--quickstart-border-radius);
+}
+
+.kcFormGroupCl
+
+:is(
+  input.kcInputClass,
+  .kcInputClass input,
+  select.kcInputClass,
+  textarea.kcInputClass,
+  .kcButtonClass,
+  .kcButtonPrimaryClass,
+  .kcButtonSecondaryClass,
+  .kcFormSocialAccountListButtonClass,
+  .kcPanelMainBodyClass
+) {
+  border-radius: var(--quickstart-border-radius);
+}
+
+.kcFormGroupCla
+
+:is(
+  input.kcInputClass,
+  .kcInputClass input,
+  select.kcInputClass,
+  textarea.kcInputClass,
+  .kcButtonClass,
+  .kcButtonPrimaryClass,
+  .kcButtonSecondaryClass,
+  .kcFormSocialAccountListButtonClass,
+  .kcPanelMainBodyClass
+) {
+  border-radius: var(--quickstart-border-radius);
+}
+
+.kcFormGroupClas
+
+:is(
+  input.kcInputClass,
+  .kcInputClass input,
+  select.kcInputClass,
+  textarea.kcInputClass,
+  .kcButtonClass,
+  .kcButtonPrimaryClass,
+  .kcButtonSecondaryClass,
+  .kcFormSocialAccountListButtonClass,
+  .kcPanelMainBodyClass
+) {
+  border-radius: var(--quickstart-border-radius);
+}
+
+:is(
+  input.kcInputClass,
+  .kcInputClass input,
+  select.kcInputClass,
+  textarea.kcInputClass,
+  .kcButtonClass,
+  .kcButtonPrimaryClass,
+  .kcButtonSecondaryClass,
+  .kcFormSocialAccountListButtonClass,
+  .kcPanelMainBodyClass
+) {
+  border-radius: var(--quickstart-border-radius);
+}
+
+:is(
+  input.kcInputClass,
+  .kcInputClass input,
+  select.kcInputClass,
+  textarea.kcInputClass,
+  .kcButtonClass,
+  .kcButtonPrimaryClass,
+  .kcButtonSecondaryClass,
+  .kcFormSocialAccountListButtonClass,
+  .kcPanelMainBodyClass
+) {
+  border-radius: var(--quickstart-border-radius);
+}
+
+:is(
+  input.kcInputClass,
+  .kcInputClass input,
+  select.kcInputClass,
+  textarea.kcInputClass,
+  .kcButtonClass,
+  .kcButtonPrimaryClass,
+  .kcButtonSecondaryClass,
+  .kcFormSocialAccountListButtonClass,
+  .kcPanelMainBodyClass
+) {
+  border-radius: var(--quickstart-border-radius);
+}
+
+.kcInputClass {
+  display: block;
+  width: 100%;
+  position: relative;
+}
+
+.kcInputClass input,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="tel"],
+input[type="number"],
+select,
+textarea {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: var(--quickstart-border-radius);
+  color: #1a1a2e;
+  font-size: 15px;
+  font-family: system-ui, -apple-system, sans-serif;
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  box-sizing: border-box;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+.kcInputClass input:hover,
+input:hover,
+select:hover,
+textarea:hover {
+  border-color: #9ca3af;
+}
+
+.kcInputClass input:focus,
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--quickstart-primary-color);
+}
+
+.kcInputGroup .kcInputClass {
+  flex: 1;
+}
+
+.kcInputGroup :is(
+  input.kcInputClass,
+  .kcInputClass input,
+  .kcInputGroupItemClass.kcFill > input,
+  .kcInputGroupItemClass.kcFill > .kcInputClass,
+  .kcInputGroupItemClass.kcFill > .kcInputClass input,
+  input[type="password"],
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="number"]
+) {
+  border-top-left-radius: var(--quickstart-border-radius);
+  border-bottom-left-radius: var(--quickstart-border-radius);
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-right-width: 0;
+  border-inline-end-width: 0;
+}
+
+.kcInputGroup :is(
+  input.kcInputClass:focus,
+  .kcInputClass input:focus,
+  .kcInputGroupItemClass.kcFill > input:focus,
+  .kcInputGroupItemClass.kcFill > .kcInputClass input:focus,
+  input[type="password"]:focus,
+  input[type="text"]:focus,
+  input[type="email"]:focus,
+  input[type="tel"]:focus,
+  input[type="number"]:focus,
+  input.kcInputClass[aria-invalid="true"],
+  .kcInputClass input[aria-invalid="true"],
+  .kcInputGroupItemClass.kcFill > input[aria-invalid="true"],
+  .kcInputGroupItemClass.kcFill > .kcInputClass input[aria-invalid="true"]
+) {
+  box-shadow: none;
+}
+
+.kcButtonPrimaryClass,
+button[type="submit"],
+input[type="submit"],
+button.kcButtonPrimaryClass,
+a.kcButtonPrimaryClass {
+  background: linear-gradient(135deg, var(--quickstart-primary-color) 0%, var(--quickstart-secondary-color) 100%);
+  color: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.kcButtonBlockClass,
+button.kcButtonBlockClass,
+a.kcButtonBlockClass {
+  display: block;
+  width: 100%;
+}
+
+.kcButtonPrimaryClass,
+button.kcButtonPrimaryClass,
+a.kcButtonPrimaryClass,
+button[type="submit"],
+input[type="submit"] {
+  border-color: var(--quickstart-primary-color);
 }
 
 #code {
@@ -267,82 +799,12 @@ html.kcDarkModeClass textarea::placeholder {
   color: var(--quickstart-muted-text-color-dark);
 }
 
-.kcInputClass {
-  display: block;
-  width: 100%;
-  position: relative;
-}
-
-.kcInputClass input,
-input[type="text"],
-input[type="email"],
-input[type="password"],
-input[type="tel"],
-input[type="number"],
-select,
-textarea {
-  width: 100%;
-  padding: 0.875rem 1rem;
-  background: #ffffff;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  color: #1a1a2e;
-  font-size: 15px;
-  font-family: system-ui, -apple-system, sans-serif;
-  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
-  box-sizing: border-box;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-}
-
-.kcInputClass input::placeholder,
-input::placeholder,
-textarea::placeholder {
-  color: #9ca3af;
-}
-
-.kcInputClass input:hover,
-input:hover,
-select:hover,
-textarea:hover {
-  border-color: #9ca3af;
-}
-
 .kcInputClass.kcError input,
 .kcInputClass input[aria-invalid="true"],
 input.kcError,
 input[aria-invalid="true"] {
   border-color: #ef4444;
   background: #fef2f2;
-}
-
-.kcInputClass input:focus,
-input[type="text"]:focus,
-input[type="email"]:focus,
-input[type="password"]:focus {
-  border-bottom-color: var(--quickstart-primary-color);
-}
-
-.kcInputClass input:focus,
-input:focus,
-select:focus,
-textarea:focus {
-  border-color: var(--quickstart-primary-color);
-}
-
-:is(
-  input.kcInputClass,
-  .kcInputClass input,
-  select.kcInputClass,
-  textarea.kcInputClass,
-  .kcButtonClass,
-  .kcButtonPrimaryClass,
-  .kcButtonSecondaryClass,
-  .kcFormSocialAccountListButtonClass,
-  .kcPanelMainBodyClass
-) {
-  border-radius: var(--quickstart-border-radius);
 }
 
 .kcLoginMainHeader {
@@ -393,6 +855,24 @@ textarea:focus {
   line-height: 1.25;
   width: 100%;
   text-align: center;
+}
+
+@media (max-width: 480px) {
+  .kcLoginMainTitle {
+    font-size: 28px;
+  }
+}
+
+h1, h2, h3, h4, h5, h6,
+#kc-header-wrapper,
+#kc-realm-name,
+#kc-client-name,
+.kcLoginMainTitle {
+  font-family: var(--quickstart-heading-font-family);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--quickstart-text-primary-light);
 }
 
 #kc-header-wrapper #kc-client-name {
@@ -458,53 +938,6 @@ select {
   padding-right: 2.5rem;
 }
 
-.kcButtonClass:not(.kcButtonSecondaryClass),
-button:not(.kcButtonSecondaryClass),
-input[type="submit"],
-a.kcButtonClass:not(.kcButtonSecondaryClass) {
-  display: inline-block;
-  padding: 0.875rem 1.5rem;
-  font-size: 15px;
-  font-weight: 600;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
-  border: none;
-  font-family: system-ui, -apple-system, sans-serif;
-  text-decoration: none;
-  text-align: center;
-}
-
-.kcButtonPrimaryClass,
-button[type="submit"],
-input[type="submit"],
-button.kcButtonPrimaryClass,
-a.kcButtonPrimaryClass {
-  background: linear-gradient(135deg, var(--quickstart-primary-color) 0%, var(--quickstart-secondary-color) 100%);
-  color: #ffffff;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.kcButtonPrimaryClass:hover,
-button[type="submit"]:hover,
-input[type="submit"]:hover,
-button.kcButtonPrimaryClass:hover,
-a.kcButtonPrimaryClass:hover {
-  background: linear-gradient(135deg, var(--quickstart-primary-color) 0%, var(--quickstart-secondary-color) 100%);
-  filter: brightness(0.95);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-  opacity: 1;
-}
-
-.kcButtonPrimaryClass:active,
-button[type="submit"]:active,
-button.kcButtonPrimaryClass:active,
-a.kcButtonPrimaryClass:active {
-  transform: translateY(0);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
 .kcButtonSecondaryClass,
 button.kcButtonSecondaryClass,
 a.kcButtonSecondaryClass,
@@ -533,13 +966,6 @@ input[type="button"]:hover {
   text-decoration: underline;
 }
 
-.kcButtonBlockClass,
-button.kcButtonBlockClass,
-a.kcButtonBlockClass {
-  display: block;
-  width: 100%;
-}
-
 .kcInputGroup {
   display: flex;
   position: relative;
@@ -552,23 +978,6 @@ a.kcButtonBlockClass {
 
 .kcInputGroupItemClass.kcFill {
   flex: 1;
-}
-
-.kcInputGroup .kcInputClass {
-  flex: 1;
-}
-
-.kcInputGroup .kcInputClass input,
-.kcInputGroup input.kcInputClass,
-.kcInputGroup .kcInputGroupItemClass.kcFill input,
-.kcInputGroup .kcInputGroupItemClass.kcFill input.kcInputClass,
-.kcInputGroup input[type="password"],
-.kcInputGroup input[type="text"],
-.kcInputGroup input[type="email"],
-.kcInputGroup input[type="tel"],
-.kcInputGroup input[type="number"] {
-  border-radius: 8px 0 0 8px;
-  border-right: none;
 }
 
 .kcFormPasswordVisibilityButtonClass,
@@ -783,12 +1192,6 @@ a:hover {
   border-left-color: #10b981;
 }
 
-.kcAlertClass.pf-m-warning,
-.kcAlertClass.kcWarning {
-  background: #fffbeb;
-  border-left-color: #f59e0b;
-}
-
 .kcAlertTitleClass {
   color: #1a1a2e;
   font-weight: 600;
@@ -964,47 +1367,15 @@ html.kcDarkModeClass .kc-footer-language select,
 html.pf-v5-theme-dark select.kc-language-select,
 body.pf-v5-theme-dark select.kc-language-select,
 html.kcDarkModeClass select.kc-language-select {
-  background: transparent;
-  border: none;
-  color: var(--quickstart-primary-color);
   box-shadow: none;
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%230f766e' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M8 6l4 4-4 4'/%3e%3c/svg%3e");
-  background-position: left center;
-  background-repeat: no-repeat;
-  background-size: 1em;
-}
-
-html.pf-v5-theme-dark .kc-footer-language select:hover,
-body.pf-v5-theme-dark .kc-footer-language select:hover,
-html.kcDarkModeClass .kc-footer-language select:hover,
-html.pf-v5-theme-dark select.kc-language-select:hover,
-body.pf-v5-theme-dark select.kc-language-select:hover,
-html.kcDarkModeClass select.kc-language-select:hover {
-  background-color: transparent;
-  border: none;
-  box-shadow: none;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  opacity: 0.8;
 }
 
 .kcInputHelperTextItemClass a,
 .kcInputHelperTextClass a,
 .kcFormSettingClass a,
 .kcFormOptionsWrapperClass a {
-  color: var(--quickstart-primary-color);
-  font-weight: 500;
   font-size: 14px;
   line-height: 16px;
-  text-decoration: none;
-}
-
-.kcInputHelperTextItemClass a:hover,
-.kcInputHelperTextClass a:hover,
-.kcFormSettingClass a:hover,
-.kcFormOptionsWrapperClass a:hover {
-  opacity: 0.8;
-  text-decoration: underline;
 }
 
 .kc-footer-legal-links {
@@ -1023,19 +1394,8 @@ html.kcDarkModeClass select.kc-language-select:hover {
   display: none;
 }
 
-.kc-footer-legal-links a {
-  color: var(--quickstart-primary-color);
-  font-weight: 500;
-  text-decoration: none;
-}
-
-.kc-footer-legal-links a:hover {
-  opacity: 0.8;
-  text-decoration: underline;
-}
-
 .kcLoginMainFooterBand {
-  margin-top: 0.75rem;
+  margin-top: 0;
   text-align: center;
   color: #6b7280;
   font-size: 13px;
@@ -1047,11 +1407,6 @@ html.kcDarkModeClass select.kc-language-select:hover {
 
 .kcLoginMainFooterBandItem {
   color: #6b7280;
-}
-
-.kcLoginMainFooterBandItem a {
-  color: var(--quickstart-primary-color);
-  font-weight: 500;
 }
 
 .kcFormSocialAccountSectionClass {
@@ -1083,7 +1438,7 @@ a.kcFormSocialAccountListButtonClass {
   padding: 0.75rem 1rem;
   background: #ffffff;
   border: 1px solid #d1d5db;
-  border-radius: 8px;
+  border-radius: var(--quickstart-border-radius);
   color: #374151;
   font-size: 14px;
   font-weight: 500;
@@ -1142,10 +1497,6 @@ body.pf-v5-theme-dark a.kcFormSocialAccountListButtonClass:focus-visible {
 }
 
 @media (max-width: 480px) {
-  .kcLoginMainTitle {
-    font-size: 28px;
-  }
-
   .kcFormSocialAccountListClass {
     grid-template-columns: 1fr;
   }
@@ -1176,54 +1527,10 @@ body.pf-v5-theme-dark a.kcFormSocialAccountListButtonClass:focus-visible {
   min-width: 2ch;
 }
 
-#printRecoveryCodes,
-#downloadRecoveryCodes,
-#copyRecoveryCodes {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  margin: 0 0.25rem;
-  background: transparent;
-  border: none;
-  border-radius: 6px;
-  color: #6b7280;
-  cursor: pointer;
-  transition: color 0.15s ease, background-color 0.15s ease;
-  font-size: 0;
-  overflow: hidden;
-  position: relative;
-}
-
-#printRecoveryCodes:hover,
-#downloadRecoveryCodes:hover,
-#copyRecoveryCodes:hover {
-  background: #f3f4f6;
-  color: var(--quickstart-primary-color);
-}
-
-#printRecoveryCodes:active,
-#downloadRecoveryCodes:active,
-#copyRecoveryCodes:active {
-  background: #e5e7eb;
-}
-
 #printRecoveryCodes i,
 #downloadRecoveryCodes i,
 #copyRecoveryCodes i {
   display: none;
-}
-
-#printRecoveryCodes::before {
-  content: '';
-  display: block;
-  width: 20px;
-  height: 20px;
-  background-color: currentColor;
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 6 2 18 2 18 9'%3E%3C/polyline%3E%3Cpath d='M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2'%3E%3C/path%3E%3Crect x='6' y='14' width='12' height='8'%3E%3C/rect%3E%3C/svg%3E") no-repeat center / contain;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 6 2 18 2 18 9'%3E%3C/polyline%3E%3Cpath d='M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2'%3E%3C/path%3E%3Crect x='6' y='14' width='12' height='8'%3E%3C/rect%3E%3C/svg%3E") no-repeat center / contain;
 }
 
 #downloadRecoveryCodes::before {
@@ -1261,15 +1568,16 @@ label[for="kcRecoveryCodesConfirmationCheck"] {
   margin: 0 0 8px 0;
 }
 
-.kcLoginMainFooterBand {
-  margin-top: 0px;
-}
-
 div#kc-registration > span:nth-of-type(1) > a:nth-of-type(1) {
   margin-bottom: 1.5rem;
 }
 
 div#kc-social-providers > h2:nth-of-type(1) {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+#kc-oauth h3 {
   margin-bottom: 1rem;
 }
 
@@ -1293,22 +1601,6 @@ div#kc-social-providers > h2:nth-of-type(1) {
 #kc-registration > span > a,
 #kc-registration-container #kc-registration > a {
   font-size: 14px;
-  color: var(--quickstart-primary-color);
-}
-
-.kcButtonPrimaryClass,
-button.kcButtonPrimaryClass,
-a.kcButtonPrimaryClass,
-button[type="submit"],
-input[type="submit"] {
-  border-color: var(--quickstart-primary-color);
-}
-
-.kcButtonPrimaryClass:hover,
-.kcButtonPrimaryClass:focus,
-button[type="submit"]:hover,
-button[type="submit"]:focus {
-  filter: brightness(0.9);
 }
 
 .kcButtonSecondaryClass,
@@ -1319,18 +1611,6 @@ button.kcButtonSecondaryClass,
   color: var(--quickstart-primary-color);
 }
 
-.kcButtonLinkClass,
-a.kcButtonLinkClass,
-button.kcButtonLinkClass {
-  color: var(--quickstart-primary-color);
-}
-
-#printRecoveryCodes:hover,
-#downloadRecoveryCodes:hover,
-#copyRecoveryCodes:hover {
-  color: var(--quickstart-secondary-color);
-}
-
 .kcCheckboxInputClass,
 input[type="checkbox"].kcCheckboxInputClass,
 .kcCheckboxClass input[type="checkbox"],
@@ -1338,29 +1618,37 @@ input[type="checkbox"] {
   accent-color: var(--quickstart-secondary-color);
 }
 
-a {
-  color: var(--quickstart-primary-color);
-}
-
 .kcCheckboxInputClass,
 input[type="checkbox"] {
   accent-color: var(--quickstart-primary-color);
 }
 
-body {
-  font-family: var(--quickstart-font-family);
+hr {
+  border: none;
+  border-top: none;
+  height: 2px;
+  background: linear-gradient(90deg, var(--quickstart-primary-color), var(--quickstart-secondary-color));
+  opacity: 1;
 }
 
-h1, h2, h3, h4, h5, h6,
-body h1, body h2, body h3, body h4, body h5, body h6,
-html h1, html h2, html h3, html h4, html h5, html h6,
-#kc-header-wrapper,
-#kc-header-wrapper #kc-realm-name,
-#kc-header-wrapper #kc-client-name,
-#kc-header-wrapper span#kc-realm-name,
-#kc-header-wrapper span#kc-client-name,
-body .kcLoginMainTitle {
-  font-family: var(--quickstart-heading-font-family);
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  font-family: var(--quickstart-font-family);
+  color: var(--quickstart-text-primary-light);
+}
+
+html.pf-v5-theme-dark body,
+html.kcDarkModeClass body {
+  color: var(--quickstart-text-primary-dark);
+}
+
+html.pf-v5-theme-dark h1, html.pf-v5-theme-dark h2, html.pf-v5-theme-dark h3,
+html.pf-v5-theme-dark h4, html.pf-v5-theme-dark h5, html.pf-v5-theme-dark h6,
+html.kcDarkModeClass h1, html.kcDarkModeClass h2, html.kcDarkModeClass h3,
+html.kcDarkModeClass h4, html.kcDarkModeClass h5, html.kcDarkModeClass h6 {
+  color: var(--quickstart-text-primary-dark);
 }
 
 html:not(.pf-v5-theme-dark):not(.kcDarkModeClass),
@@ -1384,49 +1672,20 @@ html.kcDarkModeClass body#keycloak-bg {
   border-radius: var(--quickstart-border-radius);
 }
 
-.kcInputGroup :is(
-  input.kcInputClass,
-  .kcInputClass input,
-  .kcInputGroupItemClass.kcFill > input,
-  .kcInputGroupItemClass.kcFill > .kcInputClass,
-  .kcInputGroupItemClass.kcFill > .kcInputClass input,
-  input[type="password"],
-  input[type="text"],
-  input[type="email"],
-  input[type="tel"],
-  input[type="number"]
-) {
-  border-top-left-radius: var(--quickstart-border-radius);
-  border-bottom-left-radius: var(--quickstart-border-radius);
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
-  border-right-width: 0;
-  border-inline-end-width: 0;
-}
-
-.kcInputGroup :is(
-  input.kcInputClass:focus,
-  .kcInputClass input:focus,
-  .kcInputGroupItemClass.kcFill > input:focus,
-  .kcInputGroupItemClass.kcFill > .kcInputClass input:focus,
-  input[type="password"]:focus,
-  input[type="text"]:focus,
-  input[type="email"]:focus,
-  input[type="tel"]:focus,
-  input[type="number"]:focus,
-  input.kcInputClass[aria-invalid="true"],
-  .kcInputClass input[aria-invalid="true"],
-  .kcInputGroupItemClass.kcFill > input[aria-invalid="true"],
-  .kcInputGroupItemClass.kcFill > .kcInputClass input[aria-invalid="true"]
-) {
-  box-shadow: none;
-}
-
 .kcInputGroup .kcFormPasswordVisibilityButtonClass {
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
   border-top-right-radius: var(--quickstart-border-radius);
   border-bottom-right-radius: var(--quickstart-border-radius);
+}
+
+:root {
+  --quickstart-bg-logo-url: none;
+  --keycloak-bg-logo-url: none;
+}
+
+html body .pf-v5-c-login {
+  background-image: none;
 }
 
 
