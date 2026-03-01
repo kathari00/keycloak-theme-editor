@@ -2,32 +2,31 @@ import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 import { viteStaticCopy } from 'vite-plugin-static-copy'
 
+import { cloudflare } from "@cloudflare/vite-plugin";
+
 export default defineConfig({
-  plugins: [
-    react({
-      babel: {
-        plugins: [
-          ['babel-plugin-react-compiler', {}],
-        ],
-      },
-    }),
-    viteStaticCopy({
-      targets: [
-        {
-          src: 'node_modules/@patternfly-v5/patternfly/patternfly.min.css',
-          dest: 'keycloak-dev-resources',
-        },
-        {
-          src: 'node_modules/@patternfly-v5/patternfly/patternfly-addons.css',
-          dest: 'keycloak-dev-resources',
-        },
-        {
-          src: 'node_modules/@patternfly-v5/patternfly/assets/fonts/**/*',
-          dest: 'keycloak-dev-resources/assets/fonts',
-        },
+  plugins: [react({
+    babel: {
+      plugins: [
+        ['babel-plugin-react-compiler', {}],
       ],
-    }),
-  ],
+    },
+  }), viteStaticCopy({
+    targets: [
+      {
+        src: 'node_modules/@patternfly-v5/patternfly/patternfly.min.css',
+        dest: 'keycloak-dev-resources',
+      },
+      {
+        src: 'node_modules/@patternfly-v5/patternfly/patternfly-addons.css',
+        dest: 'keycloak-dev-resources',
+      },
+      {
+        src: 'node_modules/@patternfly-v5/patternfly/assets/fonts/**/*',
+        dest: 'keycloak-dev-resources/assets/fonts',
+      },
+    ],
+  }), cloudflare()],
 
   optimizeDeps: {
     include: ['react', 'react-dom', 'react/jsx-runtime'],
