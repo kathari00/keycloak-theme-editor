@@ -1,10 +1,9 @@
 import { createServer } from 'node:http'
+import { spawn, spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
 import { program } from 'commander'
-import open from 'open'
-import sirv from 'sirv'
 import { watch } from 'chokidar'
 import { createJiti } from 'jiti'
 import { generatePreview, getJavaMajorVersion, type ContextMocks } from '../tools/generate-preview'
@@ -18,6 +17,24 @@ const sseClients: Set<import('node:http').ServerResponse> = new Set()
 
 const SKIP_DIRS = new Set(['node_modules', '.git', 'dist', 'build', 'target', '.next', '.nuxt'])
 const MAX_DISCOVERY_DEPTH = 5
+
+function findNearestDirectory(startDir: string, predicate: (dir: string) => boolean): string | null {
+  let current = path.resolve(startDir)
+  while (true) {
+    if (predicate(current)) {
+      return current
+    }
+    const parent = path.dirname(current)
+    if (parent === current) {
+      return null
+    }
+    current = parent
+  }
+}
+
+function findNearestPackageRoot(startDir: string): string | null {
+  return findNearestDirectory(startDir, dir => fs.existsSync(path.join(dir, 'package.json')))
+}
 
 function findThemeDirs(dir: string, depth: number): string[] {
   if (depth <= 0) return []
@@ -88,9 +105,9 @@ async function loadUserMocks(pagesDir: string): Promise<ContextMocks | undefined
     userPage = await jiti.import(userPageFile) as typeof userPage
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
-    if (message.includes('Cannot find module')) {
-      console.warn(`Warning: Failed to load ${path.basename(userPageFile)} — missing dependency.`)
-      console.warn('  Make sure keycloakify is installed: npm install keycloakify')
+    if (message.includes('Cannot find module') && message.includes('keycloakify')) {
+      console.warn(`Warning: Failed to load ${path.basename(userPageFile)} — keycloakify is still missing.`)
+      console.warn('  Try installing it manually in your project: npm install keycloakify')
     } else {
       console.warn(`Warning: Failed to load ${path.basename(userPageFile)}: ${message}`)
     }
@@ -158,6 +175,132 @@ function readRequestBody(req: import('node:http').IncomingMessage): Promise<stri
     req.on('end', () => resolve(Buffer.concat(chunks).toString('utf-8')))
     req.on('error', reject)
   })
+}
+
+const MIME_TYPES: Record<string, string> = {
+  '.css': 'text/css; charset=utf-8',
+  '.ftl': 'text/plain; charset=utf-8',
+  '.html': 'text/html; charset=utf-8',
+  '.ico': 'image/x-icon',
+  '.js': 'text/javascript; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.properties': 'text/plain; charset=utf-8',
+  '.svg': 'image/svg+xml',
+  '.ttf': 'font/ttf',
+  '.txt': 'text/plain; charset=utf-8',
+  '.woff': 'font/woff',
+  '.woff2': 'font/woff2',
+}
+
+function getRequestPath(url: string): string {
+  try {
+    return new URL(url, 'http://localhost').pathname
+  }
+  catch {
+    return url.split('?')[0]?.split('#')[0] || '/'
+  }
+}
+
+function isPathWithinRoot(rootDir: string, filePath: string): boolean {
+  const relative = path.relative(rootDir, filePath)
+  return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative))
+}
+
+function resolveStaticPath(rootDir: string, requestPath: string): string | null {
+  let decodedPath = requestPath
+  try {
+    decodedPath = decodeURIComponent(requestPath)
+  }
+  catch {
+    return null
+  }
+  const normalizedPath = decodedPath.replaceAll('\\', '/').replace(/^\/+/, '')
+  const resolvedPath = path.resolve(rootDir, normalizedPath)
+  if (!isPathWithinRoot(rootDir, resolvedPath)) {
+    return null
+  }
+  return resolvedPath
+}
+
+function sendFile(res: import('node:http').ServerResponse, filePath: string): boolean {
+  try {
+    const stat = fs.statSync(filePath)
+    if (!stat.isFile()) {
+      return false
+    }
+  }
+  catch {
+    return false
+  }
+
+  const ext = path.extname(filePath).toLowerCase()
+  const contentType = MIME_TYPES[ext] || 'application/octet-stream'
+  res.writeHead(200, { 'Content-Type': contentType })
+  fs.createReadStream(filePath).pipe(res)
+  return true
+}
+
+function serveStaticPath(
+  res: import('node:http').ServerResponse,
+  rootDir: string,
+  requestPath: string,
+): boolean {
+  const resolvedPath = resolveStaticPath(rootDir, requestPath)
+  if (!resolvedPath) {
+    return false
+  }
+
+  let candidatePath = resolvedPath
+  try {
+    if (fs.existsSync(candidatePath) && fs.statSync(candidatePath).isDirectory()) {
+      candidatePath = path.join(candidatePath, 'index.html')
+    }
+  }
+  catch {
+    return false
+  }
+
+  return sendFile(res, candidatePath)
+}
+
+function serveDistSpa(
+  res: import('node:http').ServerResponse,
+  distDir: string,
+  requestPath: string,
+) {
+  if (requestPath !== '/' && serveStaticPath(res, distDir, requestPath)) {
+    return
+  }
+
+  const indexPath = path.join(distDir, 'index.html')
+  if (!sendFile(res, indexPath)) {
+    res.writeHead(404)
+    res.end('Not found')
+  }
+}
+
+function openBrowser(url: string) {
+  const platform = process.platform
+  const command = platform === 'win32'
+    ? 'cmd'
+    : platform === 'darwin'
+      ? 'open'
+      : 'xdg-open'
+  const args = platform === 'win32'
+    ? ['/c', 'start', '', url]
+    : [url]
+
+  try {
+    const child = spawn(command, args, { detached: true, stdio: 'ignore' })
+    child.unref()
+  }
+  catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    console.warn(`Unable to open browser automatically: ${message}`)
+  }
 }
 
 function isValidPathSegment(value: string, opts?: { allowDots?: boolean }): boolean {
@@ -230,18 +373,12 @@ function startServer(opts: {
 }) {
   const { port, distDir, pagesJsonPath, publicDir, exportDir, userThemeMapping } = opts
 
-  // Static file servers
-  const serveDist = sirv(distDir, { single: true, dev: true })
-  const servePublic = sirv(publicDir, { dev: true })
-  const serveUserTheme = userThemeMapping
-    ? sirv(userThemeMapping.localDir, { dev: true })
-    : null
-
   const server = createServer((req, res) => {
     const url = req.url ?? '/'
+    const requestPath = getRequestPath(url)
 
     // API: serve generated pages.json
-    if (url === '/api/pages.json') {
+    if (requestPath === '/api/pages.json') {
       if (!fs.existsSync(pagesJsonPath)) {
         res.writeHead(404, { 'Content-Type': 'application/json' })
         res.end(JSON.stringify({ error: 'pages.json not generated yet' }))
@@ -256,12 +393,12 @@ function startServer(opts: {
     }
 
     // API: save theme to project directory
-    if (url === '/api/save-theme' && req.method === 'GET') {
+    if (requestPath === '/api/save-theme' && req.method === 'GET') {
       res.writeHead(200, { 'Content-Type': 'application/json' })
       res.end(JSON.stringify({ available: true, cwd: exportDir }))
       return
     }
-    if (url === '/api/save-theme' && req.method === 'POST') {
+    if (requestPath === '/api/save-theme' && req.method === 'POST') {
       readRequestBody(req).then((raw) => {
         try {
           const body = JSON.parse(raw)
@@ -296,7 +433,7 @@ function startServer(opts: {
     }
 
     // SSE endpoint for live reload
-    if (url === '/api/events') {
+    if (requestPath === '/api/events') {
       res.writeHead(200, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
@@ -309,29 +446,26 @@ function startServer(opts: {
     }
 
     // Serve user theme resources (must be checked before general public/ handler)
-    if (serveUserTheme && userThemeMapping && url.startsWith(userThemeMapping.urlPrefix)) {
-      req.url = url.slice(userThemeMapping.urlPrefix.length) || '/'
-      serveUserTheme(req, res, () => {
+    if (userThemeMapping && requestPath.startsWith(userThemeMapping.urlPrefix)) {
+      const userThemePath = requestPath.slice(userThemeMapping.urlPrefix.length) || '/'
+      if (!serveStaticPath(res, userThemeMapping.localDir, userThemePath)) {
         res.writeHead(404)
         res.end('Not found')
-      })
+      }
       return
     }
 
     // Serve public/ assets (keycloak-upstream, keycloak-dev-resources)
-    if (url.startsWith('/keycloak-upstream/') || url.startsWith('/keycloak-dev-resources/')) {
-      servePublic(req, res, () => {
+    if (requestPath.startsWith('/keycloak-upstream/') || requestPath.startsWith('/keycloak-dev-resources/')) {
+      if (!serveStaticPath(res, publicDir, requestPath)) {
         res.writeHead(404)
         res.end('Not found')
-      })
+      }
       return
     }
 
     // Serve the pre-built SPA (with SPA fallback to index.html)
-    serveDist(req, res, () => {
-      res.writeHead(404)
-      res.end('Not found')
-    })
+    serveDistSpa(res, distDir, requestPath)
   })
 
   server.listen(port, () => {
@@ -469,9 +603,20 @@ export const stories: Record<string, Record<string, Record<string, unknown>>> = 
     console.log(`Created: ${kcStoryPath}`)
   }
 
+  const installDir = findNearestPackageRoot(pagesDir) ?? pagesDir
+  console.log(`Ensuring keycloakify is installed in: ${installDir}`)
+  const installResult = spawnSync('npm', ['install', '--no-save', '--no-package-lock', 'keycloakify'], {
+    cwd: installDir,
+    stdio: 'inherit',
+    shell: process.platform === 'win32',
+  })
+  if (installResult.status !== 0) {
+    const message = installResult.error instanceof Error ? installResult.error.message : `exit code ${installResult.status ?? 'unknown'}`
+    console.warn(`Warning: Failed to install keycloakify automatically (${message}).`)
+  }
+
   console.log('\nNext steps:')
-  console.log('  npm install keycloakify           — install keycloakify (if not already)')
-  console.log('  npx keycloak-theme-editor         — start the editor')
+  console.log('  npx keycloak-theme-editor         - start the editor')
   console.log('')
 }
 
@@ -561,7 +706,7 @@ async function startEditor(opts: { pages?: string, port: string, open: boolean }
 
   // Open browser
   if (opts.open) {
-    await open(`http://localhost:${port}`)
+    openBrowser(`http://localhost:${port}`)
   }
 
   // Cleanup on exit
@@ -601,3 +746,5 @@ main().catch((err) => {
   console.error(err)
   process.exit(1)
 })
+
+
