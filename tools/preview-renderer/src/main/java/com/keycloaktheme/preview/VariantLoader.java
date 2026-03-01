@@ -25,7 +25,7 @@ public final class VariantLoader {
     this.overrideRoot = overrideRoot;
   }
 
-  public VariantInputs loadVariantInputs(Path inputRoot, String baseTheme, Path overlayDir) throws IOException {
+  public VariantInputs loadVariantInputs(Path inputRoot, String baseTheme, Path overlayDir, Path userOverlayDir) throws IOException {
     Path baseThemeLoginDir = inputRoot.resolve(baseTheme).resolve("login");
     Path localOverrideLoginDir = overrideRoot.resolve(baseTheme).resolve("login");
     Path inheritedBaseLoginDir = inputRoot.resolve("base").resolve("login");
@@ -44,6 +44,18 @@ public final class VariantLoader {
         themeProperties.putIfAbsent(entry.getKey(), entry.getValue());
       }
     }
+    if (overlayDir != null) {
+      Path overlayThemePropertiesPath = overlayDir.resolve("theme.properties");
+      if (Files.exists(overlayThemePropertiesPath)) {
+        themeProperties.putAll(parseJavaProperties(readUtf8(overlayThemePropertiesPath)));
+      }
+    }
+    if (userOverlayDir != null) {
+      Path userThemePropertiesPath = userOverlayDir.resolve("theme.properties");
+      if (Files.exists(userThemePropertiesPath)) {
+        themeProperties.putAll(parseJavaProperties(readUtf8(userThemePropertiesPath)));
+      }
+    }
 
     Map<String, String> messages = parseJavaProperties(readUtf8(messagesPath));
     Path overrideMessagesPath = localOverrideLoginDir.resolve("messages").resolve("messages_en.properties");
@@ -56,12 +68,19 @@ public final class VariantLoader {
         messages.putAll(parseJavaProperties(readUtf8(overlayMessagesPath)));
       }
     }
+    if (userOverlayDir != null) {
+      Path userMessagesPath = userOverlayDir.resolve("messages").resolve("messages_en.properties");
+      if (Files.exists(userMessagesPath)) {
+        messages.putAll(parseJavaProperties(readUtf8(userMessagesPath)));
+      }
+    }
 
     List<String> pageTemplates = listPageTemplates(
         baseThemeLoginDir,
         inheritedBaseLoginDir,
         localOverrideLoginDir,
-        overlayDir
+        overlayDir,
+        userOverlayDir
     );
 
     return new VariantInputs(
@@ -78,9 +97,11 @@ public final class VariantLoader {
       Path baseThemeLoginDir,
       Path inheritedBaseLoginDir,
       Path localOverrideLoginDir,
-      Path overlayDir
+      Path overlayDir,
+      Path userOverlayDir
   ) throws IOException {
     Set<String> templates = new LinkedHashSet<String>();
+    templates.addAll(collectPageTemplateNames(userOverlayDir));
     templates.addAll(collectPageTemplateNames(overlayDir));
     templates.addAll(collectPageTemplateNames(localOverrideLoginDir));
     templates.addAll(collectPageTemplateNames(baseThemeLoginDir));

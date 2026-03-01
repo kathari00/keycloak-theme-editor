@@ -14,8 +14,17 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public final class PageRenderer {
+  private static final Pattern BODY_TAG_PATTERN = Pattern.compile(
+      "(<body\\b)([^>]*)(>)", Pattern.CASE_INSENSITIVE
+  );
+  private static final Pattern DATA_PAGE_ID_ATTR = Pattern.compile(
+      "\\sdata-page-id\\s*=\\s*(['\"])[^'\"]*\\1", Pattern.CASE_INSENSITIVE
+  );
+
   private final ContextBuilder contextBuilder;
 
   public PageRenderer(ContextBuilder contextBuilder) {
@@ -27,10 +36,11 @@ public final class PageRenderer {
       String pageId,
       String variantId,
       Path overlayDir,
+      Path userOverlayDir,
       VariantLoader.VariantInputs inputs,
       Map<String, Object> pageContextOverride
   ) throws Exception {
-    Configuration configuration = createConfiguration(overlayDir, inputs);
+    Configuration configuration = createConfiguration(overlayDir, userOverlayDir, inputs);
     Template template = configuration.getTemplate(pageTemplateName);
     Map<String, Object> model = buildModel(
         pageId,
@@ -43,11 +53,16 @@ public final class PageRenderer {
     StringWriter writer = new StringWriter();
     template.process(model, writer);
     String html = writer.toString();
-    return stripEditorMarkers(html);
+    html = stripEditorMarkers(html);
+    html = ensureDataPageId(html, pageId);
+    return html;
   }
 
-  private Configuration createConfiguration(Path overlayDir, VariantLoader.VariantInputs inputs) throws IOException {
+  private Configuration createConfiguration(Path overlayDir, Path userOverlayDir, VariantLoader.VariantInputs inputs) throws IOException {
     List<TemplateLoader> loaders = new ArrayList<TemplateLoader>();
+    if (userOverlayDir != null && Files.exists(userOverlayDir)) {
+      loaders.add(new FileTemplateLoader(userOverlayDir.toFile()));
+    }
     if (overlayDir != null && Files.exists(overlayDir)) {
       loaders.add(new FileTemplateLoader(overlayDir.toFile()));
     }
@@ -118,6 +133,19 @@ public final class PageRenderer {
     }
 
     return model;
+  }
+
+  private String ensureDataPageId(String html, String pageId) {
+    String expectedId = "login-" + pageId.replaceAll("\\.html$", "");
+    Matcher bodyMatcher = BODY_TAG_PATTERN.matcher(html);
+    if (!bodyMatcher.find()) {
+      return html;
+    }
+    String attrs = bodyMatcher.group(2);
+    // Strip any existing data-page-id attribute
+    String cleanedAttrs = DATA_PAGE_ID_ATTR.matcher(attrs).replaceAll("");
+    String replacement = bodyMatcher.group(1) + cleanedAttrs + " data-page-id=\"" + expectedId + "\"" + bodyMatcher.group(3);
+    return bodyMatcher.replaceFirst(Matcher.quoteReplacement(replacement));
   }
 
   private String stripEditorMarkers(String html) {

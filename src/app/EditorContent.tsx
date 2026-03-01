@@ -11,7 +11,7 @@ import { sanitizeThemeCssSourceForEditor, stripQuickStartImportLine } from '../f
 import { assetStore } from '../features/editor/stores/asset-store'
 import { useDarkModeState, usePresetState, usePreviewState } from '../features/editor/use-editor'
 import { getThemeCssStructuredCached, resolveThemeBaseIdFromConfig, resolveThemeIdFromConfig, useThemeConfig } from '../features/presets/queries'
-import { ensureGeneratedPreviewPagesLoaded, getVariantPages, resolvePreviewVariantId } from '../features/preview/load-generated'
+import { connectLiveReload, ensureGeneratedPreviewPagesLoaded, getVariantPages, resolvePreviewVariantId } from '../features/preview/load-generated'
 import { PreviewProvider } from '../features/preview/PreviewProvider'
 import { PreviewShell } from '../features/preview/PreviewShell'
 import { THEME_JAR_IMPORTED_EVENT } from '../features/theme-export/jar-import-service'
@@ -72,6 +72,7 @@ export default function EditorContent() {
       .then(() => {
         if (!cancelled) {
           setPreviewPagesReady(true)
+          connectLiveReload(() => setPreviewPagesReady(true))
         }
       })
       .catch(() => {

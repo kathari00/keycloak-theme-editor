@@ -183,6 +183,7 @@ function syncPreviewDocumentStyles(params: {
   removeElementById(doc, 'preview-quick-start')
   ensureStyle(doc, 'preview-quick-start-overrides', quickStartOverridesCss)
   ensureLink(doc, 'preview-theme-preview-css', themePreviewCssPath)
+  removeElementById(doc, 'preview-common-preview-css')
   ensureStyle(doc, 'preview-uploaded-fonts', uploadedFontsCss)
   ensureStyle(doc, 'preview-uploaded-images', uploadedImagesCss)
   ensureStyle(doc, 'preview-applied-assets', appliedAssetsCss)
