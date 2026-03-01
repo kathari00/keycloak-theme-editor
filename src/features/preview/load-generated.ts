@@ -41,13 +41,19 @@ export async function ensureGeneratedPreviewPagesLoaded(): Promise<void> {
 
   previewPagesLoadPromise = fetch('/api/pages.json')
     .then((res) => {
-      if (!res.ok) {
+      if (!res.ok || !res.headers.get('content-type')?.includes('application/json')) {
         throw new Error(`Failed to load pages.json: ${res.status}`)
       }
       return res.json()
     })
     .then((previewPages: PreviewPageHtmlMap) => {
       applyPreviewPages(previewPages)
+    })
+    .catch(() => {
+      // CLI serves /api/pages.json; during Vite dev, fall back to the generated file
+      return import('./generated/pages.json').then((mod) => {
+        applyPreviewPages(mod.default as PreviewPageHtmlMap)
+      })
     })
     .finally(() => {
       previewPagesLoadPromise = null
@@ -58,6 +64,9 @@ export async function ensureGeneratedPreviewPagesLoaded(): Promise<void> {
 
 export async function reloadPreviewPages(): Promise<void> {
   const res = await fetch('/api/pages.json')
+  if (!res.ok || !res.headers.get('content-type')?.includes('application/json')) {
+    return
+  }
   const previewPages = await res.json() as PreviewPageHtmlMap
   applyPreviewPages(previewPages)
 }

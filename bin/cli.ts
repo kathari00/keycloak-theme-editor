@@ -39,15 +39,21 @@ function findNearestPackageRoot(startDir: string): string | null {
 function findThemeDirs(dir: string, depth: number): string[] {
   if (depth <= 0) return []
   const results: string[] = []
-  if (fs.existsSync(path.join(dir, 'login', 'theme.properties'))) {
-    results.push(dir)
-  }
+  const isTheme = fs.existsSync(path.join(dir, 'login', 'theme.properties'))
   let entries: fs.Dirent[]
   try { entries = fs.readdirSync(dir, { withFileTypes: true }) }
-  catch { return results }
+  catch { return isTheme ? [dir] : [] }
+  const childThemes: string[] = []
   for (const entry of entries) {
     if (!entry.isDirectory() || SKIP_DIRS.has(entry.name) || entry.name.startsWith('.')) continue
-    results.push(...findThemeDirs(path.join(dir, entry.name), depth - 1))
+    childThemes.push(...findThemeDirs(path.join(dir, entry.name), depth - 1))
+  }
+  // Prefer deeper nested themes over a parent that also has theme.properties
+  if (childThemes.length > 0) {
+    return childThemes
+  }
+  if (isTheme) {
+    results.push(dir)
   }
   return results
 }
@@ -66,19 +72,35 @@ function resolveUserPagesDir(pagesArg?: string): string | undefined {
   const cwd = process.cwd()
   const found = findThemeDirs(cwd, MAX_DISCOVERY_DEPTH)
 
+  if (found.length === 0) return undefined
+
   if (found.length === 1) {
     console.log(`Auto-discovered theme directory: ${found[0]}`)
     return found[0]
   }
-  if (found.length > 1) {
-    console.log(`Found multiple theme directories:`)
-    for (const dir of found) {
-      console.log(`  - ${dir}`)
-    }
-    console.log(`Use --pages to specify which one to use.`)
+
+  // Multiple themes found — use common parent so all variants are loaded
+  console.log(`Auto-discovered ${found.length} theme variants:`)
+  for (const dir of found) {
+    console.log(`  - ${path.relative(cwd, dir)}`)
   }
 
-  return undefined
+  const parents = new Set(found.map(d => path.dirname(d)))
+  if (parents.size === 1) {
+    const parent = [...parents][0]
+    console.log(`Using parent directory: ${parent}`)
+    return parent
+  }
+
+  // Different parents — use the first theme dir
+  return found[0]
+}
+
+function discoverThemeDirsIn(dir: string): string[] {
+  if (fs.existsSync(path.join(dir, 'login', 'theme.properties'))) {
+    return [dir]
+  }
+  return findThemeDirs(dir, MAX_DISCOVERY_DEPTH)
 }
 
 async function loadUserMocks(pagesDir: string): Promise<ContextMocks | undefined> {
@@ -369,9 +391,9 @@ function startServer(opts: {
   pagesJsonPath: string
   publicDir: string
   exportDir: string
-  userThemeMapping?: { urlPrefix: string, localDir: string }
+  userThemeMappings?: Array<{ urlPrefix: string, localDir: string }>
 }) {
-  const { port, distDir, pagesJsonPath, publicDir, exportDir, userThemeMapping } = opts
+  const { port, distDir, pagesJsonPath, publicDir, exportDir, userThemeMappings } = opts
 
   const server = createServer((req, res) => {
     const url = req.url ?? '/'
@@ -446,13 +468,16 @@ function startServer(opts: {
     }
 
     // Serve user theme resources (must be checked before general public/ handler)
-    if (userThemeMapping && requestPath.startsWith(userThemeMapping.urlPrefix)) {
-      const userThemePath = requestPath.slice(userThemeMapping.urlPrefix.length) || '/'
-      if (!serveStaticPath(res, userThemeMapping.localDir, userThemePath)) {
-        res.writeHead(404)
-        res.end('Not found')
+    if (userThemeMappings) {
+      const mapping = userThemeMappings.find(m => requestPath.startsWith(m.urlPrefix))
+      if (mapping) {
+        const userThemePath = requestPath.slice(mapping.urlPrefix.length) || '/'
+        if (!serveStaticPath(res, mapping.localDir, userThemePath)) {
+          res.writeHead(404)
+          res.end('Not found')
+        }
+        return
       }
-      return
     }
 
     // Serve public/ assets (keycloak-upstream, keycloak-dev-resources)
@@ -481,10 +506,10 @@ function startWatcher(opts: {
   jarPath: string
   outputPath: string
   additionalMocks?: ContextMocks
-  requiredVariantId?: string
+  requiredVariantIds?: string[]
   userThemeDir?: string
 }) {
-  const { pagesDir, jarPath, outputPath, additionalMocks, requiredVariantId, userThemeDir } = opts
+  const { pagesDir, jarPath, outputPath, additionalMocks, requiredVariantIds, userThemeDir } = opts
   let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
   const watcher = watch(pagesDir, {
@@ -507,11 +532,14 @@ function startWatcher(opts: {
       quiet: true,
     })
 
-    if (result.success && requiredVariantId) {
-      const variantPages = result.pagesData?.variants?.[requiredVariantId]
-      if (!variantPages || Object.keys(variantPages).length === 0) {
+    if (result.success && requiredVariantIds && requiredVariantIds.length > 0) {
+      const missingVariants = requiredVariantIds.filter((id) => {
+        const variantPages = result.pagesData?.variants?.[id]
+        return !variantPages || Object.keys(variantPages).length === 0
+      })
+      if (missingVariants.length > 0) {
         console.error(
-          `Preview regeneration rejected: required variant "${requiredVariantId}" is missing. Keeping previous previews.`,
+          `Preview regeneration rejected: required variant(s) ${missingVariants.map(v => `"${v}"`).join(', ')} missing. Keeping previous previews.`,
         )
         if (previousPagesJson !== null) {
           try {
@@ -655,10 +683,20 @@ async function startEditor(opts: { pages?: string, port: string, open: boolean }
     process.exit(1)
   }
 
+  // Discover actual theme directories within the user pages dir
+  const themeDirs = userPagesDir ? discoverThemeDirsIn(userPagesDir) : []
+
   // Load user page mocks if available
   let additionalMocks: ContextMocks | undefined
   if (userPagesDir) {
     additionalMocks = await loadUserMocks(userPagesDir)
+    // If no mocks in the given dir, try each discovered theme dir
+    if (!additionalMocks) {
+      for (const dir of themeDirs) {
+        additionalMocks = await loadUserMocks(dir)
+        if (additionalMocks) break
+      }
+    }
   }
 
   // Generate preview pages
@@ -676,32 +714,35 @@ async function startEditor(opts: { pages?: string, port: string, open: boolean }
     process.exit(1)
   }
 
-  // Build user theme mapping for the dev server
-  let userThemeMapping: { urlPrefix: string, localDir: string } | undefined
-  if (userPagesDir) {
-    const variantId = path.basename(userPagesDir)
+  // Build user theme mappings for the dev server (one per variant)
+  const userThemeMappings: Array<{ urlPrefix: string, localDir: string }> = []
+  for (const dir of themeDirs) {
+    const variantId = path.basename(dir)
     const urlPrefix = `/keycloak-dev-resources/themes/${variantId}`
-    const localDir = userPagesDir
-    if (fs.existsSync(path.join(localDir, 'login'))) {
-      userThemeMapping = { urlPrefix, localDir }
+    if (fs.existsSync(path.join(dir, 'login'))) {
+      userThemeMappings.push({ urlPrefix, localDir: dir })
     }
   }
 
-  // In projects with an existing variant folder (e.g. .../theme/custom.v2),
-  // save exports into the parent theme root (e.g. .../theme).
-  const exportDir = userPagesDir ? path.dirname(userPagesDir) : process.cwd()
+  // Export dir: if userPagesDir is a parent of variants, use it directly;
+  // otherwise use its parent (e.g. .../theme/custom.v2 → .../theme)
+  const isParentOfVariants = themeDirs.length > 0 && themeDirs[0] !== userPagesDir
+  const exportDir = userPagesDir
+    ? (isParentOfVariants ? userPagesDir : path.dirname(userPagesDir))
+    : process.cwd()
 
   // Start HTTP server
-  startServer({ port, distDir, pagesJsonPath, publicDir, exportDir, userThemeMapping })
+  startServer({ port, distDir, pagesJsonPath, publicDir, exportDir, userThemeMappings })
 
   // Start file watcher if user has a pages dir
   if (userPagesDir) {
+    const requiredVariantIds = themeDirs.map(d => path.basename(d))
     startWatcher({
       pagesDir: userPagesDir,
       jarPath,
       outputPath: pagesJsonPath,
       additionalMocks,
-      requiredVariantId: path.basename(userPagesDir),
+      requiredVariantIds,
       userThemeDir: userPagesDir,
     })
     console.log(`  Watching for changes in: ${userPagesDir}`)

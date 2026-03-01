@@ -38,66 +38,35 @@ function isLegalInfoLink(anchor: HTMLAnchorElement): boolean {
   return anchor.matches('[data-kc-state="imprint-link"], [data-kc-state="data-protection-link"], #kc-imprint-link, #kc-data-protection-link')
 }
 
-function ensureStyle(doc: Document, id: string, css: string, insertBeforeId?: string) {
-  const head = doc.head
-  if (!head) {
-    return
-  }
+function ensureStyle(doc: Document, id: string, css: string) {
   let styleEl = doc.getElementById(id) as HTMLStyleElement | null
-  const insertBeforeElement = insertBeforeId ? doc.getElementById(insertBeforeId) : null
   if (!styleEl) {
     styleEl = doc.createElement('style')
     styleEl.id = id
-    if (insertBeforeElement?.parentElement === head) {
-      insertBeforeElement.before(styleEl)
-    }
-    else {
-      head.appendChild(styleEl)
-    }
-  }
-  else if (insertBeforeElement?.parentElement === head && styleEl !== insertBeforeElement) {
-    insertBeforeElement.before(styleEl)
+    doc.head.appendChild(styleEl)
   }
   styleEl.textContent = css
 }
 
 function ensureBaseHref(doc: Document, id: string, href: string) {
-  const head = doc.head
-  if (!head) {
-    return
-  }
   let base = doc.getElementById(id) as HTMLBaseElement | null
   if (!base) {
     base = doc.createElement('base')
     base.id = id
-    const firstStyleNode = head.querySelector('link[rel="stylesheet"], style')
-    if (firstStyleNode?.parentElement === head) {
-      firstStyleNode.before(base)
-    }
-    else {
-      head.prepend(base)
-    }
+    doc.head.prepend(base)
   }
-  if (base.getAttribute('href') !== href) {
-    base.setAttribute('href', href)
-  }
+  base.setAttribute('href', href)
 }
 
 function ensureLink(doc: Document, id: string, href: string) {
-  const head = doc.head
-  if (!head) {
-    return
-  }
   let link = doc.getElementById(id) as HTMLLinkElement | null
   if (!link) {
     link = doc.createElement('link')
     link.id = id
     link.rel = 'stylesheet'
-    head.appendChild(link)
+    doc.head.appendChild(link)
   }
-  if (link.getAttribute('href') !== href) {
-    link.setAttribute('href', href)
-  }
+  link.setAttribute('href', href)
 }
 
 function removeElementById(doc: Document, id: string) {
@@ -150,18 +119,12 @@ function syncPreviewDocumentStyles(params: {
   removeUpstreamThemeStylesheets(doc)
 
   if (isV2Theme) {
-    // Scenario HTML can be a body fragment (no <html class="login-pf"> / no body id).
-    // Normalize these markers so upstream v2 selectors apply consistently.
     doc.documentElement.classList.add('login-pf')
-    if (!doc.body.id) {
-      doc.body.id = 'keycloak-bg'
-    }
+    doc.body.id = 'keycloak-bg'
   }
   else {
     doc.documentElement.classList.remove('login-pf')
-    if (doc.body.id === 'keycloak-bg') {
-      doc.body.removeAttribute('id')
-    }
+    doc.body.removeAttribute('id')
   }
 
   ensureLink(doc, 'preview-patternfly', patternflyCssUrl)
@@ -171,42 +134,19 @@ function syncPreviewDocumentStyles(params: {
   else {
     removeElementById(doc, 'preview-patternfly-addons')
   }
-  removeElementById(doc, 'preview-theme-styles')
   const themeHref = new URL(themeStylesPath, window.location.href).toString()
   ensureBaseHref(doc, 'preview-theme-base', themeHref)
   ensureLink(doc, 'preview-theme-quick-start', themeQuickStartCssPath)
   ensureStyle(doc, 'preview-theme-styles-inline', stylesCss)
-  // Legacy style nodes from earlier preview implementations can override v2 background vars.
-  // Remove them on every sync so applied assets become source of truth immediately.
-  removeElementById(doc, 'preview-theme-image-vars')
-  removeElementById(doc, 'preview-v2-background')
-  removeElementById(doc, 'preview-quick-start')
   ensureStyle(doc, 'preview-quick-start-overrides', quickStartOverridesCss)
   ensureLink(doc, 'preview-theme-preview-css', themePreviewCssPath)
-  removeElementById(doc, 'preview-common-preview-css')
   ensureStyle(doc, 'preview-uploaded-fonts', uploadedFontsCss)
   ensureStyle(doc, 'preview-uploaded-images', uploadedImagesCss)
   ensureStyle(doc, 'preview-applied-assets', appliedAssetsCss)
+  ensureStyle(doc, 'preview-selection-outline', '[data-preview-selected="true"] { outline: 2px solid #0b57d0 !important; outline-offset: 2px !important; }')
 
   doc.documentElement.classList.toggle('pf-v5-theme-dark', isDarkMode)
   doc.body.classList.toggle('pf-v5-theme-dark', isDarkMode)
-}
-
-function removePreviewInteractionHandlers(frame: HTMLIFrameElement, doc: Document | null) {
-  const clickHandler = (frame as any).__previewClickHandler as ((event: MouseEvent) => void) | undefined
-  const submitHandler = (frame as any).__previewSubmitHandler as ((event: Event) => void) | undefined
-
-  if (doc) {
-    if (clickHandler) {
-      doc.removeEventListener('click', clickHandler, true)
-    }
-    if (submitHandler) {
-      doc.removeEventListener('submit', submitHandler, true)
-    }
-  }
-
-  delete (frame as any).__previewClickHandler
-  delete (frame as any).__previewSubmitHandler
 }
 
 export function PreviewShell() {
@@ -319,8 +259,6 @@ export function PreviewShell() {
     if (!doc)
       return
 
-    removePreviewInteractionHandlers(frame, doc)
-
     const selectFromEventTarget = (rawTarget: Node | null) => {
       const target = toEventElement(rawTarget)
       if (!target) {
@@ -354,20 +292,9 @@ export function PreviewShell() {
 
     doc.addEventListener('click', clickHandler, true)
     doc.addEventListener('submit', submitHandler, true)
-    ;(frame as any).__previewClickHandler = clickHandler
-    ;(frame as any).__previewSubmitHandler = submitHandler
     setPreviewReady(true)
     setFrameLoadVersion(version => version + 1)
   }
-
-  useEffect(() => {
-    const frame = iframeRef.current
-    if (!frame)
-      return
-    return () => {
-      removePreviewInteractionHandlers(frame, frame.contentDocument)
-    }
-  }, [iframeRef])
 
   useEffect(() => {
     const doc = iframeRef.current?.contentDocument

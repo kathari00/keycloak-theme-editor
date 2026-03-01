@@ -225,8 +225,11 @@ export default function EditorContent() {
           return
         }
 
+        const requestedThemeId = (detail.themeId || '').trim()
         const fallbackThemeId = resolveThemeIdFromThemeProperties(detail.properties)
-        const targetThemeId = resolveThemeIdFromConfig(themeConfig, detail.themeId || fallbackThemeId)
+        const targetThemeId = requestedThemeId
+          ? resolveThemeIdFromConfig(themeConfig, requestedThemeId)
+          : resolveThemeIdFromConfig(themeConfig, selectedThemeId || fallbackThemeId)
         const targetThemeStorageKey = targetThemeId
         const themeCssStructured = await getThemeCssStructuredCached(targetThemeId).catch(() => ({ quickStartDefaults: '', stylesCss: '' }))
         editorActions.setThemeQuickStartDefaults(themeCssStructured.quickStartDefaults)
@@ -246,7 +249,7 @@ export default function EditorContent() {
     return () => {
       window.removeEventListener(THEME_JAR_IMPORTED_EVENT, handleThemeJarImported as EventListener)
     }
-  }, [themeConfig])
+  }, [selectedThemeId, themeConfig])
 
   if (!previewPagesReady || !pageIds.length) {
     return loadingSpinner
