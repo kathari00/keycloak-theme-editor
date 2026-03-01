@@ -51,5 +51,4 @@ describe('sanitizePreviewHtml', () => {
     expect(result).not.toContain('rel="stylesheet"')
     expect(result).toContain('rel="icon"')
   })
-
 })
