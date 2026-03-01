@@ -1,6 +1,6 @@
 import type { DirectoryWriteParams, EditorCssContext, ImportedQuickSettingsByMode, JarBuildParams } from '../features/theme-export/types'
 import { Button, Card, CardBody, CardTitle, FormGroup, Grid, GridItem, TextInput } from '@patternfly/react-core'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { buildModeDefaultsSnapshot } from '../features/editor/actions/preset-actions'
 import { sanitizeThemeCssSourceForEditor } from '../features/editor/css-source-sanitizer'
 import { presetStore } from '../features/editor/stores/preset-store'
@@ -91,12 +91,21 @@ function buildOverriddenMessages(params: {
 export default function DownloadView({ onExportComplete }: DownloadViewProps) {
   const [themeName, setThemeName] = useState('mytheme')
   const [statusMessage, setStatusMessage] = useState('')
-  const [activeTask, setActiveTask] = useState<'jar' | 'quick' | null>(null)
+  const [activeTask, setActiveTask] = useState<'jar' | 'quick' | 'save' | null>(null)
+  const [cliMode, setCliMode] = useState<{ available: boolean, cwd: string } | null>(null)
   const clearStatusMessage = () => setStatusMessage('')
   const themeNameError = getThemeNameError(themeName)
   const isDownloadingJar = activeTask === 'jar'
   const isQuickExporting = activeTask === 'quick'
+  const isSavingToProject = activeTask === 'save'
   const isExportBusy = activeTask !== null
+
+  useEffect(() => {
+    fetch('/api/save-theme')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data?.available) setCliMode(data) })
+      .catch(() => {})
+  }, [])
   const { uploadedAssets, appliedAssets } = useUploadedAssetsState()
   const { selectedThemeId } = usePresetState()
   const { stylesCss } = useStylesCssState()
@@ -104,6 +113,7 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
   const { quickSettingsByThemeMode } = useQuickSettingsByThemeModeState()
   const themeConfig = useThemeConfig()
   const resolvedThemeId = resolveThemeIdFromConfig(themeConfig, selectedThemeId)
+  const exportVariantId = resolvedThemeId
   const baseIdForExport: 'base' | 'v2' = resolveThemeBaseIdFromConfig(themeConfig, selectedThemeId)
   const isV2Base = baseIdForExport === 'v2'
   const {
@@ -191,9 +201,20 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
       imprintUrl: exportImprintUrl,
       dataProtectionUrl: exportDataProtectionUrl,
     })
+    const rawLightExportSnapshot = isDarkMode ? toExportSnapshot(lightFallback) : currentSnapshot
+    const rawDarkExportSnapshot = isDarkMode ? currentSnapshot : toExportSnapshot(darkFallback)
+    const lightBgColor = (rawLightExportSnapshot.colorPresetBgColor || '').trim()
+    const darkBgColor = (rawDarkExportSnapshot.colorPresetBgColor || '').trim()
+
     const exportQuickSettingsByMode: ImportedQuickSettingsByMode = {
-      light: isDarkMode ? toExportSnapshot(lightFallback) : currentSnapshot,
-      dark: isDarkMode ? currentSnapshot : toExportSnapshot(darkFallback),
+      // If only one mode has a background color, mirror it so exported themes
+      // don't keep the default gradient in the opposite mode unexpectedly.
+      light: darkBgColor && !lightBgColor
+        ? { ...rawLightExportSnapshot, colorPresetBgColor: darkBgColor }
+        : rawLightExportSnapshot,
+      dark: lightBgColor && !darkBgColor
+        ? { ...rawDarkExportSnapshot, colorPresetBgColor: lightBgColor }
+        : rawDarkExportSnapshot,
     }
     const quickStartCssParts = buildModeAwareQuickStartCssParts(exportQuickSettingsByMode)
     const editorCss = await extractEditorCssContext(quickStartCssParts.sharedCss)
@@ -221,6 +242,27 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
       messagesContent,
       payload,
     }
+  }
+
+  const saveExportToProject = async (writeParams: DirectoryWriteParams): Promise<string | null> => {
+    if (!cliMode?.available) {
+      return null
+    }
+
+    const response = await fetch('/api/save-theme', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        themeName,
+        variantId: exportVariantId,
+        ...writeParams,
+      }),
+    })
+    const result = await response.json()
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to save theme to project')
+    }
+    return typeof result.path === 'string' ? result.path : null
   }
 
   const runDownloadJar = async () => {
@@ -268,7 +310,10 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
       if (saveResult === 'unavailable') {
         downloadBlob(blob, `${themeName}.jar`)
       }
-      setStatusMessage('JAR export finished.')
+      const projectPath = await saveExportToProject(writeParams).catch(() => null)
+      setStatusMessage(projectPath
+        ? `JAR export finished. Saved to ${projectPath}`
+        : 'JAR export finished.')
       closeOnSuccess = true
     }
     catch (error) {
@@ -298,9 +343,12 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
         try {
           const dirHandle = await (window as any).showDirectoryPicker({ mode: 'readwrite' })
           await writeToDirectory(dirHandle, writeParams)
+          const projectPath = await saveExportToProject(writeParams).catch(() => null)
           // eslint-disable-next-line no-alert
-          alert('Theme exported to login/')
-          setStatusMessage('Quick export finished.')
+          alert(projectPath ? `Theme exported to login/ and saved to ${projectPath}` : 'Theme exported to login/')
+          setStatusMessage(projectPath
+            ? `Quick export finished. Saved to ${projectPath}`
+            : 'Quick export finished.')
           closeOnSuccess = true
           return
         }
@@ -316,7 +364,10 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
       // Fallback: download as ZIP for browsers without File System Access API
       const zipBlob = await buildFolderZipBlob(writeParams)
       downloadBlob(zipBlob, `${themeName}-theme.zip`)
-      setStatusMessage('Theme exported as ZIP.')
+      const projectPath = await saveExportToProject(writeParams).catch(() => null)
+      setStatusMessage(projectPath
+        ? `Theme exported as ZIP. Saved to ${projectPath}`
+        : 'Theme exported as ZIP.')
       closeOnSuccess = true
     }
     catch (error) {
@@ -343,6 +394,34 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
       return
     clearStatusMessage()
     void runQuickExport()
+  }
+
+  const runSaveToProject = async () => {
+    if (isExportBusy) return
+    setActiveTask('save')
+    let closeOnSuccess = false
+    try {
+      const writeParams = await prepareExportFiles()
+      const path = await saveExportToProject(writeParams)
+      setStatusMessage(path ? `Saved to ${path}` : 'Saved to project.')
+      closeOnSuccess = true
+    }
+    catch (error) {
+      console.error('Error saving to project:', error)
+      setStatusMessage('Error saving to project.')
+    }
+    finally {
+      setActiveTask(null)
+      if (closeOnSuccess) {
+        onExportComplete?.()
+      }
+    }
+  }
+
+  const handleSaveToProject = () => {
+    if (themeNameError) return
+    clearStatusMessage()
+    void runSaveToProject()
   }
 
   return (
@@ -376,17 +455,37 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
       </FormGroup>
 
       <Grid hasGutter>
+        {cliMode?.available && (
+          <GridItem span={12}>
+            <Card isCompact>
+              <CardTitle>Save to project</CardTitle>
+              <CardBody>
+                <p style={{ marginBottom: '1rem', fontSize: '0.9rem', fontFamily: 'var(--pf-t--global--font--family--sans-serif)' }}>
+                  Write theme files directly to your project directory.
+                </p>
+                <Button
+                  variant="primary"
+                  onClick={handleSaveToProject}
+                  isDisabled={!themeName.trim() || !!themeNameError || isExportBusy}
+                  isBlock
+                >
+                  {isSavingToProject ? 'Saving...' : `Save to ${exportVariantId}/`}
+                </Button>
+              </CardBody>
+            </Card>
+          </GridItem>
+        )}
         <GridItem span={6}>
           <Card isCompact>
             <CardTitle>Download .jar</CardTitle>
             <CardBody>
               <p style={{ marginBottom: '1rem', fontSize: '0.9rem', fontFamily: 'var(--pf-t--global--font--family--sans-serif)' }}>
-                Use this option to save your current configurations as a deployable JAR file.
+                Save as a deployable JAR file for your Keycloak server.
               </p>
               <Button
-                variant="primary"
+                variant="secondary"
                 onClick={handleDownloadJar}
-                isDisabled={!themeName.trim() || !!themeNameError || isDownloadingJar || isQuickExporting}
+                isDisabled={!themeName.trim() || !!themeNameError || isExportBusy}
                 isBlock
               >
                 {isDownloadingJar
@@ -413,7 +512,7 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
               <Button
                 variant="secondary"
                 onClick={handleDownloadQuickExport}
-                isDisabled={!themeName.trim() || !!themeNameError || isQuickExporting || isDownloadingJar}
+                isDisabled={!themeName.trim() || !!themeNameError || isExportBusy}
                 isBlock
               >
                 {isQuickExporting ? 'Exporting...' : 'Download files'}
