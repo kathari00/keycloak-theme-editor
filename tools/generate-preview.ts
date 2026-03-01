@@ -130,8 +130,8 @@ async function resolveContextMocks(): Promise<ContextMocks> {
       },
       kcContextExtensionPerPage: {},
       overridesPerPage: {
-        'login.ftl': { usernameHidden: undefined, login: { username: '' }, social: { providers: socialProviders } },
-        'login-username.ftl': { usernameHidden: undefined, login: { username: '' }, social: { providers: socialProviders } },
+        'login.ftl': { usernameHidden: undefined, enableWebAuthnConditionalUI: undefined, login: { username: '' }, social: { providers: socialProviders } },
+        'login-username.ftl': { usernameHidden: undefined, enableWebAuthnConditionalUI: undefined, login: { username: '' }, social: { providers: socialProviders } },
         'register.ftl': {
           termsAcceptanceRequired: true,
           ...profileOverride,
