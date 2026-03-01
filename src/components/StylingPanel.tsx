@@ -63,6 +63,33 @@ function collectIdentifiersForSelectedElement(doc: Document | null, selectedNode
   return identifiers
 }
 
+function escapeCssAttributeValue(value: string): string {
+  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
+}
+
+function buildPageScopedUniqueSelector(doc: Document | null, selectedNodeId: string | null): string | null {
+  const normalizedSelector = (selectedNodeId || '').trim()
+  if (!normalizedSelector || !doc?.body) {
+    return normalizedSelector || null
+  }
+
+  const pageId = (doc.body.getAttribute('data-page-id') || '').trim()
+  if (!pageId) {
+    return normalizedSelector
+  }
+
+  const pageScopedBodySelector = `body[data-page-id="${escapeCssAttributeValue(pageId)}"]`
+  if (normalizedSelector === 'body') {
+    return pageScopedBodySelector
+  }
+
+  if (normalizedSelector.startsWith('body[') || normalizedSelector.startsWith('body#') || normalizedSelector.startsWith('body.')) {
+    return normalizedSelector
+  }
+
+  return `${pageScopedBodySelector} ${normalizedSelector}`
+}
+
 export default function StylingPanel() {
   const { isDarkMode } = useDarkModeState()
   const { stylesCss } = useStylesCssState()
@@ -95,13 +122,14 @@ export default function StylingPanel() {
     }))
 
   const availableIdentifiers = collectIdentifiersForSelectedElement(previewDocument, selectedNodeId)
+  const pageScopedUniqueSelector = buildPageScopedUniqueSelector(previewDocument, selectedNodeId)
 
   const extensions = createCssEditorExtensions(
     isDarkMode,
     customFontFamilies,
     uploadedImages,
     availableIdentifiers,
-    selectedNodeId,
+    pageScopedUniqueSelector,
     {
       undo: editorActions.undo,
       redo: editorActions.redo,

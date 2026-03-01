@@ -1,5 +1,5 @@
 import type { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete'
-import type { Extension } from '@codemirror/state'
+import type { EditorState, Extension } from '@codemirror/state'
 import type { KeyBinding } from '@codemirror/view'
 import type { CssEditorVariable } from './quickstart-variable-registry'
 import { autocompletion } from '@codemirror/autocomplete'
@@ -98,15 +98,17 @@ const commonValues: Record<string, string[]> = {
 }
 
 const THEME_CSS_VARS: CssEditorVariable[] = [
-  { name: '--kc-text-primary-light', detail: 'Theme var' },
-  { name: '--kc-text-primary-dark', detail: 'Theme var' },
-  { name: '--kc-text-secondary-light', detail: 'Theme var' },
-  { name: '--kc-text-secondary-dark', detail: 'Theme var' },
-  { name: '--kc-text-muted-light', detail: 'Theme var' },
-  { name: '--kc-text-muted-dark', detail: 'Theme var' },
+  { name: '--keycloak-logo-url', detail: 'Theme var' },
+  { name: '--keycloak-bg-logo-url', detail: 'Theme var' },
+  { name: '--keycloak-logo-height', detail: 'Theme var' },
+  { name: '--keycloak-logo-width', detail: 'Theme var' },
 ]
 
 const CSS_EDITOR_CSS_VARS = [...QUICK_START_EDITOR_CSS_VARIABLES, ...THEME_CSS_VARS]
+
+export const COLOR_CSS_VARIABLE_NAMES = CSS_EDITOR_CSS_VARS
+  .filter(v => v.isColor)
+  .map(v => v.name)
 
 const SELECTOR_SNIPPETS: Array<{ label: string, apply: string, info: string }> = [
   {
@@ -190,10 +192,11 @@ function buildSelectorCompletions(availableIdentifiers: string[], uniqueSelector
 
   const identifierOptions: Completion[] = availableIdentifiers.map((identifier) => {
     const isId = identifier.startsWith('#')
+    const isClass = identifier.startsWith('.')
     return {
       label: identifier,
-      type: isId ? 'property' : 'class',
-      detail: isId ? 'Available id' : 'Available class',
+      type: isId ? 'property' : isClass ? 'class' : 'type',
+      detail: isId ? 'Available id' : isClass ? 'Available class' : 'Element type',
       boost: 220,
     }
   })
@@ -212,7 +215,7 @@ function buildSelectorCompletions(availableIdentifiers: string[], uniqueSelector
       return null
     }
 
-    const word = getWordOrCursor(context, /[#.]?[\w-]*/)
+    const word = getWordOrCursor(context, /[^\s,{;]*/)
     // Only auto-show when user has typed a prefix; Ctrl+Space or startCompletion() sets explicit
     if (word.from === word.to && !context.explicit) {
       return null
@@ -225,7 +228,7 @@ function buildSelectorCompletions(availableIdentifiers: string[], uniqueSelector
     return {
       from: word.from,
       options,
-      validFor: /^[#.]?[\w-]*$/,
+      validFor: /^[^\s,{;]*$/,
     }
   }
 }
@@ -392,6 +395,93 @@ function buildCssVariableCompletions(cssVars: CssEditorVariable[]) {
   }
 }
 
+const COLOR_PROPERTIES = new Set([
+  'color',
+  'background-color',
+  'border-color',
+  'border-top-color',
+  'border-right-color',
+  'border-bottom-color',
+  'border-left-color',
+  'outline-color',
+  'text-decoration-color',
+  'caret-color',
+  'accent-color',
+  'fill',
+  'stroke',
+  'column-rule-color',
+  'flood-color',
+  'lighting-color',
+  'stop-color',
+])
+
+// Map from variable name to resolved color value, used for swatch rendering
+let colorSwatchMap: Map<string, string> = new Map()
+
+function buildColorVariableCompletions(colorVars: CssEditorVariable[], colorValues: Map<string, string>) {
+  colorSwatchMap = colorValues
+
+  return function colorVariableCompletions(context: CompletionContext): CompletionResult | null {
+    if (getCssAutocompleteScope(context) !== 'value') {
+      return null
+    }
+
+    const before = context.state.doc.sliceString(0, context.pos)
+    const propertyMatch = before.match(/([\w-]+)\s*:[^;{}]*$/)
+    if (!propertyMatch || !COLOR_PROPERTIES.has(propertyMatch[1])) {
+      return null
+    }
+
+    // Don't activate if already inside var() or -- prefix (handled by buildCssVariableCompletions)
+    if (context.matchBefore(/var\(\s*--[\w-]*/)) {
+      return null
+    }
+
+    const word = context.matchBefore(/[\w(-]*/)
+    const from = word ? word.from : context.pos
+
+    const options: Completion[] = colorVars.map((cssVar) => {
+      const insertText = `var(${cssVar.name})`
+      return {
+        label: `var(${cssVar.name})`,
+        displayLabel: cssVar.name,
+        type: 'variable',
+        detail: cssVar.detail,
+        boost: 200,
+        apply: (view: EditorView, _c: Completion, _from: number, to: number) => {
+          view.dispatch({
+            changes: { from, to, insert: insertText },
+            selection: { anchor: from + insertText.length },
+          })
+        },
+      }
+    })
+
+    return { from: context.pos, options }
+  }
+}
+
+function renderColorSwatch(completion: Completion, _state: EditorState, _view: EditorView): HTMLElement | null {
+  const varNameMatch = completion.label.match(/var\((--[\w-]+)\)/)
+  const varName = varNameMatch ? varNameMatch[1] : completion.label
+  const colorValue = colorSwatchMap.get(varName)
+  if (!colorValue) {
+    return null
+  }
+
+  const swatch = document.createElement('span')
+  swatch.style.display = 'inline-block'
+  swatch.style.width = '12px'
+  swatch.style.height = '12px'
+  swatch.style.borderRadius = '2px'
+  swatch.style.border = '1px solid rgba(128, 128, 128, 0.4)'
+  swatch.style.backgroundColor = colorValue
+  swatch.style.marginRight = '4px'
+  swatch.style.verticalAlign = 'middle'
+  swatch.style.flexShrink = '0'
+  return swatch
+}
+
 // Image URL completions for uploaded assets (var-only, no inline data URL suggestions)
 function buildImageCompletions(uploadedImages: Array<{ name: string, dataUrl: string, category: string, cssVar?: string }>) {
   const IMAGE_PROPS_REGEX
@@ -475,6 +565,8 @@ function buildImageCompletions(uploadedImages: Array<{ name: string, dataUrl: st
  * @param uploadedImages - Uploaded image assets to include in url() autocomplete
  * @param availableIdentifiers - Available id/class identifiers from the current preview
  * @param uniqueSelector - Unique selector for currently selected element
+ * @param customHistory - Custom undo/redo handlers
+ * @param colorValues - Map of CSS variable name to resolved color value for swatch rendering
  */
 export function createCssEditorExtensions(
   isDarkMode: boolean,
@@ -483,6 +575,7 @@ export function createCssEditorExtensions(
   availableIdentifiers: string[] = [],
   uniqueSelector: string | null = null,
   customHistory?: CssEditorCustomHistory,
+  colorValues: Map<string, string> = new Map(),
 ): Extension[] {
   const customHistoryKeymap: KeyBinding[] = []
   if (customHistory?.undo) {
@@ -522,8 +615,18 @@ export function createCssEditorExtensions(
         cssPropertyCompletions,
         cssValueCompletions,
         buildCssVariableCompletions(CSS_EDITOR_CSS_VARS),
+        buildColorVariableCompletions(
+          CSS_EDITOR_CSS_VARS.filter(v => v.isColor),
+          colorValues,
+        ),
         buildFontFamilyCompletions(customFontFamilies),
         buildImageCompletions(uploadedImages),
+      ],
+      addToOptions: [
+        {
+          render: renderColorSwatch,
+          position: 20,
+        },
       ],
     }),
   ]
@@ -532,9 +635,15 @@ export function createCssEditorExtensions(
     extensions.push(Prec.highest(keymap.of(customHistoryKeymap)))
   }
 
+  extensions.push(...buildThemeExtensions(isDarkMode))
+
+  return extensions
+}
+
+function buildThemeExtensions(isDarkMode: boolean): Extension[] {
   if (isDarkMode) {
-    extensions.push(syntaxHighlighting(darkThemeHighlight))
-    extensions.push(
+    return [
+      syntaxHighlighting(darkThemeHighlight),
       EditorView.theme(
         {
           '&': {
@@ -548,7 +657,6 @@ export function createCssEditorExtensions(
           },
           '.cm-content': {
             caretColor: '#ffffff',
-            minHeight: '300px',
             padding: '12px',
           },
           '.cm-gutters': {
@@ -575,54 +683,50 @@ export function createCssEditorExtensions(
         },
         { dark: true },
       ),
-    )
-  }
-  else {
-    // Light mode
-    extensions.push(syntaxHighlighting(lightThemeHighlight))
-    extensions.push(
-      EditorView.theme(
-        {
-          '&': {
-            backgroundColor: '#ffffff',
-            color: '#000000',
-            fontSize: '13px',
-            fontFamily: '\'JetBrains Mono\', \'Fira Code\', \'Consolas\', \'Monaco\', monospace',
-          },
-          '.cm-scroller': {
-            backgroundColor: '#ffffff',
-          },
-          '.cm-content': {
-            caretColor: '#000000',
-            minHeight: '300px',
-            padding: '12px',
-          },
-          '.cm-gutters': {
-            backgroundColor: '#f5f5f5',
-            color: '#237893',
-            borderRight: '1px solid #e0e0e0',
-          },
-          '.cm-activeLineGutter': {
-            backgroundColor: '#e8e8e8',
-            color: '#0b216f',
-          },
-          '.cm-activeLine': {
-            backgroundColor: '#f0f0f0',
-          },
-          '.cm-selectionBackground': {
-            backgroundColor: '#add6ff !important',
-          },
-          '&.cm-focused .cm-selectionBackground': {
-            backgroundColor: '#79c0ff !important',
-          },
-          '.cm-cursor': {
-            borderLeftColor: '#000000',
-          },
-        },
-        { dark: false },
-      ),
-    )
+    ]
   }
 
-  return extensions
+  return [
+    syntaxHighlighting(lightThemeHighlight),
+    EditorView.theme(
+      {
+        '&': {
+          backgroundColor: '#ffffff',
+          color: '#000000',
+          fontSize: '13px',
+          fontFamily: '\'JetBrains Mono\', \'Fira Code\', \'Consolas\', \'Monaco\', monospace',
+        },
+        '.cm-scroller': {
+          backgroundColor: '#ffffff',
+        },
+        '.cm-content': {
+          caretColor: '#000000',
+          padding: '12px',
+        },
+        '.cm-gutters': {
+          backgroundColor: '#f5f5f5',
+          color: '#237893',
+          borderRight: '1px solid #e0e0e0',
+        },
+        '.cm-activeLineGutter': {
+          backgroundColor: '#e8e8e8',
+          color: '#0b216f',
+        },
+        '.cm-activeLine': {
+          backgroundColor: '#f0f0f0',
+        },
+        '.cm-selectionBackground': {
+          backgroundColor: '#add6ff !important',
+        },
+        '&.cm-focused .cm-selectionBackground': {
+          backgroundColor: '#79c0ff !important',
+        },
+        '.cm-cursor': {
+          borderLeftColor: '#000000',
+        },
+      },
+      { dark: false },
+    ),
+  ]
 }
+
