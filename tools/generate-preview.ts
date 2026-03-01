@@ -130,8 +130,8 @@ async function resolveContextMocks(): Promise<ContextMocks> {
       },
       kcContextExtensionPerPage: {},
       overridesPerPage: {
-        'login.ftl': { login: { username: '' }, social: { providers: socialProviders } },
-        'login-username.ftl': { login: { username: '' }, social: { providers: socialProviders } },
+        'login.ftl': { usernameHidden: undefined, login: { username: '' }, social: { providers: socialProviders } },
+        'login-username.ftl': { usernameHidden: undefined, login: { username: '' }, social: { providers: socialProviders } },
         'register.ftl': {
           termsAcceptanceRequired: true,
           ...profileOverride,
@@ -171,11 +171,13 @@ async function resolveContextMocks(): Promise<ContextMocks> {
 
   for (const { pageId } of kcContextMocks) {
     const name = pageId.replace('.ftl', '')
-    pages[name] = JSON.parse(JSON.stringify(getKcContextMock({ pageId: pageId as any })))
+    const context = JSON.parse(JSON.stringify(getKcContextMock({ pageId: pageId as any })))
+    pages[name] = context
     for (const [storyId, override] of Object.entries(stories[name] ?? {})) {
-      pages[`${name}@${storyId}`] = JSON.parse(JSON.stringify(
+      const storyContext = JSON.parse(JSON.stringify(
         getKcContextMock({ pageId: pageId as any, overrides: override as any }),
       ))
+      pages[`${name}@${storyId}`] = storyContext
     }
   }
 
