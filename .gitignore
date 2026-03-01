@@ -29,4 +29,8 @@ keycloak-jar-server
 .claude
 CLAUDE.md
 tools/preview-renderer/target/
+tools/preview-renderer/preview-renderer.jar
+tools/preview-renderer/lib/
 public/keycloak-upstream/
+bin
+*.tgz

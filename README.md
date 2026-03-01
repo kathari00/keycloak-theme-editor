@@ -32,15 +32,17 @@ Open the URL shown in terminal (default: `http://localhost:5173`).
 | `npm run sync:keycloak` | Sync upstream Keycloak templates into `public/keycloak-upstream/` |
 | `npm run generate:preview` | Regenerate preview `pages.json` (with embedded scenarios) |
 
-## Add Custom Preview Page (FTL + Mocks)
+## Add Custom Preview Page
 
 Use this when you add a custom login page and want it selectable in the preview editor.
 
-1. Checkout the repository locally.
-2. Add your custom FTL page in theme override folders:
-   `public/keycloak-dev-resources/themes/base/login/<your-page>.ftl`
-   `public/keycloak-dev-resources/themes/v2/login/<your-page>.ftl`
-3. Render it through Keycloak layout template (recommended pattern):
+### 1. Add the FTL template
+
+Place your page in the base theme folder:
+
+`public/keycloak-dev-resources/themes/base/login/<your-page>.ftl`
+
+Use the standard Keycloak layout wrapper:
 
 ```ftl
 <#import "template.ftl" as layout>
@@ -53,18 +55,40 @@ Use this when you add a custom login page and want it selectable in the preview 
 </@layout.registrationLayout>
 ```
 
-4. Add page mocks in `tools/kc-context-mocks.ts` under `pageOverrides` with key `<your-page>` (without `.ftl`).
-5. Optional: add extra states (stories) by editing
-   `src/features/preview/generated/pages.json`
-   (custom stories are preserved on `npm run generate:preview` when they differ from the base render)
-6. Regenerate preview artifacts:
-   `npm run generate:preview`
-7. Start dev server and open preview:
-   `npm run dev`
+### 2. Register the page mock
 
-Notes:
-- Custom templates from theme overrides are discovered by the preview renderer.
-- You can layer user-specific JSON overrides via `--custom-mocks` (or `PREVIEW_CUSTOM_MOCKS` in tooling).
+In `tools/kc-context-mocks/kc-page.ts`, add your page to `kcContextExtensionPerPage` with its custom context fields:
+
+```typescript
+kcContextExtensionPerPage: {
+  'my-custom-page.ftl': {
+    myField: 'some value',
+  },
+},
+```
+
+Standard Keycloak pages (login, register, etc.) are already provided by keycloakify — only custom pages need to be registered here.
+
+### 3. Add story variants (optional)
+
+To preview different states of your page, add entries in `tools/kc-context-mocks/kc-page-story.ts`:
+
+```typescript
+export const stories = {
+  'my-custom-page': {
+    'error-state': {
+      message: { type: 'error', summary: 'Something went wrong' },
+    },
+  },
+}
+```
+
+### 4. Generate and preview
+
+```bash
+npm run generate:preview
+npm run dev
+```
 
 ## Requirements
 
