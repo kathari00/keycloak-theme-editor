@@ -7,12 +7,8 @@
 
     <!-- Reveal.js (CDN) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css" />
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/white.css"
-      id="theme"
-    />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/github.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/white.css" id="theme" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css" />
 
     <style>
       /* Removed custom slide width CSS; use Reveal config instead */
@@ -32,7 +28,7 @@
       }
 
       .reveal .workflow-col h4 {
-        margin: 0 0 0.75rem 0;
+        margin: 0 0 1.25rem 0;
         color: var(--kc-blue);
       }
 
@@ -40,9 +36,15 @@
         background: rgba(0, 102, 204, 0.06);
         border: 1px solid rgba(0, 102, 204, 0.18);
         border-radius: 10px;
-        padding: 0.5rem 1.5rem;
-        min-width: 220px;
+        padding: 0.5rem 1rem;
+        width: 100%;
         text-align: center;
+        box-sizing: border-box;
+      }
+
+      .reveal .flow-step code {
+        font-size: 0.85em;
+        white-space: nowrap;
       }
 
       .reveal .flow-arrow {
@@ -51,13 +53,188 @@
         padding: 0.15rem 0;
       }
 
+      .reveal .quick-start-mini {
+        opacity: 0.7;
+        transform: scale(0.9);
+        transform-origin: top center;
+      }
+
+      .reveal .quick-start-mini h4 {
+        margin: 0 0 0.75rem 0;
+        color: var(--kc-blue);
+        font-size: 0.8em;
+      }
+
+      .reveal .quick-start-mini .flow-step {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8em;
+      }
+
+      .reveal .quick-start-mini .flow-arrow {
+        font-size: 0.8em;
+      }
+
       li {
         line-height: 1.75;
       }
 
-      .reveal aside.notes {
-        display: none !important;
+      /* Puzzle pieces */
+      .reveal .puzzle-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0;
+        margin-top: 2rem;
       }
+
+      .reveal .puzzle-piece {
+        position: relative;
+        width: 420px;
+        height: 260px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 1rem 2.5rem;
+        box-sizing: border-box;
+        color: #fff;
+        font-size: 0.9em;
+      }
+
+      .reveal .puzzle-piece h4 {
+        margin: 0 0 0.4rem 0;
+        color: #fff;
+        font-size: 0.85em;
+      }
+
+      .reveal .puzzle-piece p {
+        margin: 0;
+        font-size: 0.82em;
+        opacity: 0.92;
+      }
+
+      .reveal .puzzle-piece code {
+        background: rgba(255,255,255,0.18);
+        border-radius: 4px;
+        padding: 0.1em 0.35em;
+        font-size: 0.9em;
+      }
+
+      .reveal .puzzle-1 {
+        background: var(--kc-blue);
+        border-radius: 12px 0 0 12px;
+        clip-path: polygon(
+          0% 0%,
+          calc(100% - 20px) 0%,
+          calc(100% - 20px) 30%,
+          100% 30%,
+          100% 70%,
+          calc(100% - 20px) 70%,
+          calc(100% - 20px) 100%,
+          0% 100%
+        );
+        padding-right: 3rem;
+      }
+
+      .reveal .puzzle-2 {
+        background: var(--kc-blue);
+        clip-path: polygon(
+          0% 0%,
+          0% 30%,
+          20px 30%,
+          20px 70%,
+          0% 70%,
+          0% 100%,
+          calc(100% - 20px) 100%,
+          calc(100% - 20px) 70%,
+          100% 70%,
+          100% 30%,
+          calc(100% - 20px) 30%,
+          calc(100% - 20px) 0%
+        );
+        padding-left: 3rem;
+        padding-right: 3rem;
+      }
+
+      .reveal .puzzle-3 {
+        background: var(--kc-blue);
+        border-radius: 0 12px 12px 0;
+        clip-path: polygon(
+          0% 0%,
+          0% 30%,
+          20px 30%,
+          20px 70%,
+          0% 70%,
+          0% 100%,
+          100% 100%,
+          100% 0%
+        );
+        padding-left: 3rem;
+      }
+
+      .reveal .roundtrip-layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.25rem;
+        margin-top: 1rem;
+        align-items: stretch;
+      }
+
+      .reveal .roundtrip-panel {
+        background: rgba(0, 102, 204, 0.06);
+        border: 1px solid rgba(0, 102, 204, 0.18);
+        border-radius: 12px;
+        padding: 1.3rem 1.5rem;
+        text-align: left;
+      }
+
+      .reveal .roundtrip-panel h4 {
+        margin: 0 0 0.6rem 0;
+        color: var(--kc-blue);
+      }
+
+      .reveal .roundtrip-list {
+        margin: 0;
+        padding-left: 1.1rem;
+        font-size: 0.8em;
+        line-height: 1.5;
+      }
+
+      .reveal .roundtrip-note {
+        margin: 0.55rem 0 0 0;
+        font-size: 0.68em;
+      }
+
+      .reveal .arch-grid {
+        display: grid;
+        grid-template-columns: 0.75fr auto 1.5fr auto 0.75fr;
+        align-items: stretch;
+        gap: 0.5rem;
+        margin-top: 1.5rem;
+      }
+
+      .reveal .arch-side {
+        padding: 0.9rem 1rem;
+      }
+
+      .reveal .arch-main {
+        padding: 1.25rem 1.3rem;
+      }
+
+      .reveal .arch-side p {
+        margin: 0;
+        font-size: 0.68em;
+        line-height: 1.5;
+      }
+
+      .reveal .arch-main ul {
+        margin: 0;
+        padding-left: 1rem;
+        font-size: 0.7em;
+        line-height: 1.45;
+      }
+
     </style>
   </head>
 
@@ -90,8 +267,8 @@
             <li>What the editor does</li>
             <li>Live demo</li>
             <li>Preview generation logic</li>
-            <li>Import/export</li>
-            <li>Gotchas + FAQ</li>
+            <li>Architecture + theme round-trip</li>
+            <li>FAQ + close</li>
           </ol>
           <aside class="notes">
             [1:00–1:30] Keep this crisp. Signal that there will be a live demo and a fallback plan if needed.
@@ -116,31 +293,31 @@
             </div>
           </div>
           <aside class="notes">
-            [1:30–3:30] Open with the desired outcome: “a modern login that looks like your product.”
-            Keep it positive: the challenge is team constraints and safe iteration, not “slow” or “bad tooling.”
+            [1:30–3:30] Open with the desired outcome: “a modern login that looks like your product."
+            Keep it positive: the challenge is team constraints and safe iteration, not “slow" or “bad tooling."
           </aside>
         </section>
 
               <!-- 4) Existing solutions -->
               <section>
               <h3>Existing solutions</h3>
-              <ul>
-                <li>
-                <strong>Hand editing:</strong> Directly modify theme files (CSS, FTL, assets) in the Keycloak theme folder.
-                <br />Flexible but complex
-                </li>
-                <li>
-                <strong>Quick theme (dev preview):</strong> Use Keycloak’s <code>quick theme</code> feature to style the base theme
-                <br />Faster feedback and easy to try out, but limited to basic look-and-feel
-                </li>
-                <li>
-                <strong>Keycloakify:</strong> SPA Framework approach for large-scale apps.
-                <br />Great for teams with Framework expertise and high need for branding consistency
-                </li>
-              </ul>
+              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2rem; margin-top: 1.5rem; text-align: center; align-items: stretch;">
+                <div class="flow-step" style="padding: 1.25rem 1rem; display: flex; flex-direction: column; justify-content: flex-start; gap: 0.5rem;">
+                  <h4 style="margin: 0 0 0.5rem 0; color: var(--kc-blue);">Hand editing</h4>
+                  <p style="margin: 0; font-size: 0.85em;">Directly modify CSS, FTL templates and assets in the Keycloak theme folder for full control over every detail</p>
+                </div>
+                <div class="flow-step" style="padding: 1.25rem 1rem; display: flex; flex-direction: column; justify-content: flex-start; gap: 0.5rem;">
+                  <h4 style="margin: 0 0 0.5rem 0; color: var(--kc-blue);">Quick theme</h4>
+                  <p style="margin: 0; font-size: 0.85em;">Keycloak's built-in dev preview feature; set a handful of style variables and see results immediately</p>
+                </div>
+                <div class="flow-step" style="padding: 1.25rem 1rem; display: flex; flex-direction: column; justify-content: flex-start; gap: 0.5rem;">
+                  <h4 style="margin: 0 0 0.5rem 0; color: var(--kc-blue);">Keycloakify</h4>
+                  <p style="margin: 0; font-size: 0.85em;">Build login pages with Single Page Application Frameworks with full component-level control and type safety</p>
+                </div>
+              </div>
               <aside class="notes">
-                [3:30–6:30] Briefly compare the main options: manual editing (flexible but slow), quick theme for dev preview (set a handful of variables for fast styling), and Keycloakify for advanced use cases.
-                Set up why a visual editor can help bridge these approaches.
+                [3:30–6:30] Present each option on its own merits. All are valid — they serve different teams and use cases.
+                The visual editor complements these approaches rather than replacing them.
                 PACE: Pause after each option — let the room absorb. Ask: "Anyone here using one of these today?"
               </aside>
               </section>
@@ -155,9 +332,10 @@
             <li>Undo/redo + device preview</li>
             <li>Import a theme JAR to continue editing</li>
             <li>Export deployable output</li>
+            <li>CLI for local theme development with live reload</li>
           </ul>
           <aside class="notes">
-            [6:30–8:30] “This is not a new theming system; it’s a faster editor for the existing system.”
+            [6:30–8:30] "This is not a new theming system; it's a faster editor for the existing system."
           </aside>
         </section>
 
@@ -167,27 +345,30 @@
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; margin-top: 1rem;">
             <div class="workflow-col">
               <h4>Option A: Quick start</h4>
+              <div class="flow-step">Open keycloak-theme-editor.org</div>
+              <div class="flow-arrow">&darr;</div>
               <div class="flow-step">Pick a preset</div>
               <div class="flow-arrow">&darr;</div>
-              <div class="flow-step">Customize</div>
+              <div class="flow-step">Customize quick start</div>
               <div class="flow-arrow">&darr;</div>
               <div class="flow-step">Export</div>
-              <p style="margin-top: 0.75rem;">Get 80% of the look fast</p>
+              <p style="margin-top: auto; padding-top: 0.75rem;">Get 80% of the look fast</p>
             </div>
             <div class="workflow-col">
               <h4>Option B: Deep customization</h4>
-              <div class="flow-step">Clone the repo</div>
+              <div class="flow-step"><code>npx keycloak-theme-editor init</code></div>
               <div class="flow-arrow">&darr;</div>
-              <div class="flow-step">Add custom FTL pages</div>
+              <div class="flow-step">Extend with custom FTL</div>
               <div class="flow-arrow">&darr;</div>
-              <div class="flow-step">Provide mocks</div>
+              <div class="flow-step">Style in CSS editor</div>
               <div class="flow-arrow">&darr;</div>
-              <div class="flow-step">Style in editor</div>
-              <p style="margin-top: 0.75rem;">Full control when you need it</p>
+              <div class="flow-step">Export</div>
+              <p style="margin-top: auto; padding-top: 0.75rem;">Full control, no fork needed</p>
             </div>
           </div>
           <aside class="notes">
-            [8:30–10:00] Set up the demo path: we’ll do Option A and show where Option B fits.
+            [8:30–10:00] Set up the demo path: we’ll do Option A first and then show the CLI workflow.
+            Option B uses npx — no need to clone the editor repo. Init scaffolds a theme directory, then the CLI auto-discovers your FTL files and launches the editor with live reload.
             PACE: Walk through each column slowly, pointing at each step. Don’t rush the comparison.
           </aside>
         </section>
@@ -195,13 +376,25 @@
         <!-- 7) Live demo plan -->
         <section>
           <h3>Live demo</h3>
-          <ul>
-            <li>Pick a preset</li>
-            <li>Adjust brand colors + fonts</li>
-            <li>Add logo and background</li>
-            <li>Make a targeted CSS tweak</li>
-            <li>Export as folder</li>
-          </ul>
+          <div style="display: flex; gap: 2.5rem; align-items: start; margin-top: 1rem;">
+            <div class="quick-start-mini" style="flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 0;">
+              <h4>Option A: Quick start</h4>
+              <div class="flow-step">Open keycloak-theme-editor.org</div>
+              <div class="flow-arrow">&darr;</div>
+              <div class="flow-step">Pick a preset</div>
+              <div class="flow-arrow">&darr;</div>
+              <div class="flow-step">Customize quick start</div>
+              <div class="flow-arrow">&darr;</div>
+              <div class="flow-step">Export</div>
+            </div>
+            <ol style="margin: 0;">
+              <li>Pick a preset</li>
+              <li>Adjust brand colors + fonts</li>
+              <li>Add logo</li>
+              <li>Make a targeted CSS tweak</li>
+              <li>Export as folder and test in Keycloak</li>
+            </ol>
+          </div>
           <aside class="notes">
             <p>[10:00–10:30] for this slide, then [10:30–17:30] for the live demo.</p>
             <p>Tell the room: if anything fails mid-demo, you’ll switch to prepared checkpoints.</p>
@@ -221,62 +414,96 @@
           </aside>
         </section>
 
-        <!-- 8) Preview generation logic -->
+        <!-- 8) Architecture overview -->
+        <section>
+          <h3>Architecture overview</h3>
+          <div class="arch-grid">
+            <!-- Column 1: What you see -->
+            <div class="flow-step arch-side" style="text-align: left;">
+              <h4 style="margin: 0 0 0.5rem 0; color: var(--kc-blue);">What you see</h4>
+              <p>
+                React SPA with a sandboxed preview iframe.
+              </p>
+            </div>
+            <div class="flow-arrow" style="font-size: 1.5em;">&harr;</div>
+            <!-- Column 2: What happens -->
+            <div class="flow-step arch-main" style="text-align: left;">
+              <h4 style="margin: 0 0 0.5rem 0; color: var(--kc-blue);">What happens</h4>
+              <ul>
+                <li>Every edit updates the corresponding React state.</li>
+                <li>State is persisted in localStorage.</li>
+                <li>No server upload; data stays on your machine.</li>
+              </ul>
+            </div>
+            <div class="flow-arrow" style="font-size: 1.5em;">&harr;</div>
+            <!-- Column 3: What you get -->
+            <div class="flow-step arch-side" style="text-align: left;">
+              <h4 style="margin: 0 0 0.5rem 0; color: var(--kc-blue);">What you get</h4>
+              <p>
+                Standard Keycloak theme artifacts generated from state.
+              </p>
+            </div>
+          </div>
+          <aside class="notes">
+            [19:30–22:00] Walk through the three columns left to right.
+            “What you see" — React SPA plus sandboxed iframe preview.
+            “What happens" — in-browser state updates, localStorage persistence, and no backend.
+            “What you get" — a standard Keycloak theme JAR or folder.
+          </aside>
+        </section>
+        <!-- 9) Preview generation logic -->
         <section>
           <h3>How previews are generated</h3>
-          <p>The editor needs realistic HTML to display — here's how it's built:</p>
-          <ol>
-            <li><strong>Mock context data</strong> — typed Keycloak context objects (users, forms, errors) defined in TypeScript</li>
-            <li><strong>FreeMarker rendering</strong> — a Java tool compiles <code>.ftl</code> templates with the mock data into static HTML</li>
-            <li><strong>Pages JSON</strong> — the rendered HTML is saved as a JSON artifact the editor loads at runtime</li>
-          </ol>
-          <aside class=”notes”>
+          <p>The editor needs realistic HTML to display</p>
+          <div class="puzzle-row">
+            <div class="puzzle-piece puzzle-1">
+              <h4>Mock context data</h4>
+              <p>Typed Keycloak context objects defined in TypeScript</p>
+            </div>
+            <div class="puzzle-piece puzzle-2">
+              <h4>FTL rendering</h4>
+              <p>A Java tool compiles <code>.ftl</code> templates with mock data into static HTML and strips scripts</p>
+            </div>
+            <div class="puzzle-piece puzzle-3">
+              <h4>Pages JSON</h4>
+              <p>Rendered HTML saved as a JSON artifact the editor loads at runtime</p>
+            </div>
+          </div>
+          <p style="margin-top: 1.5rem;">The CLI runs this pipeline automatically and watches for file changes.</p>
+          <aside class="notes">
             [17:30–19:30] Explain that preview generation is deterministic and file-based.
             The pipeline: TS mocks → JSON → Java FreeMarker renderer → pages.json → editor UI.
+            When using the CLI, this happens automatically — file changes trigger re-generation and the editor reloads.
           </aside>
         </section>
 
-        <!-- 9) What gets exported -->
+        <!-- 10) Theme round-trip -->
         <section>
-          <h3>What gets exported</h3>
-          <pre><code class=”language-text”>my-theme.jar
-├─ META-INF/
-│   └─ keycloak-themes.json
-└─ theme/my-theme/login/
-    ├─ theme.properties
-    ├─ template.ftl
-    ├─ messages/
-    │   ├─ messages.properties
-    │   └─ messages_en.properties
-    └─ resources/
-        ├─ css/  (styles.css + quick-start.css)
-        ├─ fonts/
-        └─ img/  (backgrounds, logos, favicon)</code></pre>
-          <p>Standard Keycloak theme structure — deploy it like any other theme.</p>
-          <aside class=”notes”>
-            [19:30–22:30] Point at the tree: “This is exactly what Keycloak expects in a theme JAR — nothing custom, nothing proprietary.”
-            Mention styles.css holds your CSS overrides, quick-start.css holds the generated quick-start variables.
-            The same structure is used for folder export (without the JAR wrapper).
-          </aside>
-        </section>
-
-        <!-- 10) Import story -->
-        <section>
-          <h3>Import an existing theme JAR</h3>
-          <p>What gets extracted:</p>
-          <ul>
-            <li>CSS (styles.css + quick-start.css)</li>
-            <li>Quick-start settings (colors, fonts, border radius, ...)</li>
-            <li>Assets (fonts, backgrounds, logos, favicon)</li>
-            <li>Theme properties + messages</li>
-          </ul>
-          <p>
-            Best-effort: custom <code>template.ftl</code> edits do not round-trip.
-          </p>
-          <aside class=”notes”>
-            [22:30–24:30] Keep it simple: “import → tweak → export”.
-            The import parses quick-start CSS variables back into editor settings, so colors/fonts/radius are restored.
-            Template (FTL) customizations are not imported — only CSS-based styling.
+          <h3>Theme round-trip</h3>
+          <div class="roundtrip-layout">
+            <div class="roundtrip-panel">
+              <h4>Via Browser</h4>
+              <ul class="roundtrip-list">
+                <li>Export JAR or ZIP.</li>
+                <li>CSS, assets, and quick-start settings restored.</li>
+                <li>Works for themes that were generated from the editor without custom FTLs.</li>
+              </ul>
+            </div>
+            <div class="roundtrip-panel">
+              <h4>Via Command Line Interface</h4>
+              <ul class="roundtrip-list">
+                <li>Export with direct File System access</li>
+                <li>Automatically imports any theme folder; quick-start stays locked when theme was created outside editor</li>
+                <li>Freemarker can be live edited.</li>
+              </ul>
+            </div>
+          </div>
+          <aside class="notes">
+            [22:00-24:00] Two paths to get an existing theme into the editor.
+            Browser import: upload a JAR and restore CSS, assets, and quick-start settings.
+            CLI import: point at any theme folder, edit FreeMarker, and watch preview regeneration and editor live reload.
+            Command: npx keycloak-theme-editor.
+            Quick-start controls stay locked when quick-start variables are missing.
           </aside>
         </section>
 
@@ -302,42 +529,22 @@
             Invite feedback on what would help most in real-world theming workflows.
           </aside>
         </section>
-
-        <!-- 12) Gotchas / best practices -->
+        <!-- 12) FAQ + close -->
         <section>
-          <h3>Gotchas</h3>
+          <h3>FAQ</h3>
           <ul>
-            <li><strong>Preview is static</strong> — no JavaScript runs, so interactive flows (OTP, WebAuthn, password toggle) must be tested in real Keycloak</li>
-            <li><strong>Check accessibility</strong> — the editor does not validate contrast ratios or focus indicators; verify error states and color choices yourself</li>
-            <li><strong>Keycloak version matters</strong> — the editor targets Keycloak 26.x; older or newer versions may render templates differently</li>
+            <li><strong>Does my data leave the browser?</strong> No. Editing is client side only.</li>
+            <li><strong>Does this work for account/email themes?</strong> Not yet. The current scope is login themes.</li>
+            <li><strong>Can I use my own FreeMarker templates?</strong> Yes. Run <code>npx keycloak-theme-editor init</code>, add your FTL files, then run the CLI.</li>
+            <li><strong>Can our team collaborate on a theme?</strong> There is no backend server, use Git.</li>
           </ul>
-          <aside class=”notes”>
-            [26:30–28:30] These are the three things most likely to bite you in production.
-            Static preview: the editor strips all scripts for safety — anything dynamic won't show.
-            Accessibility: especially error messages and low-contrast text on colored backgrounds.
-            Version: if your cluster runs a different major version, always do a final check there.
-          </aside>
-        </section>
-
-        <!-- 13) FAQ + close -->
-        <section>
-          <h3>FAQ + close</h3>
-          <ul>
-            <li><strong>Does my data leave the browser?</strong> keep this one, rephrase slightly</li>
-            <li><strong>Does this work for account/email themes?</strong> not yet, only login (ties into "What's next")</li>
-            <li><strong>Can I use my own FreeMarker templates?</strong> yes, that's the Option B workflow</li>
-            <li><strong>Can our team collaborate on a theme?</strong> no built-in collab, but export → git → import works</li>
-          </ul>
-          <p style="margin-top: 1.5rem; font-weight: 500; color: var(--kc-blue);">
-            Takeaway: export early, test in Keycloak, iterate fast.
-          </p>
           <aside class="notes">
             [28:30–30:00] Close with the single takeaway and invite questions about their deployment model.
             PACE: Read the takeaway line out loud, then pause before moving to QR slide.
           </aside>
         </section>
 
-        <!-- 14) QR Codes slide (now last) -->
+        <!-- 13) QR Codes slide (now last) -->
         <section>
           <h3>Try it yourself</h3>
           <div style="display: flex; gap: 3rem; align-items: center; justify-content: center; margin-top: 2rem;">
