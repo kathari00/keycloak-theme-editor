@@ -13,9 +13,21 @@ label.kcLoginOTPListClass {
   margin-right: 1rem;
 }
 
+#kc-otp-reset-form-description {
+  margin-bottom: 1rem;
+}
+
+.kcFormGroupClass hr {
+  display: none
+}
+
+label.kcLoginOTPListClass {
+  display: inline;
+  margin-right: 1rem;
+}
+
 .kcFormCardClass {
   box-shadow: var(--quickstart-card-shadow);
-  border-radius: var(--quickstart-border-radius);
   border-radius: var(--quickstart-border-radius);
 }
 
@@ -47,14 +59,10 @@ html.kcDarkModeClass .kcLoginMain {
 }
 
 .pf-c-alert.pf-m-warning,
-
 .alert-warning {
-  border-left: 4px solid #f59e0b;
   border-left: 4px solid #f59e0b;
   gap: 12px;
 
-  border-radius: var(--quickstart-border-radius);
-  display: flex;
   border-radius: var(--quickstart-border-radius);
   background-color: #fffbeb;
   padding: 12px 16px;
@@ -104,10 +112,6 @@ html.pf-v5-theme-dark #kc-recovery-codes-list li span {
 html.pf-v5-theme-dark p, 
 html.pf-v5-theme-dark ul {
   color: var(--quickstart-text-primary-dark) !important;
-}
-
-div:nth-of-type(2) > p:nth-of-type(1) {
-  margin-bottom: 1rem;
 }
 
 div:nth-of-type(2) > p:nth-of-type(1) {
@@ -177,33 +181,8 @@ ul {
   background: color-mix(in srgb, var(--quickstart-secondary-color) 8%, transparent);
   border-radius: var(--quickstart-border-radius);
   padding: 0.75rem 1rem;
-#kc-totp-supported-apps,
-ul {
-  list-style: disc inside;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
 }
 
-#kc-totp-supported-apps > li{
-  background: color-mix(in srgb, var(--quickstart-secondary-color) 8%, transparent);
-  border-radius: var(--quickstart-border-radius);
-  padding: 0.75rem 1rem;
-}
-
-html.pf-v5-theme-dark #kc-totp-supported-apps > li,
-html.pf-v5-theme-dark form > ul > li,
-html.pf-v5-theme-dark form > div > ul > li,
-html.pf-v5-theme-dark #kc-content-wrapper > ul > li,
-html.pf-v5-theme-dark #kc-content-wrapper > div > ul > li,
-html.kcDarkModeClass #kc-totp-supported-apps > li,
-html.kcDarkModeClass form > ul > li,
-html.kcDarkModeClass form > div > ul > li,
-html.kcDarkModeClass #kc-content-wrapper > ul > li,
-html.kcDarkModeClass #kc-content-wrapper > div > ul > li {
-  background: color-mix(in srgb, var(--quickstart-secondary-color) 12%, transparent);
 html.pf-v5-theme-dark #kc-totp-supported-apps > li,
 html.pf-v5-theme-dark form > ul > li,
 html.pf-v5-theme-dark form > div > ul > li,
@@ -222,8 +201,6 @@ html.kcDarkModeClass #kc-content-wrapper > div > ul > li {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  min-height: 100dvh;
-  box-sizing: border-box;
   min-height: 100dvh;
   box-sizing: border-box;
   padding: 2rem;
@@ -254,14 +231,6 @@ html.kcDarkModeClass body .kcLoginClass,
 html.kcDarkModeClass body#keycloak-bg .kcLoginClass {
   background-color: var(--quickstart-bg-color);
   background-image: var(--quickstart-bg-image);
-}
-
-#confirmOverride {
-  margin-top: 1rem;
-}
-
-#updateProfile {
-  margin-bottom: 1rem;
 }
 
 #confirmOverride {
@@ -1711,6 +1680,10 @@ div#kc-social-providers > h2:nth-of-type(1) {
   margin-bottom: 1rem;
 }
 
+#kc-oauth h3 {
+  margin-bottom: 1rem;
+}
+
 h1, h2, h3, h4, h5, h6,
 #kc-header-wrapper,
 #kc-realm-name,
@@ -1779,18 +1752,7 @@ hr {
   opacity: 1;
 }
 
-hr {
-  border: none;
-  border-top: none;
-  height: 2px;
-  background: linear-gradient(90deg, var(--quickstart-primary-color), var(--quickstart-secondary-color));
-  opacity: 1;
-}
-
 body {
-  margin: 0;
-  min-height: 100vh;
-  min-height: 100dvh;
   margin: 0;
   min-height: 100vh;
   min-height: 100dvh;
