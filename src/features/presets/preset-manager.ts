@@ -1,7 +1,7 @@
 import type { BaseThemeId, ThemeConfig, ThemeId } from './types'
 import { sanitizeThemeCssSourceForEditor, stripQuickStartImportLine } from '../editor/css-source-sanitizer'
-import { getThemePreviewStylesPath, getThemeQuickStartCssPath } from './theme-paths'
-import { isBuiltinTheme } from './types'
+import { getThemeQuickStartCssPath } from './theme-paths'
+import { isBuiltinTheme, themeResourcePath } from './types'
 
 export interface ThemeCssStructured {
   quickStartDefaults: string
@@ -59,24 +59,66 @@ export async function loadThemes(): Promise<ThemeConfig> {
   }
 }
 
+async function fetchThemeStylesPaths(themeId: ThemeId): Promise<string[]> {
+  try {
+    const propsUrl = themeResourcePath(themeId, 'theme.properties')
+    const response = await fetch(propsUrl)
+    if (!response.ok) {
+      return []
+    }
+    const text = await response.text()
+    for (const rawLine of text.split(/\r?\n/)) {
+      const line = rawLine.trim()
+      if (line.startsWith('#') || !line)
+        continue
+      const eqIndex = line.indexOf('=')
+      if (eqIndex <= 0)
+        continue
+      const key = line.slice(0, eqIndex).trim()
+      if (key === 'styles') {
+        return line.slice(eqIndex + 1).trim().split(/\s+/).filter(Boolean)
+      }
+    }
+    return []
+  }
+  catch {
+    return []
+  }
+}
+
 /**
  * Load theme CSS as two separate streams (quick-start defaults + styles).
+ * Discovers CSS file paths from the `styles=` property in theme.properties
+ * so that user-provided CSS files (e.g. `styles=css/login.css`) are loaded.
  */
 export async function loadThemeCssStructured(themeId: ThemeId): Promise<ThemeCssStructured> {
   try {
-    const quickStartPath = getThemeQuickStartCssPath(themeId)
-    const stylesPath = getThemePreviewStylesPath(themeId)
+    const stylePaths = await fetchThemeStylesPaths(themeId)
 
-    const [rawQuickStart, rawStyles] = await Promise.all([
-      fetchCssFile(quickStartPath),
-      fetchCssFile(stylesPath),
+    // Separate quick-start.css (editor-managed) from user styles
+    const quickStartEntry = stylePaths.find(p => p === 'css/quick-start.css')
+    const userStyleEntries = stylePaths.filter(p => p !== 'css/quick-start.css')
+
+    const quickStartPath = quickStartEntry
+      ? themeResourcePath(themeId, `resources/${quickStartEntry}`)
+      : getThemeQuickStartCssPath(themeId)
+
+    const quickStartPromise = fetchCssFile(quickStartPath)
+    const userStylePromises = userStyleEntries.map(entry =>
+      fetchCssFile(themeResourcePath(themeId, `resources/${entry}`)),
+    )
+
+    const [rawQuickStart, ...rawUserStyles] = await Promise.all([
+      quickStartPromise,
+      ...userStylePromises,
     ])
 
     const quickStartDefaults = rawQuickStart
+    const combinedStyles = rawUserStyles.filter(Boolean).join('\n\n')
     // Strip @import "./quick-start.css" since we manage quick-start separately,
     // and sanitize visibility rules that may have been baked in from a previous export.
     const stylesCss = stripQuickStartImportLine(
-      sanitizeThemeCssSourceForEditor(rawStyles),
+      sanitizeThemeCssSourceForEditor(combinedStyles),
     )
 
     return { quickStartDefaults, stylesCss }
