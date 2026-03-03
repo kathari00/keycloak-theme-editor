@@ -235,6 +235,7 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
     const topLevelImportsCss = mergeCssImports(payloadCssParts.imports)
 
     return {
+      themeName,
       properties,
       templateFtl: stripDataKcStateAttributes(templateFtl),
       footerFtl: footerFtl ? stripDataKcStateAttributes(footerFtl) : footerFtl,
@@ -259,7 +260,6 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        themeName,
         variantId: exportVariantId,
         ...writeParams,
       }),
@@ -351,7 +351,7 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
           await writeToDirectory(dirHandle, writeParams)
           const projectPath = await saveExportToProject(writeParams).catch(() => null)
           // eslint-disable-next-line no-alert
-          alert(projectPath ? `Theme exported to login/ and saved to ${projectPath}` : 'Theme exported to login/')
+          alert(projectPath ? `Theme exported to ${themeName}/login and saved to ${projectPath}` : `Theme exported to ${themeName}/login`)
           setStatusMessage(projectPath
             ? `Quick export finished. Saved to ${projectPath}`
             : 'Quick export finished.')

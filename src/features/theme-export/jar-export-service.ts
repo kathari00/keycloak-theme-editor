@@ -76,9 +76,10 @@ export async function buildJarBlob(params: JarBuildParams): Promise<Blob> {
 
   const { zipSync } = await import('fflate')
   const files: Record<string, Uint8Array> = {}
-  const themeLoginRoot = `theme/${themeName}/login`
+  const exportRoot = themeName
+  const themeLoginRoot = `${exportRoot}/login`
 
-  addTextEntry(files, 'META-INF/keycloak-themes.json', generateKeycloakThemesJson(themeName))
+  addTextEntry(files, `${exportRoot}/META-INF/keycloak-themes.json`, generateKeycloakThemesJson(themeName))
   addTextEntry(files, `${themeLoginRoot}/theme.properties`, properties)
   addTextEntry(files, `${themeLoginRoot}/template.ftl`, templateFtl)
   if (footerFtl) {
@@ -135,31 +136,34 @@ function buildNestedZipData(files: Record<string, Uint8Array>): Record<string, a
 
 /** Build a ZIP blob from DirectoryWriteParams (for folder-as-zip download) */
 export async function buildFolderZipBlob(params: DirectoryWriteParams): Promise<Blob> {
-  const { properties, templateFtl, footerFtl, quickStartCss, stylesCss, messagesContent, payload } = params
+  const { themeName, properties, templateFtl, footerFtl, quickStartCss, stylesCss, messagesContent, payload } = params
   const { zipSync } = await import('fflate')
   const files: Record<string, Uint8Array> = {}
+  const exportRoot = themeName
+  const themeLoginRoot = `${exportRoot}/login`
 
-  addTextEntry(files, 'login/theme.properties', properties)
+  addTextEntry(files, `${exportRoot}/META-INF/keycloak-themes.json`, generateKeycloakThemesJson(themeName))
+  addTextEntry(files, `${themeLoginRoot}/theme.properties`, properties)
   if (templateFtl) {
-    addTextEntry(files, 'login/template.ftl', templateFtl)
+    addTextEntry(files, `${themeLoginRoot}/template.ftl`, templateFtl)
   }
   if (footerFtl) {
-    addTextEntry(files, 'login/footer.ftl', footerFtl)
+    addTextEntry(files, `${themeLoginRoot}/footer.ftl`, footerFtl)
   }
 
-  addTextEntry(files, 'login/resources/css/quick-start.css', quickStartCss)
-  addTextEntry(files, 'login/resources/css/styles.css', stylesCss)
-  addTextEntry(files, 'login/messages/messages.properties', messagesContent)
-  addTextEntry(files, 'login/messages/messages_en.properties', messagesContent)
+  addTextEntry(files, `${themeLoginRoot}/resources/css/quick-start.css`, quickStartCss)
+  addTextEntry(files, `${themeLoginRoot}/resources/css/styles.css`, stylesCss)
+  addTextEntry(files, `${themeLoginRoot}/messages/messages.properties`, messagesContent)
+  addTextEntry(files, `${themeLoginRoot}/messages/messages_en.properties`, messagesContent)
 
   for (const [key, directory] of ASSET_BUCKETS) {
     for (const asset of dedupeAssetsByName(payload[key])) {
-      await addBlobEntry(files, `login/resources/${directory}/${asset.name}`, toAssetBlob(asset))
+      await addBlobEntry(files, `${themeLoginRoot}/resources/${directory}/${asset.name}`, toAssetBlob(asset))
     }
   }
 
   if (payload.appliedFavicon) {
-    await addBlobEntry(files, 'login/resources/img/favicon.ico', toAssetBlob(payload.appliedFavicon))
+    await addBlobEntry(files, `${themeLoginRoot}/resources/img/favicon.ico`, toAssetBlob(payload.appliedFavicon))
   }
 
   const nested = buildNestedZipData(files)
@@ -209,13 +213,16 @@ export async function writeToDirectory(
   dirHandle: FileSystemDirectoryHandle,
   params: DirectoryWriteParams,
 ): Promise<void> {
-  const { properties, templateFtl, footerFtl, quickStartCss, stylesCss, messagesContent, payload } = params
+  const { themeName, properties, templateFtl, footerFtl, quickStartCss, stylesCss, messagesContent, payload } = params
 
-  const loginDir = await dirHandle.getDirectoryHandle('login', { create: true })
+  const themeRootDir = await ensureDirectory(dirHandle, themeName)
+  const metaInfDir = await themeRootDir.getDirectoryHandle('META-INF', { create: true })
+  const loginDir = await themeRootDir.getDirectoryHandle('login', { create: true })
   const resourcesDir = await loginDir.getDirectoryHandle('resources', { create: true })
   const cssDir = await resourcesDir.getDirectoryHandle('css', { create: true })
   const messagesDir = await loginDir.getDirectoryHandle('messages', { create: true })
 
+  await writeFile(metaInfDir, 'keycloak-themes.json', generateKeycloakThemesJson(themeName))
   await writeFile(loginDir, 'theme.properties', properties)
   if (templateFtl) {
     await writeFile(loginDir, 'template.ftl', templateFtl)

@@ -27,6 +27,7 @@ export interface JarBuildParams {
 
 /** Parameters for writing theme files to a directory */
 export interface DirectoryWriteParams {
+  themeName: string
   properties: string
   templateFtl: string
   footerFtl: string | null
