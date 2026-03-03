@@ -9,12 +9,7 @@ export function sanitizePreviewHtml(html: string): string {
 
   const doc = new DOMParser().parseFromString(html, 'text/html')
 
-  doc.querySelectorAll('link[rel="stylesheet"], script').forEach((element) => {
-    if (element.tagName === 'LINK' && (element as HTMLLinkElement).href.includes('/resources-common/')) {
-      return
-    }
-    element.remove()
-  })
+  doc.querySelectorAll('script').forEach(element => element.remove())
 
   doc.querySelectorAll('*').forEach((element) => {
     for (const attributeName of element.getAttributeNames()) {

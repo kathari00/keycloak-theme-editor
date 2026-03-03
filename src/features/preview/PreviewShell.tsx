@@ -1,5 +1,3 @@
-import patternflyAddonsCssUrl from '@patternfly-v5/patternfly/patternfly-addons.css?url'
-import patternflyCssUrl from '@patternfly-v5/patternfly/patternfly.min.css?url'
 import { useEffect, useState } from 'react'
 import {
   generateAppliedAssetsCSS,
@@ -73,19 +71,6 @@ function removeElementById(doc: Document, id: string) {
   doc.getElementById(id)?.remove()
 }
 
-function removeUpstreamThemeStylesheets(doc: Document) {
-  const links = doc.querySelectorAll('link[rel="stylesheet"]')
-  links.forEach((node) => {
-    const link = node as HTMLLinkElement
-    if (link.id.startsWith('preview-')) {
-      return
-    }
-    if (link.href.includes('/keycloak-dev-resources/themes/')) {
-      link.remove()
-    }
-  })
-}
-
 function syncPreviewDocumentStyles(params: {
   doc: Document
   isV2Theme: boolean
@@ -116,8 +101,6 @@ function syncPreviewDocumentStyles(params: {
   if (!doc.head || !doc.body)
     return
 
-  removeUpstreamThemeStylesheets(doc)
-
   if (isV2Theme) {
     doc.documentElement.classList.add('login-pf')
     doc.body.id = 'keycloak-bg'
@@ -127,13 +110,6 @@ function syncPreviewDocumentStyles(params: {
     doc.body.removeAttribute('id')
   }
 
-  ensureLink(doc, 'preview-patternfly', patternflyCssUrl)
-  if (isV2Theme) {
-    ensureLink(doc, 'preview-patternfly-addons', patternflyAddonsCssUrl)
-  }
-  else {
-    removeElementById(doc, 'preview-patternfly-addons')
-  }
   const themeHref = new URL(themeStylesPath, window.location.href).toString()
   ensureBaseHref(doc, 'preview-theme-base', themeHref)
   ensureLink(doc, 'preview-theme-quick-start', themeQuickStartCssPath)
