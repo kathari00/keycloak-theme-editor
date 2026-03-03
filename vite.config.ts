@@ -25,6 +25,10 @@ export default defineConfig({
           src: 'node_modules/@patternfly-v5/patternfly/assets/fonts/**/*',
           dest: 'keycloak-dev-resources/assets/fonts',
         },
+        {
+          src: 'docs/presentation/wysiwyg-a-keycloak-theme-editing-approach-presentation/**/*',
+          dest: 'docs/presentation/wysiwyg-a-keycloak-theme-editing-approach-presentation',
+        },
       ],
     }),
   ],
