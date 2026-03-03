@@ -1,4 +1,6 @@
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { copyFile, mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { existsSync } from 'node:fs'
+import { spawnSync } from 'node:child_process'
 import path from 'node:path'
 import process from 'node:process'
 
@@ -7,6 +9,7 @@ interface SyncConfig {
   tag: string
   themes: { id: string, upstream: string }[]
   targetDir: string
+  commonResourcesTargetDir: string
 }
 
 interface GithubEntry {
@@ -68,6 +71,16 @@ async function fetchText(url: string) {
   return response.text()
 }
 
+async function fetchBuffer(url: string): Promise<Buffer> {
+  const response = await fetch(url, {
+    headers: { 'User-Agent': 'keycloak-theme-editor-sync' },
+  })
+  if (!response.ok) {
+    throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`)
+  }
+  return Buffer.from(await response.arrayBuffer())
+}
+
 async function fetchOptionalText(url: string) {
   const response = await fetch(url, {
     headers: { 'User-Agent': 'keycloak-theme-editor-sync' },
@@ -97,6 +110,35 @@ function parseThemeProperties(text: string) {
     }
   }
   return themeProperties
+}
+
+async function copyDirRecursive(src: string, dest: string) {
+  const entries = await readdir(src, { withFileTypes: true })
+  for (const entry of entries) {
+    const srcPath = path.join(src, entry.name)
+    const destPath = path.join(dest, entry.name)
+    if (entry.isDirectory()) {
+      await mkdir(destPath, { recursive: true })
+      await copyDirRecursive(srcPath, destPath)
+    }
+    else {
+      await copyFile(srcPath, destPath)
+    }
+  }
+}
+
+async function countFiles(dir: string): Promise<number> {
+  let count = 0
+  const entries = await readdir(dir, { withFileTypes: true })
+  for (const entry of entries) {
+    if (entry.isDirectory()) {
+      count += await countFiles(path.join(dir, entry.name))
+    }
+    else {
+      count++
+    }
+  }
+  return count
 }
 
 async function syncTheme(theme: SyncConfig['themes'][number], config: SyncConfig, rootDir: string) {
@@ -157,6 +199,56 @@ async function syncTheme(theme: SyncConfig['themes'][number], config: SyncConfig
   return fileCount
 }
 
+async function syncCommonResources(config: SyncConfig, rootDir: string) {
+  const targetDir = path.join(rootDir, config.commonResourcesTargetDir)
+  await rm(targetDir, { recursive: true, force: true })
+  await mkdir(targetDir, { recursive: true })
+
+  const cacheDir = path.join(rootDir, 'node_modules', '.cache', 'sync-keycloak')
+  await mkdir(cacheDir, { recursive: true })
+  const tmpExtractDir = path.join(cacheDir, 'extract')
+  await rm(tmpExtractDir, { recursive: true, force: true })
+  await mkdir(tmpExtractDir, { recursive: true })
+
+  const jars = [
+    { name: 'keycloak-themes', artifact: 'keycloak-themes' },
+    { name: 'keycloak-themes-vendor', artifact: 'keycloak-themes-vendor' },
+  ]
+
+  for (const jar of jars) {
+    const jarFileName = `${jar.artifact}-${config.tag}.jar`
+    const cachedJarPath = path.join(cacheDir, jarFileName)
+
+    if (existsSync(cachedJarPath)) {
+      writeInfo(`Using cached ${jar.name} (${jarFileName})`)
+    }
+    else {
+      const jarUrl = `https://repo1.maven.org/maven2/org/keycloak/${jar.artifact}/${config.tag}/${jar.artifact}-${config.tag}.jar`
+      writeInfo(`Downloading ${jar.name}...`)
+      const jarBuffer = await fetchBuffer(jarUrl)
+      await writeFile(cachedJarPath, jarBuffer)
+      writeInfo(`  ${(jarBuffer.length / 1024 / 1024).toFixed(1)} MB`)
+    }
+
+    const extractResult = spawnSync('jar', ['xf', cachedJarPath, 'theme/keycloak/common/resources'], {
+      cwd: tmpExtractDir,
+      stdio: 'pipe',
+      shell: process.platform === 'win32',
+    })
+    if (extractResult.status !== 0) {
+      throw new Error(`Failed to extract ${jar.name}: ${extractResult.stderr?.toString() || 'unknown error'}`)
+    }
+  }
+
+  writeInfo('Copying common resources...')
+  const extractedDir = path.join(tmpExtractDir, 'theme', 'keycloak', 'common', 'resources')
+  await copyDirRecursive(extractedDir, targetDir)
+  await rm(tmpExtractDir, { recursive: true, force: true })
+
+  const fileCount = await countFiles(targetDir)
+  return fileCount
+}
+
 async function main() {
   const rootDir = process.cwd()
   const config = await readConfig(rootDir)
@@ -168,8 +260,10 @@ async function main() {
     const count = await syncTheme(theme, config, rootDir)
     totalFiles += count
   }
-
   writeInfo(`Synced ${totalFiles} files from ${config.repo}@${config.tag} to ${config.targetDir}`)
+
+  const commonCount = await syncCommonResources(config, rootDir)
+  writeInfo(`Synced ${commonCount} common resource files to ${config.commonResourcesTargetDir}`)
 }
 
 main().catch((error) => {

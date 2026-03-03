@@ -11,5 +11,6 @@
       "upstream": "keycloak.v2"
     }
   ],
-  "targetDir": "public/keycloak-upstream"
+  "targetDir": "public/keycloak-upstream",
+  "commonResourcesTargetDir": "public/keycloak-dev-resources/resources-common"
 }

@@ -32,5 +32,6 @@ tools/preview-renderer/target/
 tools/preview-renderer/preview-renderer.jar
 tools/preview-renderer/lib/
 public/keycloak-upstream/
+public/keycloak-dev-resources/resources-common/
 bin
 *.tgz
