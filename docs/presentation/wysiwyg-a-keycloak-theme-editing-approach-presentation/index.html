@@ -253,9 +253,10 @@
             <li>How to export a deployable artifact from the editor</li>
           </ul>
           <aside class="notes">
-            [0:00–1:00] Set expectations: practical workflow, not a deep code walk-through.
-            One sentence on who this is for: Keycloak admins / IAM engineers responsible for branding the login experience.
-            PACE: Breathe. Let the audience read the three bullets before moving on.
+            <ul>
+              <li>[00:00-00:50] Introduce the goal: faster Keycloak login branding.</li>
+              <li>[00:00-00:50] Set expectation: practical workflow, not deep internals.</li>
+            </ul>
           </aside>
         </section>
 
@@ -271,7 +272,10 @@
             <li>FAQ + close</li>
           </ol>
           <aside class="notes">
-            [1:00–1:30] Keep this crisp. Signal that there will be a live demo and a fallback plan if needed.
+            <ul>
+              <li>[00:50-01:20] Walk through agenda quickly.</li>
+              <li>[00:50-01:20] Mention a 7-minute live demo is coming.</li>
+            </ul>
           </aside>
         </section>
 
@@ -293,8 +297,10 @@
             </div>
           </div>
           <aside class="notes">
-            [1:30–3:30] Open with the desired outcome: “a modern login that looks like your product."
-            Keep it positive: the challenge is team constraints and safe iteration, not “slow" or “bad tooling."
+            <ul>
+              <li>[01:20-03:00] Describe the target outcome: branded login that matches product UX.</li>
+              <li>[01:20-03:00] Emphasize speed and low template complexity for platform teams.</li>
+            </ul>
           </aside>
         </section>
 
@@ -316,9 +322,10 @@
                 </div>
               </div>
               <aside class="notes">
-                [3:30–6:30] Present each option on its own merits. All are valid — they serve different teams and use cases.
-                The visual editor complements these approaches rather than replacing them.
-                PACE: Pause after each option — let the room absorb. Ask: "Anyone here using one of these today?"
+                <ul>
+                  <li>[03:00-05:30] Compare hand editing, quick theme, and Keycloakify.</li>
+                  <li>[03:00-05:30] Position the editor as complementary, not a replacement.</li>
+                </ul>
               </aside>
               </section>
 
@@ -335,7 +342,12 @@
             <li>CLI for local theme development with live reload</li>
           </ul>
           <aside class="notes">
-            [6:30–8:30] "This is not a new theming system; it's a faster editor for the existing system."
+            <ul>
+              <li>[05:30-07:00] Summarize core editor capabilities in one pass.</li>
+              <li>Presets move away from pf look and feel</li>
+              <li>Undo redo for safe exploration</li>
+              <li>[05:30-07:00] Transition to workflow choices before demo.</li>
+            </ul>
           </aside>
         </section>
 
@@ -367,9 +379,10 @@
             </div>
           </div>
           <aside class="notes">
-            [8:30–10:00] Set up the demo path: we’ll do Option A first and then show the CLI workflow.
-            Option B uses npx — no need to clone the editor repo. Init scaffolds a theme directory, then the CLI auto-discovers your FTL files and launches the editor with live reload.
-            PACE: Walk through each column slowly, pointing at each step. Don’t rush the comparison.
+            <ul>
+              <li>[07:00-08:30] Contrast quick start vs CLI deep customization.</li>
+              <li>[07:00-08:30] Set up the exact path you will show in the demo.</li>
+            </ul>
           </aside>
         </section>
 
@@ -396,21 +409,10 @@
             </ol>
           </div>
           <aside class="notes">
-            <p>[10:00–10:30] for this slide, then [10:30–17:30] for the live demo.</p>
-            <p>Tell the room: if anything fails mid-demo, you’ll switch to prepared checkpoints.</p>
-            <p>PACE: Don’t rush the demo — narrate what you’re doing as you do it. Pause after export to let it land.</p>
-            <p><strong>DEMO SCRIPT:</strong></p>
-            <ol>
-              <li>[10:30–11:00] Open editor, start with Modern Gradient. Show the default preview. "This is what you get out of the box."</li>
-              <li>[11:00–12:00] Quick Start tab — cycle through color presets (Keycloak Blue → Sunrise → Forest → Midnight). Land on one that looks dramatically different. Point out all pages update instantly.</li>
-              <li>[12:00–13:00] Customize: pick a custom primary color, change heading font and text font, adjust border radius or card shadow. Show how quick start covers 80% of the look.</li>
-              <li>[13:00–13:30] Still in Quick Start — add imprint URL and data protection URL. Show the footer links appearing in the preview. "Legal requirements covered in two fields."</li>
-              <li>[13:30–14:30] Uploads tab — upload a logo (auto-applies). Upload a background image, apply it. Show it updating in preview.</li>
-              <li>[14:30–15:30] Styling tab — click the login button in the preview. Show CSS autocomplete (Ctrl+Space). Add <code>text-transform: uppercase; letter-spacing: 1px;</code> to the button — the text changes instantly on screen. "This is where power users can go deeper."</li>
-              <li>[15:30–16:00] Toggle Desktop → Mobile in toolbar. Show responsive preview. Optionally toggle dark mode.</li>
-              <li>[16:00–17:00] Export Theme → enter a theme name → Download JAR. Then show Quick Export to folder. "Two options: JAR for artifact deployments, folder for local dev."</li>
-            </ol>
-            <p>BONUS if time: [17:00–17:30] Import the JAR back, show settings restored.</p>
+            <ul>
+              <li>[08:30-15:30] Live demo (7:00 total): preset, colors/fonts, logo/background, CSS tweak, export.</li>
+              <li>[08:30-15:30] If something fails, switch to prepared checkpoints and keep timing.</li>
+            </ul>
           </aside>
         </section>
 
@@ -422,7 +424,7 @@
             <div class="flow-step arch-side" style="text-align: left;">
               <h4 style="margin: 0 0 0.5rem 0; color: var(--kc-blue);">What you see</h4>
               <p>
-                React SPA with a sandboxed preview iframe.
+                React SPA with a sandboxed preview iframe
               </p>
             </div>
             <div class="flow-arrow" style="font-size: 1.5em;">&harr;</div>
@@ -430,9 +432,9 @@
             <div class="flow-step arch-main" style="text-align: left;">
               <h4 style="margin: 0 0 0.5rem 0; color: var(--kc-blue);">What happens</h4>
               <ul>
-                <li>Every edit updates the corresponding React state.</li>
-                <li>State is persisted in localStorage.</li>
-                <li>No server upload; data stays on your machine.</li>
+                <li>Every edit updates the corresponding React state</li>
+                <li>State is persisted in localStorage</li>
+                <li>No server upload; data stays on your machine</li>
               </ul>
             </div>
             <div class="flow-arrow" style="font-size: 1.5em;">&harr;</div>
@@ -440,15 +442,15 @@
             <div class="flow-step arch-side" style="text-align: left;">
               <h4 style="margin: 0 0 0.5rem 0; color: var(--kc-blue);">What you get</h4>
               <p>
-                Standard Keycloak theme artifacts generated from state.
+                Standard Keycloak theme artifacts generated from state
               </p>
             </div>
           </div>
           <aside class="notes">
-            [19:30–22:00] Walk through the three columns left to right.
-            “What you see" — React SPA plus sandboxed iframe preview.
-            “What happens" — in-browser state updates, localStorage persistence, and no backend.
-            “What you get" — a standard Keycloak theme JAR or folder.
+            <ul>
+              <li>[15:30-17:30] Explain React app + sandbox preview + local persistence.</li>
+              <li>[15:30-17:30] Reinforce that output is standard Keycloak theme artifacts.</li>
+            </ul>
           </aside>
         </section>
         <!-- 9) Preview generation logic -->
@@ -469,11 +471,12 @@
               <p>Rendered HTML saved as a JSON artifact the editor loads at runtime</p>
             </div>
           </div>
-          <p style="margin-top: 1.5rem;">The CLI runs this pipeline automatically and watches for file changes.</p>
+          <p style="margin-top: 1.5rem;">The CLI runs this pipeline automatically and watches for file changes</p>
           <aside class="notes">
-            [17:30–19:30] Explain that preview generation is deterministic and file-based.
-            The pipeline: TS mocks → JSON → Java FreeMarker renderer → pages.json → editor UI.
-            When using the CLI, this happens automatically — file changes trigger re-generation and the editor reloads.
+            <ul>
+              <li>[17:30-19:30] Explain preview pipeline: mock context -> FTL renderer -> pages.json.</li>
+              <li>[17:30-19:30] Note that CLI automates regeneration on file changes.</li>
+            </ul>
           </aside>
         </section>
 
@@ -484,9 +487,9 @@
             <div class="roundtrip-panel">
               <h4>Via Browser</h4>
               <ul class="roundtrip-list">
-                <li>Export JAR or ZIP.</li>
-                <li>CSS, assets, and quick-start settings restored.</li>
-                <li>Works for themes that were generated from the editor without custom FTLs.</li>
+                <li>Export JAR or ZIP</li>
+                <li>CSS, assets, and quick-start settings restored</li>
+                <li>Works for themes that were generated from the editor without custom FTLs</li>
               </ul>
             </div>
             <div class="roundtrip-panel">
@@ -494,16 +497,15 @@
               <ul class="roundtrip-list">
                 <li>Export with direct File System access</li>
                 <li>Automatically imports any theme folder; quick-start stays locked when theme was created outside editor</li>
-                <li>Freemarker can be live edited.</li>
+                <li>Freemarker can be live edited</li>
               </ul>
             </div>
           </div>
           <aside class="notes">
-            [22:00-24:00] Two paths to get an existing theme into the editor.
-            Browser import: upload a JAR and restore CSS, assets, and quick-start settings.
-            CLI import: point at any theme folder, edit FreeMarker, and watch preview regeneration and editor live reload.
-            Command: npx keycloak-theme-editor.
-            Quick-start controls stay locked when quick-start variables are missing.
+            <ul>
+              <li>[19:30-21:30] Compare browser import/export and CLI round-trip paths.</li>
+              <li>[19:30-21:30] Call out when quick-start controls are locked.</li>
+            </ul>
           </aside>
         </section>
 
@@ -525,22 +527,26 @@
             </li>
           </ul>
           <aside class="notes">
-            [24:30–26:30] Highlight that these features would further shorten the feedback loop and improve accuracy.
-            Invite feedback on what would help most in real-world theming workflows.
+            <ul>
+              <li>[21:30-22:30] Share roadmap items briefly.</li>
+              <li>[21:30-22:30] Ask which capability would help their team most.</li>
+            </ul>
           </aside>
         </section>
         <!-- 12) FAQ + close -->
         <section>
           <h3>FAQ</h3>
           <ul>
-            <li><strong>Does my data leave the browser?</strong> No. Editing is client side only.</li>
-            <li><strong>Does this work for account/email themes?</strong> Not yet. The current scope is login themes.</li>
-            <li><strong>Can I use my own FreeMarker templates?</strong> Yes. Run <code>npx keycloak-theme-editor init</code>, add your FTL files, then run the CLI.</li>
-            <li><strong>Can our team collaborate on a theme?</strong> There is no backend server, use Git.</li>
+            <li><strong>Does my data leave the browser?</strong> No, editing is client side only</li>
+            <li><strong>Does this work for account/email themes?</strong> Not yet, the current scope is login themes</li>
+            <li><strong>Can I use my own FreeMarker templates?</strong> Yes, run <code>npx keycloak-theme-editor init</code>, add your FTL files, then run the CLI</li>
+            <li><strong>Can our team collaborate on a theme?</strong> There is no backend server, use Git</li>
           </ul>
           <aside class="notes">
-            [28:30–30:00] Close with the single takeaway and invite questions about their deployment model.
-            PACE: Read the takeaway line out loud, then pause before moving to QR slide.
+            <ul>
+              <li>[22:30-24:00] Answer top FAQ quickly and restate key takeaway.</li>
+              <li>[22:30-24:00] Move to QR slide for closing minute.</li>
+            </ul>
           </aside>
         </section>
 
@@ -563,8 +569,10 @@
             What are your pain points when theming?
           </p>
           <aside class="notes">
-            [25:00–30:00] Q&amp;A. Leave this slide up while taking questions.
-            Let people scan the QR codes. If no questions, prompt with: "What are your biggest pain points when theming?"
+            <ul>
+              <li>[24:00-25:00] Final minute: show QR codes and take last question.</li>
+              <li>[24:00-25:00] Close on the call to action: try the editor and share feedback.</li>
+            </ul>
           </aside>
         </section>
       </div>
