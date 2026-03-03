@@ -6,7 +6,7 @@ import path from 'node:path'
 import process from 'node:process'
 import { createJiti } from 'jiti'
 
-const MIN_JAVA = 25
+const MIN_JAVA = 8
 const isWindows = process.platform === 'win32'
 const SCRIPT_TAG_PATTERN = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi
 

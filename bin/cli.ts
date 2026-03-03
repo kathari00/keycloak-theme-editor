@@ -10,7 +10,7 @@ import { generatePreview, getJavaMajorVersion, type ContextMocks } from '../tool
 
 const PACKAGE_ROOT = path.resolve(import.meta.dirname, '..')
 const DEFAULT_PORT = 4800
-const MIN_JAVA = 25
+const MIN_JAVA = 8
 
 // SSE clients for live reload
 const sseClients: Set<import('node:http').ServerResponse> = new Set()
