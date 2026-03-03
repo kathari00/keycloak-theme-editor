@@ -191,14 +191,15 @@
                         </div>
                         <span class="${properties.kcAlertTitleClass!} kc-feedback-text">${message.summary}</span>
                     </div>
-                <#elseif msg("infoMessage")?has_content>
-                    <div id="kc-info-message" data-kc-class="kcAlertClass" data-kc-state="info-message" data-kc-i18n-key="infoMessage" class="${properties.kcAlertClass!} pf-m-info">
+                </#if>
+                <#assign _infoMsg = msg("infoMessage")>
+                <#assign _hasInfo = _infoMsg?has_content && !(displayMessage && message?has_content)>
+                    <div id="kc-info-message" data-kc-class="kcAlertClass" data-kc-state="info-message" data-kc-i18n-key="infoMessage" class="${properties.kcAlertClass!} pf-m-info"<#if !_hasInfo> style="display:none" aria-hidden="true"</#if>>
                         <div class="${properties.kcAlertIconClass!}">
                             <span class="${properties.kcFeedbackInfoIcon!}"></span>
                         </div>
-                        <span class="${properties.kcAlertTitleClass!} kc-feedback-text">${msg("infoMessage")}</span>
+                        <span class="${properties.kcAlertTitleClass!} kc-feedback-text"><#if _hasInfo>${_infoMsg}</#if></span>
                     </div>
-                </#if>
                 <#nested "form">
 
                 <#if auth?has_content && auth.showTryAnotherWayLink()>
