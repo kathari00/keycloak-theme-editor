@@ -220,7 +220,11 @@ html.kcDarkModeClass #kc-content-wrapper > div > ul > li {
 html:not(.pf-v5-theme-dark):not(.kcDarkModeClass) body .kcLogin,
 html:not(.pf-v5-theme-dark):not(.kcDarkModeClass) body#keycloak-bg .kcLogin,
 html:not(.pf-v5-theme-dark):not(.kcDarkModeClass) body .kcLoginClass,
-html:not(.pf-v5-theme-dark):not(.kcDarkModeClass) body#keycloak-bg .kcLoginClass,
+html:not(.pf-v5-theme-dark):not(.kcDarkModeClass) body#keycloak-bg .kcLoginClass {
+  background-color: var(--quickstart-bg-color);
+  background-image: var(--quickstart-bg-image);
+}
+
 html.pf-v5-theme-dark body .kcLogin,
 html.pf-v5-theme-dark body#keycloak-bg .kcLogin,
 html.pf-v5-theme-dark body .kcLoginClass,
@@ -229,7 +233,7 @@ html.kcDarkModeClass body .kcLogin,
 html.kcDarkModeClass body#keycloak-bg .kcLogin,
 html.kcDarkModeClass body .kcLoginClass,
 html.kcDarkModeClass body#keycloak-bg .kcLoginClass {
-  background-color: var(--quickstart-bg-color);
+  background-color: var(--quickstart-bg-color-dark);
   background-image: var(--quickstart-bg-image);
 }
 
@@ -702,7 +706,7 @@ button[type="submit"],
 input[type="submit"],
 button.kcButtonPrimaryClass,
 a.kcButtonPrimaryClass {
-  background: linear-gradient(135deg, var(--quickstart-primary-color) 0%, var(--quickstart-secondary-color) 100%);
+  background: var(--quickstart-primary-color);
   color: #ffffff;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
@@ -1748,7 +1752,7 @@ hr {
   border: none;
   border-top: none;
   height: 2px;
-  background: linear-gradient(90deg, var(--quickstart-primary-color), var(--quickstart-secondary-color));
+  background: var(--quickstart-primary-color);
   opacity: 1;
 }
 
@@ -1784,7 +1788,7 @@ html.pf-v5-theme-dark body#keycloak-bg,
 html.kcDarkModeClass,
 html.kcDarkModeClass body,
 html.kcDarkModeClass body#keycloak-bg {
-  background-color: var(--quickstart-bg-color);
+  background-color: var(--quickstart-bg-color-dark);
   background-image: var(--quickstart-bg-image);
 }
 

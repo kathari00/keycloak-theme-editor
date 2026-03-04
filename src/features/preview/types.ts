@@ -1,4 +1,4 @@
-export type PreviewVariantId = 'base' | 'v2' | 'modern-gradient' | 'horizontal-card'
+export type PreviewVariantId = 'base' | 'v2' | 'modern-card' | 'horizontal-card'
 
 export type PreviewPageStories = Record<string, string>
 

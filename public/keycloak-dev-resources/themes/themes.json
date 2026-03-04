@@ -27,9 +27,9 @@
       }
     },
     {
-      "id": "modern-gradient",
-      "name": "Modern Gradient",
-      "description": "Modern gradient with translucent surfaces and soft shadows",
+      "id": "modern-card",
+      "name": "Modern Card",
+      "description": "Modern card design with primary color background and soft shadows",
       "baseId": "base"
     },
     {

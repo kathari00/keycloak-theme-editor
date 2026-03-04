@@ -39,7 +39,7 @@ describe('resolveScenarioHtml', () => {
 
   it('does not override page html for the default story', () => {
     const scenarioHtml = resolveScenarioHtml({
-      variantId: 'modern-gradient',
+      variantId: 'modern-card',
       pageId: 'login.html',
       storyId: 'default',
     })

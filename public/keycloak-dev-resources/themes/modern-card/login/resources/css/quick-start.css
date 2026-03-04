@@ -15,8 +15,9 @@
   --quickstart-text-primary-dark: #e8eaed;
   --quickstart-text-secondary-light: #374151;
   --quickstart-text-secondary-dark: #cbd5e1;
-  --quickstart-gradient-bg-default: linear-gradient(135deg, var(--quickstart-primary-color) 0%, var(--quickstart-secondary-color) 100%);
-  --quickstart-bg-image: var(--quickstart-gradient-bg-default);
+  --quickstart-bg-color: var(--quickstart-primary-color);
+  --quickstart-bg-color-dark: var(--quickstart-primary-color-dark);
+  --quickstart-bg-image: none;
   --quickstart-card-bg-color: #ffffff;
   --quickstart-card-bg-color-dark: #0e0e0e;
   --quickstart-input-bg-color-dark: #141516;
@@ -27,13 +28,25 @@
 body,
 body#keycloak-bg {
   margin: 0;
+  background-color: var(--quickstart-bg-color);
 }
 
 .kcLogin,
 .kcLoginClass {
   box-sizing: border-box;
   background-image: var(--quickstart-bg-image);
+  background-color: var(--quickstart-bg-color);
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
+}
+
+html.pf-v5-theme-dark body,
+html.pf-v5-theme-dark body#keycloak-bg {
+  background-color: var(--quickstart-bg-color-dark);
+}
+
+html.pf-v5-theme-dark .kcLogin,
+html.pf-v5-theme-dark .kcLoginClass {
+  background-color: var(--quickstart-bg-color-dark);
 }

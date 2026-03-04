@@ -33,5 +33,7 @@ tools/preview-renderer/preview-renderer.jar
 tools/preview-renderer/lib/
 public/keycloak-upstream/
 public/keycloak-dev-resources/resources-common/
+public/fonts/
+docker-compose.yml
 bin
 *.tgz

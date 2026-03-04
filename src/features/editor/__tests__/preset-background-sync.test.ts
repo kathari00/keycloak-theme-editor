@@ -16,7 +16,7 @@ vi.mock('../../presets/queries', async (importOriginal) => {
       themes: [
         { id: 'base', baseId: 'base' },
         { id: 'v2', baseId: 'v2' },
-        { id: 'modern-gradient', baseId: 'base' },
+        { id: 'modern-card', baseId: 'base' },
         { id: 'horizontal-card', baseId: 'base' },
       ],
     })),
@@ -128,7 +128,7 @@ describe('preset background sync on preset selection', () => {
   })
 
   it('clears persisted default background when current theme base is non-v2', async () => {
-    presetStore.setState(state => ({ ...state, selectedThemeId: 'modern-gradient' }))
+    presetStore.setState(state => ({ ...state, selectedThemeId: 'modern-card' }))
 
     await presetActions.syncBackgroundForCurrentTheme()
 

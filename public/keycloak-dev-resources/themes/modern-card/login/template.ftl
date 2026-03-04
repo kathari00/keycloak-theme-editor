@@ -226,6 +226,8 @@
 
                 <#nested "form">
 
+                <#nested "socialProviders">
+
         <#if auth?has_content && auth.showTryAnotherWayLink()>
           <form id="kc-select-try-another-way-form" action="${url.loginAction}" method="post" novalidate="novalidate">
               <input type="hidden" name="tryAnotherWay" value="on"/>

@@ -254,8 +254,8 @@
           </ul>
           <aside class="notes">
             <ul>
-              <li>[00:00-00:50] Introduce the goal: faster Keycloak login branding.</li>
-              <li>[00:00-00:50] Set expectation: practical workflow, not deep internals.</li>
+              <li>[00:00-00:50] Keycloak is a great IAM solution but platform teams might struggle with the login theme looking like a default Keycloak login and not matching their brand.</li>
+              <li>[00:00-00:50] Set expectation: This talk will try to fix that quickly by demonstrating a WYSIWYG approach to Keycloak theme editing. This is a practical workflow and will not be a deep dive into Keycloak internals. By the end you will know how to create a branded login page.</li>
             </ul>
           </aside>
         </section>
@@ -267,9 +267,9 @@
             <li>Keycloak login theming</li>
             <li>What the editor does</li>
             <li>Live demo</li>
+            <li>Architecture</li>
             <li>Preview generation logic</li>
-            <li>Architecture + theme round-trip</li>
-            <li>FAQ + close</li>
+            <li>FAQ</li>
           </ol>
           <aside class="notes">
             <ul>
@@ -299,6 +299,7 @@
           <aside class="notes">
             <ul>
               <li>[01:20-03:00] Describe the target outcome: branded login that matches product UX.</li>
+              <li>No freemarker -> freemarker might not be in tech stack and the more ftl you write the more you need to maintain</li>
               <li>[01:20-03:00] Emphasize speed and low template complexity for platform teams.</li>
             </ul>
           </aside>
@@ -324,6 +325,7 @@
               <aside class="notes">
                 <ul>
                   <li>[03:00-05:30] Compare hand editing, quick theme, and Keycloakify.</li>
+                  <li>HAnd editing great because of full control, but you dont have an overview over all pages</li>
                   <li>[03:00-05:30] Position the editor as complementary, not a replacement.</li>
                 </ul>
               </aside>

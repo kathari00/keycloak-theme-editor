@@ -76,10 +76,10 @@ export async function buildJarBlob(params: JarBuildParams): Promise<Blob> {
 
   const { zipSync } = await import('fflate')
   const files: Record<string, Uint8Array> = {}
-  const exportRoot = themeName
+  const exportRoot = `theme/${themeName}`
   const themeLoginRoot = `${exportRoot}/login`
 
-  addTextEntry(files, `${exportRoot}/META-INF/keycloak-themes.json`, generateKeycloakThemesJson(themeName))
+  addTextEntry(files, `META-INF/keycloak-themes.json`, generateKeycloakThemesJson(themeName))
   addTextEntry(files, `${themeLoginRoot}/theme.properties`, properties)
   addTextEntry(files, `${themeLoginRoot}/template.ftl`, templateFtl)
   if (footerFtl) {

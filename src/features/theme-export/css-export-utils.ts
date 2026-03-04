@@ -38,7 +38,7 @@ export function stripDataKcStateAttributes(markup: string): string {
 /**
  * Get effective applied assets with default background fallback.
  * Only auto-applies the default Keycloak background for v2 base themes.
- * Non-v2 presets (e.g. Modern Gradient) define their own backgrounds via preset
+ * Non-v2 presets (e.g. Modern Card) define their own backgrounds via preset
  * CSS, so injecting the default image would overwrite them in the cascade.
  */
 export function getEffectiveAppliedAssets(

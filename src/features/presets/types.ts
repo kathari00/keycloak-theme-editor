@@ -1,7 +1,7 @@
 export type BaseThemeId = 'base' | 'v2'
-export type ThemeId = 'base' | 'v2' | 'modern-gradient' | 'horizontal-card'
+export type ThemeId = 'base' | 'v2' | 'modern-card' | 'horizontal-card'
 
-const BUILTIN_THEME_IDS: ReadonlySet<string> = new Set<string>(['base', 'v2', 'modern-gradient', 'horizontal-card'])
+const BUILTIN_THEME_IDS: ReadonlySet<string> = new Set<string>(['base', 'v2', 'modern-card', 'horizontal-card'])
 
 export function isBuiltinTheme(themeId: string): boolean {
   return BUILTIN_THEME_IDS.has(themeId)
