@@ -7,7 +7,7 @@ import {
 import { buildQuickStartCss } from '../editor/quick-start-css'
 import { useDarkModeState, usePresetState, usePreviewState, useQuickStartColorsState, useQuickStartContentState, useStylesCssState, useUploadedAssetsState } from '../editor/use-editor'
 import { resolveThemeBaseIdFromConfig, resolveThemeIdFromConfig, useThemeConfig } from '../presets/queries'
-import { getThemePreviewCssPath, getThemePreviewStylesPath, getThemeQuickStartCssPath } from '../presets/theme-paths'
+import { getThemePreviewStylesPath } from '../presets/theme-paths'
 import { themeResourcePath } from '../presets/types'
 import { resolveOpenableLegalLinkUrl } from './legal-link-url'
 import { getVariantPages, resolveScenarioHtml } from './load-generated'
@@ -56,17 +56,6 @@ function ensureBaseHref(doc: Document, id: string, href: string) {
   base.setAttribute('href', href)
 }
 
-function ensureLink(doc: Document, id: string, href: string) {
-  let link = doc.getElementById(id) as HTMLLinkElement | null
-  if (!link) {
-    link = doc.createElement('link')
-    link.id = id
-    link.rel = 'stylesheet'
-    doc.head.appendChild(link)
-  }
-  link.setAttribute('href', href)
-}
-
 function removeElementById(doc: Document, id: string) {
   doc.getElementById(id)?.remove()
 }
@@ -74,9 +63,7 @@ function removeElementById(doc: Document, id: string) {
 function syncPreviewDocumentStyles(params: {
   doc: Document
   isV2Theme: boolean
-  themeQuickStartCssPath: string
   themeStylesPath: string
-  themePreviewCssPath: string
   stylesCss: string
   quickStartOverridesCss: string
   uploadedFontsCss: string
@@ -87,9 +74,7 @@ function syncPreviewDocumentStyles(params: {
   const {
     doc,
     isV2Theme,
-    themeQuickStartCssPath,
     themeStylesPath,
-    themePreviewCssPath,
     stylesCss,
     quickStartOverridesCss,
     uploadedFontsCss,
@@ -112,10 +97,10 @@ function syncPreviewDocumentStyles(params: {
 
   const themeHref = new URL(themeStylesPath, window.location.href).toString()
   ensureBaseHref(doc, 'preview-theme-base', themeHref)
-  ensureLink(doc, 'preview-theme-quick-start', themeQuickStartCssPath)
   ensureStyle(doc, 'preview-theme-styles-inline', stylesCss)
   ensureStyle(doc, 'preview-quick-start-overrides', quickStartOverridesCss)
-  ensureLink(doc, 'preview-theme-preview-css', themePreviewCssPath)
+  removeElementById(doc, 'preview-theme-quick-start')
+  removeElementById(doc, 'preview-theme-preview-css')
   removeElementById(doc, 'preview-common-preview-css')
   ensureStyle(doc, 'preview-uploaded-fonts', uploadedFontsCss)
   ensureStyle(doc, 'preview-uploaded-images', uploadedImagesCss)
@@ -177,9 +162,7 @@ export function PreviewShell() {
   const resolvedThemeId = resolveThemeIdFromConfig(themeConfig, selectedThemeId)
   const themeBaseId = resolveThemeBaseIdFromConfig(themeConfig, selectedThemeId)
   const isV2Theme = themeBaseId === 'v2'
-  const themeQuickStartCssPath = getThemeQuickStartCssPath(resolvedThemeId)
   const themeStylesPath = getThemePreviewStylesPath(resolvedThemeId)
-  const themePreviewCssPath = getThemePreviewCssPath(resolvedThemeId)
   const quickStartOverridesCss = buildQuickStartCss({
     primaryColor: colorPresetPrimaryColor,
     secondaryColor: colorPresetSecondaryColor,
@@ -281,9 +264,7 @@ export function PreviewShell() {
     syncPreviewDocumentStyles({
       doc,
       isV2Theme,
-      themeQuickStartCssPath,
       themeStylesPath,
-      themePreviewCssPath,
       stylesCss,
       quickStartOverridesCss,
       uploadedFontsCss,
@@ -306,9 +287,7 @@ export function PreviewShell() {
     frameLoadVersion,
     isV2Theme,
     resolvedThemeId,
-    themeQuickStartCssPath,
     themeStylesPath,
-    themePreviewCssPath,
     stylesCss,
     quickStartOverridesCss,
     uploadedFontsCss,

@@ -1,6 +1,5 @@
 import type { BaseThemeId, ThemeConfig, ThemeId } from './types'
 import { sanitizeThemeCssSourceForEditor, stripQuickStartImportLine } from '../editor/css-source-sanitizer'
-import { getThemeQuickStartCssPath } from './theme-paths'
 import { isBuiltinTheme, themeResourcePath } from './types'
 
 export interface ThemeCssStructured {
@@ -99,11 +98,9 @@ export async function loadThemeCssStructured(themeId: ThemeId): Promise<ThemeCss
     const quickStartEntry = stylePaths.find(p => p === 'css/quick-start.css')
     const userStyleEntries = stylePaths.filter(p => p !== 'css/quick-start.css')
 
-    const quickStartPath = quickStartEntry
-      ? themeResourcePath(themeId, `resources/${quickStartEntry}`)
-      : getThemeQuickStartCssPath(themeId)
-
-    const quickStartPromise = fetchCssFile(quickStartPath)
+    const quickStartPromise = quickStartEntry
+      ? fetchCssFile(themeResourcePath(themeId, `resources/${quickStartEntry}`))
+      : Promise.resolve('')
     const userStylePromises = userStyleEntries.map(entry =>
       fetchCssFile(themeResourcePath(themeId, `resources/${entry}`)),
     )
