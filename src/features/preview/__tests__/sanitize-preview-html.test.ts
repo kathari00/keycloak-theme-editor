@@ -39,7 +39,7 @@ describe('sanitizePreviewHtml', () => {
     expect(sanitizePreviewHtml('')).toBe('<!doctype html><html><body></body></html>')
   })
 
-  it('removes stylesheet links', () => {
+  it('preserves stylesheet links', () => {
     const html = `
       <head>
         <link href="/keycloak-dev-resources/vendor/patternfly-v5/patternfly.min.css" rel="stylesheet" />
@@ -48,7 +48,7 @@ describe('sanitizePreviewHtml', () => {
     `
 
     const result = sanitizePreviewHtml(html)
-    expect(result).not.toContain('rel="stylesheet"')
+    expect(result).toContain('rel="stylesheet"')
     expect(result).toContain('rel="icon"')
   })
 })
