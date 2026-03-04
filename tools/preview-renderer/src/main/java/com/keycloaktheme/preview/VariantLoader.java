@@ -25,14 +25,27 @@ public final class VariantLoader {
     this.overrideRoot = overrideRoot;
   }
 
-  public VariantInputs loadVariantInputs(Path inputRoot, String baseTheme, Path overlayDir, Path userOverlayDir) throws IOException {
-    Path baseThemeLoginDir = inputRoot.resolve(baseTheme).resolve("login");
-    Path localOverrideLoginDir = overrideRoot.resolve(baseTheme).resolve("login");
-    Path inheritedBaseLoginDir = inputRoot.resolve("base").resolve("login");
-    Path messagesPath = inputRoot.resolve(baseTheme).resolve("messages").resolve("messages_en.properties");
+  public VariantInputs loadVariantInputs(
+      Path baseThemeDir,
+      Path inheritedBaseThemeDir,
+      Path overlayDir,
+      Path userOverlayDir
+  ) throws IOException {
+    String baseThemeId = baseThemeDir.getFileName().toString();
+    Path baseThemeLoginDir = baseThemeDir.resolve("login");
+    Path localOverrideLoginDir = overrideRoot.resolve(baseThemeId).resolve("login");
+    Path inheritedBaseLoginDir = inheritedBaseThemeDir.resolve("login");
+    Path messagesPath = baseThemeDir.resolve("messages").resolve("messages_en.properties");
+    Path inheritedMessagesPath = inheritedBaseThemeDir.resolve("messages").resolve("messages_en.properties");
     Path themePropertiesPath = baseThemeLoginDir.resolve("theme.properties");
 
-    if (!Files.exists(baseThemeLoginDir) || !Files.exists(themePropertiesPath) || !Files.exists(messagesPath)) {
+    if (!Files.exists(baseThemeLoginDir) || !Files.exists(themePropertiesPath)) {
+      return null;
+    }
+    if (!Files.exists(messagesPath)) {
+      messagesPath = inheritedMessagesPath;
+    }
+    if (!Files.exists(messagesPath)) {
       return null;
     }
 

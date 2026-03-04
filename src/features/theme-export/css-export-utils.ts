@@ -253,7 +253,8 @@ export function assembleExportPayload(params: {
 
 // --- Quick-start CSS export utilities ---
 
-const QUICK_START_LIGHT_VARIABLE_SCOPE = `html:not(.pf-v5-theme-dark):not(.kcDarkModeClass) body:not(.pf-v5-theme-dark):not(.kcDarkModeClass),
+const QUICK_START_LIGHT_VARIABLE_SCOPE = `:root,
+html:not(.pf-v5-theme-dark):not(.kcDarkModeClass) body:not(.pf-v5-theme-dark):not(.kcDarkModeClass),
 html:not(.pf-v5-theme-dark):not(.kcDarkModeClass) body#keycloak-bg:not(.pf-v5-theme-dark):not(.kcDarkModeClass)`
 const QUICK_START_DARK_VARIABLE_SCOPE = `html.pf-v5-theme-dark,
 html.pf-v5-theme-dark body,

@@ -2,7 +2,7 @@ import type { AppliedAssets, UploadedAsset } from '../../assets/types'
 import { describe, expect, it } from 'vitest'
 import { REMOVED_ASSET_ID } from '../../assets/types'
 import { buildQuickStartCss } from '../../editor/quick-start-css'
-import { assembleExportPayload, getEffectiveAppliedAssets, parseAppliedAssetsFromCss } from '../css-export-utils'
+import { assembleExportPayload, buildModeAwareQuickStartCssParts, getEffectiveAppliedAssets, parseAppliedAssetsFromCss } from '../css-export-utils'
 
 function makeAsset(overrides: Partial<UploadedAsset>): UploadedAsset {
   return {
@@ -120,5 +120,47 @@ describe('assembleExportPayload', () => {
     })
 
     expect(payload.generatedCss).toContain('--quickstart-font-family: \'Inter\', sans-serif;')
+  })
+})
+
+describe('buildModeAwareQuickStartCssParts', () => {
+  it('includes a :root light variable scope so exported themes match preview variable resolution', () => {
+    const parts = buildModeAwareQuickStartCssParts({
+      light: {
+        colorPresetId: 'custom',
+        colorPresetPrimaryColor: '#123456',
+        colorPresetSecondaryColor: '#abcdef',
+        colorPresetFontFamily: 'custom',
+        colorPresetBgColor: '',
+        colorPresetBorderRadius: 'rounded',
+        colorPresetCardShadow: 'subtle',
+        colorPresetHeadingFontFamily: 'custom',
+        showClientName: false,
+        showRealmName: true,
+        infoMessage: '',
+        imprintUrl: '',
+        dataProtectionUrl: '',
+      },
+      dark: {
+        colorPresetId: 'custom',
+        colorPresetPrimaryColor: '#111111',
+        colorPresetSecondaryColor: '#222222',
+        colorPresetFontFamily: 'custom',
+        colorPresetBgColor: '',
+        colorPresetBorderRadius: 'rounded',
+        colorPresetCardShadow: 'subtle',
+        colorPresetHeadingFontFamily: 'custom',
+        showClientName: false,
+        showRealmName: true,
+        infoMessage: '',
+        imprintUrl: '',
+        dataProtectionUrl: '',
+      },
+    })
+
+    expect(parts.variablesCss).toContain(':root')
+    expect(parts.variablesCss).toContain('html.pf-v5-theme-dark')
+    expect(parts.variablesCss).toContain('--quickstart-gradient-bg-default: linear-gradient(135deg, #123456 0%, #abcdef 100%);')
+    expect(parts.variablesCss).toContain('--quickstart-gradient-bg-default: linear-gradient(135deg, #111111 0%, #222222 100%);')
   })
 })

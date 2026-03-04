@@ -7,6 +7,10 @@
       "upstream": "base"
     },
     {
+      "id": "keycloak",
+      "upstream": "keycloak"
+    },
+    {
       "id": "v2",
       "upstream": "keycloak.v2"
     }

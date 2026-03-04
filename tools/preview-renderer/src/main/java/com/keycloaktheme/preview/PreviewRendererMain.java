@@ -47,8 +47,8 @@ public final class PreviewRendererMain {
 
     for (VariantSpec variant : getVariants()) {
       VariantLoader.VariantInputs inputs = variantLoader.loadVariantInputs(
-          arguments.inputRoot,
-          variant.baseTheme,
+          variant.baseThemeDir,
+          arguments.inputRoot.resolve("base"),
           variant.overlayDir,
           variant.userOverlayDir
       );
@@ -69,17 +69,19 @@ public final class PreviewRendererMain {
   }
 
   private List<VariantSpec> getVariants() throws IOException {
+    Map<String, Path> availableThemeDirs = discoverAvailableThemeDirs();
+
     List<VariantSpec> variants = new ArrayList<VariantSpec>(Arrays.asList(
-        new VariantSpec("base", "base", null, null),
-        new VariantSpec("v2", "v2", null, null),
-        new VariantSpec("modern-gradient", "base", arguments.presetRoot.resolve("modern-gradient").resolve("login"), null),
-        new VariantSpec("horizontal-card", "base", arguments.presetRoot.resolve("horizontal-card").resolve("login"), null)
+        new VariantSpec("base", resolveBaseThemeDir("base", availableThemeDirs), null, null),
+        new VariantSpec("v2", resolveBaseThemeDir("v2", availableThemeDirs), null, null),
+        new VariantSpec("modern-gradient", resolveBaseThemeDir("base", availableThemeDirs), arguments.presetRoot.resolve("modern-gradient").resolve("login"), null),
+        new VariantSpec("horizontal-card", resolveBaseThemeDir("base", availableThemeDirs), arguments.presetRoot.resolve("horizontal-card").resolve("login"), null)
     ));
 
     for (Path userThemeDir : arguments.userThemeDirs) {
       Path userLogin = userThemeDir.resolve("login");
       Path userThemeProps = userLogin.resolve("theme.properties");
-      String baseTheme = "base";
+      String parentTheme = "base";
       String presetId = null;
       if (Files.exists(userThemeProps)) {
         String content = new String(Files.readAllBytes(userThemeProps), StandardCharsets.UTF_8);
@@ -88,32 +90,97 @@ public final class PreviewRendererMain {
           if (trimmed.startsWith("preset=")) {
             presetId = trimmed.substring(7).trim();
           } else if (trimmed.startsWith("parent=")) {
-            String parent = trimmed.substring(7).trim();
-            if (parent.contains("v2")) {
-              baseTheme = "v2";
-            }
+            parentTheme = trimmed.substring(7).trim();
           }
         }
       }
 
+      Path baseThemeDir = resolveBaseThemeDir(parentTheme, availableThemeDirs);
       String variantId = userThemeDir.getFileName().toString();
       if (presetId != null && !presetId.isEmpty()) {
         Path presetLogin = arguments.presetRoot.resolve(presetId).resolve("login");
         if (Files.exists(presetLogin)) {
           if (presetId.contains("v2")) {
-            baseTheme = "v2";
+            baseThemeDir = resolveBaseThemeDir("v2", availableThemeDirs);
           }
-          variants.add(new VariantSpec(variantId, baseTheme, presetLogin, userLogin));
+          variants.add(new VariantSpec(variantId, baseThemeDir, presetLogin, userLogin));
         } else {
           System.err.println("Warning: preset '" + presetId + "' not found, ignoring preset= directive.");
-          variants.add(new VariantSpec(variantId, baseTheme, userLogin, null));
+          variants.add(new VariantSpec(variantId, baseThemeDir, userLogin, null));
         }
       } else {
-        variants.add(new VariantSpec(variantId, baseTheme, userLogin, null));
+        variants.add(new VariantSpec(variantId, baseThemeDir, userLogin, null));
       }
     }
 
     return variants;
+  }
+
+  private Map<String, Path> discoverAvailableThemeDirs() throws IOException {
+    Map<String, Path> result = new LinkedHashMap<String, Path>();
+    addThemeDirsFromRoot(arguments.inputRoot, result);
+    addThemeDirsFromRoot(arguments.overrideRoot, result);
+    for (Path userThemeDir : arguments.userThemeDirs) {
+      addThemeDir(userThemeDir, result);
+    }
+    return result;
+  }
+
+  private void addThemeDirsFromRoot(Path root, Map<String, Path> target) throws IOException {
+    if (root == null || !Files.isDirectory(root)) {
+      return;
+    }
+    try (java.nio.file.DirectoryStream<Path> entries = Files.newDirectoryStream(root)) {
+      for (Path entry : entries) {
+        addThemeDir(entry, target);
+      }
+    }
+  }
+
+  private void addThemeDir(Path themeDir, Map<String, Path> target) {
+    if (!isThemeDir(themeDir)) {
+      return;
+    }
+    String themeId = themeDir.getFileName().toString();
+    target.putIfAbsent(themeId, themeDir);
+  }
+
+  private boolean isThemeDir(Path themeDir) {
+    return themeDir != null
+        && Files.isDirectory(themeDir)
+        && Files.exists(themeDir.resolve("login").resolve("theme.properties"));
+  }
+
+  private Path resolveBaseThemeDir(String parent, Map<String, Path> availableThemeDirs) {
+    String normalizedParent = normalizeParentThemeId(parent);
+    Path resolved = availableThemeDirs.get(normalizedParent);
+    if (resolved == null && normalizedParent.contains("v2")) {
+      resolved = availableThemeDirs.get("v2");
+    }
+    boolean usedBaseFallback = false;
+    if (resolved == null) {
+      resolved = availableThemeDirs.get("base");
+      usedBaseFallback = true;
+    }
+    if (resolved != null) {
+      if (usedBaseFallback && parent != null && !parent.trim().isEmpty()) {
+        System.err.println("Warning: parent '" + parent.trim() + "' not found, falling back to 'base'.");
+      }
+      return resolved;
+    }
+    throw new IllegalStateException("Unable to resolve base theme directory.");
+  }
+
+  private String normalizeParentThemeId(String parent) {
+    String normalized = parent == null ? "" : parent.trim();
+    if (normalized.isEmpty()) {
+      return "base";
+    }
+    if (!normalized.startsWith("keycloak.")) {
+      return normalized;
+    }
+    String suffix = normalized.substring("keycloak.".length()).trim();
+    return suffix.isEmpty() ? "base" : suffix;
   }
 
   private VariantRenderResult renderVariantPages(
@@ -253,13 +320,13 @@ public final class PreviewRendererMain {
 
   private static final class VariantSpec {
     private final String id;
-    private final String baseTheme;
+    private final Path baseThemeDir;
     private final Path overlayDir;
     private final Path userOverlayDir;
 
-    private VariantSpec(String id, String baseTheme, Path overlayDir, Path userOverlayDir) {
+    private VariantSpec(String id, Path baseThemeDir, Path overlayDir, Path userOverlayDir) {
       this.id = id;
-      this.baseTheme = baseTheme;
+      this.baseThemeDir = baseThemeDir;
       this.overlayDir = overlayDir;
       this.userOverlayDir = userOverlayDir;
     }
