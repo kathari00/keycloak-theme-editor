@@ -15,15 +15,15 @@ export default defineConfig({
       targets: [
         {
           src: 'node_modules/@patternfly-v5/patternfly/patternfly.min.css',
-          dest: 'keycloak-dev-resources',
+          dest: 'keycloak-dev-resources/resources-common/vendor/patternfly-v5',
         },
         {
           src: 'node_modules/@patternfly-v5/patternfly/patternfly-addons.css',
-          dest: 'keycloak-dev-resources',
+          dest: 'keycloak-dev-resources/resources-common/vendor/patternfly-v5',
         },
         {
-          src: 'node_modules/@patternfly-v5/patternfly/assets/fonts/**/*',
-          dest: 'keycloak-dev-resources/assets/fonts',
+          src: 'node_modules/@patternfly-v5/patternfly/assets/**/*',
+          dest: 'keycloak-dev-resources/resources-common/vendor/patternfly-v5/assets',
         },
         {
           src: 'docs/presentation/wysiwyg-a-keycloak-theme-editing-approach-presentation/**/*',
