@@ -15,8 +15,8 @@
   --quickstart-text-primary-dark: #e8eaed;
   --quickstart-text-secondary-light: #374151;
   --quickstart-text-secondary-dark: #cbd5e1;
-  --quickstart-bg-color: var(--quickstart-primary-color);
-  --quickstart-bg-color-dark: var(--quickstart-primary-color-dark);
+  --quickstart-bg-color: #6074A1;
+  --quickstart-bg-color-dark: #6074A1;
   --quickstart-bg-image: none;
   --quickstart-card-bg-color: #ffffff;
   --quickstart-card-bg-color-dark: #0e0e0e;
