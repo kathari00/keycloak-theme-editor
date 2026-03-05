@@ -2,36 +2,35 @@ import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 import { viteStaticCopy } from 'vite-plugin-static-copy'
 
+import { cloudflare } from "@cloudflare/vite-plugin";
+
 export default defineConfig({
-  plugins: [
-    react({
-      babel: {
-        plugins: [
-          ['babel-plugin-react-compiler', {}],
-        ],
-      },
-    }),
-    viteStaticCopy({
-      targets: [
-        {
-          src: 'node_modules/@patternfly-v5/patternfly/patternfly.min.css',
-          dest: 'keycloak-dev-resources/resources-common/vendor/patternfly-v5',
-        },
-        {
-          src: 'node_modules/@patternfly-v5/patternfly/patternfly-addons.css',
-          dest: 'keycloak-dev-resources/resources-common/vendor/patternfly-v5',
-        },
-        {
-          src: 'node_modules/@patternfly-v5/patternfly/assets/**/*',
-          dest: 'keycloak-dev-resources/resources-common/vendor/patternfly-v5/assets',
-        },
-        {
-          src: 'docs/presentation/wysiwyg-a-keycloak-theme-editing-approach-presentation/**/*',
-          dest: 'docs/presentation/wysiwyg-a-keycloak-theme-editing-approach-presentation',
-        },
+  plugins: [react({
+    babel: {
+      plugins: [
+        ['babel-plugin-react-compiler', {}],
       ],
-    }),
-  ],
+    },
+  }), viteStaticCopy({
+    targets: [
+      {
+        src: 'node_modules/@patternfly-v5/patternfly/patternfly.min.css',
+        dest: 'keycloak-dev-resources/resources-common/vendor/patternfly-v5',
+      },
+      {
+        src: 'node_modules/@patternfly-v5/patternfly/patternfly-addons.css',
+        dest: 'keycloak-dev-resources/resources-common/vendor/patternfly-v5',
+      },
+      {
+        src: 'node_modules/@patternfly-v5/patternfly/assets/**/*',
+        dest: 'keycloak-dev-resources/resources-common/vendor/patternfly-v5/assets',
+      },
+      {
+        src: 'docs/presentation/wysiwyg-a-keycloak-theme-editing-approach-presentation/**/*',
+        dest: 'docs/presentation/wysiwyg-a-keycloak-theme-editing-approach-presentation',
+      },
+    ],
+  }), cloudflare()],
 
   optimizeDeps: {
     include: ['react', 'react-dom', 'react/jsx-runtime'],
