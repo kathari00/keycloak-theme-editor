@@ -1,7 +1,7 @@
 import type { UndoRedoAction } from '../stores/types'
 import { useEffect, useReducer, useRef } from 'react'
-import { normalizeCss } from '../style-editor-utils'
-import { userCssStore } from '../user-css-store'
+import { normalizeCss } from '../lib/style-editor-utils'
+import { userCssStore } from '../stores/user-css-store'
 
 interface UseStyleWorkspaceOptions {
   stylesCss: string

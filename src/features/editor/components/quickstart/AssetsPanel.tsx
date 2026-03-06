@@ -5,7 +5,7 @@ import {
   Tooltip,
 } from '@patternfly/react-core'
 import { InfoCircleIcon } from '@patternfly/react-icons'
-import CustomAssetUploader from '../CustomAssetUploader'
+import CustomAssetUploader from '../../../assets/components/CustomAssetUploader'
 
 export function AssetsPanel() {
   return (

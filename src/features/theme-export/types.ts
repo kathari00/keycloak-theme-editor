@@ -1,5 +1,6 @@
 import type { AppliedAssets, UploadedAsset } from '../assets/types'
 import type { QuickSettings } from '../editor/stores/types'
+import type { ThemeEditorMetadata } from './theme-file-assembler'
 
 /** Assembled CSS + asset payload ready for JAR packing or directory writing */
 export interface ThemeExportPayload {
@@ -20,9 +21,10 @@ export interface JarBuildParams {
   footerFtl: string | null
   quickStartCss: string
   stylesCss: string
-  bgImageBlob?: Blob
-  logoImageBlob?: Blob
   messagesContent: string
+  editorMetadata: ThemeEditorMetadata
+  /** Extra resource blobs (e.g. default bg/logo for v2) keyed by path relative to login/resources/ */
+  extraBlobs?: Record<string, Blob>
 }
 
 /** Parameters for writing theme files to a directory */
@@ -35,6 +37,7 @@ export interface DirectoryWriteParams {
   stylesCss: string
   messagesContent: string
   payload: ThemeExportPayload
+  editorMetadata: ThemeEditorMetadata
 }
 
 export interface ImportedQuickSettingsByMode {
@@ -47,7 +50,6 @@ export interface JarImportResult {
   css: string
   properties: string
   themeName: string
-  themeId: string | null
   quickSettingsByMode?: ImportedQuickSettingsByMode
   uploadedAssets: UploadedAsset[]
   appliedAssets: AppliedAssets

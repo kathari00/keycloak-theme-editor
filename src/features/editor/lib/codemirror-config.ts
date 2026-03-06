@@ -8,7 +8,7 @@ import { HighlightStyle, syntaxHighlighting } from '@codemirror/language'
 import { Prec } from '@codemirror/state'
 import { EditorView, keymap } from '@codemirror/view'
 import { tags } from '@lezer/highlight'
-import { GOOGLE_FONTS } from '../assets/google-fonts'
+import { GOOGLE_FONTS } from '../../assets/google-fonts'
 import { QUICK_START_EDITOR_CSS_VARIABLES } from './quickstart-variable-registry'
 
 // CSS properties with descriptions for autocomplete

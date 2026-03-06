@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { normalizeCss } from '../style-editor-utils'
+import { normalizeCss } from '../lib/style-editor-utils'
 
 describe('style-editor-utils', () => {
   it('normalizes css line endings and trims outer whitespace', () => {

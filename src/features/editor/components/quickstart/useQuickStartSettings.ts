@@ -1,11 +1,11 @@
-import { buildGoogleFontOptions } from '../../features/assets/google-fonts'
-import { CUSTOM_PRESET_ID } from '../../features/editor/quick-start-css'
+import { buildGoogleFontOptions } from '../../../assets/google-fonts'
+import { CUSTOM_PRESET_ID } from '../../lib/quick-start-css'
 import {
   usePresetState,
   useQuickStartColorsState,
   useQuickStartContentState,
   useUploadedAssetsState,
-} from '../../features/editor/use-editor'
+} from '../../hooks/use-editor'
 
 function formatFontLabelFromValue(fontValue: string): string {
   const first = fontValue.split(',')[0]?.trim() || fontValue
@@ -21,7 +21,6 @@ export function useQuickStartSettings() {
   const { uploadedAssets } = useUploadedAssetsState()
   const { selectedThemeId } = usePresetState()
   const {
-    colorPresetId: effectivePresetId,
     colorPresetPrimaryColor: effectivePrimaryColor,
     colorPresetSecondaryColor: effectiveSecondaryColor,
     colorPresetFontFamily: effectiveFontFamily,
@@ -74,7 +73,6 @@ export function useQuickStartSettings() {
 
   return {
     selectedThemeId,
-    effectivePresetId,
     effectivePrimaryColor,
     effectiveSecondaryColor,
     effectiveFontFamily,

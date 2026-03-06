@@ -1,119 +1,7 @@
-import type { UploadedAsset } from '../assets/types'
-import type { DirectoryWriteParams, JarBuildParams, ThemeExportPayload } from './types'
-import { base64ToBlob } from '../assets/font-css-generator'
-import { generateKeycloakThemesJson } from './css-export-utils'
+import type { DirectoryWriteParams, JarBuildParams } from './types'
+import { assembleThemeFiles } from './theme-file-assembler'
 
-type AssetBucketKey = 'uploadedFonts' | 'uploadedBackgrounds' | 'uploadedLogos' | 'uploadedImages'
-
-const ASSET_BUCKETS: ReadonlyArray<[AssetBucketKey, string]> = [
-  ['uploadedFonts', 'fonts'],
-  ['uploadedBackgrounds', 'img/backgrounds'],
-  ['uploadedLogos', 'img/logos'],
-  ['uploadedImages', 'img/assets'],
-]
-
-function dedupeAssetsByName(assets: UploadedAsset[]): UploadedAsset[] {
-  const byName = new Map<string, UploadedAsset>()
-  for (const asset of assets) {
-    byName.set(asset.name, asset)
-  }
-  return Array.from(byName.values())
-}
-
-function toAssetBlob(asset: UploadedAsset): Blob {
-  return base64ToBlob(asset.base64Data, asset.mimeType)
-}
-
-const textEncoder = new TextEncoder()
 const FILE_STREAM_CLOSE_TIMEOUT_MS = 4000
-
-function addTextEntry(files: Record<string, Uint8Array>, path: string, content: string): void {
-  files[path] = textEncoder.encode(content)
-}
-
-async function addBlobEntry(files: Record<string, Uint8Array>, path: string, blob: Blob): Promise<void> {
-  files[path] = new Uint8Array(await blob.arrayBuffer())
-}
-
-async function addAssetsToZip(
-  files: Record<string, Uint8Array>,
-  basePath: string,
-  payload: ThemeExportPayload,
-): Promise<void> {
-  for (const [key, directory] of ASSET_BUCKETS) {
-    for (const asset of dedupeAssetsByName(payload[key])) {
-      await addBlobEntry(files, `${basePath}/${directory}/${asset.name}`, toAssetBlob(asset))
-    }
-  }
-}
-
-async function ensureDirectory(
-  root: FileSystemDirectoryHandle,
-  relativePath: string,
-): Promise<FileSystemDirectoryHandle> {
-  const parts = relativePath.split('/').filter(Boolean)
-  let current = root
-  for (const part of parts) {
-    current = await current.getDirectoryHandle(part, { create: true })
-  }
-  return current
-}
-
-/** Build a complete Keycloak theme JAR as a Blob */
-export async function buildJarBlob(params: JarBuildParams): Promise<Blob> {
-  const {
-    themeName,
-    properties,
-    payload,
-    templateFtl,
-    footerFtl,
-    quickStartCss,
-    stylesCss,
-    bgImageBlob,
-    logoImageBlob,
-    messagesContent,
-  } = params
-
-  const { zipSync } = await import('fflate')
-  const files: Record<string, Uint8Array> = {}
-  const exportRoot = `theme/${themeName}`
-  const themeLoginRoot = `${exportRoot}/login`
-
-  addTextEntry(files, `META-INF/keycloak-themes.json`, generateKeycloakThemesJson(themeName))
-  addTextEntry(files, `${themeLoginRoot}/theme.properties`, properties)
-  addTextEntry(files, `${themeLoginRoot}/template.ftl`, templateFtl)
-  if (footerFtl) {
-    addTextEntry(files, `${themeLoginRoot}/footer.ftl`, footerFtl)
-  }
-
-  addTextEntry(files, `${themeLoginRoot}/resources/css/quick-start.css`, quickStartCss)
-  addTextEntry(files, `${themeLoginRoot}/resources/css/styles.css`, stylesCss)
-
-  if (bgImageBlob) {
-    await addBlobEntry(files, `${themeLoginRoot}/resources/img/backgrounds/keycloak-bg-darken.svg`, bgImageBlob)
-  }
-  if (logoImageBlob) {
-    await addBlobEntry(files, `${themeLoginRoot}/resources/img/logos/keycloak-logo-text.svg`, logoImageBlob)
-  }
-
-  await addAssetsToZip(files, `${themeLoginRoot}/resources`, payload)
-
-  if (payload.appliedFavicon) {
-    await addBlobEntry(
-      files,
-      `${themeLoginRoot}/resources/img/favicon.ico`,
-      toAssetBlob(payload.appliedFavicon),
-    )
-  }
-
-  addTextEntry(files, `${themeLoginRoot}/messages/messages.properties`, messagesContent)
-  addTextEntry(files, `${themeLoginRoot}/messages/messages_en.properties`, messagesContent)
-
-  // fflate expects a nested directory structure for zipSync
-  const nested = buildNestedZipData(files)
-  const zipped = zipSync(nested)
-  return new Blob([new Uint8Array(zipped) as BlobPart], { type: 'application/java-archive' })
-}
 
 /** Convert flat path→data map to fflate's nested directory structure */
 function buildNestedZipData(files: Record<string, Uint8Array>): Record<string, any> {
@@ -128,43 +16,37 @@ function buildNestedZipData(files: Record<string, Uint8Array>): Record<string, a
       }
       current = current[dir]
     }
-    // Store with empty options (no compression for speed — theme files are small)
     current[parts[parts.length - 1]] = [data, { level: 0 }]
   }
   return root
 }
 
+/** Build a complete Keycloak theme JAR as a Blob */
+export async function buildJarBlob(params: JarBuildParams): Promise<Blob> {
+  const { themeName, extraBlobs, ...rest } = params
+  const { zipSync } = await import('fflate')
+
+  const files = await assembleThemeFiles(
+    { ...rest, themeName, extraBlobs },
+    `theme/${themeName}`,
+    'META-INF/',
+  )
+
+  const nested = buildNestedZipData(files)
+  const zipped = zipSync(nested)
+  return new Blob([new Uint8Array(zipped) as BlobPart], { type: 'application/java-archive' })
+}
+
 /** Build a ZIP blob from DirectoryWriteParams (for folder-as-zip download) */
 export async function buildFolderZipBlob(params: DirectoryWriteParams): Promise<Blob> {
-  const { themeName, properties, templateFtl, footerFtl, quickStartCss, stylesCss, messagesContent, payload } = params
+  const { themeName, ...rest } = params
   const { zipSync } = await import('fflate')
-  const files: Record<string, Uint8Array> = {}
-  const exportRoot = themeName
-  const themeLoginRoot = `${exportRoot}/login`
 
-  addTextEntry(files, `${exportRoot}/META-INF/keycloak-themes.json`, generateKeycloakThemesJson(themeName))
-  addTextEntry(files, `${themeLoginRoot}/theme.properties`, properties)
-  if (templateFtl) {
-    addTextEntry(files, `${themeLoginRoot}/template.ftl`, templateFtl)
-  }
-  if (footerFtl) {
-    addTextEntry(files, `${themeLoginRoot}/footer.ftl`, footerFtl)
-  }
-
-  addTextEntry(files, `${themeLoginRoot}/resources/css/quick-start.css`, quickStartCss)
-  addTextEntry(files, `${themeLoginRoot}/resources/css/styles.css`, stylesCss)
-  addTextEntry(files, `${themeLoginRoot}/messages/messages.properties`, messagesContent)
-  addTextEntry(files, `${themeLoginRoot}/messages/messages_en.properties`, messagesContent)
-
-  for (const [key, directory] of ASSET_BUCKETS) {
-    for (const asset of dedupeAssetsByName(payload[key])) {
-      await addBlobEntry(files, `${themeLoginRoot}/resources/${directory}/${asset.name}`, toAssetBlob(asset))
-    }
-  }
-
-  if (payload.appliedFavicon) {
-    await addBlobEntry(files, `${themeLoginRoot}/resources/img/favicon.ico`, toAssetBlob(payload.appliedFavicon))
-  }
+  const files = await assembleThemeFiles(
+    { ...rest, themeName },
+    themeName,
+    `${themeName}/META-INF/`,
+  )
 
   const nested = buildNestedZipData(files)
   const zipped = zipSync(nested)
@@ -213,60 +95,25 @@ export async function writeToDirectory(
   dirHandle: FileSystemDirectoryHandle,
   params: DirectoryWriteParams,
 ): Promise<void> {
-  const { themeName, properties, templateFtl, footerFtl, quickStartCss, stylesCss, messagesContent, payload } = params
+  const { themeName, ...rest } = params
 
-  const themeRootDir = await ensureDirectory(dirHandle, themeName)
-  const metaInfDir = await themeRootDir.getDirectoryHandle('META-INF', { create: true })
-  const loginDir = await themeRootDir.getDirectoryHandle('login', { create: true })
-  const resourcesDir = await loginDir.getDirectoryHandle('resources', { create: true })
-  const cssDir = await resourcesDir.getDirectoryHandle('css', { create: true })
-  const messagesDir = await loginDir.getDirectoryHandle('messages', { create: true })
+  const files = await assembleThemeFiles(
+    { ...rest, themeName },
+    themeName,
+    `${themeName}/META-INF/`,
+  )
 
-  await writeFile(metaInfDir, 'keycloak-themes.json', generateKeycloakThemesJson(themeName))
-  await writeFile(loginDir, 'theme.properties', properties)
-  if (templateFtl) {
-    await writeFile(loginDir, 'template.ftl', templateFtl)
-  }
-  if (footerFtl) {
-    await writeFile(loginDir, 'footer.ftl', footerFtl)
-  }
-
-  await writeFile(messagesDir, 'messages.properties', messagesContent)
-  await writeFile(messagesDir, 'messages_en.properties', messagesContent)
-
-  await writeFile(cssDir, 'quick-start.css', quickStartCss)
-  await writeFile(cssDir, 'styles.css', stylesCss)
-
-  for (const [key, directory] of ASSET_BUCKETS) {
-    await writeAssets(await ensureDirectory(resourcesDir, directory), payload[key])
-  }
-
-  if (payload.appliedFavicon) {
-    const imgDir = await resourcesDir.getDirectoryHandle('img', { create: true })
-    await writeBlobFile(imgDir, 'favicon.ico', toAssetBlob(payload.appliedFavicon))
-  }
-}
-
-/** Write a text file to a directory handle */
-async function writeFile(dir: FileSystemDirectoryHandle, name: string, content: string): Promise<void> {
-  const fileHandle = await dir.getFileHandle(name, { create: true })
-  const writable = await fileHandle.createWritable()
-  await writable.write(content)
-  await closeWritableStream(writable)
-}
-
-/** Write a blob file to a directory handle */
-async function writeBlobFile(dir: FileSystemDirectoryHandle, name: string, blob: Blob): Promise<void> {
-  const fileHandle = await dir.getFileHandle(name, { create: true })
-  const writable = await fileHandle.createWritable()
-  await writable.write(blob)
-  await closeWritableStream(writable)
-}
-
-/** Write uploaded assets to a directory */
-async function writeAssets(dir: FileSystemDirectoryHandle, assets: UploadedAsset[]): Promise<void> {
-  for (const asset of dedupeAssetsByName(assets)) {
-    await writeBlobFile(dir, asset.name, toAssetBlob(asset))
+  for (const [path, data] of Object.entries(files)) {
+    const parts = path.split('/')
+    const fileName = parts.pop()!
+    let dir = dirHandle
+    for (const part of parts) {
+      dir = await dir.getDirectoryHandle(part, { create: true })
+    }
+    const fileHandle = await dir.getFileHandle(fileName, { create: true })
+    const writable = await fileHandle.createWritable()
+    await writable.write(data as ArrayBufferView<ArrayBuffer>)
+    await closeWritableStream(writable)
   }
 }
 

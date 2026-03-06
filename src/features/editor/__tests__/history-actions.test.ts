@@ -1,8 +1,10 @@
-import { beforeEach, describe, expect, it } from 'vitest'
-import { historyActions } from '../actions/history-actions'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { historyActions, subscribeToScopeChanges } from '../actions/history-actions'
 import { coreStore } from '../stores/core-store'
 import { historyStore } from '../stores/history-store'
 import { presetStore } from '../stores/preset-store'
+
+let unsubscribeScopeChanges: () => void
 
 function resetHistoryStore() {
   historyStore.setState(() => ({
@@ -15,12 +17,17 @@ function resetHistoryStore() {
   }))
   coreStore.setState(state => ({ ...state, isDarkMode: false }))
   presetStore.setState(state => ({ ...state, selectedThemeId: 'v2' }))
-  historyActions.syncActiveScopeFromEditor()
+  // Scope is automatically synced by subscribeToScopeChanges() subscriber.
 }
 
 describe('historyActions coalescing', () => {
   beforeEach(() => {
+    unsubscribeScopeChanges = subscribeToScopeChanges()
     resetHistoryStore()
+  })
+
+  afterEach(() => {
+    unsubscribeScopeChanges?.()
   })
 
   it('coalesces actions with same key inside window', () => {
@@ -90,7 +97,7 @@ describe('historyActions coalescing', () => {
     })
 
     coreStore.setState(state => ({ ...state, isDarkMode: true }))
-    historyActions.syncActiveScopeFromEditor()
+    // Subscriber automatically syncs scope to 'v2::dark'.
     expect(historyStore.getState().canUndo).toBe(false)
 
     historyActions.addUndoRedoAction({
@@ -106,8 +113,30 @@ describe('historyActions coalescing', () => {
     expect(marker.value).toBe('dark-undo')
 
     coreStore.setState(state => ({ ...state, isDarkMode: false }))
-    historyActions.syncActiveScopeFromEditor()
+    // Subscriber automatically syncs scope back to 'v2::light'.
     expect(historyActions.undo()).toBe(true)
     expect(marker.value).toBe('light-undo')
+  })
+
+  it('makes theme-scoped actions undoable from either light or dark mode', () => {
+    const marker = { value: '' }
+
+    historyActions.addUndoRedoAction({
+      undo: () => {
+        marker.value = 'shared-undo'
+      },
+      redo: () => {
+        marker.value = 'shared-redo'
+      },
+      scope: 'theme',
+    })
+
+    coreStore.setState(state => ({ ...state, isDarkMode: true }))
+
+    expect(historyStore.getState().canUndo).toBe(true)
+    expect(historyActions.undo()).toBe(true)
+    expect(marker.value).toBe('shared-undo')
+    expect(historyActions.redo()).toBe(true)
+    expect(marker.value).toBe('shared-redo')
   })
 })

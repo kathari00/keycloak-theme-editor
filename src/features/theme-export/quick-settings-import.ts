@@ -1,8 +1,8 @@
 import type { QuickSettings } from '../editor/stores/types'
 import type { ImportedQuickSettingsByMode } from './types'
-import { parseCssDeclarations, parseCssTopLevelBlocks } from '../../lib/css-ast'
-import { CUSTOM_PRESET_ID } from '../editor/quick-start-css'
-import { readMessageProperty } from '../preview/message-properties'
+import { collectDeclarationsBySelector } from '../../lib/css-ast'
+import { CUSTOM_PRESET_ID } from '../editor/lib/quick-start-css'
+import { readMessageProperty } from '../preview/lib/message-properties'
 
 type QuickSettingsMode = 'light' | 'dark'
 type QuickSettingsVars = Partial<Record<string, string>>
@@ -76,33 +76,23 @@ function collectQuickStartVariablesByMode(cssText: string): {
   const light: QuickSettingsVars = {}
   const dark: QuickSettingsVars = {}
 
-  const visit = (inputCss: string) => {
-    for (const block of parseCssTopLevelBlocks(inputCss)) {
-      if (block.type === 'rule') {
-        const mode = classifyModeBySelector(block.selector)
-        const target = mode === 'light' ? light : mode === 'dark' ? dark : shared
-        for (const declaration of parseCssDeclarations(block.body)) {
-          if (!declaration.property.startsWith('--quickstart-')) {
-            continue
-          }
+  for (const [selector, declarations] of collectDeclarationsBySelector(cssText)) {
+    const mode = classifyModeBySelector(selector)
+    const target = mode === 'light' ? light : mode === 'dark' ? dark : shared
 
-          const value = normalizeCssValue(declaration.value)
-          if (!value) {
-            continue
-          }
-
-          target[declaration.property] = value
-        }
+    for (const [property, rawValue] of Object.entries(declarations)) {
+      if (!property.startsWith('--quickstart-')) {
         continue
       }
 
-      if (block.body) {
-        visit(block.body)
+      const value = normalizeCssValue(rawValue)
+      if (!value) {
+        continue
       }
+
+      target[property] = value
     }
   }
-
-  visit(cssText)
 
   return { shared, light, dark }
 }

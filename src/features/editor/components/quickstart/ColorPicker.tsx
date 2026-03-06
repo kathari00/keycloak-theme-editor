@@ -1,5 +1,5 @@
 import { FormGroup, TextInput } from '@patternfly/react-core'
-import { COLOR_REGEX } from '../../features/editor/quick-start-css'
+import { COLOR_REGEX } from '../../lib/quick-start-css'
 
 interface ColorPickerProps {
   label: string

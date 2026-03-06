@@ -1,6 +1,6 @@
 import type { AppliedAssets, ThemeAssetTarget, UploadedAsset } from '../../assets/types'
 import { REMOVED_ASSET_ID } from '../../assets/types'
-import { buildQuickSettingsStorageKey, resolveQuickSettingsMode } from '../quick-settings'
+import { buildQuickSettingsStorageKey, resolveQuickSettingsMode } from '../lib/quick-settings'
 import { assetStore } from '../stores/asset-store'
 import { coreStore } from '../stores/core-store'
 import { presetStore } from '../stores/preset-store'

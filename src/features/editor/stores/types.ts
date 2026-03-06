@@ -8,6 +8,7 @@ export interface AssetState {
 export interface UndoRedoAction {
   undo: () => void
   redo: () => void
+  scope?: 'mode' | 'theme'
   coalesceKey?: string
   createdAt?: number
   coalesceWindowMs?: number

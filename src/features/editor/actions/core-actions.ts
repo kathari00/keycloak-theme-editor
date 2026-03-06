@@ -1,14 +1,9 @@
-import type { QuickSettingsMode } from './preset-actions'
-import { toggleDarkMode as toggleDarkModeUtil } from '../dark-mode'
+import { toggleDarkMode as toggleDarkModeUtil } from '../lib/dark-mode'
+import { getThemeStorageKey, resolveQuickSettingsMode } from '../lib/quick-settings'
 import { coreStore } from '../stores/core-store'
 import { presetStore } from '../stores/preset-store'
 import { themeStore } from '../stores/theme-store'
-import { historyActions } from './history-actions'
-import { presetActions } from './preset-actions'
-
-function resolveQuickSettingsMode(isDarkMode: boolean): QuickSettingsMode {
-  return isDarkMode ? 'dark' : 'light'
-}
+import { quickStartExtrasActions as presetActions } from './quick-start-extras-actions'
 
 export const coreActions = {
   setActivePage: (activePageId: string) => {
@@ -40,18 +35,19 @@ export const coreActions = {
       imprintUrl,
       dataProtectionUrl,
     } = presetState
-    const currentThemeKey = presetState.selectedThemeId || 'v2'
+    const currentThemeKey = getThemeStorageKey(presetState.selectedThemeId)
     const currentMode = resolveQuickSettingsMode(coreStore.getState().isDarkMode)
     presetActions.saveQuickSettingsForPreset(currentThemeKey, currentMode)
 
     const newMode = toggleDarkModeUtil()
     coreStore.setState({ isDarkMode: newMode })
-    historyActions.syncActiveScopeFromEditor()
 
     const nextMode = resolveQuickSettingsMode(newMode)
     const hasRestoredSettings = presetActions.restoreQuickSettingsForPreset(currentThemeKey, nextMode)
     if (!hasRestoredSettings) {
-      presetActions.applyThemeModeDefaults(nextMode, themeStore.getState().themeQuickStartDefaults)
+      presetActions.applyThemeModeDefaults(nextMode, themeStore.getState().themeQuickStartDefaults, {
+        preserveSharedValues: true,
+      })
       presetActions.saveQuickSettingsForPreset(currentThemeKey, nextMode)
       return
     }

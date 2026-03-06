@@ -1,11 +1,12 @@
-import type { EditorStore } from './stores/create-editor-store'
+import type { PresetState } from '../stores/types'
+import type { EditorStore } from '../stores/create-editor-store'
 import { useStore } from 'zustand'
 import { useShallow } from 'zustand/react/shallow'
-import { assetStore } from './stores/asset-store'
-import { coreStore } from './stores/core-store'
-import { historyStore } from './stores/history-store'
-import { presetStore } from './stores/preset-store'
-import { themeStore } from './stores/theme-store'
+import { assetStore } from '../stores/asset-store'
+import { coreStore } from '../stores/core-store'
+import { historyStore } from '../stores/history-store'
+import { presetStore } from '../stores/preset-store'
+import { themeStore } from '../stores/theme-store'
 
 function createShallowStoreHook<TState extends object>(store: EditorStore<TState>) {
   return function useShallowStoreSlice<TSlice extends object>(selector: (state: TState) => TSlice): TSlice {
@@ -58,6 +59,27 @@ export function usePresetState() {
   return usePresetStoreSlice(state => ({
     selectedThemeId: state.selectedThemeId,
     presetCss: state.presetCss,
+  }))
+}
+
+export function usePresetExportState(): PresetState {
+  return usePresetStoreSlice(state => ({
+    selectedThemeId: state.selectedThemeId,
+    presetCss: state.presetCss,
+    colorPresetId: state.colorPresetId,
+    colorPresetPrimaryColor: state.colorPresetPrimaryColor,
+    colorPresetSecondaryColor: state.colorPresetSecondaryColor,
+    colorPresetFontFamily: state.colorPresetFontFamily,
+    colorPresetBgColor: state.colorPresetBgColor,
+    colorPresetBorderRadius: state.colorPresetBorderRadius,
+    colorPresetCardShadow: state.colorPresetCardShadow,
+    colorPresetHeadingFontFamily: state.colorPresetHeadingFontFamily,
+    showClientName: state.showClientName,
+    showRealmName: state.showRealmName,
+    infoMessage: state.infoMessage,
+    imprintUrl: state.imprintUrl,
+    dataProtectionUrl: state.dataProtectionUrl,
+    presetQuickSettings: state.presetQuickSettings,
   }))
 }
 

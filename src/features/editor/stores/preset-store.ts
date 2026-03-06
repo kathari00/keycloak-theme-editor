@@ -1,6 +1,6 @@
 import type { PresetState, QuickSettingsStyle } from './types'
-import { DEFAULT_THEME_ID } from '../quick-settings'
-import { PRESET_STORE_STORAGE_KEY } from '../storage-keys'
+import { DEFAULT_THEME_ID } from '../lib/quick-settings'
+import { PRESET_STORE_STORAGE_KEY } from '../lib/storage-keys'
 import { createPersistedEditorStore } from './create-editor-store'
 
 export const DEFAULT_QUICK_SETTINGS_STYLE: QuickSettingsStyle = {

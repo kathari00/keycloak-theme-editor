@@ -1,5 +1,5 @@
-import type { CssRuleBlock, CssTopLevelBlock } from '../../lib/css-ast'
-import { parseCssTopLevelBlocks } from '../../lib/css-ast'
+import type { CssRuleBlock, CssTopLevelBlock } from '../../../lib/css-ast'
+import { parseCssTopLevelBlocks } from '../../../lib/css-ast'
 
 interface ReplaceCssOptions {
   insertPositionWhenMissing?: 'start' | 'end'

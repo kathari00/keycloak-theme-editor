@@ -1,10 +1,10 @@
 import type { ThemeCssStructured } from './preset-manager'
-import type { BaseThemeId, EditorTheme, ThemeConfig, ThemeId } from './types'
+import type { EditorTheme, ThemeConfig, ThemeId } from './types'
 import { use } from 'react'
 import { loadThemeCssStructured, loadThemes } from './preset-manager'
 
-const DEFAULT_THEME_ID: ThemeId = 'v2'
-const DEFAULT_BASE_THEME_ID: BaseThemeId = 'v2'
+import { DEFAULT_THEME_ID } from '../editor/lib/quick-settings'
+
 const themeCssStructuredCache = new Map<ThemeId, ThemeCssStructured>()
 const themeCssStructuredInFlight = new Map<ThemeId, Promise<ThemeCssStructured>>()
 let themeConfigCache: ThemeConfig | null = null
@@ -43,12 +43,6 @@ export function resolveThemeIdFromConfig(
   return resolveThemeFromConfig(config, value)?.id ?? DEFAULT_THEME_ID
 }
 
-export function resolveThemeBaseIdFromConfig(
-  config: ThemeConfig,
-  value: string | null | undefined,
-): BaseThemeId {
-  return resolveThemeFromConfig(config, value)?.baseId ?? DEFAULT_BASE_THEME_ID
-}
 
 export async function getThemeConfigCached(): Promise<ThemeConfig> {
   if (themeConfigCache) {

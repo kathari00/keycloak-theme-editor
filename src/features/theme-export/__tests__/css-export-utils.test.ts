@@ -1,7 +1,7 @@
 import type { AppliedAssets, UploadedAsset } from '../../assets/types'
 import { describe, expect, it } from 'vitest'
 import { REMOVED_ASSET_ID } from '../../assets/types'
-import { buildQuickStartCss } from '../../editor/quick-start-css'
+import { buildQuickStartCss } from '../../editor/lib/quick-start-css'
 import { assembleExportPayload, buildModeAwareQuickStartCssParts, getEffectiveAppliedAssets, parseAppliedAssetsFromCss } from '../css-export-utils'
 
 function makeAsset(overrides: Partial<UploadedAsset>): UploadedAsset {
@@ -27,49 +27,31 @@ describe('getEffectiveAppliedAssets', () => {
 
   const uploadedAssets: UploadedAsset[] = [defaultBg]
 
-  it('auto-applies default background for v2 base when no background set', () => {
-    const applied: AppliedAssets = {}
-    const result = getEffectiveAppliedAssets(applied, uploadedAssets, 'v2')
-    expect(result.background).toBe('default-bg')
-  })
-
-  it('auto-applies default background when baseId is omitted (defaults to v2)', () => {
+  it('auto-applies default background when a default background exists', () => {
     const applied: AppliedAssets = {}
     const result = getEffectiveAppliedAssets(applied, uploadedAssets)
     expect(result.background).toBe('default-bg')
   })
 
-  it('explicitly suppresses default background for base presets (REMOVED_ASSET_ID)', () => {
+  it('suppresses background when no default background exists (REMOVED_ASSET_ID)', () => {
     const applied: AppliedAssets = {}
-    const result = getEffectiveAppliedAssets(applied, uploadedAssets, 'base')
+    const assetsWithoutDefault: UploadedAsset[] = [
+      makeAsset({ id: 'non-default-bg', isDefault: false }),
+    ]
+    const result = getEffectiveAppliedAssets(applied, assetsWithoutDefault)
     expect(result.background).toBe(REMOVED_ASSET_ID)
   })
 
-  it('preserves explicitly set background for v2', () => {
+  it('preserves explicitly set background', () => {
     const applied: AppliedAssets = { background: 'custom-bg' }
-    const result = getEffectiveAppliedAssets(applied, uploadedAssets, 'v2')
-    expect(result.background).toBe('custom-bg')
-  })
-
-  it('preserves explicitly set background for base', () => {
-    const applied: AppliedAssets = { background: 'custom-bg' }
-    const result = getEffectiveAppliedAssets(applied, uploadedAssets, 'base')
+    const result = getEffectiveAppliedAssets(applied, uploadedAssets)
     expect(result.background).toBe('custom-bg')
   })
 
   it('does not mutate the input appliedAssets', () => {
     const applied: AppliedAssets = {}
-    getEffectiveAppliedAssets(applied, uploadedAssets, 'v2')
+    getEffectiveAppliedAssets(applied, uploadedAssets)
     expect(applied.background).toBeUndefined()
-  })
-
-  it('returns unchanged assets when no default background exists', () => {
-    const applied: AppliedAssets = {}
-    const assetsWithoutDefault: UploadedAsset[] = [
-      makeAsset({ id: 'non-default-bg', isDefault: false }),
-    ]
-    const result = getEffectiveAppliedAssets(applied, assetsWithoutDefault, 'v2')
-    expect(result.background).toBeUndefined()
   })
 })
 
@@ -116,7 +98,6 @@ describe('assembleExportPayload', () => {
         presetCss: '',
         colorPresetCss: quickStartCss,
       },
-      baseId: 'base',
     })
 
     expect(payload.generatedCss).toContain('--quickstart-font-family: \'Inter\', sans-serif;')
@@ -159,7 +140,7 @@ describe('buildModeAwareQuickStartCssParts', () => {
     })
 
     expect(parts.variablesCss).toContain(':root')
-    expect(parts.variablesCss).toContain('html.pf-v5-theme-dark')
+    expect(parts.variablesCss).toContain('html.kcDarkModeClass')
     expect(parts.variablesCss).toContain('--quickstart-gradient-bg-default: linear-gradient(135deg, #123456 0%, #abcdef 100%);')
     expect(parts.variablesCss).toContain('--quickstart-gradient-bg-default: linear-gradient(135deg, #111111 0%, #222222 100%);')
   })

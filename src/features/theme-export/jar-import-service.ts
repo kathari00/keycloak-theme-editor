@@ -1,15 +1,11 @@
-import type { AppliedAssets, UploadedAsset } from '../assets/types'
+import type { UploadedAsset } from '../assets/types'
 import type { JarImportResult } from './types'
+import type { ThemeEditorMetadata } from './theme-file-assembler'
 import { processUploadedFile } from '../assets/upload-service'
-import { stripQuickStartImportLine } from '../editor/css-source-sanitizer'
-import { getFilename, parseAppliedAssetsFromCss } from './css-export-utils'
+import { getFilename } from './css-export-utils'
 import { parseQuickSettingsFromImportedTheme } from './quick-settings-import'
 
 export const THEME_JAR_IMPORTED_EVENT = 'themeJarImported'
-
-interface ImportedEditorCssResolution {
-  css: string
-}
 
 interface AssetImportRule {
   path: string
@@ -18,7 +14,6 @@ interface AssetImportRule {
   defaultName?: string
 }
 
-const THEME_ID_PATTERN = /^\s*x-kte-theme-id\s*=\s*([^\r\n#]+)/im
 const ASSET_IMPORT_RULES: AssetImportRule[] = [
   { path: '/login/resources/fonts/', category: 'font' },
   {
@@ -80,35 +75,19 @@ async function importAssetByRule(
   importedAssets.push(asset)
 }
 
-function resolveImportedEditorCssWithQuickSettings(params: {
-  customCss: string
-  importedAssets: UploadedAsset[]
-}): ImportedEditorCssResolution {
-  const { customCss, importedAssets } = params
-  const parsedForEditor = customCss
-    ? parseAppliedAssetsFromCss(customCss, importedAssets)
-    : { applied: {}, cleanedCss: '' }
-
-  return { css: parsedForEditor.cleanedCss || customCss }
-}
-
-function normalizeImportedAppliedAssets(
-  appliedAssets: AppliedAssets,
-  importedAssets: UploadedAsset[],
-): AppliedAssets {
-  const normalized: AppliedAssets = { ...appliedAssets }
-
-  // Keep the default background binding to avoid preview quick-start overrides
-  // (e.g. a persisted bg color) hiding the imported v2 background on import.
-  // For logos, keep CSS as source of truth and avoid auto-applying the default.
-  const defaultLogo = importedAssets.find(
-    asset => asset.category === 'logo' && asset.isDefault,
-  )
-  if (defaultLogo && normalized.logo === defaultLogo.id) {
-    delete normalized.logo
+/** Try to extract editor metadata from keycloak-themes.json */
+function parseEditorMetadata(keycloakThemesJson: string): ThemeEditorMetadata | null {
+  try {
+    const parsed = JSON.parse(keycloakThemesJson)
+    const editor = parsed?.themes?.[0]?.editor
+    if (editor && typeof editor === 'object') {
+      return editor as ThemeEditorMetadata
+    }
   }
-
-  return normalized
+  catch {
+    // Not valid JSON or missing structure
+  }
+  return null
 }
 
 /** Parse a Keycloak theme JAR file and extract all theme data */
@@ -123,11 +102,10 @@ export async function importJarFile(file: File): Promise<JarImportResult> {
   let themeProps = ''
   let messagesProperties = ''
   let themeName = ''
-  let themeId: string | null = null
+  let keycloakThemesJsonText = ''
   const importedAssets: UploadedAsset[] = []
 
   for (const [filename, data] of Object.entries(entries)) {
-    // Skip directories (fflate includes them as empty entries)
     if (filename.endsWith('/') || data.length === 0) {
       continue
     }
@@ -149,9 +127,12 @@ export async function importJarFile(file: File): Promise<JarImportResult> {
 
     if (filename.includes('/login/theme.properties')) {
       themeProps = readEntryText(data)
-      const themeIdMatch = themeProps.match(THEME_ID_PATTERN)
-      themeId = themeIdMatch?.[1]?.trim() || null
       themeName = extractThemeNameFromPath(filename)
+      continue
+    }
+
+    if (filename.endsWith('/keycloak-themes.json') || filename === 'keycloak-themes.json') {
+      keycloakThemesJsonText = readEntryText(data)
       continue
     }
 
@@ -171,42 +152,34 @@ export async function importJarFile(file: File): Promise<JarImportResult> {
     }
   }
 
-  const combinedCss = joinCssBlocks([quickStartCss, stylesCss, customCss])
-  const quickSettingsByMode = parseQuickSettingsFromImportedTheme({
-    quickStartCss,
-    stylesCss,
-    customCss,
-    messagesPropertiesText: messagesProperties,
-  })
+  const editorMetadata = parseEditorMetadata(keycloakThemesJsonText)
 
-  // Parse applied assets from full CSS so imported asset bindings are preserved.
-  const parsedForAssets = combinedCss
-    ? parseAppliedAssetsFromCss(combinedCss, importedAssets)
-    : { applied: {}, cleanedCss: '' }
+  // Build quick settings: prefer metadata, fall back to CSS parsing
+  const quickSettingsByMode = editorMetadata?.quickSettings
+    ?? parseQuickSettingsFromImportedTheme({
+      quickStartCss,
+      stylesCss,
+      customCss,
+      messagesPropertiesText: messagesProperties,
+    })
 
-  const appliedAssets = normalizeImportedAppliedAssets(parsedForAssets.applied, importedAssets)
+  // Build applied assets: prefer metadata, fall back to empty
+  const appliedAssets = editorMetadata?.appliedAssets
+    ? { ...editorMetadata.appliedAssets }
+    : {}
 
-  // Set favicon if present
+  // Set favicon if present and not already in metadata
   const faviconAsset = importedAssets.find(a => a.category === 'favicon')
-  if (faviconAsset) {
+  if (faviconAsset && !appliedAssets.favicon) {
     appliedAssets.favicon = faviconAsset.id
   }
 
-  const importedEditorCss = resolveImportedEditorCssWithQuickSettings({
-    customCss,
-    importedAssets,
-  })
-
-  // Build the editor CSS: strip @import quick-start.css from styles.css (managed separately),
-  // then combine with legacy custom-user-styles.css if present.
-  const strippedStylesCss = stripQuickStartImportLine(stylesCss)
-  const editorStylesCss = joinCssBlocks([strippedStylesCss, importedEditorCss.css])
+  const editorStylesCss = joinCssBlocks([stylesCss, customCss])
 
   return {
     css: editorStylesCss,
     properties: themeProps,
     themeName,
-    themeId,
     quickSettingsByMode,
     uploadedAssets: importedAssets,
     appliedAssets,

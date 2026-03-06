@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react'
 
-const EditorContent = lazy(() => import('./app/EditorContent'))
+const EditorContent = lazy(() => import('./EditorContent'))
 
 const loadingFallback = (
   <div style={{

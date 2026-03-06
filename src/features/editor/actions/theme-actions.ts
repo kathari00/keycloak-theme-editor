@@ -1,12 +1,10 @@
 import type { KeycloakPage } from '../../assets/types'
+import { getThemeStorageKey } from '../lib/quick-settings'
 import { presetStore } from '../stores/preset-store'
 import { themeStore } from '../stores/theme-store'
 
-const DEFAULT_THEME_ID = 'v2'
-
 function getActiveThemeStorageKey(): string {
-  const selectedThemeId = (presetStore.getState().selectedThemeId || '').trim()
-  return selectedThemeId || DEFAULT_THEME_ID
+  return getThemeStorageKey(presetStore.getState().selectedThemeId)
 }
 
 function setStylesCssForActiveTheme(stylesCss: string) {

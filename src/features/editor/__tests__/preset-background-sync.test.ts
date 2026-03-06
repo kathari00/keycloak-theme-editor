@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { REMOVED_ASSET_ID } from '../../assets/types'
-import { presetActions } from '../actions/preset-actions'
-import { buildQuickSettingsStorageKey } from '../quick-settings'
+import { presetActions } from '../actions'
+import { buildQuickSettingsStorageKey } from '../lib/quick-settings'
 import { assetStore } from '../stores/asset-store'
 import { coreStore } from '../stores/core-store'
 import { historyStore } from '../stores/history-store'
@@ -14,10 +14,9 @@ vi.mock('../../presets/queries', async (importOriginal) => {
     ...actual,
     getThemeConfigCached: vi.fn(async () => ({
       themes: [
-        { id: 'base', baseId: 'base', defaultAssets: [] },
+        { id: 'base', defaultAssets: [] },
         {
           id: 'v2',
-          baseId: 'v2',
           defaultAssets: [
             {
               category: 'background',
@@ -26,8 +25,8 @@ vi.mock('../../presets/queries', async (importOriginal) => {
             },
           ],
         },
-        { id: 'modern-card', baseId: 'base', defaultAssets: [] },
-        { id: 'horizontal-card', baseId: 'base', defaultAssets: [] },
+        { id: 'modern-card', defaultAssets: [] },
+        { id: 'horizontal-card', defaultAssets: [] },
       ],
     })),
     getThemeCssStructuredCached: vi.fn(async (themeId: string) => {
@@ -126,6 +125,43 @@ describe('preset background sync on preset selection', () => {
 
     expect(getModePrimaryColor('horizontal-card', 'dark')).toBe('#a8c7fa')
     expect(assetStore.getState().appliedAssets.background).toBe(REMOVED_ASSET_ID)
+  })
+
+  it('restores shared quick-start settings from the selected theme snapshot', async () => {
+    presetStore.setState(state => ({
+      ...state,
+      colorPresetFontFamily: 'current-font',
+      colorPresetBorderRadius: 'sharp',
+      colorPresetCardShadow: 'subtle',
+      infoMessage: 'current-info',
+      presetQuickSettings: {
+        ...state.presetQuickSettings,
+        [buildQuickSettingsStorageKey('horizontal-card', 'light')]: {
+          colorPresetId: 'custom',
+          colorPresetPrimaryColor: '#123456',
+          colorPresetSecondaryColor: '#abcdef',
+          colorPresetFontFamily: 'restored-font',
+          colorPresetBgColor: '#f0f4f9',
+          colorPresetBorderRadius: 'pill',
+          colorPresetCardShadow: 'strong',
+          colorPresetHeadingFontFamily: 'restored-heading',
+          showClientName: true,
+          showRealmName: false,
+          infoMessage: 'restored-info',
+          imprintUrl: 'https://example.com/imprint',
+          dataProtectionUrl: 'https://example.com/privacy',
+        },
+      },
+    }))
+
+    await presetActions.applyThemeSelection('horizontal-card')
+
+    expect(presetStore.getState().colorPresetFontFamily).toBe('restored-font')
+    expect(presetStore.getState().colorPresetBorderRadius).toBe('pill')
+    expect(presetStore.getState().colorPresetCardShadow).toBe('strong')
+    expect(presetStore.getState().infoMessage).toBe('restored-info')
+    expect(presetStore.getState().showClientName).toBe(true)
+    expect(presetStore.getState().showRealmName).toBe(false)
   })
 
   it('keeps default background active when selecting v2', async () => {

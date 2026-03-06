@@ -1,6 +1,6 @@
-import type { QuickStartCssOptions } from '../quick-start-css'
+import type { QuickStartCssOptions } from '../lib/quick-start-css'
 import { describe, expect, it } from 'vitest'
-import { buildQuickStartCss, COLOR_REGEX } from '../quick-start-css'
+import { buildQuickStartCss, COLOR_REGEX } from '../lib/quick-start-css'
 
 function build(overrides: Partial<QuickStartCssOptions> = {}) {
   return buildQuickStartCss({ primaryColor: '#000000', secondaryColor: '#111111', ...overrides })

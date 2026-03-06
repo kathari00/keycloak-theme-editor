@@ -1,5 +1,5 @@
 import type { ThemeState } from './types'
-import { THEME_STORE_STORAGE_KEY } from '../storage-keys'
+import { THEME_STORE_STORAGE_KEY } from '../lib/storage-keys'
 import { createPersistedEditorStore } from './create-editor-store'
 
 /**
@@ -18,8 +18,6 @@ export const themeStore = createPersistedEditorStore<ThemeState>({
   pages: [],
 }, {
   name: THEME_STORE_STORAGE_KEY,
-  version: 5,
-  migrate: state => (state || {}) as Partial<ThemeState>,
   partialize: state => ({
     stylesCss: state.stylesCss,
     stylesCssByTheme: state.stylesCssByTheme,

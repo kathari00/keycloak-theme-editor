@@ -8,14 +8,13 @@ import {
 import Icon from '@mdi/react'
 import { Tab, Tabs, TabTitleText, Tooltip } from '@patternfly/react-core'
 import { Activity, lazy, Suspense, useState } from 'react'
-import { useDarkModeState } from '../features/editor/use-editor'
-import { cx } from '../styles/cx'
-import CustomAssetUploader from './CustomAssetUploader'
-import PageManager from './PageManager'
-import QuickStartPanel from './QuickStartPanel'
-import SelectionTree from './SelectionTree'
-
-const StylingPanel = lazy(() => import('./StylingPanel'))
+import CustomAssetUploader from '../features/assets/components/CustomAssetUploader'
+import QuickStartPanel from '../features/editor/components/QuickStartPanel'
+import SelectionTree from '../features/editor/components/SelectionTree'
+import { useDarkModeState } from '../features/editor/hooks/use-editor'
+import PageManager from '../features/preview/components/PageManager'
+import { cx } from '../lib/cx'
+const StylingPanel = lazy(() => import('../features/editor/components/StylingPanel'))
 
 export default function RightSidebar({
   className,

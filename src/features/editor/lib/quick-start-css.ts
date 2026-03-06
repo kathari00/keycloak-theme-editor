@@ -1,8 +1,8 @@
-import type { QuickSettingsStyle } from './stores/types'
+import type { QuickSettingsStyle } from '../stores/types'
 import {
   buildGoogleFontsImportCSS,
   normalizeGoogleFontFamily,
-} from '../assets/google-fonts'
+} from '../../assets/google-fonts'
 import { QUICK_START_GENERATED_ROOT_VARIABLE_NAMES } from './quickstart-variable-registry'
 
 export const CUSTOM_PRESET_ID = 'custom'
@@ -161,17 +161,20 @@ function buildQuickStartCssParts(options: QuickStartCssOptions): QuickStartCssPa
   const rulesCss = `${
     !effectiveShowRealmName
       ? `
+/* @kte:visibility-start:hide-realm-name */
 /* Hide realm name */
 #kc-realm-name,
 .kc-realm-name,
 .kc-horizontal-card-realm-name {
   display: none !important;
 }
+/* @kte:visibility-end */
 `
       : ''
   }${
     !showClientName
       ? `
+/* @kte:visibility-start:hide-client-name */
 /* Hide client name */
 #kc-client-name,
 .kc-client-name,
@@ -179,37 +182,44 @@ function buildQuickStartCssParts(options: QuickStartCssOptions): QuickStartCssPa
 [data-kc-client="name"] {
   display: none !important;
 }
+/* @kte:visibility-end */
 `
       : ''
   }${
     !showClientName && !effectiveShowRealmName
       ? `
+/* @kte:visibility-start:hide-subtitle */
 /* Hide subtitle row when both client and realm are disabled */
 .kc-horizontal-card-subtitle {
   display: none !important;
 }
+/* @kte:visibility-end */
 `
       : ''
   }${
     hasInfoMessage
       ? ''
       : `
+/* @kte:visibility-start:hide-info-message */
 /* Hide info message */
 #kc-info-message.kcAlertClass,
 .kc-info-message,
 [data-kc-i18n-key="infoMessage"] {
   display: none !important;
 }
+/* @kte:visibility-end */
 `
   }${
     showClientName || hasInfoMessage || (showRealmName !== undefined ? effectiveShowRealmName : false)
       ? ''
       : `
+/* @kte:visibility-start:hide-client-container */
 /* Hide client container */
 #kc-client,
 .kc-client {
   display: none !important;
 }
+/* @kte:visibility-end */
 `
   }`.trim()
 

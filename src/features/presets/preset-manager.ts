@@ -1,5 +1,6 @@
 import type { ThemeConfig, ThemeId } from './types'
-import { sanitizeThemeCssSourceForEditor, stripQuickStartImportLine } from '../editor/css-source-sanitizer'
+import { sanitizeThemeCssSourceForEditor } from '../editor/lib/css-source-sanitizer'
+import { readMessageProperty } from '../preview/lib/message-properties'
 import { themeResourcePath } from './types'
 
 export interface ThemeCssStructured {
@@ -25,6 +26,19 @@ async function fetchCssFile(path: string): Promise<string> {
   }
 }
 
+async function fetchThemeProperty(themeId: ThemeId, key: string): Promise<string | undefined> {
+  try {
+    const response = await fetch(themeResourcePath(themeId, 'theme.properties'))
+    if (!response.ok) {
+      return undefined
+    }
+    return readMessageProperty(await response.text(), key)
+  }
+  catch {
+    return undefined
+  }
+}
+
 export async function loadThemes(): Promise<ThemeConfig> {
   try {
     const [themesResponse, pagesResponse] = await Promise.all([
@@ -45,13 +59,17 @@ export async function loadThemes(): Promise<ThemeConfig> {
             id: variantId,
             name: variantId,
             description: 'Imported theme',
-            baseId: 'base',
             defaultAssets: [],
             isImported: true,
           })
         }
       }
     }
+
+    await Promise.all(config.themes.map(async (theme) => {
+      theme.darkModeClasses = (await fetchThemeProperty(theme.id, 'kcDarkModeClass'))?.split(/\s+/).filter(Boolean) || ['kcDarkModeClass']
+    }))
+
     return config
   }
   catch (error) {
@@ -62,25 +80,7 @@ export async function loadThemes(): Promise<ThemeConfig> {
 
 async function fetchThemeStylesPaths(themeId: ThemeId): Promise<string[]> {
   try {
-    const propsUrl = themeResourcePath(themeId, 'theme.properties')
-    const response = await fetch(propsUrl)
-    if (!response.ok) {
-      return []
-    }
-    const text = await response.text()
-    for (const rawLine of text.split(/\r?\n/)) {
-      const line = rawLine.trim()
-      if (line.startsWith('#') || !line)
-        continue
-      const eqIndex = line.indexOf('=')
-      if (eqIndex <= 0)
-        continue
-      const key = line.slice(0, eqIndex).trim()
-      if (key === 'styles') {
-        return line.slice(eqIndex + 1).trim().split(/\s+/).filter(Boolean)
-      }
-    }
-    return []
+    return ((await fetchThemeProperty(themeId, 'styles')) || '').split(/\s+/).filter(Boolean)
   }
   catch {
     return []
@@ -114,11 +114,7 @@ export async function loadThemeCssStructured(themeId: ThemeId): Promise<ThemeCss
 
     const quickStartDefaults = rawQuickStart
     const combinedStyles = rawUserStyles.filter(Boolean).join('\n\n')
-    // Strip @import "./quick-start.css" since we manage quick-start separately,
-    // and sanitize visibility rules that may have been baked in from a previous export.
-    const stylesCss = stripQuickStartImportLine(
-      sanitizeThemeCssSourceForEditor(combinedStyles),
-    )
+    const stylesCss = sanitizeThemeCssSourceForEditor(combinedStyles)
 
     return { quickStartDefaults, stylesCss }
   }

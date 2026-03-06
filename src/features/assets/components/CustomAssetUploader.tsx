@@ -1,4 +1,4 @@
-import type { AssetCategory, ThemeAssetTarget, UploadedAsset } from '../features/assets/types'
+import type { AssetCategory, ThemeAssetTarget, UploadedAsset } from '../types'
 import {
   Alert,
   Button,
@@ -10,15 +10,14 @@ import {
   PanelMainBody,
 } from '@patternfly/react-core'
 import { useRef, useState } from 'react'
-import { getAssetDataUrl } from '../features/assets/font-css-generator'
-import { REMOVED_ASSET_ID } from '../features/assets/types'
+import { getAssetDataUrl } from '../font-css-generator'
+import { REMOVED_ASSET_ID } from '../types'
 import {
   processUploadedFile,
   validateAssetFile,
-} from '../features/assets/upload-service'
-import { editorActions } from '../features/editor/actions'
-import { usePresetState, useUploadedAssetsState } from '../features/editor/use-editor'
-import { resolveThemeBaseIdFromConfig, useThemeConfig } from '../features/presets/queries'
+} from '../upload-service'
+import { editorActions } from '../../editor/actions'
+import { useUploadedAssetsState } from '../../editor/hooks/use-editor'
 
 const CATEGORY_CONFIG: Record<
   AssetCategory,
@@ -48,9 +47,6 @@ const CATEGORY_CONFIG: Record<
 
 export default function CustomAssetUploader() {
   const { uploadedAssets, appliedAssets } = useUploadedAssetsState()
-  const { selectedThemeId } = usePresetState()
-  const themeConfig = useThemeConfig()
-  const selectedBaseId = resolveThemeBaseIdFromConfig(themeConfig, selectedThemeId)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [uploadErrorCategory, setUploadErrorCategory] = useState<AssetCategory | null>(null)
@@ -112,7 +108,7 @@ export default function CustomAssetUploader() {
     if (asset.category === 'background') {
       return Boolean(
         appliedAssets.background === asset.id
-        || (selectedBaseId === 'v2' && asset.isDefault && !appliedAssets.background),
+        || (asset.isDefault && !appliedAssets.background),
       )
     }
     if (asset.category === 'logo') {

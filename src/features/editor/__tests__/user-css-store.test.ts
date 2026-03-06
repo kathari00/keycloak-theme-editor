@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { userCssStore } from '../user-css-store'
+import { userCssStore } from '../stores/user-css-store'
 
 function getElement(markup: string, selector: string): Element {
   const wrapper = document.createElement('div')

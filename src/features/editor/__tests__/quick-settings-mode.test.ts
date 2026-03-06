@@ -1,10 +1,10 @@
 import type { QuickSettingsStyle } from '../stores/types'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { coreActions } from '../actions/core-actions'
-import { historyActions } from '../actions/history-actions'
-import { presetActions } from '../actions/preset-actions'
-import { buildQuickSettingsStorageKey } from '../quick-settings'
-import { DARK_MODE_STORAGE_KEY } from '../storage-keys'
+import { historyActions, subscribeToScopeChanges } from '../actions/history-actions'
+import { presetActions } from '../actions'
+import { buildQuickSettingsStorageKey } from '../lib/quick-settings'
+import { DARK_MODE_STORAGE_KEY } from '../lib/storage-keys'
 import { coreStore } from '../stores/core-store'
 import { historyStore } from '../stores/history-store'
 import { createDefaultPresetState, presetStore } from '../stores/preset-store'
@@ -44,7 +44,7 @@ function resetStores() {
     canUndo: false,
     canRedo: false,
   }))
-  historyActions.syncActiveScopeFromEditor()
+  // Scope is automatically synced by subscribeToScopeChanges() subscriber.
   themeStore.setState(() => ({
     baseCss: '',
     stylesCss: '',
@@ -55,24 +55,52 @@ function resetStores() {
 }
 
 describe('quick settings mode separation', () => {
+  let unsubscribeScopeChanges: () => void
+
   beforeEach(() => {
+    unsubscribeScopeChanges = subscribeToScopeChanges()
     resetStores()
     localStorage.setItem(DARK_MODE_STORAGE_KEY, 'light')
   })
 
+  afterEach(() => {
+    unsubscribeScopeChanges?.()
+  })
+
   it('keeps quick settings isolated per mode when toggling dark mode', () => {
-    presetActions.setColorPreset('custom', '#111111', '#222222', 'custom')
+    presetActions.setQuickStartStyle('#111111', '#222222', 'custom')
 
     coreActions.toggleDarkMode()
     expect(coreStore.getState().isDarkMode).toBe(true)
     expect(getModeSettings('v2', 'dark')?.colorPresetPrimaryColor).toBe('#0066cc')
+    expect(presetStore.getState().colorPresetFontFamily).toBe('custom')
 
-    presetActions.setColorPreset('custom', '#aaaaaa', '#bbbbbb', 'custom')
+    presetActions.setQuickStartStyle('#aaaaaa', '#bbbbbb', 'custom')
     expect(getModeSettings('v2', 'dark')?.colorPresetPrimaryColor).toBe('#aaaaaa')
 
     coreActions.toggleDarkMode()
     expect(coreStore.getState().isDarkMode).toBe(false)
     expect(getModeSettings('v2', 'light')?.colorPresetPrimaryColor).toBe('#111111')
+  })
+
+  it('keeps non-color quick-start settings shared across light and dark mode', () => {
+    presetActions.setQuickStartStyle('#111111', '#222222', '\'Poppins\', sans-serif', {
+      headingFontFamily: '\'Poppins\', sans-serif',
+    })
+    presetActions.setQuickStartExtras({
+      colorPresetBorderRadius: 'pill',
+      colorPresetCardShadow: 'strong',
+    })
+
+    coreActions.toggleDarkMode()
+
+    expect(presetStore.getState().colorPresetFontFamily).toBe('\'Poppins\', sans-serif')
+    expect(presetStore.getState().colorPresetHeadingFontFamily).toBe('\'Poppins\', sans-serif')
+    expect(presetStore.getState().colorPresetBorderRadius).toBe('pill')
+    expect(presetStore.getState().colorPresetCardShadow).toBe('strong')
+    expect(getModeSettings('v2', 'dark')?.colorPresetFontFamily).toBe('\'Poppins\', sans-serif')
+    expect(getModeSettings('v2', 'dark')?.colorPresetBorderRadius).toBe('pill')
+    expect(getModeSettings('v2', 'dark')?.colorPresetCardShadow).toBe('strong')
   })
 
   it('keeps template content global when switching modes', () => {
@@ -135,7 +163,7 @@ describe('quick settings mode separation', () => {
     expect(darkSettings?.colorPresetPrimaryColor).toBe('#a8c7fa')
     expect(darkSettings?.colorPresetBgColor).toBe('#1e1f20')
     expect(darkSettings?.colorPresetBorderRadius).toBe('rounded')
-    expect(darkSettings?.colorPresetCardShadow).toBe('none')
+    expect(darkSettings?.colorPresetCardShadow).toBe('strong')
   })
 
   it('applies imported quick settings by mode and updates global content from active mode', () => {
@@ -160,10 +188,10 @@ describe('quick settings mode separation', () => {
   })
 
   it('keeps undo/redo scoped per mode', () => {
-    presetActions.setColorPreset('custom', '#111111', '#bbbbbb', 'custom')
+    presetActions.setQuickStartStyle('#111111', '#bbbbbb', 'custom')
     coreActions.toggleDarkMode()
 
-    presetActions.setColorPreset('custom', '#222222', '#bbbbbb', 'custom')
+    presetActions.setQuickStartStyle('#222222', '#bbbbbb', 'custom')
     expect(getModeSettings('v2', 'dark')?.colorPresetPrimaryColor).toBe('#222222')
     expect(historyActions.undo()).toBe(true)
     expect(getModeSettings('v2', 'dark')?.colorPresetPrimaryColor).toBe('#0066cc')

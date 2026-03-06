@@ -1,6 +1,6 @@
 import { Button, Form, FormGroup } from '@patternfly/react-core'
 import { useState } from 'react'
-import { importJarFile, THEME_JAR_IMPORTED_EVENT } from '../features/theme-export/jar-import-service'
+import { importJarFile, THEME_JAR_IMPORTED_EVENT } from '../jar-import-service'
 
 interface ImportStatus {
   tone: 'idle' | 'loading' | 'success' | 'error'

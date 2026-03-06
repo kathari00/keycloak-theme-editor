@@ -1,8 +1,8 @@
 import { Button, FormSelect, FormSelectOption } from '@patternfly/react-core'
 import { MoonIcon, SunIcon } from '@patternfly/react-icons'
 import { editorActions } from '../features/editor/actions'
-import { useDarkModeState, usePreviewState } from '../features/editor/use-editor'
-import { cx } from '../styles/cx'
+import { useDarkModeState, usePreviewState } from '../features/editor/hooks/use-editor'
+import { cx } from '../lib/cx'
 import TopbarButtons from './TopbarButtons'
 
 export default function Topbar({

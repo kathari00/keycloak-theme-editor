@@ -1,4 +1,4 @@
-import { useThemeConfig } from '../features/presets/queries'
+import { useThemeConfig } from '../../presets/queries'
 import {
   AssetsPanel,
   ColorSettingsPanel,
@@ -18,7 +18,6 @@ export default function QuickStartPanel() {
         <ColorSettingsPanel
           themes={themeConfig.themes}
           selectedThemeId={settings.selectedThemeId}
-          effectivePresetId={settings.effectivePresetId}
           effectivePrimaryColor={settings.effectivePrimaryColor}
           effectiveSecondaryColor={settings.effectiveSecondaryColor}
           effectiveFontFamily={settings.effectiveFontFamily}
@@ -42,7 +41,6 @@ export default function QuickStartPanel() {
       <ColorSettingsPanel
         themes={themeConfig.themes}
         selectedThemeId={settings.selectedThemeId}
-        effectivePresetId={settings.effectivePresetId}
         effectivePrimaryColor={settings.effectivePrimaryColor}
         effectiveSecondaryColor={settings.effectiveSecondaryColor}
         effectiveFontFamily={settings.effectiveFontFamily}

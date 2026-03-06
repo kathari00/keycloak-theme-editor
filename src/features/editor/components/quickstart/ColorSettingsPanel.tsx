@@ -1,5 +1,5 @@
-import type { QuickSettingsStyle } from '../../features/editor/stores/types'
-import type { EditorTheme } from '../../features/presets/types'
+import type { QuickSettingsStyle } from '../../stores/types'
+import type { EditorTheme } from '../../../presets/types'
 import type { FontOption } from './useQuickStartSettings'
 import {
   FormGroup,
@@ -11,12 +11,12 @@ import {
   Tooltip,
 } from '@patternfly/react-core'
 import { InfoCircleIcon } from '@patternfly/react-icons'
-import { editorActions } from '../../features/editor/actions'
+import { editorActions } from '../../actions'
 import {
   BORDER_RADIUS_OPTIONS,
   CARD_SHADOW_OPTIONS,
   CUSTOM_PRESET_ID,
-} from '../../features/editor/quick-start-css'
+} from '../../lib/quick-start-css'
 import { ColorPicker } from './ColorPicker'
 
 const QUICK_START_PRESETS = [
@@ -50,10 +50,25 @@ const QUICK_START_PRESETS = [
   },
 ] as const
 
+function resolveEffectivePresetId(params: {
+  primaryColor: string
+  secondaryColor: string
+  fontFamily: string
+  headingFontFamily: string
+}): string {
+  const matchingPreset = QUICK_START_PRESETS.find(preset =>
+    preset.primaryColor === params.primaryColor
+    && preset.secondaryColor === params.secondaryColor
+    && preset.fontFamily === params.fontFamily
+    && preset.fontFamily === params.headingFontFamily,
+  )
+
+  return matchingPreset?.id ?? CUSTOM_PRESET_ID
+}
+
 interface ColorSettingsPanelProps {
   themes: EditorTheme[]
   selectedThemeId: string
-  effectivePresetId: string
   effectivePrimaryColor: string
   effectiveSecondaryColor: string
   effectiveFontFamily: string
@@ -70,7 +85,6 @@ const formGroupStyle = { marginBottom: 0 }
 export function ColorSettingsPanel({
   themes,
   selectedThemeId,
-  effectivePresetId,
   effectivePrimaryColor,
   effectiveSecondaryColor,
   effectiveFontFamily,
@@ -81,6 +95,13 @@ export function ColorSettingsPanel({
   fontOptions,
   isExternal,
 }: ColorSettingsPanelProps) {
+  const effectivePresetId = resolveEffectivePresetId({
+    primaryColor: effectivePrimaryColor,
+    secondaryColor: effectiveSecondaryColor,
+    fontFamily: effectiveFontFamily,
+    headingFontFamily: effectiveHeadingFontFamily,
+  })
+
   const handleDesignPresetChange = (_event: React.FormEvent<HTMLSelectElement>, value: string) => {
     const selectedTheme = themes.find(theme => theme.id === value)
     if (!selectedTheme) {
@@ -94,8 +115,7 @@ export function ColorSettingsPanel({
     if (!preset) {
       return
     }
-    editorActions.setColorPreset(
-      value,
+    editorActions.setQuickStartStyle(
       preset.primaryColor,
       preset.secondaryColor,
       preset.fontFamily,
@@ -104,15 +124,15 @@ export function ColorSettingsPanel({
   }
 
   const updatePrimaryColor = (value: string) => {
-    editorActions.setColorPreset(CUSTOM_PRESET_ID, value, effectiveSecondaryColor, effectiveFontFamily)
+    editorActions.setQuickStartStyle(value, effectiveSecondaryColor, effectiveFontFamily)
   }
 
   const updateSecondaryColor = (value: string) => {
-    editorActions.setColorPreset(CUSTOM_PRESET_ID, effectivePrimaryColor, value, effectiveFontFamily)
+    editorActions.setQuickStartStyle(effectivePrimaryColor, value, effectiveFontFamily)
   }
 
   const handleFontChange = (_event: React.FormEvent<HTMLSelectElement>, value: string) => {
-    editorActions.setColorPreset(CUSTOM_PRESET_ID, effectivePrimaryColor, effectiveSecondaryColor, value)
+    editorActions.setQuickStartStyle(effectivePrimaryColor, effectiveSecondaryColor, value)
   }
 
   const updateBgColor = (value: string) => {

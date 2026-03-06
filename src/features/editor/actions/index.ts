@@ -1,9 +1,20 @@
 import { assetActions } from './asset-actions'
 import { coreActions } from './core-actions'
 import { historyActions } from './history-actions'
-import { presetActions } from './preset-actions'
 import { resetActions } from './reset-actions'
 import { themeActions } from './theme-actions'
+import { quickStartExtrasActions } from './quick-start-extras-actions'
+import { themeSelectionActions } from './theme-selection-actions'
+import { importActions } from './import-actions'
+
+/**
+ * Assembled preset actions from split modules
+ */
+export const presetActions = {
+  ...quickStartExtrasActions,
+  ...themeSelectionActions,
+  ...importActions,
+}
 
 /**
  * Unified editor actions namespace
@@ -18,6 +29,7 @@ export const editorActions = {
   ...resetActions,
 }
 
-// Re-export for direct imports
-export { assetActions, coreActions, historyActions, presetActions, resetActions, themeActions }
-export { buildQuickSettingsStorageKey } from './preset-actions'
+export { assetActions, coreActions, historyActions, resetActions, themeActions }
+export { buildQuickSettingsStorageKey } from '../lib/quick-settings'
+export { buildModeDefaultsSnapshot } from './quick-start-extras-actions'
+export type { QuickSettingsMode } from './preset-state'

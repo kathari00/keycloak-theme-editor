@@ -1,6 +1,6 @@
 import type { CoreState } from './types'
-import { getInitialDarkMode } from '../dark-mode'
-import { CORE_STORE_STORAGE_KEY } from '../storage-keys'
+import { getInitialDarkMode } from '../lib/dark-mode'
+import { CORE_STORE_STORAGE_KEY } from '../lib/storage-keys'
 import { createPersistedEditorStore } from './create-editor-store'
 
 export const coreStore = createPersistedEditorStore<CoreState>({

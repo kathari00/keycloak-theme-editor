@@ -1,6 +1,5 @@
 import type { UndoRedoAction } from '../stores/types'
-import { buildQuickSettingsStorageKey, DEFAULT_THEME_ID, getThemeStorageKey } from '../quick-settings'
-import { HISTORY_SCOPE_STORAGE_KEY } from '../storage-keys'
+import { buildQuickSettingsStorageKey, DEFAULT_THEME_ID, getThemeStorageKey } from '../lib/quick-settings'
 import { coreStore } from '../stores/core-store'
 import { historyStore } from '../stores/history-store'
 import { presetStore } from '../stores/preset-store'
@@ -12,6 +11,10 @@ const DEFAULT_HISTORY_SCOPE_KEY = buildQuickSettingsStorageKey(DEFAULT_THEME_ID,
 interface HistoryScopeStacks {
   undoStack: UndoRedoAction[]
   redoStack: UndoRedoAction[]
+}
+
+function buildThemeHistoryScopeKey(themeId?: string | null): string {
+  return `${getThemeStorageKey(themeId)}::shared`
 }
 
 function buildHistoryScopeKey(params?: {
@@ -32,35 +35,74 @@ function getScopeStacks(state = historyStore.getState(), scopeKey = state.active
   return state.stacksByScope[scopeKey] ?? { undoStack: [], redoStack: [] }
 }
 
-function persistActiveScopeKey(scopeKey: string) {
-  if (typeof window === 'undefined') {
-    return
-  }
+function getThemeScopeKeyForModeScope(scopeKey: string): string {
+  const themeId = scopeKey.split('::')[0] || DEFAULT_THEME_ID
+  return buildThemeHistoryScopeKey(themeId)
+}
 
-  try {
-    window.localStorage.setItem(HISTORY_SCOPE_STORAGE_KEY, scopeKey)
+function getPreferredScopeKey(params: {
+  primaryScopeKey: string
+  primaryStack: UndoRedoAction[]
+  secondaryScopeKey: string
+  secondaryStack: UndoRedoAction[]
+}): string | null {
+  const {
+    primaryScopeKey,
+    primaryStack,
+    secondaryScopeKey,
+    secondaryStack,
+  } = params
+  if (primaryStack.length > 0) {
+    return primaryScopeKey
   }
-  catch {
-    // Ignore storage write failures.
+  if (secondaryStack.length > 0) {
+    return secondaryScopeKey
+  }
+  return null
+}
+
+function getVisibleHistoryState(state: typeof historyStore.state, modeScopeKey: string) {
+  const themeScopeKey = getThemeScopeKeyForModeScope(modeScopeKey)
+  const modeStacks = getScopeStacks(state, modeScopeKey)
+  const themeStacks = getScopeStacks(state, themeScopeKey)
+
+  const undoScopeKey = getPreferredScopeKey({
+    primaryScopeKey: modeScopeKey,
+    primaryStack: modeStacks.undoStack,
+    secondaryScopeKey: themeScopeKey,
+    secondaryStack: themeStacks.undoStack,
+  })
+  const redoScopeKey = getPreferredScopeKey({
+    primaryScopeKey: modeScopeKey,
+    primaryStack: modeStacks.redoStack,
+    secondaryScopeKey: themeScopeKey,
+    secondaryStack: themeStacks.redoStack,
+  })
+
+  return {
+    undoStack: undoScopeKey ? getScopeStacks(state, undoScopeKey).undoStack : [],
+    redoStack: redoScopeKey ? getScopeStacks(state, redoScopeKey).redoStack : [],
+    canUndo: modeStacks.undoStack.length > 0 || themeStacks.undoStack.length > 0,
+    canRedo: modeStacks.redoStack.length > 0 || themeStacks.redoStack.length > 0,
   }
 }
 
 function setActiveScopeInternal(scopeKey: string) {
   const normalizedScopeKey = scopeKey.trim() || DEFAULT_HISTORY_SCOPE_KEY
   const currentScopeKey = historyStore.getState().activeScopeKey
-  if (currentScopeKey !== normalizedScopeKey) {
-    persistActiveScopeKey(normalizedScopeKey)
+  if (currentScopeKey === normalizedScopeKey) {
+    return
   }
 
   historyStore.setState((state) => {
-    const scopeStacks = getScopeStacks(state, normalizedScopeKey)
+    const visibleHistory = getVisibleHistoryState(state, normalizedScopeKey)
     return {
       ...state,
       activeScopeKey: normalizedScopeKey,
-      undoStack: scopeStacks.undoStack,
-      redoStack: scopeStacks.redoStack,
-      canUndo: scopeStacks.undoStack.length > 0,
-      canRedo: scopeStacks.redoStack.length > 0,
+      undoStack: visibleHistory.undoStack,
+      redoStack: visibleHistory.redoStack,
+      canUndo: visibleHistory.canUndo,
+      canRedo: visibleHistory.canRedo,
     }
   })
 }
@@ -73,15 +115,42 @@ function ensureActiveScopeInSync(): string {
   return scopeKey
 }
 
-export const historyActions = {
-  syncActiveScopeFromEditor: () => {
-    setActiveScopeInternal(resolveEditorScopeKey())
-  },
+/**
+ * Call once at startup to automatically sync the history scope whenever
+ * the active theme or dark-mode changes. Returns an unsubscribe function.
+ */
+export function subscribeToScopeChanges(): () => void {
+  const unsubPreset = presetStore.subscribe((state, prevState) => {
+    if (state.selectedThemeId !== prevState.selectedThemeId) {
+      setActiveScopeInternal(resolveEditorScopeKey())
+    }
+  })
+  const unsubCore = coreStore.subscribe((state, prevState) => {
+    if (state.isDarkMode !== prevState.isDarkMode) {
+      setActiveScopeInternal(resolveEditorScopeKey())
+    }
+  })
+  return () => {
+    unsubPreset()
+    unsubCore()
+  }
+}
 
+export const historyActions = {
   undo: (): boolean => {
     ensureActiveScopeInSync()
     const state = historyStore.getState()
-    const scopeKey = state.activeScopeKey
+    const modeScopeKey = state.activeScopeKey
+    const themeScopeKey = getThemeScopeKeyForModeScope(modeScopeKey)
+    const scopeKey = getPreferredScopeKey({
+      primaryScopeKey: modeScopeKey,
+      primaryStack: getScopeStacks(state, modeScopeKey).undoStack,
+      secondaryScopeKey: themeScopeKey,
+      secondaryStack: getScopeStacks(state, themeScopeKey).undoStack,
+    })
+    if (!scopeKey) {
+      return false
+    }
     const scopeStacks = getScopeStacks(state, scopeKey)
 
     if (scopeStacks.undoStack.length > 0) {
@@ -96,10 +165,7 @@ export const historyActions = {
       historyStore.setState(s => ({
         ...s,
         stacksByScope,
-        undoStack: newUndoStack,
-        redoStack: newRedoStack,
-        canUndo: newUndoStack.length > 0,
-        canRedo: newRedoStack.length > 0,
+        ...getVisibleHistoryState({ ...s, stacksByScope }, modeScopeKey),
       }))
 
       action.undo()
@@ -111,7 +177,17 @@ export const historyActions = {
   redo: (): boolean => {
     ensureActiveScopeInSync()
     const state = historyStore.getState()
-    const scopeKey = state.activeScopeKey
+    const modeScopeKey = state.activeScopeKey
+    const themeScopeKey = getThemeScopeKeyForModeScope(modeScopeKey)
+    const scopeKey = getPreferredScopeKey({
+      primaryScopeKey: modeScopeKey,
+      primaryStack: getScopeStacks(state, modeScopeKey).redoStack,
+      secondaryScopeKey: themeScopeKey,
+      secondaryStack: getScopeStacks(state, themeScopeKey).redoStack,
+    })
+    if (!scopeKey) {
+      return false
+    }
     const scopeStacks = getScopeStacks(state, scopeKey)
 
     if (scopeStacks.redoStack.length > 0) {
@@ -126,10 +202,7 @@ export const historyActions = {
       historyStore.setState(s => ({
         ...s,
         stacksByScope,
-        undoStack: newUndoStack,
-        redoStack: newRedoStack,
-        canUndo: newUndoStack.length > 0,
-        canRedo: newRedoStack.length > 0,
+        ...getVisibleHistoryState({ ...s, stacksByScope }, modeScopeKey),
       }))
 
       action.redo()
@@ -141,7 +214,10 @@ export const historyActions = {
   addUndoRedoAction: (action: UndoRedoAction) => {
     ensureActiveScopeInSync()
     const state = historyStore.getState()
-    const scopeKey = state.activeScopeKey
+    const modeScopeKey = state.activeScopeKey
+    const scopeKey = action.scope === 'theme'
+      ? getThemeScopeKeyForModeScope(modeScopeKey)
+      : modeScopeKey
     const scopeStacks = getScopeStacks(state, scopeKey)
     const nextAction: UndoRedoAction = {
       ...action,
@@ -178,10 +254,7 @@ export const historyActions = {
     historyStore.setState(s => ({
       ...s,
       stacksByScope,
-      undoStack: newUndoStack,
-      redoStack: [],
-      canUndo: true,
-      canRedo: false,
+      ...getVisibleHistoryState({ ...s, stacksByScope }, modeScopeKey),
     }))
   },
 }

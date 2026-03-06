@@ -1,14 +1,22 @@
-import type { DirectoryWriteParams, EditorCssContext, ImportedQuickSettingsByMode, JarBuildParams } from '../features/theme-export/types'
+import type { ThemeEditorMetadata } from '../theme-file-assembler'
+import type { DirectoryWriteParams, EditorCssContext, ImportedQuickSettingsByMode, JarBuildParams } from '../types'
 import { Button, Card, CardBody, CardTitle, FormGroup, Grid, GridItem, TextInput } from '@patternfly/react-core'
 import { useEffect, useState } from 'react'
-import { buildModeDefaultsSnapshot } from '../features/editor/actions/preset-actions'
-import { sanitizeThemeCssSourceForEditor } from '../features/editor/css-source-sanitizer'
-import { presetStore } from '../features/editor/stores/preset-store'
-import { useDarkModeState, usePresetState, useQuickSettingsByThemeModeState, useQuickStartColorsState, useQuickStartContentState, useStylesCssState, useUploadedAssetsState } from '../features/editor/use-editor'
-import { getThemeCssStructuredCached, resolveThemeBaseIdFromConfig, resolveThemeIdFromConfig, useThemeConfig } from '../features/presets/queries'
-import { getThemeQuickStartCssPath } from '../features/presets/theme-paths'
-import { themeResourcePath } from '../features/presets/types'
-import { normalizeExternalLegalLinkUrl } from '../features/preview/legal-link-url'
+import { buildModeDefaultsSnapshot } from '../../editor/actions'
+import { sanitizeThemeCssSourceForEditor } from '../../editor/lib/css-source-sanitizer'
+import {
+  useDarkModeState,
+  usePresetExportState,
+  useQuickSettingsByThemeModeState,
+  useQuickStartColorsState,
+  useQuickStartContentState,
+  useStylesCssState,
+  useUploadedAssetsState,
+} from '../../editor/hooks/use-editor'
+import { getThemeCssStructuredCached, resolveThemeIdFromConfig, useThemeConfig } from '../../presets/queries'
+import { getThemeQuickStartCssPath } from '../../presets/theme-paths'
+import { themeResourcePath } from '../../presets/types'
+import { normalizeExternalLegalLinkUrl } from '../../preview/lib/legal-link-url'
 import {
   assembleExportPayload,
   buildModeAwareQuickStartCssParts,
@@ -17,9 +25,9 @@ import {
   fetchTemplateFtl,
   mergeCssImports,
   stripDataKcStateAttributes,
-} from '../features/theme-export/css-export-utils'
-import { buildFolderZipBlob, buildJarBlob, downloadBlob, saveWithFilePicker, writeToDirectory } from '../features/theme-export/jar-export-service'
-import { getThemeNameError } from '../features/theme-export/theme-validation'
+} from '../css-export-utils'
+import { buildFolderZipBlob, buildJarBlob, downloadBlob, saveWithFilePicker, writeToDirectory } from '../jar-export-service'
+import { getThemeNameError } from '../theme-validation'
 
 interface DownloadViewProps {
   onExportComplete?: () => void
@@ -110,15 +118,15 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
       .catch(() => {})
   }, [])
   const { uploadedAssets, appliedAssets } = useUploadedAssetsState()
-  const { selectedThemeId } = usePresetState()
+  const presetExportState = usePresetExportState()
+  const { selectedThemeId } = presetExportState
   const { stylesCss } = useStylesCssState()
   const { isDarkMode } = useDarkModeState()
   const { quickSettingsByThemeMode } = useQuickSettingsByThemeModeState()
   const themeConfig = useThemeConfig()
   const resolvedThemeId = resolveThemeIdFromConfig(themeConfig, selectedThemeId)
   const exportVariantId = resolvedThemeId
-  const baseIdForExport: 'base' | 'v2' = resolveThemeBaseIdFromConfig(themeConfig, selectedThemeId)
-  const isV2Base = baseIdForExport === 'v2'
+  const resolvedTheme = themeConfig.themes.find(t => t.id === resolvedThemeId)
   const {
     colorPresetId,
     colorPresetPrimaryColor,
@@ -138,8 +146,6 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
   } = useQuickStartContentState()
   const exportImprintUrl = normalizeExternalLegalLinkUrl(imprintUrl)
   const exportDataProtectionUrl = normalizeExternalLegalLinkUrl(dataProtectionUrl)
-  const bgImagePath = '/keycloak-dev-resources/themes/v2/login/resources/img/keycloak-bg-darken.svg'
-  const logoImagePath = '/keycloak-dev-resources/themes/v2/login/resources/img/keycloak-logo-text.svg'
 
   const extractEditorCssContext = async (quickStartSharedCss: string): Promise<EditorCssContext> => {
     let presetCss = sanitizeThemeCssSourceForEditor(stylesCss)
@@ -196,11 +202,15 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
     const lightStorageKey = `${resolvedThemeId}::light`
     const darkStorageKey = `${resolvedThemeId}::dark`
     const lightFallback = quickSettingsByThemeMode[lightStorageKey]
-      ?? buildModeDefaultsSnapshot(presetStore.getState(), 'light')
+      ?? buildModeDefaultsSnapshot(presetExportState, 'light')
     const darkFallback = quickSettingsByThemeMode[darkStorageKey]
-      ?? buildModeDefaultsSnapshot(presetStore.getState(), 'dark')
+      ?? buildModeDefaultsSnapshot(presetExportState, 'dark')
     const toExportSnapshot = (settings: typeof lightFallback) => ({
       ...settings,
+      colorPresetFontFamily,
+      colorPresetBorderRadius,
+      colorPresetCardShadow,
+      colorPresetHeadingFontFamily,
       showClientName,
       showRealmName,
       infoMessage,
@@ -229,10 +239,14 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
       appliedAssets,
       uploadedAssets,
       editorCssContext: editorCss,
-      baseId: baseIdForExport,
     })
     const payloadCssParts = extractCssImports(payload.generatedCss)
     const topLevelImportsCss = mergeCssImports(payloadCssParts.imports)
+
+    const editorMetadata: ThemeEditorMetadata = {
+      appliedAssets,
+      quickSettings: exportQuickSettingsByMode,
+    }
 
     return {
       themeName,
@@ -248,6 +262,7 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
       ].filter(Boolean).join('\n\n'),
       messagesContent,
       payload,
+      editorMetadata,
     }
   }
 
@@ -280,29 +295,22 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
     let closeOnSuccess = false
     try {
       const writeParams = await prepareExportFiles()
-      let bgImageBlob: Blob | undefined
-      let logoImageBlob: Blob | undefined
+      let extraBlobs: Record<string, Blob> | undefined
 
-      if (isV2Base) {
-        const [bgImageResponse, logoImageResponse] = await Promise.all([
-          fetch(bgImagePath),
-          fetch(logoImagePath),
-        ])
-        bgImageBlob = await bgImageResponse.blob()
-        logoImageBlob = await logoImageResponse.blob()
+      const defaultAssets = resolvedTheme?.defaultAssets ?? []
+      if (defaultAssets.length > 0) {
+        const entries = await Promise.all(
+          defaultAssets.map(async (asset) => {
+            const response = await fetch(themeResourcePath(resolvedThemeId, `resources/${asset.path}`))
+            return [asset.path, await response.blob()] as const
+          }),
+        )
+        extraBlobs = Object.fromEntries(entries)
       }
 
       const params: JarBuildParams = {
-        themeName,
-        properties: writeParams.properties,
-        payload: writeParams.payload,
-        templateFtl: writeParams.templateFtl,
-        footerFtl: writeParams.footerFtl,
-        quickStartCss: writeParams.quickStartCss,
-        stylesCss: writeParams.stylesCss,
-        bgImageBlob,
-        logoImageBlob,
-        messagesContent: writeParams.messagesContent,
+        ...writeParams,
+        extraBlobs,
       }
 
       const blob = await buildJarBlob(params)

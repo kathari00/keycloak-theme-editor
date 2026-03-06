@@ -16,9 +16,9 @@ import { useState } from 'react'
 import { editorActions } from '../features/editor/actions'
 import {
   useUndoRedoState,
-} from '../features/editor/use-editor'
-import DownloadView from './DownloadView'
-import ThemeImportHelper from './ThemeImportHelper'
+} from '../features/editor/hooks/use-editor'
+import DownloadView from '../features/theme-export/components/DownloadView'
+import ThemeImportHelper from '../features/theme-export/components/ThemeImportHelper'
 
 const TopbarButtons = React.memo(({
   className,

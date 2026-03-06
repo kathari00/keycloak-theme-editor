@@ -1,23 +1,23 @@
 import { describe, expect, it } from 'vitest'
-import { sanitizeThemeCssSourceForEditor, stripQuickStartImportLine } from '../css-source-sanitizer'
+import { sanitizeThemeCssSourceForEditor } from '../lib/css-source-sanitizer'
 
 describe('sanitizeThemeCssSourceForEditor', () => {
-  it('removes exported quick-start visibility snapshot blocks', () => {
+  it('removes KTE-marker-wrapped visibility blocks', () => {
     const css = `
 .foo { color: red; }
+/* @kte:visibility-start:hide-client-name */
 /* Hide client name */
 #kc-client-name,
-.kc-client-name,
-.kc-horizontal-card-client-name,
-[data-kc-client="name"] {
+.kc-client-name {
   display: none !important;
 }
+/* @kte:visibility-end */
+/* @kte:visibility-start:hide-info-message */
 /* Hide info message */
-#kc-info-message.kcAlertClass,
-.kc-info-message,
-[data-kc-i18n-key="infoMessage"] {
+#kc-info-message.kcAlertClass {
   display: none !important;
 }
+/* @kte:visibility-end */
 .bar { color: blue; }
 `.trim()
 
@@ -25,8 +25,9 @@ describe('sanitizeThemeCssSourceForEditor', () => {
 
     expect(sanitized).toContain('.foo { color: red; }')
     expect(sanitized).toContain('.bar { color: blue; }')
-    expect(sanitized).not.toContain('Hide client name')
-    expect(sanitized).not.toContain('Hide info message')
+    expect(sanitized).not.toContain('@kte:visibility-start')
+    expect(sanitized).not.toContain('@kte:visibility-end')
+    expect(sanitized).not.toContain('display: none !important')
   })
 
   it('keeps unrelated css untouched', () => {
@@ -34,24 +35,30 @@ describe('sanitizeThemeCssSourceForEditor', () => {
     const sanitized = sanitizeThemeCssSourceForEditor(css)
     expect(sanitized).toBe(css)
   })
-})
 
-describe('stripQuickStartImportLine', () => {
-  it('removes @import quick-start.css lines', () => {
-    const css = `@import "./quick-start.css";\n\n.card { color: blue; }`
-    const stripped = stripQuickStartImportLine(css)
-    expect(stripped).toBe('.card { color: blue; }')
-    expect(stripped).not.toContain('quick-start.css')
+  it('keeps old-format visibility blocks untouched (no markers)', () => {
+    // Old JARs exported without markers are preserved as-is.
+    // Phase 5 will handle them via metadata-based import.
+    const css = `/* Hide client name */\n#kc-client-name { display: none !important; }`
+    const sanitized = sanitizeThemeCssSourceForEditor(css)
+    expect(sanitized).toBe(css)
   })
 
-  it('keeps other @import lines intact', () => {
-    const css = `@import url("https://fonts.googleapis.com/css2?family=Inter");\n.card { color: blue; }`
-    const stripped = stripQuickStartImportLine(css)
-    expect(stripped).toContain('@import url("https://fonts.googleapis.com/css2?family=Inter")')
-    expect(stripped).toContain('.card { color: blue; }')
-  })
+  it('removes multiple visibility blocks in a single pass', () => {
+    const css = `
+/* @kte:visibility-start:hide-realm-name */
+#kc-realm-name { display: none !important; }
+/* @kte:visibility-end */
+.keep-me { color: red; }
+/* @kte:visibility-start:hide-subtitle */
+.kc-horizontal-card-subtitle { display: none !important; }
+/* @kte:visibility-end */
+`.trim()
 
-  it('returns empty string for empty input', () => {
-    expect(stripQuickStartImportLine('')).toBe('')
+    const sanitized = sanitizeThemeCssSourceForEditor(css)
+    expect(sanitized).toContain('.keep-me { color: red; }')
+    expect(sanitized).not.toContain('hide-realm-name')
+    expect(sanitized).not.toContain('hide-subtitle')
+    expect(sanitized).not.toContain('display: none !important')
   })
 })

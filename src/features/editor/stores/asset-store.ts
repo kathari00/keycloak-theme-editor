@@ -1,5 +1,5 @@
 import type { AssetState } from './types'
-import { ASSET_STORE_STORAGE_KEY } from '../storage-keys'
+import { ASSET_STORE_STORAGE_KEY } from '../lib/storage-keys'
 import { createPersistedEditorStore } from './create-editor-store'
 
 /**
@@ -17,7 +17,6 @@ export const assetStore = createPersistedEditorStore<AssetState>({
   appliedAssets: {},
 }, {
   name: ASSET_STORE_STORAGE_KEY,
-  version: 1,
   partialize: state => ({
     appliedAssets: state.appliedAssets,
   }),

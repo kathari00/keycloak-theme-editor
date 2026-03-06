@@ -20,7 +20,7 @@ import {
   CARD_SHADOW_OPTIONS,
   COLOR_REGEX,
   CUSTOM_PRESET_ID,
-} from '../editor/quick-start-css'
+} from '../editor/lib/quick-start-css'
 import { themeResourcePath } from '../presets/types'
 
 /** Remove editor-only data-kc-state attributes from exported templates */
@@ -38,28 +38,22 @@ export function stripDataKcStateAttributes(markup: string): string {
 /**
  * Get effective applied assets with default background fallback.
  * Only auto-applies the default Keycloak background for v2 base themes.
- * Non-v2 presets (e.g. Modern Card) define their own backgrounds via preset
- * CSS, so injecting the default image would overwrite them in the cascade.
+ * Non-v2 presets define their own backgrounds via preset CSS, so injecting
+ * the default image would overwrite them in the cascade.
  */
 export function getEffectiveAppliedAssets(
   appliedAssets: AppliedAssets,
   uploadedAssets: UploadedAsset[],
-  baseId: 'base' | 'v2' = 'v2',
 ): AppliedAssets {
   const next: AppliedAssets = { ...appliedAssets }
   if (!next.background) {
-    if (baseId === 'v2') {
-      // For v2, auto-apply default Keycloak background
-      const defaultBackground = uploadedAssets.find(
-        asset => asset.category === 'background' && asset.isDefault,
-      )
-      if (defaultBackground) {
-        next.background = defaultBackground.id
-      }
+    const defaultBackground = uploadedAssets.find(
+      asset => asset.category === 'background' && asset.isDefault,
+    )
+    if (defaultBackground) {
+      next.background = defaultBackground.id
     }
     else {
-      // For non-v2 presets, explicitly suppress default background
-      // so generateExportAppliedCSS emits background-image suppression vars.
       next.background = REMOVED_ASSET_ID
     }
   }
@@ -80,16 +74,6 @@ function getGoogleFontsCss(cssText: string, applied: AppliedAssets): string {
     families.add(appliedGoogleFont)
   }
   return buildGoogleFontsImportCSS(Array.from(families))
-}
-
-/** Generate JAR's META-INF/keycloak-themes.json */
-export function generateKeycloakThemesJson(themeName: string): string {
-  return JSON.stringify({
-    themes: [{
-      name: themeName,
-      types: ['login'],
-    }],
-  }, null, 2)
 }
 
 /** Fetch the correct template.ftl for a theme */
@@ -208,9 +192,8 @@ export function assembleExportPayload(params: {
   uploadedAssets: UploadedAsset[]
   appliedAssets: AppliedAssets
   editorCssContext: EditorCssContext
-  baseId?: 'base' | 'v2'
 }): ThemeExportPayload {
-  const { sourceCss, uploadedAssets, appliedAssets, editorCssContext, baseId = 'v2' } = params
+  const { sourceCss, uploadedAssets, appliedAssets, editorCssContext } = params
 
   const uploadedFonts = uploadedAssets.filter(a => a.category === 'font')
   const uploadedBackgrounds = uploadedAssets.filter(a => a.category === 'background')
@@ -221,7 +204,7 @@ export function assembleExportPayload(params: {
 
   const uploadedFontsCss = generateExportFontCSS(uploadedFonts)
   const uploadedImagesCss = generateExportImageCSS(uploadedVarImages)
-  const effectiveAppliedAssets = getEffectiveAppliedAssets(appliedAssets, uploadedAssets, baseId)
+  const effectiveAppliedAssets = getEffectiveAppliedAssets(appliedAssets, uploadedAssets)
   const appliedAssetsCss = generateExportAppliedCSS(effectiveAppliedAssets, uploadedAssets)
   const googleFontsCss = getGoogleFontsCss(sourceCss, appliedAssets)
 
@@ -254,14 +237,9 @@ export function assembleExportPayload(params: {
 // --- Quick-start CSS export utilities ---
 
 const QUICK_START_LIGHT_VARIABLE_SCOPE = `:root,
-html:not(.pf-v5-theme-dark):not(.kcDarkModeClass) body:not(.pf-v5-theme-dark):not(.kcDarkModeClass),
-html:not(.pf-v5-theme-dark):not(.kcDarkModeClass) body#keycloak-bg:not(.pf-v5-theme-dark):not(.kcDarkModeClass)`
-const QUICK_START_DARK_VARIABLE_SCOPE = `html.pf-v5-theme-dark,
-html.pf-v5-theme-dark body,
-html.pf-v5-theme-dark body#keycloak-bg,
-body.pf-v5-theme-dark,
-body#keycloak-bg.pf-v5-theme-dark,
-html.kcDarkModeClass,
+html:not(.kcDarkModeClass) body:not(.kcDarkModeClass),
+html:not(.kcDarkModeClass) body#keycloak-bg:not(.kcDarkModeClass)`
+const QUICK_START_DARK_VARIABLE_SCOPE = `html.kcDarkModeClass,
 html.kcDarkModeClass body,
 html.kcDarkModeClass body#keycloak-bg,
 body.kcDarkModeClass,

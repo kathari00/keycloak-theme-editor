@@ -1,12 +1,12 @@
 import CodeMirror from '@uiw/react-codemirror'
 import { useState } from 'react'
-import { getAssetDataUrl, getUploadedImageCssVarName } from '../features/assets/font-css-generator'
-import { editorActions } from '../features/editor/actions'
-import { createCssEditorExtensions } from '../features/editor/codemirror-config'
-import { useStyleWorkspace } from '../features/editor/hooks/use-style-workspace'
-import { useDarkModeState, useStylesCssState, useUploadedAssetsState } from '../features/editor/use-editor'
-import { escapeCssIdentifier } from '../features/preview/selector-utils'
-import { usePreviewContext } from '../features/preview/use-preview-context'
+import { getAssetDataUrl, getUploadedImageCssVarName } from '../../assets/font-css-generator'
+import { editorActions } from '../actions'
+import { useStyleWorkspace } from '../hooks/use-style-workspace'
+import { useDarkModeState, useStylesCssState, useUploadedAssetsState } from '../hooks/use-editor'
+import { createCssEditorExtensions } from '../lib/codemirror-config'
+import { escapeCssIdentifier } from '../../preview/lib/selector-utils'
+import { usePreviewContext } from '../../preview/hooks/use-preview-context'
 
 interface CssEditorImageAsset {
   name: string
