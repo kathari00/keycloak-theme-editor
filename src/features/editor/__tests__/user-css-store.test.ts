@@ -299,6 +299,29 @@ body {
       expect(next).toContain('#kc-code p {\n  color: black;\n}')
     })
 
+    it('preserves @layer and nested @container rules while replacing matched selectors', () => {
+      const css = `@layer defaults {
+  @container (min-width: 30rem) {
+    .foo {
+      color: orange;
+    }
+  }
+}
+
+#kc-code p {
+  color: red;
+}`
+      const element = getElement('<div id="kc-code"><p id="demo-p">Demo</p></div>', '#demo-p')
+      const next = userCssStore.replaceCssForElementInText(css, element, `#kc-code p {
+  color: black;
+}`)
+
+      expect(next).toContain('@layer defaults {')
+      expect(next).toContain('@container (min-width: 30rem) {')
+      expect(next).toContain('.foo {')
+      expect(next).toContain('#kc-code p {\n  color: black;\n}')
+    })
+
     it('preserves google fonts @import rules with semicolons inside url', () => {
       const css = `@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 

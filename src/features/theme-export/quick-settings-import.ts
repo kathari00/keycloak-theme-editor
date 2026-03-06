@@ -1,5 +1,6 @@
 import type { QuickSettings } from '../editor/stores/types'
 import type { ImportedQuickSettingsByMode } from './types'
+import { parseCssDeclarations, parseCssTopLevelBlocks } from '../../lib/css-ast'
 import { CUSTOM_PRESET_ID } from '../editor/quick-start-css'
 import { readMessageProperty } from '../preview/message-properties'
 
@@ -74,28 +75,34 @@ function collectQuickStartVariablesByMode(cssText: string): {
   const shared: QuickSettingsVars = {}
   const light: QuickSettingsVars = {}
   const dark: QuickSettingsVars = {}
-  const blockPattern = /([^{}]+)\{([^{}]*)\}/g
-  const declPattern = /(--quickstart-[a-z0-9-]+)\s*:([^;]+);/gi
 
-  for (const match of cssText.matchAll(blockPattern)) {
-    const selector = match[1] || ''
-    const body = match[2] || ''
-    if (!body.toLowerCase().includes('--quickstart-')) {
-      continue
-    }
+  const visit = (inputCss: string) => {
+    for (const block of parseCssTopLevelBlocks(inputCss)) {
+      if (block.type === 'rule') {
+        const mode = classifyModeBySelector(block.selector)
+        const target = mode === 'light' ? light : mode === 'dark' ? dark : shared
+        for (const declaration of parseCssDeclarations(block.body)) {
+          if (!declaration.property.startsWith('--quickstart-')) {
+            continue
+          }
 
-    const mode = classifyModeBySelector(selector)
-    const target = mode === 'light' ? light : mode === 'dark' ? dark : shared
+          const value = normalizeCssValue(declaration.value)
+          if (!value) {
+            continue
+          }
 
-    for (const decl of body.matchAll(declPattern)) {
-      const varName = decl[1]?.trim()
-      const value = normalizeCssValue(decl[2])
-      if (!varName || !value) {
+          target[declaration.property] = value
+        }
         continue
       }
-      target[varName] = value
+
+      if (block.body) {
+        visit(block.body)
+      }
     }
   }
+
+  visit(cssText)
 
   return { shared, light, dark }
 }
@@ -174,7 +181,7 @@ export function parseQuickSettingsFromImportedTheme(params: {
   const sharedContent = buildSharedQuickStartContent(cssForVisibility, messagesPropertiesText)
 
   const lightVars = mergeVarMaps(shared, light)
-  const darkVars = mergeVarMaps(shared, dark, light)
+  const darkVars = mergeVarMaps(shared, light, dark)
 
   return {
     light: buildModeQuickSettings({ vars: lightVars, sharedContent }),

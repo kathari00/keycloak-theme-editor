@@ -1,15 +1,5 @@
-interface ParsedRule {
-  selector: string
-  raw: string
-}
-
-interface ParsedBlock {
-  type: 'rule' | 'media' | 'at-rule'
-  raw: string
-  selector?: string
-  mediaQuery?: string
-  innerRules?: ParsedRule[]
-}
+import type { CssRuleBlock, CssTopLevelBlock } from '../../lib/css-ast'
+import { parseCssTopLevelBlocks } from '../../lib/css-ast'
 
 interface ReplaceCssOptions {
   insertPositionWhenMissing?: 'start' | 'end'
@@ -91,7 +81,7 @@ class UserCssStore {
         continue
       }
 
-      if (block.type === 'media' && block.innerRules) {
+      if (block.type === 'media') {
         for (const rule of block.innerRules) {
           if (this.elementMatchesSelectorList(element, rule.selector)) {
             return true
@@ -117,7 +107,7 @@ class UserCssStore {
         continue
       }
 
-      if (block.type === 'media' && block.innerRules) {
+      if (block.type === 'media') {
         const matchingInner = block.innerRules.filter(rule => isMatch(rule.selector))
         if (matchingInner.length > 0) {
           matching.push(this.renderMediaBlock(block.mediaQuery || '', matchingInner))
@@ -151,7 +141,7 @@ class UserCssStore {
         continue
       }
 
-      if (block.type === 'media' && block.innerRules) {
+      if (block.type === 'media') {
         const kept = block.innerRules.filter(rule => !isMatch(rule.selector))
         if (kept.length > 0) {
           result.push(this.renderMediaBlock(block.mediaQuery || '', kept))
@@ -175,7 +165,7 @@ class UserCssStore {
     return result.join('\n\n')
   }
 
-  private renderMediaBlock(mediaQuery: string, rules: ParsedRule[]): string {
+  private renderMediaBlock(mediaQuery: string, rules: CssRuleBlock[]): string {
     const innerCss = rules.map(rule => `  ${rule.raw}`).join('\n\n')
     return `@media ${mediaQuery} {\n${innerCss}\n}`
   }
@@ -198,7 +188,7 @@ class UserCssStore {
         continue
       }
 
-      if (block.type === 'media' && block.innerRules) {
+      if (block.type === 'media') {
         for (const rule of block.innerRules) {
           const normalized = this.normalizeSelectorForReplacement(rule.selector)
           if (this.isReplacementSelectorValid(normalized)) {
@@ -324,139 +314,8 @@ class UserCssStore {
     return simplified
   }
 
-  private parseBlocks(cssText: string): ParsedBlock[] {
-    const text = cssText.trim()
-    if (!text) {
-      return []
-    }
-
-    const blocks: ParsedBlock[] = []
-    let index = 0
-    while (index < text.length) {
-      index = this.skipWhitespaceAndComments(text, index)
-      if (index >= text.length) {
-        break
-      }
-
-      const result = this.parseBlock(text, index)
-      if (result) {
-        blocks.push(result.block)
-        index = result.endIndex
-      }
-      else {
-        index++
-      }
-    }
-
-    return blocks
-  }
-
-  private parseBlock(text: string, start: number): { block: ParsedBlock, endIndex: number } | null {
-    // At-rule terminated by ; (e.g. @import url(...);)
-    const semiIdx = this.findTopLevelSemicolon(text, start)
-    const braceIdx = text.indexOf('{', start)
-    if (text[start] === '@' && semiIdx !== -1 && (braceIdx === -1 || semiIdx < braceIdx)) {
-      return {
-        block: { type: 'at-rule', raw: text.substring(start, semiIdx + 1).trim() },
-        endIndex: semiIdx + 1,
-      }
-    }
-
-    if (braceIdx === -1) {
-      return null
-    }
-
-    const prelude = text.substring(start, braceIdx).trim()
-    if (!prelude) {
-      return null
-    }
-
-    // Find matching closing brace
-    let depth = 1
-    let i = braceIdx + 1
-    while (i < text.length && depth > 0) {
-      if (text[i] === '{') {
-        depth++
-      }
-      else if (text[i] === '}') {
-        depth--
-      }
-      i++
-    }
-
-    const raw = text.substring(start, i).trim()
-
-    // @media → parse inner rules recursively
-    if (/^@media\b/i.test(prelude)) {
-      const mediaQuery = prelude.slice(6).trim()
-      const innerText = text.substring(braceIdx + 1, i - 1).trim()
-      const innerRules = this.parseBlocks(innerText)
-        .filter((block): block is ParsedBlock & { selector: string } => block.type === 'rule' && Boolean(block.selector))
-        .map(block => ({ selector: block.selector, raw: block.raw }))
-
-      return { block: { type: 'media', raw, mediaQuery, innerRules }, endIndex: i }
-    }
-
-    // Other @-rules (@font-face, @keyframes, etc.)
-    if (prelude.startsWith('@')) {
-      return { block: { type: 'at-rule', raw }, endIndex: i }
-    }
-
-    // Regular rule
-    return { block: { type: 'rule', selector: prelude, raw }, endIndex: i }
-  }
-
-  private findTopLevelSemicolon(text: string, start: number): number {
-    let quote: '"' | '\'' | null = null
-    let parenDepth = 0
-
-    for (let i = start; i < text.length; i++) {
-      const ch = text[i]
-      const prev = i > start ? text[i - 1] : ''
-
-      if (quote) {
-        if (ch === quote && prev !== '\\') {
-          quote = null
-        }
-        continue
-      }
-
-      if (ch === '"' || ch === '\'') {
-        quote = ch
-        continue
-      }
-      if (ch === '(') {
-        parenDepth++
-        continue
-      }
-      if (ch === ')' && parenDepth > 0) {
-        parenDepth--
-        continue
-      }
-      if (ch === ';' && parenDepth === 0) {
-        return i
-      }
-    }
-
-    return -1
-  }
-
-  private skipWhitespaceAndComments(text: string, start: number): number {
-    let index = start
-    while (index < text.length) {
-      const ch = text.charCodeAt(index)
-      if (ch === 32 || ch === 9 || ch === 10 || ch === 13 || ch === 12) {
-        index++
-        continue
-      }
-      if (ch === 47 && text.charCodeAt(index + 1) === 42) {
-        const end = text.indexOf('*/', index + 2)
-        index = end === -1 ? text.length : end + 2
-        continue
-      }
-      break
-    }
-    return index
+  private parseBlocks(cssText: string): CssTopLevelBlock[] {
+    return parseCssTopLevelBlocks(cssText)
   }
 }
 

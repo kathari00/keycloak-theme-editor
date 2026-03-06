@@ -1,5 +1,6 @@
 import type { BaseThemeId, ThemeId } from '../../presets/types'
 import type { PresetState, QuickSettings } from '../stores/types'
+import { findFirstDeclarationValue } from '../../../lib/css-ast'
 import { REMOVED_ASSET_ID } from '../../assets/types'
 import { getThemeConfigCached, getThemeCssStructuredCached, resolveThemeBaseIdFromConfig, resolveThemeIdFromConfig } from '../../presets/queries'
 import { buildQuickSettingsStorageKey, getThemeStorageKey } from '../quick-settings'
@@ -142,17 +143,7 @@ function buildModeScopedQuickSettingsMap(params: {
 }
 
 function readQuickStartVariable(cssText: string, variableName: string): string {
-  const marker = `${variableName}:`
-  const markerIndex = cssText.indexOf(marker)
-  if (markerIndex < 0) {
-    return ''
-  }
-  const valueStartIndex = markerIndex + marker.length
-  const valueEndIndex = cssText.indexOf(';', valueStartIndex)
-  if (valueEndIndex < 0) {
-    return ''
-  }
-  return cssText.slice(valueStartIndex, valueEndIndex).trim()
+  return findFirstDeclarationValue(cssText, variableName)
 }
 
 function getQuickStartVariableNameForMode(mode: QuickSettingsMode, baseVariableName: string): string {
