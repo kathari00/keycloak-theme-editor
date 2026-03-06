@@ -5,6 +5,7 @@ import os from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
 import { createJiti } from 'jiti'
+import { JSDOM } from 'jsdom'
 
 const MIN_JAVA = 8
 const isWindows = process.platform === 'win32'
@@ -195,6 +196,149 @@ function stripScriptTags(html: string): string {
   return html.replace(SCRIPT_TAG_PATTERN, '')
 }
 
+function ensureQuickStartElement(params: {
+  doc: Document
+  container: Element
+  id: string
+  state: string
+  tagName: keyof HTMLElementTagNameMap
+  fallbackText?: string
+}): HTMLElement {
+  const { doc, container, id, state, tagName, fallbackText } = params
+  let placeholder = doc.querySelector<HTMLElement>(`#${id}[data-kc-state="${state}"]`)
+    ?? doc.getElementById(id) as HTMLElement | null
+  if (!placeholder) {
+    placeholder = doc.createElement(tagName)
+    placeholder.id = id
+    container.appendChild(placeholder)
+  }
+  placeholder.setAttribute('data-kc-state', state)
+  if (!placeholder.isConnected) {
+    container.appendChild(placeholder)
+  }
+  if (fallbackText && !placeholder.textContent?.trim()) {
+    placeholder.textContent = fallbackText
+  }
+  return placeholder
+}
+
+function ensureFooterLinkContainer(doc: Document): Element {
+  const existing = doc.querySelector('[data-kc-state="footer-legal-links"], .kc-footer-legal-links')
+    ?? doc.querySelector('a[data-kc-state="imprint-link"], a#kc-imprint-link, a[data-kc-state="data-protection-link"], a#kc-data-protection-link')?.parentElement
+    ?? doc.querySelector('.kc-horizontal-card-footer-row')
+    ?? doc.querySelector('#kc-info')
+    ?? doc.body
+
+  if (!existing) {
+    return doc.body
+  }
+
+  if (existing.matches('a[data-kc-state="imprint-link"], a#kc-imprint-link, a[data-kc-state="data-protection-link"], a#kc-data-protection-link')) {
+    return existing.parentElement ?? doc.body
+  }
+
+  if (existing.classList?.contains('kc-footer-legal-links') || existing.getAttribute('data-kc-state') === 'footer-legal-links') {
+    return existing
+  }
+
+  let wrapper = doc.querySelector<HTMLElement>('[data-kc-state="footer-legal-links"], .kc-footer-legal-links')
+  if (!wrapper) {
+    wrapper = doc.createElement('div')
+    wrapper.className = 'kc-footer-legal-links'
+    wrapper.setAttribute('data-kc-state', 'footer-legal-links')
+    if (!existing.isConnected) {
+      doc.body.appendChild(wrapper)
+    }
+    else {
+      existing.appendChild(wrapper)
+    }
+  }
+
+  return wrapper
+}
+
+function injectQuickStartPlaceholders(html: string): string {
+  const dom = new JSDOM(html)
+  const { document } = dom.window
+
+  const headerWrapper = document.querySelector<HTMLElement>('#kc-header-wrapper')
+  if (headerWrapper) {
+    const headerText = headerWrapper.textContent?.trim() || ''
+    if (!headerWrapper.querySelector('#kc-realm-name, #kc-client-name')) {
+      headerWrapper.textContent = ''
+    }
+    const realmNode = ensureQuickStartElement({
+      doc: document,
+      container: headerWrapper,
+      id: 'kc-realm-name',
+      state: 'realm-name',
+      tagName: 'span',
+      fallbackText: headerText || 'myrealm',
+    })
+    ensureQuickStartElement({
+      doc: document,
+      container: headerWrapper,
+      id: 'kc-client-name',
+      state: 'client-name',
+      tagName: 'span',
+      fallbackText: 'Client name',
+    })
+    if (realmNode.id && realmNode.tagName === 'SPAN' && headerText && !realmNode.textContent?.trim()) {
+      realmNode.textContent = headerText
+    }
+  }
+
+  const contentWrapper = document.querySelector<HTMLElement>('#kc-content-wrapper')
+    ?? document.querySelector<HTMLElement>('#kc-content')
+    ?? document.body
+  const infoMessage = ensureQuickStartElement({
+    doc: document,
+    container: contentWrapper as Element,
+    id: 'kc-info-message',
+    state: 'info-message',
+    tagName: 'div',
+    fallbackText: '',
+  })
+  const infoMessageText = document.querySelector('[data-kc-state="info-message-text"]') as HTMLElement | null
+    ?? infoMessage.querySelector('.kc-feedback-text') as HTMLElement | null
+  if (!infoMessageText) {
+    const span = document.createElement('span')
+    span.setAttribute('data-kc-state', 'info-message-text')
+    span.className = 'kcAlertTitleClass kc-feedback-text'
+    infoMessage.appendChild(span)
+  }
+  infoMessage.removeAttribute('data-kc-i18n-key')
+
+  const legalWrapper = ensureFooterLinkContainer(document)
+  const imprintLink = ensureQuickStartElement({
+    doc: document,
+    container: legalWrapper,
+    id: 'kc-imprint-link',
+    state: 'imprint-link',
+    tagName: 'a',
+    fallbackText: 'Imprint',
+  }) as HTMLAnchorElement
+  imprintLink.href = '#'
+  imprintLink.target = '_blank'
+  imprintLink.rel = 'noopener noreferrer'
+  imprintLink.style.display = 'none'
+
+  const dataProtectionLink = ensureQuickStartElement({
+    doc: document,
+    container: legalWrapper,
+    id: 'kc-data-protection-link',
+    state: 'data-protection-link',
+    tagName: 'a',
+    fallbackText: 'Data Protection',
+  }) as HTMLAnchorElement
+  dataProtectionLink.href = '#'
+  dataProtectionLink.target = '_blank'
+  dataProtectionLink.rel = 'noopener noreferrer'
+  dataProtectionLink.style.display = 'none'
+
+  return dom.serialize()
+}
+
 function readJson(filePath: string): any {
   if (!fs.existsSync(filePath)) {
     return null
@@ -352,7 +496,7 @@ function normalizeStoriesForPage(params: {
     if (typeof storyHtml !== 'string') {
       throw new TypeError(`Invalid preview story payload for ${variantId}/${pageId}/${storyId}: expected string HTML.`)
     }
-    const sanitizedStoryHtml = stripScriptTags(storyHtml)
+    const sanitizedStoryHtml = injectQuickStartPlaceholders(stripScriptTags(storyHtml))
     validateStoryHtmlContract({
       variantId,
       pageId,

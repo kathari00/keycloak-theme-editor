@@ -150,7 +150,6 @@ public final class PageRenderer {
 
   private String stripEditorMarkers(String html) {
     return html
-        .replaceAll("\\sdata-kc-[\\w-]+=(\"[^\"]*\"|'[^']*')", "")
         .replaceAll("\\sdata-editor-[\\w-]+=(\"[^\"]*\"|'[^']*')", "");
   }
 

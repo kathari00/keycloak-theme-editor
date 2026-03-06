@@ -1,5 +1,4 @@
 import type { UploadedAsset } from '../features/assets/types'
-import type { ThemeId } from '../features/presets/types'
 import type { JarImportResult as ThemeImportData } from '../features/theme-export/types'
 import { useEffect, useRef, useState } from 'react'
 import ContextBar from '../components/ContextBar'
@@ -7,29 +6,17 @@ import ErrorBoundary from '../components/ErrorBoundary'
 import RightSidebar from '../components/RightSidebar'
 import Topbar from '../components/Topbar'
 import { editorActions } from '../features/editor/actions'
-import { sanitizeThemeCssSourceForEditor, stripQuickStartImportLine } from '../features/editor/css-source-sanitizer'
+import { useDarkModeState, usePresetState, usePreviewState } from '../features/editor/hooks/use-editor'
+import { sanitizeThemeCssSourceForEditor } from '../features/editor/lib/css-source-sanitizer'
 import { assetStore } from '../features/editor/stores/asset-store'
-import { useDarkModeState, usePresetState, usePreviewState } from '../features/editor/use-editor'
 import { getThemeCssStructuredCached, resolveThemeIdFromConfig, useThemeConfig } from '../features/presets/queries'
 import { themeResourcePath } from '../features/presets/types'
 import { connectLiveReload, ensureGeneratedPreviewPagesLoaded, getVariantPages, resolvePreviewVariantId } from '../features/preview/load-generated'
-import { PreviewProvider } from '../features/preview/PreviewProvider'
-import { PreviewShell } from '../features/preview/PreviewShell'
+import { PreviewProvider } from '../features/preview/components/PreviewProvider'
+import { PreviewShell } from '../features/preview/components/PreviewShell'
 import { THEME_JAR_IMPORTED_EVENT } from '../features/theme-export/jar-import-service'
 import { useResizableSidebar } from './hooks/useResizableSidebar'
 import '@patternfly/react-core/dist/styles/base.css'
-
-function resolveThemeIdFromThemeProperties(propertiesText: string | undefined): ThemeId {
-  if (!propertiesText) {
-    return 'v2'
-  }
-  const parentMatch = propertiesText.match(/^\s*parent\s*=\s*([^\r\n#]+)/im)
-  const parent = parentMatch?.[1]?.trim().toLowerCase() || ''
-  if (!parent) {
-    return 'v2'
-  }
-  return parent.includes('v2') ? 'v2' : 'base'
-}
 
 const loadingSpinner = (
   <div
@@ -211,11 +198,7 @@ export default function EditorContent() {
           return
         }
 
-        const requestedThemeId = (detail.themeId || '').trim()
-        const fallbackThemeId = resolveThemeIdFromThemeProperties(detail.properties)
-        const targetThemeId = requestedThemeId
-          ? resolveThemeIdFromConfig(themeConfig, requestedThemeId)
-          : resolveThemeIdFromConfig(themeConfig, selectedThemeId || fallbackThemeId)
+        const targetThemeId = resolveThemeIdFromConfig(themeConfig, detail.themeName || selectedThemeId)
         const targetThemeStorageKey = targetThemeId
         const themeCssStructured = await getThemeCssStructuredCached(targetThemeId).catch(() => ({ quickStartDefaults: '', stylesCss: '' }))
         editorActions.setThemeQuickStartDefaults(themeCssStructured.quickStartDefaults)
@@ -223,10 +206,7 @@ export default function EditorContent() {
         editorActions.applyImportedQuickSettingsForPreset(targetThemeStorageKey, detail.quickSettingsByMode)
         editorActions.setUploadedAssets(detail.uploadedAssets || [])
         editorActions.setAppliedAssets(detail.appliedAssets || {})
-        // Import CSS: strip quick-start import lines and sanitize visibility rules
-        const importedCss = stripQuickStartImportLine(
-          sanitizeThemeCssSourceForEditor((detail.css || '').trim()),
-        )
+        const importedCss = sanitizeThemeCssSourceForEditor((detail.css || '').trim())
         editorActions.setStylesCss(importedCss)
       })()
     }

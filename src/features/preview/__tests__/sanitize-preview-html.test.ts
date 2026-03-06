@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { sanitizePreviewHtml } from '../sanitize-preview-html'
+import { sanitizePreviewHtml } from '../lib/sanitize-preview-html'
 
 describe('sanitizePreviewHtml', () => {
   it('removes script tags', () => {

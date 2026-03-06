@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isValidExternalLegalLinkUrl, normalizeExternalLegalLinkUrl, resolveOpenableLegalLinkUrl } from '../legal-link-url'
+import { isValidExternalLegalLinkUrl, normalizeExternalLegalLinkUrl, resolveOpenableLegalLinkUrl } from '../lib/legal-link-url'
 
 describe('legal-link-url', () => {
   it('keeps absolute http/https links unchanged', () => {

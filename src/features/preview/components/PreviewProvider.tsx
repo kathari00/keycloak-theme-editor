@@ -1,12 +1,9 @@
 import type { PropsWithChildren } from 'react'
-import type { PreviewRuntimeValue } from './preview-context'
-import type { PreviewVariantId } from './types'
+import type { PreviewRuntimeValue } from '../hooks/preview-context'
+import type { PreviewVariantId } from '../types'
 import { useRef } from 'react'
-import { useStore } from 'zustand'
-import { useShallow } from 'zustand/react/shallow'
-import { editorActions } from '../editor/actions'
-import { coreStore } from '../editor/stores/core-store'
-import { PreviewContext } from './preview-context'
+import { PreviewContext } from '../hooks/preview-context'
+import { previewRuntimeActions, usePreviewRuntimeState } from '../hooks/usePreviewEditorState'
 
 interface PreviewProviderProps {
   initialVariantId: PreviewVariantId
@@ -22,35 +19,30 @@ export function PreviewProvider({
     activeStoryId,
     selectedNodeId,
     previewReady,
-  } = useStore(coreStore, useShallow(state => ({
-    activePageId: state.activePageId,
-    activeStoryId: state.activeStoryId,
-    selectedNodeId: state.selectedNodeId,
-    previewReady: state.previewReady,
-  })))
+  } = usePreviewRuntimeState()
   const activeVariantId: PreviewVariantId = initialVariantId
 
   const getDocument = () => iframeRef.current?.contentDocument ?? null
 
   const setActivePage = (pageId: string) => {
-    editorActions.setActivePage(pageId)
-    editorActions.setActiveStoryId('default')
-    editorActions.setSelectedNodeId(null)
-    editorActions.setPreviewReady(false)
+    previewRuntimeActions.setActivePage(pageId)
+    previewRuntimeActions.setActiveStory('default')
+    previewRuntimeActions.selectNode(null)
+    previewRuntimeActions.setPreviewReady(false)
   }
 
   const setActiveStory = (storyId: string) => {
-    editorActions.setActiveStoryId(storyId)
-    editorActions.setSelectedNodeId(null)
-    editorActions.setPreviewReady(false)
+    previewRuntimeActions.setActiveStory(storyId)
+    previewRuntimeActions.selectNode(null)
+    previewRuntimeActions.setPreviewReady(false)
   }
 
   const selectNode = (nodeId: string | null) => {
-    editorActions.setSelectedNodeId(nodeId)
+    previewRuntimeActions.selectNode(nodeId)
   }
 
   const setPreviewReady = (ready: boolean) => {
-    editorActions.setPreviewReady(ready)
+    previewRuntimeActions.setPreviewReady(ready)
   }
 
   const value: PreviewRuntimeValue = {

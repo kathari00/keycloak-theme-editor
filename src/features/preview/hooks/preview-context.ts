@@ -1,5 +1,5 @@
 import type { RefObject } from 'react'
-import type { PreviewContextValue } from './types'
+import type { PreviewContextValue } from '../types'
 import { createContext } from 'react'
 
 export interface PreviewRuntimeValue extends PreviewContextValue {

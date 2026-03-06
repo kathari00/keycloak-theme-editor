@@ -1,0 +1,106 @@
+import { useEffect, useState } from 'react'
+import { useDarkModeState, usePresetState, usePreviewState, useQuickStartColorsState, useQuickStartContentState, useStylesCssState, useUploadedAssetsState } from '../../editor/hooks/use-editor'
+import { resolveThemeIdFromConfig, useThemeConfig } from '../../presets/queries'
+import { getThemePreviewStylesPath } from '../../presets/theme-paths'
+import { getVariantPages, resolveScenarioHtml } from '../load-generated'
+import { usePreviewMessages } from '../hooks/usePreviewMessages'
+import { usePreviewRuntime } from '../hooks/use-preview-context'
+import { computePreviewCss } from '../lib/compute-preview-css'
+import { syncPreviewDarkModeClasses } from '../lib/dark-mode-classes'
+import { applyQuickStartTemplateContent } from '../lib/quickstart-template-content'
+import { createElementSelector } from '../lib/selector-utils'
+import { sanitizePreviewHtml } from '../lib/sanitize-preview-html'
+
+const deviceWidthMap = { desktop: '100%', tablet: '900px', mobile: '430px' } as const
+const ensureStyle = (doc: Document, id: string, css: string) => { let style = doc.getElementById(id) as HTMLStyleElement | null; if (!style) { style = doc.createElement('style'); style.id = id; doc.head.appendChild(style) } style.textContent = css }
+const ensureBaseHref = (doc: Document, id: string, href: string) => { let base = doc.getElementById(id) as HTMLBaseElement | null; if (!base) { base = doc.createElement('base'); base.id = id; doc.head.prepend(base) } base.href = href }
+const syncPreviewDocumentStyles = (params: { doc: Document; themeStylesPath: string; stylesCss: string; quickStartOverridesCss: string; uploadedFontsCss: string; uploadedImagesCss: string; appliedAssetsCss: string; darkModeClasses?: readonly string[]; isDarkMode: boolean }) => {
+  const { doc, themeStylesPath, stylesCss, quickStartOverridesCss, uploadedFontsCss, uploadedImagesCss, appliedAssetsCss, darkModeClasses, isDarkMode } = params
+  if (!doc.head || !doc.body) return
+  ensureBaseHref(doc, 'preview-theme-base', new URL(themeStylesPath, window.location.href).toString())
+  for (const [id, css] of [['preview-theme-styles-inline', stylesCss], ['preview-quick-start-overrides', quickStartOverridesCss], ['preview-uploaded-fonts', uploadedFontsCss], ['preview-uploaded-images', uploadedImagesCss], ['preview-applied-assets', appliedAssetsCss], ['preview-selection-outline', '[data-preview-selected=\"true\"] { outline: 2px solid #0b57d0 !important; outline-offset: 2px !important; }']] as const) { ensureStyle(doc, id, css) }
+  syncPreviewDarkModeClasses(doc, darkModeClasses, isDarkMode)
+}
+/** Resolve an EventTarget to an Element, working across iframe realms where `instanceof Element` fails. */
+export function getEventElement(target: EventTarget | null): Element | null {
+  if (!target || !('nodeType' in target)) return null
+  const node = target as Node
+  if (node.nodeType === Node.ELEMENT_NODE) return node as Element
+  return node.parentElement
+}
+const isLegalInfoLink = (anchor: HTMLAnchorElement) => anchor.matches('[data-kc-state="imprint-link"], [data-kc-state="data-protection-link"], #kc-imprint-link, #kc-data-protection-link')
+
+export function PreviewShell() {
+  const { activeVariantId, activePageId, activeStoryId, selectedNodeId, iframeRef, setPreviewReady, selectNode } = usePreviewRuntime()
+  const { selectedThemeId } = usePresetState()
+  const { stylesCss } = useStylesCssState()
+  const colors = useQuickStartColorsState()
+  const content = useQuickStartContentState()
+  const assets = useUploadedAssetsState()
+  const { isDarkMode } = useDarkModeState()
+  const { deviceId } = usePreviewState()
+  const themeConfig = useThemeConfig()
+  const [frameLoadVersion, setFrameLoadVersion] = useState(0)
+
+  const variantPages = getVariantPages(activeVariantId)
+  const fallbackPageId = variantPages['login.html'] ? 'login.html' : Object.keys(variantPages).find(pageId => pageId.endsWith('.html') && pageId !== 'cli_splash.html') || 'login.html'
+  const effectivePageId = variantPages[activePageId] ? activePageId : fallbackPageId
+  const pageHtml = resolveScenarioHtml({ variantId: activeVariantId, pageId: effectivePageId, storyId: activeStoryId }) || variantPages[effectivePageId] || '<!doctype html><html><body></body></html>'
+  const resolvedThemeId = resolveThemeIdFromConfig(themeConfig, selectedThemeId)
+  const resolvedTheme = themeConfig.themes.find(theme => theme.id === resolvedThemeId)
+  const themeStylesPath = getThemePreviewStylesPath(resolvedThemeId)
+  const messageOverrides = usePreviewMessages({ reloadVersion: frameLoadVersion })
+  const { quickStartCss, uploadedFontsCss, uploadedImagesCss, appliedAssetsCss } = computePreviewCss({ primaryColor: colors.colorPresetPrimaryColor, secondaryColor: colors.colorPresetSecondaryColor, fontFamily: colors.colorPresetFontFamily, bgColor: colors.colorPresetBgColor, borderRadius: colors.colorPresetBorderRadius, cardShadow: colors.colorPresetCardShadow, headingFontFamily: colors.colorPresetHeadingFontFamily, showClientName: content.showClientName, showRealmName: content.showRealmName, infoMessage: content.infoMessage, imprintUrl: content.imprintUrl, dataProtectionUrl: content.dataProtectionUrl, uploadedAssets: assets.uploadedAssets, appliedAssets: assets.appliedAssets })
+  const srcDoc = sanitizePreviewHtml(pageHtml)
+  const onFrameLoad = () => {
+    if (!iframeRef.current?.contentDocument) return
+    setPreviewReady(true)
+    setFrameLoadVersion((version) => version + 1)
+  }
+
+  useEffect(() => {
+    const doc = iframeRef.current?.contentDocument
+    if (!doc) return
+    syncPreviewDocumentStyles({ doc, themeStylesPath, stylesCss, quickStartOverridesCss: quickStartCss, uploadedFontsCss, uploadedImagesCss, appliedAssetsCss, darkModeClasses: resolvedTheme?.darkModeClasses, isDarkMode })
+    applyQuickStartTemplateContent(doc, { showClientName: content.showClientName, showRealmName: content.showRealmName, infoMessage: content.infoMessage, imprintUrl: content.imprintUrl, dataProtectionUrl: content.dataProtectionUrl, noAccountMessage: messageOverrides.noAccount, doRegisterLabel: messageOverrides.doRegister })
+  }, [frameLoadVersion, themeStylesPath, stylesCss, quickStartCss, uploadedFontsCss, uploadedImagesCss, appliedAssetsCss, resolvedTheme?.darkModeClasses, isDarkMode, content.showClientName, content.showRealmName, content.infoMessage, content.imprintUrl, content.dataProtectionUrl, messageOverrides.noAccount, messageOverrides.doRegister])
+
+  useEffect(() => {
+    const doc = iframeRef.current?.contentDocument
+    if (!doc) return
+    const onClick = (event: MouseEvent) => {
+      const target = getEventElement(event.target)
+      const anchor = target?.closest('a[href]') as HTMLAnchorElement | null
+      if (anchor) {
+        const href = anchor.getAttribute('href')?.trim() || ''
+        if (isLegalInfoLink(anchor) && (href.startsWith('http://') || href.startsWith('https://'))) window.open(href, '_blank', 'noopener,noreferrer')
+        event.preventDefault()
+      }
+      const hit = target?.closest('body *') as Element | null
+      selectNode(hit ? createElementSelector(hit) : null)
+    }
+    const onSubmit = (event: Event) => event.preventDefault()
+    doc.addEventListener('click', onClick, true)
+    doc.addEventListener('submit', onSubmit, true)
+    return () => {
+      doc.removeEventListener('click', onClick, true)
+      doc.removeEventListener('submit', onSubmit, true)
+    }
+  }, [frameLoadVersion, selectNode])
+
+  useEffect(() => {
+    const doc = iframeRef.current?.contentDocument
+    if (!doc) return
+    doc.querySelectorAll('[data-preview-selected=\"true\"]').forEach(el => el.removeAttribute('data-preview-selected'))
+    const element = selectedNodeId ? doc.querySelector(selectedNodeId) : null
+    if (element) element.setAttribute('data-preview-selected', 'true')
+  }, [selectedNodeId, frameLoadVersion])
+
+  return (
+    <div className="flex-grow overflow-auto">
+      <div className="mx-auto transition-all duration-200" style={{ width: deviceWidthMap[(deviceId as keyof typeof deviceWidthMap) || 'desktop'], maxWidth: '100%' }}>
+        <iframe ref={iframeRef} onLoad={onFrameLoad} srcDoc={srcDoc} title="Keycloak Preview" className="w-full min-h-[45vh] bg-transparent sm:min-h-[52vh] md:min-h-[90vh]" sandbox="allow-forms allow-same-origin" />
+      </div>
+    </div>
+  )
+}

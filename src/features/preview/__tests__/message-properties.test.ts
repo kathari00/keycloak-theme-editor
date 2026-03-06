@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { readMessageProperty } from '../message-properties'
+import { readMessageProperty } from '../lib/message-properties'
 
 describe('readMessageProperty', () => {
   it('reads normal message properties values', () => {

@@ -170,7 +170,14 @@ function buildQuickStartCssParts(options: QuickStartCssOptions): QuickStartCssPa
 }
 /* @kte:visibility-end */
 `
-      : ''
+      : `
+/* Show realm name — override theme defaults that may hide it */
+#kc-realm-name,
+.kc-realm-name,
+.kc-horizontal-card-realm-name {
+  display: block !important;
+}
+`
   }${
     !showClientName
       ? `
@@ -184,7 +191,15 @@ function buildQuickStartCssParts(options: QuickStartCssOptions): QuickStartCssPa
 }
 /* @kte:visibility-end */
 `
-      : ''
+      : `
+/* Show client name — override theme defaults that may hide it */
+#kc-client-name,
+.kc-client-name,
+.kc-horizontal-card-client-name,
+[data-kc-client="name"] {
+  display: block !important;
+}
+`
   }${
     !showClientName && !effectiveShowRealmName
       ? `
@@ -198,7 +213,14 @@ function buildQuickStartCssParts(options: QuickStartCssOptions): QuickStartCssPa
       : ''
   }${
     hasInfoMessage
-      ? ''
+      ? `
+/* Show info message — override theme defaults that may hide it */
+#kc-info-message.kcAlertClass,
+.kc-info-message,
+[data-kc-i18n-key="infoMessage"] {
+  display: block !important;
+}
+`
       : `
 /* @kte:visibility-start:hide-info-message */
 /* Hide info message */
