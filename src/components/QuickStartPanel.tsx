@@ -1,5 +1,4 @@
 import { useThemeConfig } from '../features/presets/queries'
-import { isBuiltinTheme } from '../features/presets/types'
 import {
   AssetsPanel,
   ColorSettingsPanel,
@@ -10,7 +9,8 @@ import {
 export default function QuickStartPanel() {
   const themeConfig = useThemeConfig()
   const settings = useQuickStartSettings()
-  const isExternal = !isBuiltinTheme(settings.selectedThemeId)
+  const selectedTheme = themeConfig.themes.find(theme => theme.id === settings.selectedThemeId)
+  const isExternal = Boolean(selectedTheme?.isImported)
 
   if (isExternal) {
     return (

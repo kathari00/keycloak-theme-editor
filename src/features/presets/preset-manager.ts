@@ -1,6 +1,6 @@
-import type { BaseThemeId, ThemeConfig, ThemeId } from './types'
+import type { ThemeConfig, ThemeId } from './types'
 import { sanitizeThemeCssSourceForEditor, stripQuickStartImportLine } from '../editor/css-source-sanitizer'
-import { isBuiltinTheme, themeResourcePath } from './types'
+import { themeResourcePath } from './types'
 
 export interface ThemeCssStructured {
   quickStartDefaults: string
@@ -42,10 +42,12 @@ export async function loadThemes(): Promise<ThemeConfig> {
       for (const variantId of Object.keys(pages.variants ?? {})) {
         if (!knownIds.has(variantId)) {
           config.themes.push({
-            id: variantId as ThemeId,
+            id: variantId,
             name: variantId,
             description: 'Imported theme',
-            baseId: (isBuiltinTheme(variantId) ? variantId : 'base') as BaseThemeId,
+            baseId: 'base',
+            defaultAssets: [],
+            isImported: true,
           })
         }
       }

@@ -98,11 +98,7 @@ export function resolvePreviewVariantId(params: {
   if (normalizedThemeId && previewVariants[normalizedThemeId]) {
     return normalizedThemeId as PreviewVariantId
   }
-  // Fall back to first available variant instead of hardcoded 'v2'
   const availableVariants = Object.keys(previewVariants)
-  if (availableVariants.includes('v2')) {
-    return 'v2'
-  }
   return (availableVariants[0] ?? 'v2') as PreviewVariantId
 }
 

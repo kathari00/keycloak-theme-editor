@@ -1,8 +1,8 @@
-import type { BaseThemeId, ThemeId } from '../../presets/types'
+import type { ThemeConfig, ThemeId } from '../../presets/types'
 import type { PresetState, QuickSettings } from '../stores/types'
 import { findFirstDeclarationValue } from '../../../lib/css-ast'
 import { REMOVED_ASSET_ID } from '../../assets/types'
-import { getThemeConfigCached, getThemeCssStructuredCached, resolveThemeBaseIdFromConfig, resolveThemeIdFromConfig } from '../../presets/queries'
+import { getThemeConfigCached, getThemeCssStructuredCached, resolveThemeIdFromConfig } from '../../presets/queries'
 import { buildQuickSettingsStorageKey, getThemeStorageKey } from '../quick-settings'
 import { CUSTOM_PRESET_ID } from '../quick-start-css'
 import { assetStore } from '../stores/asset-store'
@@ -175,17 +175,30 @@ function mapQuickStartCardShadow(value: string): PresetState['colorPresetCardSha
   return 'subtle'
 }
 
-function syncDefaultBackgroundForBaseTheme(baseThemeId: BaseThemeId): void {
+function syncDefaultBackgroundForTheme(themeConfig: ThemeConfig, themeId: string): void {
+  const theme = themeConfig.themes.find(candidate => candidate.id === themeId)
+  const defaultBackgroundNames = new Set(
+    (theme?.defaultAssets || [])
+      .filter(asset => asset.category === 'background')
+      .map(asset => asset.name.toLowerCase()),
+  )
+  const hasThemeDefaultBackground = defaultBackgroundNames.size > 0
+
   const { uploadedAssets, appliedAssets } = assetStore.getState()
   const defaultBackground = uploadedAssets.find(
-    asset => asset.category === 'background' && asset.isDefault,
+    asset => asset.category === 'background'
+      && asset.isDefault
+      && defaultBackgroundNames.has(asset.name.toLowerCase()),
   )
 
   const currentBackground = appliedAssets.background
+  const currentBackgroundAsset = currentBackground
+    ? uploadedAssets.find(asset => asset.id === currentBackground)
+    : undefined
   const hasCurrentBackgroundAsset = currentBackground
     ? uploadedAssets.some(asset => asset.id === currentBackground)
     : false
-  if (baseThemeId === 'v2') {
+  if (hasThemeDefaultBackground) {
     if (!defaultBackground) {
       return
     }
@@ -202,7 +215,7 @@ function syncDefaultBackgroundForBaseTheme(baseThemeId: BaseThemeId): void {
 
   const shouldDisableBackground
     = !currentBackground
-      || (defaultBackground ? currentBackground === defaultBackground.id : false)
+      || (currentBackgroundAsset?.category === 'background' && currentBackgroundAsset.isDefault === true)
 
   if (shouldDisableBackground && currentBackground !== REMOVED_ASSET_ID) {
     assetStore.setState({
@@ -305,8 +318,8 @@ export const presetActions = {
 
   syncBackgroundForCurrentTheme: async () => {
     const themeConfig = await getThemeConfigCached()
-    const currentThemeBaseId = resolveThemeBaseIdFromConfig(themeConfig, presetStore.getState().selectedThemeId)
-    syncDefaultBackgroundForBaseTheme(currentThemeBaseId)
+    const currentThemeId = resolveThemeIdFromConfig(themeConfig, presetStore.getState().selectedThemeId)
+    syncDefaultBackgroundForTheme(themeConfig, currentThemeId)
   },
 
   applyThemeModeDefaults: (mode: QuickSettingsMode, themeCssOverride?: string) => {
@@ -458,12 +471,11 @@ export const presetActions = {
     }
 
     const themeId = resolveThemeIdFromConfig(themeConfig, value)
-    const themeBaseId = resolveThemeBaseIdFromConfig(themeConfig, themeId)
     const currentThemeKey = getThemeStorageKey(presetStore.getState().selectedThemeId)
     const quickSettingsMode = getCurrentQuickSettingsMode()
 
     presetActions.saveQuickSettingsForPreset(currentThemeKey, quickSettingsMode)
-    syncDefaultBackgroundForBaseTheme(themeBaseId)
+    syncDefaultBackgroundForTheme(themeConfig, themeId)
 
     const { quickStartDefaults, stylesCss } = await getThemeCssStructuredCached(themeId)
     if (requestVersion !== applyThemeSelectionRequestVersion) {

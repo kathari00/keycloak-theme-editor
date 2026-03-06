@@ -1,17 +1,20 @@
-export type BaseThemeId = 'base' | 'v2'
-export type ThemeId = 'base' | 'v2' | 'modern-card' | 'horizontal-card'
+import type { AssetCategory } from '../assets/types'
 
-const BUILTIN_THEME_IDS: ReadonlySet<string> = new Set<string>(['base', 'v2', 'modern-card', 'horizontal-card'])
+export type ThemeId = string
 
-export function isBuiltinTheme(themeId: string): boolean {
-  return BUILTIN_THEME_IDS.has(themeId)
+export interface ThemeDefaultAsset {
+  category: AssetCategory
+  name: string
+  path: string
 }
 
 export interface EditorTheme {
   id: ThemeId
   name: string
   description: string
-  baseId: BaseThemeId
+  defaultAssets: ThemeDefaultAsset[]
+  darkModeClasses?: string[]
+  isImported?: boolean
 }
 
 export interface ThemeConfig {

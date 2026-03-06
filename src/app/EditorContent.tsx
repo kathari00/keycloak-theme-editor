@@ -10,7 +10,8 @@ import { editorActions } from '../features/editor/actions'
 import { sanitizeThemeCssSourceForEditor, stripQuickStartImportLine } from '../features/editor/css-source-sanitizer'
 import { assetStore } from '../features/editor/stores/asset-store'
 import { useDarkModeState, usePresetState, usePreviewState } from '../features/editor/use-editor'
-import { getThemeCssStructuredCached, resolveThemeBaseIdFromConfig, resolveThemeIdFromConfig, useThemeConfig } from '../features/presets/queries'
+import { getThemeCssStructuredCached, resolveThemeIdFromConfig, useThemeConfig } from '../features/presets/queries'
+import { themeResourcePath } from '../features/presets/types'
 import { connectLiveReload, ensureGeneratedPreviewPagesLoaded, getVariantPages, resolvePreviewVariantId } from '../features/preview/load-generated'
 import { PreviewProvider } from '../features/preview/PreviewProvider'
 import { PreviewShell } from '../features/preview/PreviewShell'
@@ -102,8 +103,6 @@ export default function EditorContent() {
     const firstRegularHtmlPage = pageIds.find(pageId => pageId.endsWith('.html') && pageId !== 'cli_splash.html')
     return firstRegularHtmlPage || pageIds[0] || 'login.html'
   })()
-  const baseId = resolveThemeBaseIdFromConfig(themeConfig, selectedThemeId)
-
   useEffect(() => {
     if (!previewPagesReady) {
       return
@@ -139,32 +138,19 @@ export default function EditorContent() {
 
       // Ensure built-in background/logo show up in the asset picker (and can be applied) even without uploads.
       try {
-        const basePath = '/keycloak-dev-resources/themes/v2/login/resources'
-        const defaults = [
-          {
-            id: '__default__:background',
-            url: `${basePath}/img/keycloak-bg-darken.svg`,
-            name: 'keycloak-bg-darken.svg',
-            category: 'background' as const,
-          },
-          {
-            id: '__default__:logo',
-            url: `${basePath}/img/keycloak-logo-text.svg`,
-            name: 'keycloak-logo-text.svg',
-            category: 'logo' as const,
-          },
-        ]
+        const selectedTheme = themeConfig.themes.find(theme => theme.id === resolvedThemeId)
+        const defaults = selectedTheme?.defaultAssets || []
 
         const managedDefaultPrefix = '__default__:'
         const preservedAssets = assetStore.getState().uploadedAssets.filter(
           asset => !asset.id.startsWith(managedDefaultPrefix),
         )
-        if (baseId !== 'v2') {
+        if (defaults.length === 0) {
           editorActions.setUploadedAssets(preservedAssets)
           return
         }
 
-        const hasExistingDefaultAsset = (category: 'background' | 'logo', name: string) =>
+        const hasExistingDefaultAsset = (category: UploadedAsset['category'], name: string) =>
           preservedAssets.some(asset =>
             asset.category === category && asset.name.toLowerCase() === name.toLowerCase(),
           )
@@ -176,7 +162,7 @@ export default function EditorContent() {
             continue
           }
 
-          const res = await fetch(item.url)
+          const res = await fetch(themeResourcePath(resolvedThemeId, `resources/${item.path}`))
           if (!res.ok) {
             continue
           }
@@ -185,7 +171,7 @@ export default function EditorContent() {
           const base64Data = await blobToBase64(blob)
 
           rebuiltDefaultAssets.push({
-            id: item.id,
+            id: `${managedDefaultPrefix}${resolvedThemeId}:${item.category}:${item.name}`,
             name: item.name,
             category: item.category,
             mimeType: blob.type || 'image/svg+xml',
@@ -209,7 +195,7 @@ export default function EditorContent() {
     }
 
     void initialize()
-  }, [baseId, initialPageId, pageMap, previewPagesReady, resolvedThemeId])
+  }, [initialPageId, pageMap, previewPagesReady, resolvedThemeId, themeConfig.themes])
 
   useEffect(() => {
     const method = isDarkMode ? 'add' : 'remove'

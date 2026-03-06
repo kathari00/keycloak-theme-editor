@@ -14,10 +14,20 @@ vi.mock('../../presets/queries', async (importOriginal) => {
     ...actual,
     getThemeConfigCached: vi.fn(async () => ({
       themes: [
-        { id: 'base', baseId: 'base' },
-        { id: 'v2', baseId: 'v2' },
-        { id: 'modern-card', baseId: 'base' },
-        { id: 'horizontal-card', baseId: 'base' },
+        { id: 'base', baseId: 'base', defaultAssets: [] },
+        {
+          id: 'v2',
+          baseId: 'v2',
+          defaultAssets: [
+            {
+              category: 'background',
+              name: 'default-bg.png',
+              path: 'img/default-bg.png',
+            },
+          ],
+        },
+        { id: 'modern-card', baseId: 'base', defaultAssets: [] },
+        { id: 'horizontal-card', baseId: 'base', defaultAssets: [] },
       ],
     })),
     getThemeCssStructuredCached: vi.fn(async (themeId: string) => {
