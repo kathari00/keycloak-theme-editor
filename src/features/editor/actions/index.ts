@@ -1,11 +1,11 @@
 import { assetActions } from './asset-actions'
 import { coreActions } from './core-actions'
 import { historyActions } from './history-actions'
+import { importActions } from './import-actions'
+import { quickStartExtrasActions } from './quick-start-extras-actions'
 import { resetActions } from './reset-actions'
 import { themeActions } from './theme-actions'
-import { quickStartExtrasActions } from './quick-start-extras-actions'
 import { themeSelectionActions } from './theme-selection-actions'
-import { importActions } from './import-actions'
 
 /**
  * Assembled preset actions from split modules
@@ -31,5 +31,5 @@ export const editorActions = {
 
 export { assetActions, coreActions, historyActions, resetActions, themeActions }
 export { buildQuickSettingsStorageKey } from '../lib/quick-settings'
-export { buildModeDefaultsSnapshot } from './quick-start-extras-actions'
 export type { QuickSettingsMode } from './preset-state'
+export { buildModeDefaultsSnapshot } from './quick-start-extras-actions'

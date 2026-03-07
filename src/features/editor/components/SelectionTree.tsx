@@ -11,8 +11,8 @@ import {
   TreeViewSearch,
 } from '@patternfly/react-core'
 import { useEffect, useState } from 'react'
-import { createElementSelector } from '../../preview/lib/selector-utils'
 import { usePreviewContext } from '../../preview/hooks/use-preview-context'
+import { createElementSelector } from '../../preview/lib/selector-utils'
 
 interface SelectionTreeNode {
   selector: string

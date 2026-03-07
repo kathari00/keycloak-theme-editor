@@ -1,6 +1,6 @@
 import { JSDOM } from 'jsdom'
 import { describe, expect, it } from 'vitest'
-import { getEventElement } from '../components/PreviewShell'
+import { getEventElement } from '../lib/event-target-utils'
 
 describe('getEventElement', () => {
   it('returns a local element target directly', () => {

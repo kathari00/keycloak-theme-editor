@@ -10,12 +10,14 @@ export interface QuickStartTemplateContentOptions {
   doRegisterLabel?: string
 }
 
-const ensureText = (node: HTMLElement | null, fallback: string) => {
-  if (node && !node.textContent?.trim()) node.textContent = fallback
+function ensureText(node: HTMLElement | null, fallback: string) {
+  if (node && !node.textContent?.trim())
+    node.textContent = fallback
 }
 
 export function applyQuickStartTemplateContent(doc: Document, options: QuickStartTemplateContentOptions) {
-  if (!doc.body) return
+  if (!doc.body)
+    return
 
   ensureText(doc.querySelector<HTMLElement>('#kc-realm-name[data-kc-state="realm-name"]'), 'myrealm')
   ensureText(doc.querySelector<HTMLElement>('#kc-client-name[data-kc-state="client-name"]'), 'Client name')
@@ -37,7 +39,8 @@ export function applyQuickStartTemplateContent(doc: Document, options: QuickStar
   for (const [id, hrefKey, fallback] of legalNodes) {
     const href = options[hrefKey]
     const link = doc.querySelector<HTMLAnchorElement>(`a[data-kc-state="${id}"]`)
-    if (!link) continue
+    if (!link)
+      continue
     const normalizedHref = normalizeExternalLegalLinkUrl(href)
     link.id = `kc-${id}`
     ensureText(link, fallback)
@@ -49,10 +52,12 @@ export function applyQuickStartTemplateContent(doc: Document, options: QuickStar
 
   const anchor = doc.querySelector<HTMLAnchorElement>('#kc-registration a[href]')
   if (anchor) {
-    if (options.doRegisterLabel !== undefined) anchor.textContent = options.doRegisterLabel
+    if (options.doRegisterLabel !== undefined)
+      anchor.textContent = options.doRegisterLabel
     if (options.noAccountMessage !== undefined) {
       const textNode = [...(anchor.parentElement?.childNodes ?? [])].find(node => node.nodeType === Node.TEXT_NODE) as Text | undefined
-      if (textNode) textNode.textContent = `${options.noAccountMessage} `
+      if (textNode)
+        textNode.textContent = `${options.noAccountMessage} `
     }
   }
 }

@@ -1,5 +1,5 @@
-import type { QuickSettingsStyle } from '../../stores/types'
 import type { EditorTheme } from '../../../presets/types'
+import type { QuickSettingsStyle } from '../../stores/types'
 import type { FontOption } from './useQuickStartSettings'
 import {
   FormGroup,

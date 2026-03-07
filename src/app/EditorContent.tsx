@@ -1,6 +1,6 @@
 import type { UploadedAsset } from '../features/assets/types'
 import type { JarImportResult as ThemeImportData } from '../features/theme-export/types'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import ContextBar from '../components/ContextBar'
 import ErrorBoundary from '../components/ErrorBoundary'
 import RightSidebar from '../components/RightSidebar'
@@ -11,9 +11,9 @@ import { sanitizeThemeCssSourceForEditor } from '../features/editor/lib/css-sour
 import { assetStore } from '../features/editor/stores/asset-store'
 import { getThemeCssStructuredCached, resolveThemeIdFromConfig, useThemeConfig } from '../features/presets/queries'
 import { themeResourcePath } from '../features/presets/types'
-import { connectLiveReload, ensureGeneratedPreviewPagesLoaded, getVariantPages, resolvePreviewVariantId } from '../features/preview/load-generated'
 import { PreviewProvider } from '../features/preview/components/PreviewProvider'
 import { PreviewShell } from '../features/preview/components/PreviewShell'
+import { connectLiveReload, ensureGeneratedPreviewPagesLoaded, getVariantPages, resolvePreviewVariantId } from '../features/preview/load-generated'
 import { THEME_JAR_IMPORTED_EVENT } from '../features/theme-export/jar-import-service'
 import { useResizableSidebar } from './hooks/useResizableSidebar'
 import '@patternfly/react-core/dist/styles/base.css'
@@ -76,7 +76,10 @@ export default function EditorContent() {
 
   const resolvedThemeId = resolveThemeIdFromConfig(themeConfig, selectedThemeId)
   const variantId = resolvePreviewVariantId({ selectedThemeId: resolvedThemeId })
-  const pageMap = previewPagesReady ? getVariantPages(variantId) : {}
+  const pageMap = useMemo(
+    () => (previewPagesReady ? getVariantPages(variantId) : {}),
+    [previewPagesReady, variantId],
+  )
   const pageIds = Object.keys(pageMap)
   const initialPageId = (() => {
     if (activePageId && pageMap[activePageId]) {

@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { subscribeToScopeChanges } from './features/editor/actions/history-actions'
 import App from './app/App.tsx'
+import { subscribeToScopeChanges } from './features/editor/actions/history-actions'
 import './index.css'
 
 subscribeToScopeChanges()

@@ -1,7 +1,7 @@
 import { TreeViewSearch } from '@patternfly/react-core'
 import { useState } from 'react'
-import { usePreviewPages } from '../hooks/usePreviewEditorState'
 import { usePreviewContext } from '../hooks/use-preview-context'
+import { usePreviewPages } from '../hooks/usePreviewEditorState'
 
 export default function PageManager() {
   const { pages } = usePreviewPages()

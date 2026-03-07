@@ -1,11 +1,11 @@
 import { buildGoogleFontOptions } from '../../../assets/google-fonts'
-import { CUSTOM_PRESET_ID } from '../../lib/quick-start-css'
 import {
   usePresetState,
   useQuickStartColorsState,
   useQuickStartContentState,
   useUploadedAssetsState,
 } from '../../hooks/use-editor'
+import { CUSTOM_PRESET_ID } from '../../lib/quick-start-css'
 
 function formatFontLabelFromValue(fontValue: string): string {
   const first = fontValue.split(',')[0]?.trim() || fontValue

@@ -3,7 +3,6 @@ import type { DirectoryWriteParams, EditorCssContext, ImportedQuickSettingsByMod
 import { Button, Card, CardBody, CardTitle, FormGroup, Grid, GridItem, TextInput } from '@patternfly/react-core'
 import { useEffect, useState } from 'react'
 import { buildModeDefaultsSnapshot } from '../../editor/actions'
-import { sanitizeThemeCssSourceForEditor } from '../../editor/lib/css-source-sanitizer'
 import {
   useDarkModeState,
   usePresetExportState,
@@ -13,6 +12,7 @@ import {
   useStylesCssState,
   useUploadedAssetsState,
 } from '../../editor/hooks/use-editor'
+import { sanitizeThemeCssSourceForEditor } from '../../editor/lib/css-source-sanitizer'
 import { getThemeCssStructuredCached, resolveThemeIdFromConfig, useThemeConfig } from '../../presets/queries'
 import { getThemeQuickStartCssPath } from '../../presets/theme-paths'
 import { themeResourcePath } from '../../presets/types'

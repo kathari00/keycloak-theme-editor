@@ -1,6 +1,6 @@
 import type { AppliedAssets, UploadedAsset } from '../assets/types'
-import type { JarImportResult } from './types'
 import type { ThemeEditorMetadata } from './theme-file-assembler'
+import type { JarImportResult } from './types'
 import { processUploadedFile } from '../assets/upload-service'
 import { getFilename } from './css-export-utils'
 import { parseQuickSettingsFromImportedTheme } from './quick-settings-import'
@@ -98,10 +98,14 @@ function buildAppliedAssetsFromImported(
   const wasApplied = (role: keyof AppliedAssets) => hasMetadata && !!savedApplied[role]
   const result: AppliedAssets = {}
   for (const asset of importedAssets) {
-    if (asset.isDefault && !wasApplied(asset.category as keyof AppliedAssets)) continue
-    if (asset.category === 'background' && !result.background) result.background = asset.id
-    else if (asset.category === 'logo' && !result.logo) result.logo = asset.id
-    else if (asset.category === 'favicon' && !result.favicon) result.favicon = asset.id
+    if (asset.isDefault && !wasApplied(asset.category as keyof AppliedAssets))
+      continue
+    if (asset.category === 'background' && !result.background)
+      result.background = asset.id
+    else if (asset.category === 'logo' && !result.logo)
+      result.logo = asset.id
+    else if (asset.category === 'favicon' && !result.favicon)
+      result.favicon = asset.id
   }
   return result
 }

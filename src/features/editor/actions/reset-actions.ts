@@ -26,7 +26,6 @@ function clearPersistedEditorState() {
   storage.removeItem(HISTORY_STORE_STORAGE_KEY)
   storage.removeItem(USER_CSS_STORAGE_KEY)
   storage.removeItem(DARK_MODE_STORAGE_KEY)
-
 }
 
 export const resetActions = {

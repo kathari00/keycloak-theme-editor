@@ -1,5 +1,5 @@
-import type { PresetState } from '../stores/types'
 import type { EditorStore } from '../stores/create-editor-store'
+import type { PresetState } from '../stores/types'
 import { useStore } from 'zustand'
 import { useShallow } from 'zustand/react/shallow'
 import { assetStore } from '../stores/asset-store'

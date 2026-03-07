@@ -10,14 +10,14 @@ import {
   PanelMainBody,
 } from '@patternfly/react-core'
 import { useRef, useState } from 'react'
+import { editorActions } from '../../editor/actions'
+import { useUploadedAssetsState } from '../../editor/hooks/use-editor'
 import { getAssetDataUrl } from '../font-css-generator'
 import { REMOVED_ASSET_ID } from '../types'
 import {
   processUploadedFile,
   validateAssetFile,
 } from '../upload-service'
-import { editorActions } from '../../editor/actions'
-import { useUploadedAssetsState } from '../../editor/hooks/use-editor'
 
 const CATEGORY_CONFIG: Record<
   AssetCategory,

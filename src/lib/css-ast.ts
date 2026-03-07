@@ -1,7 +1,7 @@
-import * as csstree from 'css-tree'
 import type { CssLocation, CssNode, Rule, StyleSheet } from 'css-tree'
+import * as csstree from 'css-tree'
 
-type CssLocatable = {
+interface CssLocatable {
   loc?: CssLocation | null
 }
 

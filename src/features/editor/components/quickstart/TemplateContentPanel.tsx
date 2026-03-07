@@ -9,8 +9,8 @@ import {
   Tooltip,
 } from '@patternfly/react-core'
 import { InfoCircleIcon, LanguageIcon } from '@patternfly/react-icons'
-import { editorActions } from '../../actions'
 import { isValidExternalLegalLinkUrl } from '../../../preview/lib/legal-link-url'
+import { editorActions } from '../../actions'
 
 interface TemplateContentPanelProps {
   showClientName: boolean

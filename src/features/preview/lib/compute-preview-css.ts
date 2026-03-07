@@ -1,5 +1,5 @@
-import { generateAppliedAssetsCSS, generateFontFaceCSS, generateImageCSSVars } from '../../assets/font-css-generator'
 import type { AppliedAssets, UploadedAsset } from '../../assets/types'
+import { generateAppliedAssetsCSS, generateFontFaceCSS, generateImageCSSVars } from '../../assets/font-css-generator'
 import { buildQuickStartCss } from '../../editor/lib/quick-start-css'
 
 interface PreviewCssInput {

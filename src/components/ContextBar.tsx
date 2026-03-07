@@ -1,8 +1,8 @@
 import { Button } from '@patternfly/react-core'
 import { useEffect } from 'react'
 import { useDarkModeState } from '../features/editor/hooks/use-editor'
-import { getVariantScenarioOptions } from '../features/preview/load-generated'
 import { usePreviewContext } from '../features/preview/hooks/use-preview-context'
+import { getVariantScenarioOptions } from '../features/preview/load-generated'
 import { cx } from '../lib/cx'
 
 interface ContextBarProps {

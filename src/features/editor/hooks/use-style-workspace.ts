@@ -1,5 +1,5 @@
 import type { UndoRedoAction } from '../stores/types'
-import { useEffect, useReducer, useRef } from 'react'
+import { useCallback, useEffect, useReducer, useRef } from 'react'
 import { normalizeCss } from '../lib/style-editor-utils'
 import { userCssStore } from '../stores/user-css-store'
 
@@ -190,7 +190,7 @@ export function useStyleWorkspace({
   const sourceCss = stylesCss
   const lastSelfCommittedCssRef = useRef<string | null>(null)
 
-  const applySourceCss = (nextCss: string) => {
+  const applySourceCss = useCallback((nextCss: string) => {
     if (nextCss === sourceCss) {
       return
     }
@@ -207,7 +207,7 @@ export function useStyleWorkspace({
 
     lastSelfCommittedCssRef.current = nextCss
     setStylesCss(nextCss)
-  }
+  }, [addUndoRedoAction, setStylesCss, sourceCss])
 
   const effectiveScopedElement = hasActiveSelection ? selectedElement : null
 

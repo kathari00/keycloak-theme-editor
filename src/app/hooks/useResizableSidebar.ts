@@ -1,5 +1,5 @@
 import type { RefObject } from 'react'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 export interface UseResizableSidebarOptions {
   layoutRef: RefObject<HTMLDivElement | null>
@@ -34,15 +34,15 @@ export function useResizableSidebar(options: UseResizableSidebarOptions): UseRes
   const [sidebarWidth, setSidebarWidth] = useState(defaultWidth)
   const sidebarWidthRef = useRef(defaultWidth)
 
-  const getMaxSidebarWidth = () => {
+  const getMaxSidebarWidth = useCallback(() => {
     const layoutWidth = layoutRef.current?.getBoundingClientRect().width ?? window.innerWidth
     return Math.max(minWidth, layoutWidth - mainMinWidth)
-  }
+  }, [layoutRef, mainMinWidth, minWidth])
 
-  const setWidth = (width: number) => {
+  const setWidth = useCallback((width: number) => {
     sidebarWidthRef.current = width
     setSidebarWidth(width)
-  }
+  }, [])
 
   const handleResizeStart = (event: React.PointerEvent<HTMLDivElement>) => {
     if (!isDesktopLayout || event.button !== 0) {

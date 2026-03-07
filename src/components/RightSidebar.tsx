@@ -14,6 +14,7 @@ import SelectionTree from '../features/editor/components/SelectionTree'
 import { useDarkModeState } from '../features/editor/hooks/use-editor'
 import PageManager from '../features/preview/components/PageManager'
 import { cx } from '../lib/cx'
+
 const StylingPanel = lazy(() => import('../features/editor/components/StylingPanel'))
 
 export default function RightSidebar({
