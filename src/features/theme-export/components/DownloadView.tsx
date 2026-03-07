@@ -246,7 +246,6 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
     const editorMetadata: ThemeEditorMetadata = {
       sourceThemeId: resolvedThemeId,
       appliedAssets,
-      quickSettings: exportQuickSettingsByMode,
     }
 
     return {

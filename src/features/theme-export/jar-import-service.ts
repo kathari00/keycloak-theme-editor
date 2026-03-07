@@ -175,14 +175,12 @@ export async function importJarFile(file: File): Promise<JarImportResult> {
   const editorMetadata = parseEditorMetadata(keycloakThemesJsonText)
   const sourceThemeId = editorMetadata?.sourceThemeId
 
-  // Build quick settings: prefer metadata, fall back to CSS parsing
-  const quickSettingsByMode = editorMetadata?.quickSettings
-    ?? parseQuickSettingsFromImportedTheme({
-      quickStartCss,
-      stylesCss,
-      customCss,
-      messagesPropertiesText: messagesProperties,
-    })
+  const quickSettingsByMode = parseQuickSettingsFromImportedTheme({
+    quickStartCss,
+    stylesCss,
+    customCss,
+    messagesPropertiesText: messagesProperties,
+  })
 
   const appliedAssets = buildAppliedAssetsFromImported(importedAssets, editorMetadata?.appliedAssets)
 

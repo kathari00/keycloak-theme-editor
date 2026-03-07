@@ -1,5 +1,5 @@
 import type { AppliedAssets, UploadedAsset } from '../assets/types'
-import type { ImportedQuickSettingsByMode, ThemeExportPayload } from './types'
+import type { ThemeExportPayload } from './types'
 import { base64ToBlob } from '../assets/font-css-generator'
 
 type AssetBucketKey = 'uploadedFonts' | 'uploadedBackgrounds' | 'uploadedLogos' | 'uploadedImages'
@@ -29,7 +29,6 @@ const textEncoder = new TextEncoder()
 export interface ThemeEditorMetadata {
   sourceThemeId?: string
   appliedAssets: AppliedAssets
-  quickSettings?: ImportedQuickSettingsByMode
 }
 
 export interface AssembleThemeFilesParams {
