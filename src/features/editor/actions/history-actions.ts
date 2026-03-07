@@ -164,6 +164,7 @@ export const historyActions = {
 
       historyStore.setState(s => ({
         ...s,
+        revision: s.revision + 1,
         stacksByScope,
         ...getVisibleHistoryState({ ...s, stacksByScope }, modeScopeKey),
       }))
@@ -201,6 +202,7 @@ export const historyActions = {
 
       historyStore.setState(s => ({
         ...s,
+        revision: s.revision + 1,
         stacksByScope,
         ...getVisibleHistoryState({ ...s, stacksByScope }, modeScopeKey),
       }))

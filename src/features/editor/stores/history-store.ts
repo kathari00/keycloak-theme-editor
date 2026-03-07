@@ -14,6 +14,7 @@ const DEFAULT_HISTORY_SCOPE_KEY = buildQuickSettingsStorageKey(DEFAULT_THEME_ID,
  */
 export const historyStore = createPersistedEditorStore<HistoryState>({
   activeScopeKey: DEFAULT_HISTORY_SCOPE_KEY,
+  revision: 0,
   stacksByScope: {},
   undoStack: [],
   redoStack: [],

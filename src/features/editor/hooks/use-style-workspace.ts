@@ -45,7 +45,7 @@ function styleWorkspaceDraftReducer(
     return { ...state, editorCssDraft: action.editorCssDraft }
   }
 
-  if (action.sourceEditorCss === state.sourceEditorCss) {
+  if (action.sourceEditorCss === state.sourceEditorCss && action.sourceEditorCss === state.editorCssDraft) {
     return state
   }
 
@@ -231,21 +231,23 @@ export function useStyleWorkspace({
 
   useEffect(() => {
     const previousContext = previousContextRef.current
+    const selfCommittedCss = lastSelfCommittedCssRef.current
     const elementOrModeChanged
       = previousContext.showAllStyles !== showAllStyles
         || previousContext.scopedElement !== effectiveScopedElement
     const sourceChanged = previousContext.sourceEditorCss !== sourceEditorCss
-    const contextChanged = elementOrModeChanged || sourceChanged
+    const selfCommitWasOverridden = !elementOrModeChanged && selfCommittedCss !== null && sourceCss !== selfCommittedCss
+    const contextChanged = elementOrModeChanged || sourceChanged || selfCommitWasOverridden
 
     if (contextChanged) {
       const isSelfEdit = !elementOrModeChanged
-        && lastSelfCommittedCssRef.current !== null
-        && sourceCss === lastSelfCommittedCssRef.current
+        && selfCommittedCss !== null
+        && sourceCss === selfCommittedCss
       lastSelfCommittedCssRef.current = null
 
       if (!isSelfEdit) {
-        const hasPendingDraft
-          = normalizeCss(draftState.editorCssDraft) !== normalizeCss(previousContext.sourceEditorCss)
+        const hasPendingDraft = !selfCommitWasOverridden
+          && normalizeCss(draftState.editorCssDraft) !== normalizeCss(previousContext.sourceEditorCss)
 
         if (hasPendingDraft) {
           const nextCss = resolveCommittedCss({

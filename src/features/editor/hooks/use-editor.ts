@@ -27,6 +27,12 @@ export function useUndoRedoState() {
   }))
 }
 
+export function useHistoryRevisionState() {
+  return useHistoryStoreSlice(state => ({
+    revision: state.revision,
+  }))
+}
+
 export function useDarkModeState() {
   return useCoreStoreSlice(state => ({
     isDarkMode: state.isDarkMode,
