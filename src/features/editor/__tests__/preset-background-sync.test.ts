@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { REMOVED_ASSET_ID } from '../../assets/types'
 import { presetActions } from '../actions'
 import { buildQuickSettingsStorageKey } from '../lib/quick-settings'
 import { assetStore } from '../stores/asset-store'
@@ -22,6 +21,11 @@ vi.mock('../../presets/queries', async (importOriginal) => {
               category: 'background',
               name: 'default-bg.png',
               path: 'img/default-bg.png',
+            },
+            {
+              category: 'logo',
+              name: 'default-logo.svg',
+              path: 'img/default-logo.svg',
             },
           ],
         },
@@ -100,18 +104,41 @@ describe('preset background sync on preset selection', () => {
           createdAt: 0,
           isDefault: true,
         },
+        {
+          id: 'default-logo',
+          name: 'default-logo.svg',
+          category: 'logo',
+          mimeType: 'image/svg+xml',
+          base64Data: '',
+          size: 0,
+          createdAt: 0,
+          isDefault: true,
+        },
       ],
       appliedAssets: {
         background: 'default-bg',
+        logo: 'default-logo',
+      },
+      appliedAssetsByTheme: {
+        v2: {
+          background: 'default-bg',
+          logo: 'default-logo',
+        },
       },
     }))
+  })
+
+  it('defaults the root preset state to v2 with realm name hidden', () => {
+    expect(createDefaultPresetState().selectedThemeId).toBe('v2')
+    expect(createDefaultPresetState().showRealmName).toBe(false)
   })
 
   it('disables default background when selecting a non-v2 theme', async () => {
     await presetActions.applyThemeSelection('horizontal-card')
 
     expect(presetStore.getState().selectedThemeId).toBe('horizontal-card')
-    expect(assetStore.getState().appliedAssets.background).toBe(REMOVED_ASSET_ID)
+    expect(assetStore.getState().appliedAssets.background).toBeUndefined()
+    expect(assetStore.getState().appliedAssets.logo).toBeUndefined()
   })
 
   it('uses horizontal-card dark defaults when no saved dark settings exist', async () => {
@@ -124,7 +151,7 @@ describe('preset background sync on preset selection', () => {
     await presetActions.applyThemeSelection('horizontal-card')
 
     expect(getModePrimaryColor('horizontal-card', 'dark')).toBe('#a8c7fa')
-    expect(assetStore.getState().appliedAssets.background).toBe(REMOVED_ASSET_ID)
+    expect(assetStore.getState().appliedAssets.background).toBeUndefined()
   })
 
   it('restores shared quick-start settings from the selected theme snapshot', async () => {
@@ -171,6 +198,53 @@ describe('preset background sync on preset selection', () => {
 
     expect(presetStore.getState().selectedThemeId).toBe('v2')
     expect(assetStore.getState().appliedAssets.background).toBe('default-bg')
+    expect(assetStore.getState().appliedAssets.logo).toBe('default-logo')
+  })
+
+  it('uses v2 defaults with realm name hidden when no snapshot exists', async () => {
+    presetStore.setState(state => ({
+      ...state,
+      selectedThemeId: 'horizontal-card',
+      showRealmName: true,
+      presetQuickSettings: {},
+    }))
+
+    await presetActions.applyThemeSelection('v2')
+
+    expect(presetStore.getState().showRealmName).toBe(false)
+  })
+
+  it('restores applied logos per theme instead of leaking them globally', async () => {
+    assetStore.setState(() => ({
+      uploadedAssets: [
+        {
+          id: 'imported-logo',
+          name: 'imported-logo.svg',
+          category: 'logo',
+          mimeType: 'image/svg+xml',
+          base64Data: '',
+          size: 0,
+          createdAt: 0,
+          isDefault: false,
+        },
+      ],
+      appliedAssets: {
+        logo: 'imported-logo',
+      },
+      appliedAssetsByTheme: {
+        v2: {
+          logo: 'imported-logo',
+        },
+      },
+    }))
+
+    await presetActions.applyThemeSelection('horizontal-card')
+
+    expect(assetStore.getState().appliedAssets.logo).toBeUndefined()
+
+    await presetActions.applyThemeSelection('v2')
+
+    expect(assetStore.getState().appliedAssets.logo).toBe('imported-logo')
   })
 
   it('clears persisted default background when current theme base is non-v2', async () => {
@@ -178,6 +252,6 @@ describe('preset background sync on preset selection', () => {
 
     await presetActions.syncBackgroundForCurrentTheme()
 
-    expect(assetStore.getState().appliedAssets.background).toBe(REMOVED_ASSET_ID)
+    expect(assetStore.getState().appliedAssets.background).toBeUndefined()
   })
 })

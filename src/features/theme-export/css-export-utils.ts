@@ -13,7 +13,6 @@ import {
   normalizeGoogleFontFamily,
   toGoogleFontId,
 } from '../assets/google-fonts'
-import { REMOVED_ASSET_ID } from '../assets/types'
 import {
   BORDER_RADIUS_OPTIONS,
   buildQuickStartNonVariableCss,
@@ -46,15 +45,16 @@ export function getEffectiveAppliedAssets(
   uploadedAssets: UploadedAsset[],
 ): AppliedAssets {
   const next: AppliedAssets = { ...appliedAssets }
-  if (!next.background) {
-    const defaultBackground = uploadedAssets.find(
-      asset => asset.category === 'background' && asset.isDefault,
-    )
-    if (defaultBackground) {
-      next.background = defaultBackground.id
-    }
-    else {
-      next.background = REMOVED_ASSET_ID
+  const defaultAssetsByCategory: Array<'background' | 'logo'> = ['background', 'logo']
+
+  for (const category of defaultAssetsByCategory) {
+    if (!next[category]) {
+      const defaultAsset = uploadedAssets.find(
+        asset => asset.category === category && asset.isDefault,
+      )
+      if (defaultAsset) {
+        next[category] = defaultAsset.id
+      }
     }
   }
   return next
@@ -111,26 +111,19 @@ export function parseAppliedAssetsFromCss(
   }
 
   // Parse background
-  const bgNoneMatch = cssText.match(/--(?:keycloak|quickstart)-bg-logo-url\s*:\s*none\b/i)
-  if (bgNoneMatch) {
-    applied.background = REMOVED_ASSET_ID
-  }
-  else {
-    const bgVarMatch = cssText.match(/--(?:keycloak|quickstart)-bg-logo-url\s*:\s*url\(["']?\.\.\/img\/backgrounds\/([^"']+)["']?\)/i)
-    const bgNameRaw = bgVarMatch?.[1]
-    if (bgNameRaw) {
-      const bgName = normalizeAssetName(bgNameRaw)
-      const bgAsset = findAssetByCssReference('background', bgName)
-      if (bgAsset) {
-        applied.background = bgAsset.id
-      }
+  const bgVarMatch = cssText.match(/--(?:keycloak|quickstart)-bg-logo-url\s*:\s*url\(["']?\.\.\/img\/backgrounds\/([^"']+)["']?\)/i)
+  const bgNameRaw = bgVarMatch?.[1]
+  if (bgNameRaw) {
+    const bgAsset = findAssetByCssReference('background', normalizeAssetName(bgNameRaw))
+    if (bgAsset) {
+      applied.background = bgAsset.id
     }
   }
   if (!applied.background) {
     const bgRuleMatch = cssText.match(/background(?:-image)?\s*:\s*url\(["']?(?:\.\.\/img\/backgrounds\/)?([^"')]+)["']?\)/i)
-    const bgNameRaw = bgRuleMatch?.[1]
-    if (bgNameRaw) {
-      const bgAsset = findAssetByCssReference('background', normalizeAssetName(bgNameRaw))
+    const bgNameRaw2 = bgRuleMatch?.[1]
+    if (bgNameRaw2) {
+      const bgAsset = findAssetByCssReference('background', normalizeAssetName(bgNameRaw2))
       if (bgAsset) {
         applied.background = bgAsset.id
       }
@@ -138,19 +131,12 @@ export function parseAppliedAssetsFromCss(
   }
 
   // Parse logo
-  const logoNoneMatch = cssText.match(/--(?:keycloak|quickstart)-logo-url\s*:\s*none\b/i)
-  if (logoNoneMatch) {
-    applied.logo = REMOVED_ASSET_ID
-  }
-  else {
-    const logoVarMatch = cssText.match(/--(?:keycloak|quickstart)-logo-url\s*:\s*url\(["']?\.\.\/img\/logos\/([^"']+)["']?\)/i)
-    const logoNameRaw = logoVarMatch?.[1]
-    if (logoNameRaw) {
-      const logoName = normalizeAssetName(logoNameRaw)
-      const logoAsset = findAssetByCssReference('logo', logoName)
-      if (logoAsset) {
-        applied.logo = logoAsset.id
-      }
+  const logoVarMatch = cssText.match(/--(?:keycloak|quickstart)-logo-url\s*:\s*url\(["']?\.\.\/img\/logos\/([^"']+)["']?\)/i)
+  const logoNameRaw = logoVarMatch?.[1]
+  if (logoNameRaw) {
+    const logoAsset = findAssetByCssReference('logo', normalizeAssetName(logoNameRaw))
+    if (logoAsset) {
+      applied.logo = logoAsset.id
     }
   }
 

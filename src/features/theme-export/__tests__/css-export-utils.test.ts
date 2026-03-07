@@ -1,6 +1,5 @@
 import type { AppliedAssets, UploadedAsset } from '../../assets/types'
 import { describe, expect, it } from 'vitest'
-import { REMOVED_ASSET_ID } from '../../assets/types'
 import { buildQuickStartCss } from '../../editor/lib/quick-start-css'
 import { assembleExportPayload, buildModeAwareQuickStartCssParts, getEffectiveAppliedAssets, parseAppliedAssetsFromCss } from '../css-export-utils'
 
@@ -33,13 +32,13 @@ describe('getEffectiveAppliedAssets', () => {
     expect(result.background).toBe('default-bg')
   })
 
-  it('suppresses background when no default background exists (REMOVED_ASSET_ID)', () => {
+  it('leaves background undefined when no default background exists', () => {
     const applied: AppliedAssets = {}
     const assetsWithoutDefault: UploadedAsset[] = [
       makeAsset({ id: 'non-default-bg', isDefault: false }),
     ]
     const result = getEffectiveAppliedAssets(applied, assetsWithoutDefault)
-    expect(result.background).toBe(REMOVED_ASSET_ID)
+    expect(result.background).toBeUndefined()
   })
 
   it('preserves explicitly set background', () => {

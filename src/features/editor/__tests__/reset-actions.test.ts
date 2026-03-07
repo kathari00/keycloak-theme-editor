@@ -31,6 +31,16 @@ describe('reset actions', () => {
           isDefault: true,
         },
         {
+          id: 'default-logo',
+          name: 'default-logo.svg',
+          category: 'logo',
+          mimeType: 'image/svg+xml',
+          base64Data: '',
+          size: 0,
+          createdAt: 0,
+          isDefault: true,
+        },
+        {
           id: 'custom-bg',
           name: 'custom-bg.png',
           category: 'background',
@@ -43,6 +53,13 @@ describe('reset actions', () => {
       ],
       appliedAssets: {
         background: 'custom-bg',
+        logo: 'default-logo',
+      },
+      appliedAssetsByTheme: {
+        v2: {
+          background: 'custom-bg',
+          logo: 'default-logo',
+        },
       },
     }))
 
@@ -98,6 +115,7 @@ describe('reset actions', () => {
     expect(themeStore.getState().stylesCss).toBe(MOCK_V2_THEME_CSS)
     expect(themeStore.getState().stylesCssByTheme.v2).toBe(MOCK_V2_THEME_CSS)
     expect(assetStore.getState().appliedAssets.background).toBe('default-bg')
+    expect(assetStore.getState().appliedAssets.logo).toBe('default-logo')
   })
 
   it('keeps preview ready when reset does not change the preview document', async () => {

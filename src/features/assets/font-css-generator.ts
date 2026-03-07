@@ -1,6 +1,5 @@
 import type { AppliedAssets, UploadedAsset } from './types'
 import { getGoogleFontFamilyFromId, normalizeGoogleFontFamily } from './google-fonts'
-import { REMOVED_ASSET_ID } from './types'
 
 type AssetUrlResolver = (asset: UploadedAsset) => string
 
@@ -173,47 +172,33 @@ function generateAppliedAssetsCssWithResolver(
 
   // Background image override
   if (appliedAssets.background) {
-    if (appliedAssets.background === REMOVED_ASSET_ID) {
-      cssRules.push(`  --quickstart-bg-logo-url: none;`)
-      cssRules.push(`  --keycloak-bg-logo-url: none;`)
-      extraRules.push(`.kcLogin {\n  --quickstart-bg-logo-url: none;\n  --keycloak-bg-logo-url: none;\n}`)
-      extraRules.push(`html body .pf-v5-c-login {\n  background-image: none;\n}`)
-    }
-    else {
-      const bgAsset = uploadedAssets.find(asset => asset.id === appliedAssets.background)
-      if (bgAsset) {
-        const bgUrl = resolveAssetUrl(bgAsset)
-        cssRules.push(`  --quickstart-bg-image: url("${bgUrl}");`)
-        cssRules.push(`  --quickstart-bg-logo-url: url("${bgUrl}");`)
-        cssRules.push(`  --keycloak-bg-logo-url: url("${bgUrl}");`)
-        extraRules.push(`.kcLogin {\n  --quickstart-bg-image: url("${bgUrl}");\n  --quickstart-bg-logo-url: url("${bgUrl}");\n  --keycloak-bg-logo-url: url("${bgUrl}");\n}`)
-        extraRules.push(
-          `body:not(#\\9), html:not(#\\9) {\n  background: url("${bgUrl}") no-repeat center center fixed;\n  background-size: cover;\n}`,
-        )
-      }
+    const bgAsset = uploadedAssets.find(asset => asset.id === appliedAssets.background)
+    if (bgAsset) {
+      const bgUrl = resolveAssetUrl(bgAsset)
+      cssRules.push(`  --quickstart-bg-image: url("${bgUrl}");`)
+      cssRules.push(`  --quickstart-bg-logo-url: url("${bgUrl}");`)
+      cssRules.push(`  --keycloak-bg-logo-url: url("${bgUrl}");`)
+      extraRules.push(`.kcLogin {\n  --quickstart-bg-image: url("${bgUrl}");\n  --quickstart-bg-logo-url: url("${bgUrl}");\n  --keycloak-bg-logo-url: url("${bgUrl}");\n}`)
+      extraRules.push(
+        `body:not(#\\9), html:not(#\\9) {\n  background: url("${bgUrl}") no-repeat center center fixed;\n  background-size: cover;\n}`,
+      )
     }
   }
 
   // Logo override
   if (appliedAssets.logo) {
-    if (appliedAssets.logo === REMOVED_ASSET_ID) {
-      cssRules.push(`  --quickstart-logo-url: none;`)
-      cssRules.push(`  --keycloak-logo-url: none;`)
-    }
-    else {
-      const logoAsset = uploadedAssets.find(asset => asset.id === appliedAssets.logo)
-      if (logoAsset) {
-        const logoUrl = resolveAssetUrl(logoAsset)
-        cssRules.push(`  --quickstart-logo-url: url("${logoUrl}");`)
-        cssRules.push(`  --keycloak-logo-url: url("${logoUrl}");`)
-        cssRules.push(`  --kc-applied-logo-url: url("${logoUrl}");`)
-        extraRules.push(
-          `.kc-logo-text {\n  background-image: url("${logoUrl}");\n  background-repeat: no-repeat;\n  background-size: contain;\n  background-position: center;\n}`,
-        )
-        extraRules.push(
-          `#kc-header-wrapper::before {\n  content: \"\";\n  display: block;\n  background-image: url("${logoUrl}");\n  background-repeat: no-repeat;\n  background-size: contain;\n  background-position: center;\n  height: var(--quickstart-logo-height, 63px);\n  width: var(--quickstart-logo-width, 300px);\n  max-width: 100%;\n  margin: 0 auto;\n}`,
-        )
-      }
+    const logoAsset = uploadedAssets.find(asset => asset.id === appliedAssets.logo)
+    if (logoAsset) {
+      const logoUrl = resolveAssetUrl(logoAsset)
+      cssRules.push(`  --quickstart-logo-url: url("${logoUrl}");`)
+      cssRules.push(`  --keycloak-logo-url: url("${logoUrl}");`)
+      cssRules.push(`  --kc-applied-logo-url: url("${logoUrl}");`)
+      extraRules.push(
+        `.kc-logo-text {\n  background-image: url("${logoUrl}");\n  background-repeat: no-repeat;\n  background-size: contain;\n  background-position: center;\n}`,
+      )
+      extraRules.push(
+        `#kc-header-wrapper::before {\n  content: \"\";\n  display: block;\n  background-image: url("${logoUrl}");\n  background-repeat: no-repeat;\n  background-size: contain;\n  background-position: center;\n  height: var(--quickstart-logo-height, 63px);\n  width: var(--quickstart-logo-width, 300px);\n  max-width: 100%;\n  margin: 0 auto;\n}`,
+      )
     }
   }
 

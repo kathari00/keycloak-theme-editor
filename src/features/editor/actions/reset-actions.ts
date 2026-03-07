@@ -34,9 +34,17 @@ export const resetActions = {
 
     const defaultAssets = assetStore.getState().uploadedAssets.filter(asset => asset.isDefault)
     const defaultBackground = defaultAssets.find(asset => asset.category === 'background')
+    const defaultLogo = defaultAssets.find(asset => asset.category === 'logo')
+    const nextAppliedAssets = {
+      ...(defaultBackground ? { background: defaultBackground.id } : {}),
+      ...(defaultLogo ? { logo: defaultLogo.id } : {}),
+    }
     assetStore.setState(() => ({
       uploadedAssets: defaultAssets,
-      appliedAssets: defaultBackground ? { background: defaultBackground.id } : {},
+      appliedAssets: nextAppliedAssets,
+      appliedAssetsByTheme: {
+        [DEFAULT_THEME_ID]: nextAppliedAssets,
+      },
     }))
 
     presetStore.setState(() => createDefaultPresetState())

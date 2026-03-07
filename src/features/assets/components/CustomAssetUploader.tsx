@@ -13,7 +13,6 @@ import { useRef, useState } from 'react'
 import { editorActions } from '../../editor/actions'
 import { useUploadedAssetsState } from '../../editor/hooks/use-editor'
 import { getAssetDataUrl } from '../font-css-generator'
-import { REMOVED_ASSET_ID } from '../types'
 import {
   processUploadedFile,
   validateAssetFile,
@@ -28,11 +27,11 @@ const CATEGORY_CONFIG: Record<
     accept: '.woff,.woff2,.ttf,.otf',
   },
   background: {
-    label: 'Backgrounds',
+    label: 'Background',
     accept: '.png,.jpg,.jpeg,.svg,.webp,.gif',
   },
   logo: {
-    label: 'Logos',
+    label: 'Logo',
     accept: '.png,.jpg,.jpeg,.svg,.webp,.gif',
   },
   favicon: {
@@ -92,13 +91,6 @@ export default function CustomAssetUploader() {
     const target = getTargetForAsset(asset)
     if (!target)
       return
-    if ((asset.category === 'background' || asset.category === 'logo') && asset.isDefault) {
-      editorActions.setAppliedAssets({
-        ...appliedAssets,
-        [target]: REMOVED_ASSET_ID,
-      })
-      return
-    }
     editorActions.unapplyAsset(target)
   }
 
@@ -112,7 +104,10 @@ export default function CustomAssetUploader() {
       )
     }
     if (asset.category === 'logo') {
-      return appliedAssets.logo === asset.id
+      return Boolean(
+        appliedAssets.logo === asset.id
+        || (asset.isDefault && !appliedAssets.logo),
+      )
     }
     if (asset.category === 'favicon')
       return appliedAssets.favicon === asset.id
@@ -146,18 +141,6 @@ export default function CustomAssetUploader() {
         newlyUploaded.push(asset)
       }
 
-      const latestAsset = newlyUploaded[newlyUploaded.length - 1]
-      if (latestAsset) {
-        if (latestAsset.category === 'background') {
-          editorActions.applyAsset('background', latestAsset.id)
-        }
-        else if (latestAsset.category === 'logo') {
-          editorActions.applyAsset('logo', latestAsset.id)
-        }
-        else if (latestAsset.category === 'favicon') {
-          editorActions.applyAsset('favicon', latestAsset.id)
-        }
-      }
     }
     catch {
       setUploadError('Failed to process file')
@@ -237,12 +220,7 @@ export default function CustomAssetUploader() {
 
   const renderImageCard = (asset: UploadedAsset) => {
     const isApplied = isAssetApplied(asset)
-    const isDefaultApplied = Boolean(
-      isApplied
-      && asset.isDefault
-      && (asset.category === 'background' || asset.category === 'logo'),
-    )
-    const canApply = asset.category !== 'image'
+    const canApply = asset.category !== 'image' && asset.category !== 'background' && asset.category !== 'logo' && asset.category !== 'favicon'
     return (
       <Panel key={asset.id} variant="bordered" style={{ marginBottom: '6px' }}>
         <PanelMain>
@@ -269,12 +247,12 @@ export default function CustomAssetUploader() {
                 <Flex gap={{ default: 'gapSm' }}>
                   {canApply && (
                     <Button
-                      variant={isDefaultApplied ? 'secondary' : isApplied ? 'primary' : 'secondary'}
+                      variant={isApplied ? 'primary' : 'secondary'}
                       size="sm"
                       onClick={() =>
                         isApplied ? handleUnapply(asset) : handleApply(asset)}
                     >
-                      {isDefaultApplied ? 'Disable' : isApplied ? 'Applied' : 'Apply'}
+                      {isApplied ? 'Applied' : 'Apply'}
                     </Button>
                   )}
                   <Button
@@ -331,7 +309,7 @@ export default function CustomAssetUploader() {
                   accept={config.accept}
                   onChange={handleFileSelect(category)}
                   style={{ display: 'none' }}
-                  multiple
+                  multiple={category !== 'background' && category !== 'logo' && category !== 'favicon'}
                 />
                 <Button
                   variant="secondary"

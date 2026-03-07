@@ -1,8 +1,8 @@
-import type { AppliedAssets, UploadedAsset } from '../assets/types'
+import type { UploadedAsset } from '../assets/types'
 import type { ThemeEditorMetadata } from './theme-file-assembler'
 import type { JarImportResult } from './types'
 import { processUploadedFile } from '../assets/upload-service'
-import { getFilename } from './css-export-utils'
+import { getFilename, parseAppliedAssetsFromCss } from './css-export-utils'
 import { parseQuickSettingsFromImportedTheme } from './quick-settings-import'
 
 export const THEME_JAR_IMPORTED_EVENT = 'themeJarImported'
@@ -90,26 +90,6 @@ function parseEditorMetadata(keycloakThemesJson: string): ThemeEditorMetadata | 
   return null
 }
 
-function buildAppliedAssetsFromImported(
-  importedAssets: UploadedAsset[],
-  savedApplied: AppliedAssets | undefined,
-): AppliedAssets {
-  const hasMetadata = !!savedApplied
-  const wasApplied = (role: keyof AppliedAssets) => hasMetadata && !!savedApplied[role]
-  const result: AppliedAssets = {}
-  for (const asset of importedAssets) {
-    if (asset.isDefault && !wasApplied(asset.category as keyof AppliedAssets))
-      continue
-    if (asset.category === 'background' && !result.background)
-      result.background = asset.id
-    else if (asset.category === 'logo' && !result.logo)
-      result.logo = asset.id
-    else if (asset.category === 'favicon' && !result.favicon)
-      result.favicon = asset.id
-  }
-  return result
-}
-
 /** Parse a Keycloak theme JAR file and extract all theme data */
 export async function importJarFile(file: File): Promise<JarImportResult> {
   const { unzipSync } = await import('fflate')
@@ -182,7 +162,8 @@ export async function importJarFile(file: File): Promise<JarImportResult> {
     messagesPropertiesText: messagesProperties,
   })
 
-  const appliedAssets = buildAppliedAssetsFromImported(importedAssets, editorMetadata?.appliedAssets)
+  const allCss = joinCssBlocks([quickStartCss, stylesCss, customCss])
+  const { applied: appliedAssets } = parseAppliedAssetsFromCss(allCss, importedAssets)
 
   const editorStylesCss = joinCssBlocks([stylesCss, customCss])
 

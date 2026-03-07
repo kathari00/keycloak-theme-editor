@@ -1,5 +1,4 @@
 import type { ThemeConfig, ThemeId } from '../../presets/types'
-import { REMOVED_ASSET_ID } from '../../assets/types'
 import { getThemeConfigCached, getThemeCssStructuredCached, resolveThemeIdFromConfig } from '../../presets/queries'
 import { getThemeStorageKey } from '../lib/quick-settings'
 import { assetStore } from '../stores/asset-store'
@@ -10,46 +9,56 @@ import { quickStartExtrasActions } from './quick-start-extras-actions'
 
 let applyThemeSelectionAbortController: AbortController | null = null
 
-export function syncDefaultBackgroundForTheme(themeConfig: ThemeConfig, themeId: string): void {
+function syncDefaultAppliedAssetForTheme(
+  themeConfig: ThemeConfig,
+  themeId: string,
+  category: 'background' | 'logo',
+): void {
   const theme = themeConfig.themes.find(candidate => candidate.id === themeId)
-  const defaultBackgroundNames = new Set(
+  const defaultAssetNames = new Set(
     (theme?.defaultAssets || [])
-      .filter(asset => asset.category === 'background')
+      .filter(asset => asset.category === category)
       .map(asset => asset.name.toLowerCase()),
   )
-  const hasThemeDefaultBackground = defaultBackgroundNames.size > 0
+  const hasThemeDefaultAsset = defaultAssetNames.size > 0
 
   const { uploadedAssets, appliedAssets } = assetStore.getState()
-  const defaultBackground = uploadedAssets.find(
-    asset => asset.category === 'background'
+  const defaultAsset = uploadedAssets.find(
+    asset => asset.category === category
       && asset.isDefault
-      && defaultBackgroundNames.has(asset.name.toLowerCase()),
+      && defaultAssetNames.has(asset.name.toLowerCase()),
   )
 
-  const currentBackground = appliedAssets.background
-  const currentBackgroundAsset = currentBackground
-    ? uploadedAssets.find(asset => asset.id === currentBackground)
+  const currentAssetId = appliedAssets[category]
+  const currentAsset = currentAssetId
+    ? uploadedAssets.find(asset => asset.id === currentAssetId)
     : undefined
-  const hasCurrentBackgroundAsset = currentBackground
-    ? uploadedAssets.some(asset => asset.id === currentBackground)
+  const hasCurrentAsset = currentAssetId
+    ? uploadedAssets.some(asset => asset.id === currentAssetId)
     : false
-  if (hasThemeDefaultBackground) {
-    if (!defaultBackground) {
+  if (hasThemeDefaultAsset) {
+    if (!defaultAsset) {
       return
     }
-    if (!currentBackground || currentBackground === REMOVED_ASSET_ID || !hasCurrentBackgroundAsset) {
-      assetStore.setState({ appliedAssets: { ...appliedAssets, background: defaultBackground.id } })
+    if (!currentAssetId || !hasCurrentAsset) {
+      assetStore.setState({ appliedAssets: { ...appliedAssets, [category]: defaultAsset.id } })
     }
     return
   }
 
-  const shouldDisableBackground
-    = !currentBackground
-      || (currentBackgroundAsset?.category === 'background' && currentBackgroundAsset.isDefault === true)
+  const shouldDisableAsset
+    = !currentAssetId
+      || (currentAsset?.category === category && currentAsset.isDefault === true)
 
-  if (shouldDisableBackground && currentBackground !== REMOVED_ASSET_ID) {
-    assetStore.setState({ appliedAssets: { ...appliedAssets, background: REMOVED_ASSET_ID } })
+  if (shouldDisableAsset) {
+    const { [category]: _removed, ...rest } = appliedAssets
+    assetStore.setState({ appliedAssets: rest })
   }
+}
+
+export function syncDefaultAssetsForTheme(themeConfig: ThemeConfig, themeId: string): void {
+  syncDefaultAppliedAssetForTheme(themeConfig, themeId, 'background')
+  syncDefaultAppliedAssetForTheme(themeConfig, themeId, 'logo')
 }
 
 export const themeSelectionActions = {
@@ -74,7 +83,13 @@ export const themeSelectionActions = {
   syncBackgroundForCurrentTheme: async () => {
     const themeConfig = await getThemeConfigCached()
     const currentThemeId = resolveThemeIdFromConfig(themeConfig, presetStore.getState().selectedThemeId)
-    syncDefaultBackgroundForTheme(themeConfig, currentThemeId)
+    assetStore.setState((state) => {
+      const currentThemeAppliedAssets = state.appliedAssetsByTheme[currentThemeId]
+      return currentThemeAppliedAssets
+        ? { appliedAssets: currentThemeAppliedAssets }
+        : state
+    })
+    syncDefaultAssetsForTheme(themeConfig, currentThemeId)
   },
 
   applyThemeSelection: async (value: string) => {
@@ -92,7 +107,7 @@ export const themeSelectionActions = {
     const quickSettingsMode = getCurrentQuickSettingsMode()
 
     quickStartExtrasActions.saveQuickSettingsForPreset(currentThemeKey, quickSettingsMode)
-    syncDefaultBackgroundForTheme(themeConfig, themeId)
+    syncDefaultAssetsForTheme(themeConfig, themeId)
 
     const { quickStartDefaults, stylesCss } = await getThemeCssStructuredCached(themeId)
     if (controller.signal.aborted) {
@@ -101,9 +116,16 @@ export const themeSelectionActions = {
 
     themeStore.setState({ themeQuickStartDefaults: quickStartDefaults })
     themeSelectionActions.setThemeData(themeId, stylesCss)
+    assetStore.setState((state) => ({
+      appliedAssets: state.appliedAssetsByTheme[themeId] ?? {},
+    }))
     if (!quickStartExtrasActions.restoreQuickSettingsForPreset(themeId, quickSettingsMode, { restoreSharedValues: true })) {
       quickStartExtrasActions.applyThemeModeDefaults(quickSettingsMode, quickStartDefaults)
+      if (themeId === 'v2') {
+        quickStartExtrasActions.setQuickStartExtras({ showRealmName: false }, { recordHistory: false })
+      }
       quickStartExtrasActions.saveQuickSettingsForPreset(themeId, quickSettingsMode)
     }
+    syncDefaultAssetsForTheme(themeConfig, themeId)
   },
 }

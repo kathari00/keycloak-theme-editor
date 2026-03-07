@@ -1,7 +1,6 @@
 import type { QuickSettingsMode } from '../lib/quick-settings'
 import type { QuickSettings } from '../stores/types'
 import type { QuickStartExtrasUpdate } from './css-variable-reader'
-import { REMOVED_ASSET_ID } from '../../assets/types'
 import { COLOR_REGEX, CUSTOM_PRESET_ID } from '../lib/quick-start-css'
 import { assetStore } from '../stores/asset-store'
 import { presetStore } from '../stores/preset-store'
@@ -140,8 +139,9 @@ export const quickStartExtrasActions = {
       && COLOR_REGEX.test(presetNewValues.colorPresetBgColor),
     )
     const assetOldValues = { appliedAssets: prevAsset.appliedAssets }
+    const { background: _, ...appliedWithoutBg } = prevAsset.appliedAssets
     const assetNewValues = hasBgColor
-      ? { appliedAssets: { ...prevAsset.appliedAssets, background: REMOVED_ASSET_ID } }
+      ? { appliedAssets: appliedWithoutBg }
       : assetOldValues
     const { colorPresetBgColor: oldBgColor, ...oldPresetWithoutBg } = presetOldValues
     const { colorPresetBgColor: newBgColor, ...newPresetWithoutBg } = presetNewValues

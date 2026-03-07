@@ -3,6 +3,7 @@ import type { AppliedAssets, KeycloakPage, UploadedAsset } from '../../assets/ty
 export interface AssetState {
   uploadedAssets: UploadedAsset[]
   appliedAssets: AppliedAssets
+  appliedAssetsByTheme: Record<string, AppliedAssets>
 }
 
 export interface UndoRedoAction {
@@ -77,6 +78,7 @@ export interface CoreState {
 
 export interface HistoryState {
   activeScopeKey: string
+  revision: number
   stacksByScope: Record<string, {
     undoStack: UndoRedoAction[]
     redoStack: UndoRedoAction[]

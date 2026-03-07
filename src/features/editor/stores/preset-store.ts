@@ -16,7 +16,7 @@ export const DEFAULT_QUICK_SETTINGS_STYLE: QuickSettingsStyle = {
 
 export const DEFAULT_QUICK_START_CONTENT = {
   showClientName: false,
-  showRealmName: true,
+  showRealmName: false,
   infoMessage: '',
   imprintUrl: '',
   dataProtectionUrl: '',

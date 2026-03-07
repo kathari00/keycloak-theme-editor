@@ -15,9 +15,11 @@ import { createPersistedEditorStore } from './create-editor-store'
 export const assetStore = createPersistedEditorStore<AssetState>({
   uploadedAssets: [],
   appliedAssets: {},
+  appliedAssetsByTheme: {},
 }, {
   name: ASSET_STORE_STORAGE_KEY,
   partialize: state => ({
     appliedAssets: state.appliedAssets,
+    appliedAssetsByTheme: state.appliedAssetsByTheme,
   }),
 })

@@ -1,4 +1,4 @@
-import type { AppliedAssets, UploadedAsset } from '../assets/types'
+import type { UploadedAsset } from '../assets/types'
 import type { ThemeExportPayload } from './types'
 import { base64ToBlob } from '../assets/font-css-generator'
 
@@ -28,7 +28,6 @@ const textEncoder = new TextEncoder()
 /** Editor metadata stored in keycloak-themes.json alongside each theme entry */
 export interface ThemeEditorMetadata {
   sourceThemeId?: string
-  appliedAssets: AppliedAssets
 }
 
 export interface AssembleThemeFilesParams {

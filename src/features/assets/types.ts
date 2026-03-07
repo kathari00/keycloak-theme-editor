@@ -8,8 +8,6 @@ export interface KeycloakPage {
 // Uploaded asset types
 export type AssetCategory = 'font' | 'background' | 'logo' | 'favicon' | 'image'
 
-export const REMOVED_ASSET_ID = '__removed__'
-
 export interface UploadedAsset {
   id: string
   name: string
