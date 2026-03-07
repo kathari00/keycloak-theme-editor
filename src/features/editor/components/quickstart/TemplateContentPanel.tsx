@@ -1,10 +1,14 @@
 import {
   Button,
   Checkbox,
+  Flex,
   FormGroup,
+  Grid,
+  GridItem,
   Panel,
   PanelMain,
   PanelMainBody,
+  Stack,
   TextInput,
   Tooltip,
 } from '@patternfly/react-core'
@@ -70,28 +74,32 @@ export function TemplateContentPanel({
     <Panel>
       <PanelMain>
         <PanelMainBody>
-          <div className="flex items-center gap-2 mb-3">
-            <h4 className="mb-0">Template content</h4>
+          <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }} style={{ marginBottom: 'var(--pf-t--global--spacer--md)' }}>
+            <h4 style={{ margin: 0 }}>Template content</h4>
             <Tooltip content="Configure dynamic content shown in the login template.">
               <InfoCircleIcon style={{ color: 'var(--pf-v5-global--info-color--100)', cursor: 'help' }} />
             </Tooltip>
-          </div>
+          </Flex>
 
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <Checkbox
-                id="quick-start-realm-name"
-                label="Show realm name"
-                isChecked={showRealmName}
-                onChange={updateShowRealmName}
-              />
-              <Checkbox
-                id="quick-start-client-name"
-                label="Show client name"
-                isChecked={showClientName}
-                onChange={updateShowClientName}
-              />
-            </div>
+          <Stack hasGutter>
+            <Grid hasGutter md={6}>
+              <GridItem>
+                <Checkbox
+                  id="quick-start-realm-name"
+                  label="Show realm name"
+                  isChecked={showRealmName}
+                  onChange={updateShowRealmName}
+                />
+              </GridItem>
+              <GridItem>
+                <Checkbox
+                  id="quick-start-client-name"
+                  label="Show client name"
+                  isChecked={showClientName}
+                  onChange={updateShowClientName}
+                />
+              </GridItem>
+            </Grid>
             <FormGroup
               label="Show info message"
               labelHelp={<LocalizationHelp ariaLabel="Info message localization help" tooltipContent="To add translations use i18n key infoMessage" />}
@@ -135,7 +143,7 @@ export function TemplateContentPanel({
                 validated={dataProtectionUrlValidated}
               />
             </FormGroup>
-          </div>
+          </Stack>
         </PanelMainBody>
       </PanelMain>
     </Panel>

@@ -205,18 +205,18 @@ export default function SelectionTree() {
   }
 
   return (
-    <div className="p-2 h-full min-h-0">
+    <div style={{ height: '100%', minHeight: 0, padding: 'var(--pf-t--global--spacer--sm)' }}>
       <Panel className="selection-tree-panel">
-        <PanelMain className="h-full">
-          <PanelMainBody className="h-full">
+        <PanelMain style={{ height: '100%', minHeight: 0 }}>
+          <PanelMainBody style={{ height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
             {!previewReady && (
-              <Bullseye className="selection-tree-loading">
+              <Bullseye style={{ height: '100%', minHeight: '240px' }}>
                 <Spinner size="md" />
               </Bullseye>
             )}
 
             {previewReady && (
-              <Stack hasGutter className="h-full min-h-0">
+              <Stack hasGutter style={{ height: '100%', minHeight: 0 }}>
                 <StackItem>
                   <TreeViewSearch
                     id="selection-tree-search"
@@ -228,7 +228,7 @@ export default function SelectionTree() {
                   />
                 </StackItem>
 
-                <StackItem isFilled className="selection-tree-scroll">
+                <StackItem isFilled style={{ minHeight: 0, overflow: 'auto', paddingInlineEnd: 'var(--pf-t--global--spacer--xs)' }}>
                   {treeData.length > 0
                     ? (
                         <TreeView
@@ -241,7 +241,7 @@ export default function SelectionTree() {
                           onSelect={handleTreeSelect}
                         />
                       )
-                    : <div className="selection-tree-empty">No selectable elements found.</div>}
+                    : <div style={{ color: 'var(--pf-t--global--text--color--subtle)', fontSize: 'var(--pf-t--global--font--size--body--sm)' }}>No selectable elements found.</div>}
                 </StackItem>
               </Stack>
             )}

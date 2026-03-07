@@ -1,3 +1,4 @@
+import { Alert, Stack, StackItem } from '@patternfly/react-core'
 import { useThemeConfig } from '../../presets/queries'
 import {
   AssetsPanel,
@@ -14,7 +15,38 @@ export default function QuickStartPanel() {
 
   if (isExternal) {
     return (
-      <div className="p-2 space-y-4">
+      <Stack hasGutter style={{ padding: 'var(--pf-t--global--spacer--sm)' }}>
+        <StackItem>
+          <ColorSettingsPanel
+            themes={themeConfig.themes}
+            selectedThemeId={settings.selectedThemeId}
+            effectivePrimaryColor={settings.effectivePrimaryColor}
+            effectiveSecondaryColor={settings.effectiveSecondaryColor}
+            effectiveFontFamily={settings.effectiveFontFamily}
+            effectiveBgColor={settings.effectiveBgColor}
+            effectiveBorderRadius={settings.effectiveBorderRadius}
+            effectiveCardShadow={settings.effectiveCardShadow}
+            effectiveHeadingFontFamily={settings.effectiveHeadingFontFamily}
+            fontOptions={settings.fontOptions}
+            isExternal
+          />
+        </StackItem>
+        <StackItem>
+          <Alert
+            isInline
+            variant="info"
+            title="Quick-start settings and template content are not available for imported themes."
+          >
+            Switch to a built-in preset to use these controls.
+          </Alert>
+        </StackItem>
+      </Stack>
+    )
+  }
+
+  return (
+    <Stack hasGutter style={{ padding: 'var(--pf-t--global--spacer--sm)' }}>
+      <StackItem>
         <ColorSettingsPanel
           themes={themeConfig.themes}
           selectedThemeId={settings.selectedThemeId}
@@ -26,40 +58,22 @@ export default function QuickStartPanel() {
           effectiveCardShadow={settings.effectiveCardShadow}
           effectiveHeadingFontFamily={settings.effectiveHeadingFontFamily}
           fontOptions={settings.fontOptions}
-          isExternal
         />
-        <div style={{ padding: '1rem', opacity: 0.6, fontSize: '0.85rem', fontFamily: 'var(--pf-t--global--font--family--sans-serif)' }}>
-          Quick-start settings and template content are not available for imported themes.
-          Switch to a built-in preset to use these controls.
-        </div>
-      </div>
-    )
-  }
+      </StackItem>
 
-  return (
-    <div className="p-2 space-y-4">
-      <ColorSettingsPanel
-        themes={themeConfig.themes}
-        selectedThemeId={settings.selectedThemeId}
-        effectivePrimaryColor={settings.effectivePrimaryColor}
-        effectiveSecondaryColor={settings.effectiveSecondaryColor}
-        effectiveFontFamily={settings.effectiveFontFamily}
-        effectiveBgColor={settings.effectiveBgColor}
-        effectiveBorderRadius={settings.effectiveBorderRadius}
-        effectiveCardShadow={settings.effectiveCardShadow}
-        effectiveHeadingFontFamily={settings.effectiveHeadingFontFamily}
-        fontOptions={settings.fontOptions}
-      />
+      <StackItem>
+        <TemplateContentPanel
+          showClientName={settings.showClientName}
+          showRealmName={settings.showRealmName}
+          infoMessage={settings.infoMessage}
+          imprintUrl={settings.imprintUrl}
+          dataProtectionUrl={settings.dataProtectionUrl}
+        />
+      </StackItem>
 
-      <TemplateContentPanel
-        showClientName={settings.showClientName}
-        showRealmName={settings.showRealmName}
-        infoMessage={settings.infoMessage}
-        imprintUrl={settings.imprintUrl}
-        dataProtectionUrl={settings.dataProtectionUrl}
-      />
-
-      <AssetsPanel />
-    </div>
+      <StackItem>
+        <AssetsPanel />
+      </StackItem>
+    </Stack>
   )
 }

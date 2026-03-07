@@ -203,9 +203,9 @@ export function PreviewShell() {
   }, [frameLoadVersion, iframeRef, selectedNodeId])
 
   return (
-    <div className="flex-grow overflow-auto">
-      <div className="mx-auto transition-all duration-200" style={{ width: deviceWidthMap[(deviceId as keyof typeof deviceWidthMap) || 'desktop'], maxWidth: '100%' }}>
-        <iframe ref={iframeRef} onLoad={onFrameLoad} srcDoc={srcDoc} title="Keycloak Preview" className="w-full min-h-[45vh] bg-transparent sm:min-h-[52vh] md:min-h-[90vh]" sandbox="allow-forms allow-same-origin" />
+    <div style={{ height: '100%', overflow: 'auto' }}>
+      <div style={{ width: deviceWidthMap[(deviceId as keyof typeof deviceWidthMap) || 'desktop'], maxWidth: '100%', marginInline: 'auto', transition: 'width 200ms ease' }}>
+        <iframe ref={iframeRef} onLoad={onFrameLoad} srcDoc={srcDoc} title="Keycloak Preview" className="preview-shell__frame" style={{ width: '100%', border: 0, background: 'transparent' }} sandbox="allow-forms allow-same-origin" />
       </div>
     </div>
   )

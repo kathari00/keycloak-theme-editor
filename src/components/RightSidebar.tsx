@@ -6,7 +6,7 @@ import {
   mdiUpload,
 } from '@mdi/js'
 import Icon from '@mdi/react'
-import { Tab, Tabs, TabTitleText, Tooltip } from '@patternfly/react-core'
+import { Stack, StackItem, Tab, Tabs, TabTitleText, Tooltip } from '@patternfly/react-core'
 import { Activity, lazy, Suspense, useState } from 'react'
 import CustomAssetUploader from '../features/assets/components/CustomAssetUploader'
 import QuickStartPanel from '../features/editor/components/QuickStartPanel'
@@ -26,66 +26,68 @@ export default function RightSidebar({
   const [selectedTab, setSelectedTab] = useState(0)
 
   return (
-    <div className={cx('gjs-right-sidebar flex flex-col min-h-0', className)} style={style} {...rest}>
-      <Tabs
-        activeKey={selectedTab}
-        onSelect={(_event, key) => setSelectedTab(key as number)}
-        style={{ minHeight: '48px' }}
-      >
-        <Tab
-          eventKey={0}
-          aria-label="Quick start"
-          title={(
-            <Tooltip content="Quick start" position="bottom">
-              <TabTitleText><Icon size={1} path={mdiRocketLaunch} /></TabTitleText>
-            </Tooltip>
-          )}
-        />
-        <Tab
-          eventKey={1}
-          aria-label="Styling"
-          title={(
-            <Tooltip content="Styling" position="bottom">
-              <TabTitleText><Icon size={1} path={mdiCodeBraces} /></TabTitleText>
-            </Tooltip>
-          )}
-        />
-        <Tab
-          eventKey={2}
-          aria-label="Selection tree"
-          title={(
-            <Tooltip content="Selection tree" position="bottom">
-              <TabTitleText><Icon size={1} path={mdiFileTree} /></TabTitleText>
-            </Tooltip>
-          )}
-        />
-        <Tab
-          eventKey={3}
-          aria-label="Pages"
-          title={(
-            <Tooltip content="Pages" position="bottom">
-              <TabTitleText><Icon size={1} path={mdiFileMultiple} /></TabTitleText>
-            </Tooltip>
-          )}
-        />
-        <Tab
-          eventKey={4}
-          aria-label="Uploads"
-          title={(
-            <Tooltip content="Uploads" position="bottom">
-              <TabTitleText><Icon size={1} path={mdiUpload} /></TabTitleText>
-            </Tooltip>
-          )}
-        />
-      </Tabs>
-      <div className="overflow-y-auto flex-grow min-h-0">
+    <Stack className={cx('gjs-right-sidebar', className)} style={{ height: '100%', minHeight: 0, ...style }} {...rest}>
+      <StackItem>
+        <Tabs
+          activeKey={selectedTab}
+          onSelect={(_event, key) => setSelectedTab(key as number)}
+          style={{ minHeight: '48px' }}
+        >
+          <Tab
+            eventKey={0}
+            aria-label="Quick start"
+            title={(
+              <Tooltip content="Quick start" position="bottom">
+                <TabTitleText><Icon size={1} path={mdiRocketLaunch} /></TabTitleText>
+              </Tooltip>
+            )}
+          />
+          <Tab
+            eventKey={1}
+            aria-label="Styling"
+            title={(
+              <Tooltip content="Styling" position="bottom">
+                <TabTitleText><Icon size={1} path={mdiCodeBraces} /></TabTitleText>
+              </Tooltip>
+            )}
+          />
+          <Tab
+            eventKey={2}
+            aria-label="Selection tree"
+            title={(
+              <Tooltip content="Selection tree" position="bottom">
+                <TabTitleText><Icon size={1} path={mdiFileTree} /></TabTitleText>
+              </Tooltip>
+            )}
+          />
+          <Tab
+            eventKey={3}
+            aria-label="Pages"
+            title={(
+              <Tooltip content="Pages" position="bottom">
+                <TabTitleText><Icon size={1} path={mdiFileMultiple} /></TabTitleText>
+              </Tooltip>
+            )}
+          />
+          <Tab
+            eventKey={4}
+            aria-label="Uploads"
+            title={(
+              <Tooltip content="Uploads" position="bottom">
+                <TabTitleText><Icon size={1} path={mdiUpload} /></TabTitleText>
+              </Tooltip>
+            )}
+          />
+        </Tabs>
+      </StackItem>
+      <StackItem isFilled style={{ minHeight: 0, overflowY: 'auto' }}>
         <Activity mode={selectedTab === 0 ? 'visible' : 'hidden'} name="QuickStart">
-          <Suspense fallback={<div className="p-3 text-sm text-gray-500">Loading quick start...</div>}>
+          <Suspense fallback={<div style={{ padding: 'var(--pf-t--global--spacer--md)', color: 'var(--pf-t--global--text--color--subtle)', fontSize: 'var(--pf-t--global--font--size--body--sm)' }}>Loading quick start...</div>}>
             <QuickStartPanel key={isDarkMode ? 'quickstart-dark' : 'quickstart-light'} />
           </Suspense>
         </Activity>
         <Activity mode={selectedTab === 1 ? 'visible' : 'hidden'} name="Styling">
-          <Suspense fallback={<div className="p-3 text-sm text-gray-500">Loading styling tools...</div>}>
+          <Suspense fallback={<div style={{ padding: 'var(--pf-t--global--spacer--md)', color: 'var(--pf-t--global--text--color--subtle)', fontSize: 'var(--pf-t--global--font--size--body--sm)' }}>Loading styling tools...</div>}>
             <StylingPanel />
           </Suspense>
         </Activity>
@@ -96,11 +98,11 @@ export default function RightSidebar({
           <PageManager />
         </Activity>
         <Activity mode={selectedTab === 4 ? 'visible' : 'hidden'} name="Uploads">
-          <div className="p-2">
+          <div style={{ padding: 'var(--pf-t--global--spacer--sm)' }}>
             <CustomAssetUploader />
           </div>
         </Activity>
-      </div>
-    </div>
+      </StackItem>
+    </Stack>
   )
 }

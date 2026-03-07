@@ -1,10 +1,11 @@
+import { Flex, Stack, StackItem } from '@patternfly/react-core'
 import CodeMirror from '@uiw/react-codemirror'
 import { useState } from 'react'
 import { getAssetDataUrl, getUploadedImageCssVarName } from '../../assets/font-css-generator'
 import { usePreviewContext } from '../../preview/hooks/use-preview-context'
 import { escapeCssIdentifier } from '../../preview/lib/selector-utils'
 import { editorActions } from '../actions'
-import { useDarkModeState, useStylesCssState, useUploadedAssetsState } from '../hooks/use-editor'
+import { useDarkModeState, useHistoryRevisionState, useStylesCssState, useUploadedAssetsState } from '../hooks/use-editor'
 import { useStyleWorkspace } from '../hooks/use-style-workspace'
 import { createCssEditorExtensions } from '../lib/codemirror-config'
 
@@ -92,6 +93,7 @@ function buildPageScopedUniqueSelector(doc: Document | null, selectedNodeId: str
 
 export default function StylingPanel() {
   const { isDarkMode } = useDarkModeState()
+  const { revision } = useHistoryRevisionState()
   const { stylesCss } = useStylesCssState()
   const { uploadedAssets } = useUploadedAssetsState()
   const {
@@ -157,39 +159,46 @@ export default function StylingPanel() {
   }
 
   return (
-    <div className="h-full flex flex-col p-2">
-      <div className="flex items-center justify-between mb-2">
-        <h4 style={{ color: labelTextColor }}>Styling</h4>
-        <label className="flex items-center gap-1 text-xs cursor-pointer select-none" style={{ color: labelTextColor }}>
-          <input
-            type="checkbox"
-            checked={showAllStyles}
-            onChange={e => setShowAllStyles(e.target.checked)}
+    <Stack style={{ height: '100%', padding: 'var(--pf-t--global--spacer--sm)' }}>
+      <StackItem>
+        <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+          <h4 style={{ color: labelTextColor, margin: 0 }}>Styling</h4>
+          <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsXs' }} style={{ color: labelTextColor, fontSize: '0.75rem' }} component="label">
+            <input
+              type="checkbox"
+              checked={showAllStyles}
+              onChange={e => setShowAllStyles(e.target.checked)}
+            />
+            <span>Show all styles</span>
+          </Flex>
+        </Flex>
+      </StackItem>
+      <StackItem isFilled style={{ minHeight: 0 }}>
+        <div style={{ overflow: 'hidden', minHeight: 0, height: '100%', border: '1px solid var(--pf-t--global--border--color--default)', borderRadius: 'var(--pf-t--global--border--radius--medium)' }}>
+          <CodeMirror
+            key={revision}
+            value={editorCss}
+            onChange={setEditorCss}
+            onBlur={commitEditorCss}
+            basicSetup={{ autocompletion: false, indentOnInput: false }}
+            extensions={extensions}
+            height="100%"
+            style={{ height: '100%' }}
           />
-          Show all styles
-        </label>
-      </div>
-      <div className="flex-1 min-h-0 border border-gray-300 rounded-md overflow-hidden">
-        <CodeMirror
-          value={editorCss}
-          onChange={setEditorCss}
-          onBlur={commitEditorCss}
-          basicSetup={{ autocompletion: false, indentOnInput: false }}
-          extensions={extensions}
-          height="100%"
-          style={{ height: '100%' }}
-        />
-      </div>
+        </div>
+      </StackItem>
 
-      <span className="mt-1 text-[12px] select-none" style={{ color: labelTextColor }}>
-        Press
-        {' '}
-        <kbd className="px-1 py-0.5 border rounded text-[10px] font-mono" style={kbdStyle}>Ctrl</kbd>
-        +
-        <kbd className="px-1 py-0.5 border rounded text-[10px] font-mono" style={kbdStyle}>Space</kbd>
-        {' '}
-        for suggestions
-      </span>
-    </div>
+      <StackItem>
+        <span style={{ color: labelTextColor, userSelect: 'none', fontSize: '12px' }}>
+          Press
+          {' '}
+          <kbd style={{ ...kbdStyle, padding: '0.125rem 0.25rem', border: '1px solid', borderRadius: 'var(--pf-t--global--border--radius--small)', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace', fontSize: '10px' }}>Ctrl</kbd>
+          +
+          <kbd style={{ ...kbdStyle, padding: '0.125rem 0.25rem', border: '1px solid', borderRadius: 'var(--pf-t--global--border--radius--small)', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace', fontSize: '10px' }}>Space</kbd>
+          {' '}
+          for suggestions
+        </span>
+      </StackItem>
+    </Stack>
   )
 }

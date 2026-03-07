@@ -1,5 +1,6 @@
 import type { UploadedAsset } from '../features/assets/types'
 import type { JarImportResult as ThemeImportData } from '../features/theme-export/types'
+import { Bullseye, Flex, FlexItem, Stack, StackItem } from '@patternfly/react-core'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import ContextBar from '../components/ContextBar'
 import ErrorBoundary from '../components/ErrorBoundary'
@@ -19,16 +20,13 @@ import { useResizableSidebar } from './hooks/useResizableSidebar'
 import '@patternfly/react-core/dist/styles/base.css'
 
 const loadingSpinner = (
-  <div
-    className="flex items-center justify-center h-screen flex-col"
-    style={{ backgroundColor: 'var(--pf-t--global--background--color--primary--default)' }}
-  >
+  <Bullseye style={{ height: '100vh', backgroundColor: 'var(--pf-t--global--background--color--primary--default)' }}>
     <div className="pf-v6-c-spinner pf-m-xl" role="progressbar" aria-label="Loading...">
       <span className="pf-v6-c-spinner__clipper"></span>
       <span className="pf-v6-c-spinner__lead-ball"></span>
       <span className="pf-v6-c-spinner__tail-ball"></span>
     </div>
-  </div>
+  </Bullseye>
 )
 
 async function blobToBase64(blob: Blob): Promise<string> {
@@ -230,36 +228,58 @@ export default function EditorContent() {
       initialVariantId={variantId}
     >
       <ErrorBoundary fallbackTitle="Preview Error">
-        <div ref={layoutRef} className="flex h-full flex-col overflow-hidden lg:flex-row">
-          <div className="gjs-column-m flex min-h-0 flex-1 flex-col">
-            <ErrorBoundary fallbackTitle="Topbar Error">
-              <Topbar className="min-h-[48px] flex-shrink-0" />
-            </ErrorBoundary>
-            <ErrorBoundary fallbackTitle="Context Bar Error">
-              <ContextBar className="flex-shrink-0" />
-            </ErrorBoundary>
-            <ErrorBoundary fallbackTitle="Preview Error">
-              <PreviewShell />
-            </ErrorBoundary>
-          </div>
-          <div
-            role="separator"
-            aria-orientation="vertical"
-            aria-label="Resize right sidebar"
-            tabIndex={-1}
-            className="group relative hidden w-2 flex-shrink-0 cursor-col-resize touch-none select-none lg:block"
-            onPointerDown={handleSidebarResizeStart}
+        <div ref={layoutRef} style={{ height: '100%', overflow: 'hidden' }}>
+          <Flex
+            direction={{ default: isDesktopLayout ? 'row' : 'column' }}
+            alignItems={{ default: 'alignItemsStretch' }}
+            style={{ height: '100%', overflow: 'hidden' }}
           >
-            <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-[var(--pf-t--global--border--color--default)] transition-colors group-hover:bg-[var(--pf-t--global--color--brand--default)]" />
-          </div>
-          <ErrorBoundary fallbackTitle="Sidebar Error">
-            <div
-              className="gjs-column-r h-[40vh] min-h-[200px] w-full min-w-0 lg:h-full lg:w-auto lg:flex-shrink-0"
-              style={isDesktopLayout ? { width: `${rightSidebarWidth}px` } : undefined}
+            <FlexItem flex={{ default: 'flex_1' }} style={{ minWidth: 0, minHeight: 0 }}>
+              <Stack style={{ height: '100%', minHeight: 0 }}>
+                <StackItem>
+                  <ErrorBoundary fallbackTitle="Topbar Error">
+                    <Topbar />
+                  </ErrorBoundary>
+                </StackItem>
+                <StackItem>
+                  <ErrorBoundary fallbackTitle="Context Bar Error">
+                    <ContextBar />
+                  </ErrorBoundary>
+                </StackItem>
+                <StackItem isFilled style={{ minHeight: 0 }}>
+                  <ErrorBoundary fallbackTitle="Preview Error">
+                    <PreviewShell />
+                  </ErrorBoundary>
+                </StackItem>
+              </Stack>
+            </FlexItem>
+            {isDesktopLayout && (
+              <div
+                role="separator"
+                aria-orientation="vertical"
+                aria-label="Resize right sidebar"
+                tabIndex={-1}
+                className="editor-resize-handle"
+                onPointerDown={handleSidebarResizeStart}
+              >
+                <div className="editor-resize-handle__line" />
+              </div>
+            )}
+            <FlexItem
+              className="gjs-column-r"
+              style={{
+                width: isDesktopLayout ? `${rightSidebarWidth}px` : '100%',
+                minWidth: 0,
+                minHeight: '200px',
+                height: isDesktopLayout ? '100%' : '40vh',
+                flexShrink: 0,
+              }}
             >
-              <RightSidebar className="h-full w-full min-w-0" />
-            </div>
-          </ErrorBoundary>
+              <ErrorBoundary fallbackTitle="Sidebar Error">
+                <RightSidebar />
+              </ErrorBoundary>
+            </FlexItem>
+          </Flex>
         </div>
       </ErrorBoundary>
     </PreviewProvider>

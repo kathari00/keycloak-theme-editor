@@ -2,12 +2,16 @@ import type { EditorTheme } from '../../../presets/types'
 import type { QuickSettingsStyle } from '../../stores/types'
 import type { FontOption } from './useQuickStartSettings'
 import {
+  Flex,
   FormGroup,
   FormSelect,
   FormSelectOption,
+  Grid,
+  GridItem,
   Panel,
   PanelMain,
   PanelMainBody,
+  Stack,
   Tooltip,
 } from '@patternfly/react-core'
 import { InfoCircleIcon } from '@patternfly/react-icons'
@@ -155,14 +159,14 @@ export function ColorSettingsPanel({
     <Panel>
       <PanelMain>
         <PanelMainBody>
-          <div className="flex items-center gap-2 mb-3">
-            <h4 className="mb-0">Quick Start</h4>
+          <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }} style={{ marginBottom: 'var(--pf-t--global--spacer--md)' }}>
+            <h4 style={{ margin: 0 }}>Quick Start</h4>
             <Tooltip content="Pick a theme and customize colors to get started fast.">
               <InfoCircleIcon style={{ color: 'var(--pf-v5-global--info-color--100)', cursor: 'help' }} />
             </Tooltip>
-          </div>
+          </Flex>
 
-          <div className="grid gap-2">
+          <Stack hasGutter>
             <FormGroup label="Theme" fieldId="design-preset" style={formGroupStyle}>
               <FormSelect
                 id="design-preset"
@@ -200,22 +204,26 @@ export function ColorSettingsPanel({
                   </FormSelect>
                 </FormGroup>
 
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  <ColorPicker
-                    label="Primary color"
-                    fieldId="quick-start-primary"
-                    value={effectivePrimaryColor}
-                    onChange={updatePrimaryColor}
-                  />
+                <Grid hasGutter md={6}>
+                  <GridItem>
+                    <ColorPicker
+                      label="Primary color"
+                      fieldId="quick-start-primary"
+                      value={effectivePrimaryColor}
+                      onChange={updatePrimaryColor}
+                    />
+                  </GridItem>
 
-                  <ColorPicker
-                    label="Secondary color"
-                    fieldId="quick-start-secondary"
-                    value={effectiveSecondaryColor}
-                    onChange={updateSecondaryColor}
-                  />
+                  <GridItem>
+                    <ColorPicker
+                      label="Secondary color"
+                      fieldId="quick-start-secondary"
+                      value={effectiveSecondaryColor}
+                      onChange={updateSecondaryColor}
+                    />
+                  </GridItem>
 
-                  <div className="sm:col-span-2">
+                  <GridItem span={12}>
                     <ColorPicker
                       label="Background color"
                       fieldId="quick-start-bg"
@@ -224,71 +232,79 @@ export function ColorSettingsPanel({
                       placeholder="(preset default)"
                       showTransparentPattern
                     />
-                  </div>
+                  </GridItem>
 
-                  <FormGroup label="Border radius" fieldId="quick-start-radius" style={formGroupStyle}>
-                    <FormSelect
-                      id="quick-start-radius"
-                      value={effectiveBorderRadius}
-                      onChange={updateBorderRadius}
-                      aria-label="Select border radius"
-                    >
-                      {BORDER_RADIUS_OPTIONS.map(option => (
-                        <FormSelectOption key={option.value} value={option.value} label={option.label} />
-                      ))}
-                    </FormSelect>
-                  </FormGroup>
+                  <GridItem>
+                    <FormGroup label="Border radius" fieldId="quick-start-radius" style={formGroupStyle}>
+                      <FormSelect
+                        id="quick-start-radius"
+                        value={effectiveBorderRadius}
+                        onChange={updateBorderRadius}
+                        aria-label="Select border radius"
+                      >
+                        {BORDER_RADIUS_OPTIONS.map(option => (
+                          <FormSelectOption key={option.value} value={option.value} label={option.label} />
+                        ))}
+                      </FormSelect>
+                    </FormGroup>
+                  </GridItem>
 
-                  <FormGroup label="Card shadow" fieldId="quick-start-shadow" style={formGroupStyle}>
-                    <FormSelect
-                      id="quick-start-shadow"
-                      value={effectiveCardShadow}
-                      onChange={updateCardShadow}
-                      aria-label="Select card shadow"
-                    >
-                      {CARD_SHADOW_OPTIONS.map(option => (
-                        <FormSelectOption key={option.value} value={option.value} label={option.label} />
-                      ))}
-                    </FormSelect>
-                  </FormGroup>
+                  <GridItem>
+                    <FormGroup label="Card shadow" fieldId="quick-start-shadow" style={formGroupStyle}>
+                      <FormSelect
+                        id="quick-start-shadow"
+                        value={effectiveCardShadow}
+                        onChange={updateCardShadow}
+                        aria-label="Select card shadow"
+                      >
+                        {CARD_SHADOW_OPTIONS.map(option => (
+                          <FormSelectOption key={option.value} value={option.value} label={option.label} />
+                        ))}
+                      </FormSelect>
+                    </FormGroup>
+                  </GridItem>
 
-                  <FormGroup label="Text font" fieldId="quick-start-font" style={formGroupStyle}>
-                    <FormSelect
-                      id="quick-start-font"
-                      value={effectiveFontFamily}
-                      onChange={handleFontChange}
-                      aria-label="Select text font family"
-                    >
-                      {fontOptions.map(option => (
-                        <FormSelectOption
-                          key={option.value}
-                          value={option.value}
-                          label={option.label}
-                        />
-                      ))}
-                    </FormSelect>
-                  </FormGroup>
+                  <GridItem>
+                    <FormGroup label="Text font" fieldId="quick-start-font" style={formGroupStyle}>
+                      <FormSelect
+                        id="quick-start-font"
+                        value={effectiveFontFamily}
+                        onChange={handleFontChange}
+                        aria-label="Select text font family"
+                      >
+                        {fontOptions.map(option => (
+                          <FormSelectOption
+                            key={option.value}
+                            value={option.value}
+                            label={option.label}
+                          />
+                        ))}
+                      </FormSelect>
+                    </FormGroup>
+                  </GridItem>
 
-                  <FormGroup label="Heading font" fieldId="quick-start-heading-font" style={formGroupStyle}>
-                    <FormSelect
-                      id="quick-start-heading-font"
-                      value={effectiveHeadingFontFamily}
-                      onChange={handleHeadingFontChange}
-                      aria-label="Select heading font family"
-                    >
-                      {fontOptions.map(option => (
-                        <FormSelectOption
-                          key={option.value}
-                          value={option.value}
-                          label={option.label}
-                        />
-                      ))}
-                    </FormSelect>
-                  </FormGroup>
-                </div>
+                  <GridItem>
+                    <FormGroup label="Heading font" fieldId="quick-start-heading-font" style={formGroupStyle}>
+                      <FormSelect
+                        id="quick-start-heading-font"
+                        value={effectiveHeadingFontFamily}
+                        onChange={handleHeadingFontChange}
+                        aria-label="Select heading font family"
+                      >
+                        {fontOptions.map(option => (
+                          <FormSelectOption
+                            key={option.value}
+                            value={option.value}
+                            label={option.label}
+                          />
+                        ))}
+                      </FormSelect>
+                    </FormGroup>
+                  </GridItem>
+                </Grid>
               </>
             )}
-          </div>
+          </Stack>
         </PanelMainBody>
       </PanelMain>
     </Panel>

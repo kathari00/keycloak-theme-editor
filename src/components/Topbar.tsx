@@ -1,4 +1,4 @@
-import { Button, FormSelect, FormSelectOption } from '@patternfly/react-core'
+import { Button, Flex, FlexItem, FormSelect, FormSelectOption } from '@patternfly/react-core'
 import { ExternalLinkAltIcon, MoonIcon, SunIcon } from '@patternfly/react-icons'
 import { editorActions } from '../features/editor/actions'
 import { useDarkModeState, usePreviewState } from '../features/editor/hooks/use-editor'
@@ -11,8 +11,21 @@ export default function Topbar({
   const { isDarkMode } = useDarkModeState()
   const { deviceId } = usePreviewState()
   return (
-    <div className={cx('gjs-top-sidebar flex flex-wrap items-start justify-between gap-2 p-1', className)}>
-      <div className="flex items-center gap-2 flex-shrink-0">
+    <Flex
+      className={cx('gjs-top-sidebar', className)}
+      alignItems={{ default: 'alignItemsFlexStart' }}
+      justifyContent={{ default: 'justifyContentSpaceBetween' }}
+      flexWrap={{ default: 'wrap' }}
+      spaceItems={{ default: 'spaceItemsSm' }}
+      style={{ minHeight: '48px', padding: 'var(--pf-t--global--spacer--xs)' }}
+    >
+      <Flex
+        direction={{ default: 'row' }}
+        alignItems={{ default: 'alignItemsCenter' }}
+        flexWrap={{ default: 'nowrap' }}
+        spaceItems={{ default: 'spaceItemsSm' }}
+        style={{ minWidth: 0 }}
+      >
         <Button
           variant="secondary"
           component="a"
@@ -27,6 +40,7 @@ export default function Topbar({
           value={deviceId}
           onChange={(_event, value) => editorActions.setDeviceId(value as 'desktop' | 'tablet' | 'mobile')}
           aria-label="Select preview device"
+          style={{ width: 'auto', minWidth: '8rem' }}
         >
           <FormSelectOption value="desktop" label="Desktop" />
           <FormSelectOption value="tablet" label="Tablet" />
@@ -38,8 +52,10 @@ export default function Topbar({
           aria-label={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           icon={isDarkMode ? <SunIcon /> : <MoonIcon />}
         />
-      </div>
-      <TopbarButtons />
-    </div>
+      </Flex>
+      <FlexItem align={{ default: 'alignRight' }}>
+        <TopbarButtons />
+      </FlexItem>
+    </Flex>
   )
 }

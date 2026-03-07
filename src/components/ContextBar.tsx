@@ -1,4 +1,4 @@
-import { Button } from '@patternfly/react-core'
+import { Button, Flex, FlexItem } from '@patternfly/react-core'
 import { useEffect } from 'react'
 import { useDarkModeState } from '../features/editor/hooks/use-editor'
 import { usePreviewContext } from '../features/preview/hooks/use-preview-context'
@@ -43,22 +43,21 @@ export default function ContextBar({ className }: ContextBarProps) {
   }
 
   return (
-    <div
-      className={cx(
-        'context-bar flex items-center gap-2 px-3 py-2',
-        'bg-[var(--pf-v6-global--BackgroundColor--200)]',
-        !isDarkMode && 'border-[var(--pf-v6-global--BorderColor--100)]',
-        className,
-      )}
-      style={{ overflowX: 'auto' }}
+    <Flex
+      className={cx(className)}
+      alignItems={{ default: 'alignItemsCenter' }}
+      spaceItems={{ default: 'spaceItemsSm' }}
+      style={{
+        overflowX: 'auto',
+        padding: 'var(--pf-t--global--spacer--sm) var(--pf-t--global--spacer--md)',
+        backgroundColor: 'var(--pf-v6-global--BackgroundColor--200)',
+        borderBottom: !isDarkMode ? '1px solid var(--pf-v6-global--BorderColor--100)' : undefined,
+      }}
     >
-      <span
-        className="text-sm flex-shrink-0"
-        style={{ color: 'var(--pf-v6-global--Color--200)' }}
-      >
+      <FlexItem style={{ color: 'var(--pf-v6-global--Color--200)', fontSize: 'var(--pf-t--global--font--size--body--sm)' }}>
         States
-      </span>
-      <div className="flex items-center gap-1 flex-wrap">
+      </FlexItem>
+      <Flex flexWrap={{ default: 'wrap' }} spaceItems={{ default: 'spaceItemsXs' }}>
         {stories.map(story => (
           <Button
             key={story.id}
@@ -69,7 +68,7 @@ export default function ContextBar({ className }: ContextBarProps) {
             {story.name}
           </Button>
         ))}
-      </div>
-    </div>
+      </Flex>
+    </Flex>
   )
 }

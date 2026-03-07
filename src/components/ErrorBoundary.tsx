@@ -41,7 +41,7 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="p-4">
+        <div className="error-boundary">
           <Alert
             variant="danger"
             title={this.props.fallbackTitle || 'Something went wrong'}

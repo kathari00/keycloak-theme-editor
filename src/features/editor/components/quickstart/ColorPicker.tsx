@@ -1,4 +1,4 @@
-import { FormGroup, TextInput } from '@patternfly/react-core'
+import { Flex, FlexItem, FormGroup, TextInput } from '@patternfly/react-core'
 import { COLOR_REGEX } from '../../lib/quick-start-css'
 
 interface ColorPickerProps {
@@ -35,28 +35,45 @@ export function ColorPicker({
 
   return (
     <FormGroup label={label} fieldId={fieldId} style={formGroupStyle}>
-      <div className="flex items-center gap-2">
+      <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
         <div
-          className="w-[28px] h-[28px] rounded border border-black/20 relative overflow-hidden"
-          style={swatchStyle}
+          style={{
+            ...swatchStyle,
+            position: 'relative',
+            overflow: 'hidden',
+            width: '28px',
+            height: '28px',
+            flex: '0 0 auto',
+            border: '1px solid rgb(0 0 0 / 20%)',
+            borderRadius: 'var(--pf-t--global--border--radius--small)',
+          }}
         >
           <input
             type="color"
             value={inputColorValue}
             onChange={event => onChange(event.target.value)}
-            className="absolute inset-0 w-full h-full cursor-pointer opacity-0"
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              cursor: 'pointer',
+              opacity: 0,
+            }}
             aria-label={`Pick ${label.toLowerCase()}`}
           />
         </div>
-        <TextInput
-          id={fieldId}
-          value={value}
-          onChange={(_event, nextValue) => onChange(nextValue)}
-          placeholder={placeholder}
-          aria-label={`${label} value`}
-          validated={validated}
-        />
-      </div>
+        <FlexItem grow={{ default: 'grow' }}>
+          <TextInput
+            id={fieldId}
+            value={value}
+            onChange={(_event, nextValue) => onChange(nextValue)}
+            placeholder={placeholder}
+            aria-label={`${label} value`}
+            validated={validated}
+          />
+        </FlexItem>
+      </Flex>
     </FormGroup>
   )
 }
