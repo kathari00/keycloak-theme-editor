@@ -1,5 +1,5 @@
 import type { RefObject } from 'react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 export interface UseResizableSidebarOptions {
   layoutRef: RefObject<HTMLDivElement | null>
@@ -22,6 +22,15 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max)
 }
 
+function getMaxSidebarWidth(
+  layoutRef: RefObject<HTMLDivElement | null>,
+  minWidth: number,
+  mainMinWidth: number,
+) {
+  const layoutWidth = layoutRef.current?.getBoundingClientRect().width ?? window.innerWidth
+  return Math.max(minWidth, layoutWidth - mainMinWidth)
+}
+
 export function useResizableSidebar(options: UseResizableSidebarOptions): UseResizableSidebarResult {
   const {
     layoutRef,
@@ -34,15 +43,10 @@ export function useResizableSidebar(options: UseResizableSidebarOptions): UseRes
   const [sidebarWidth, setSidebarWidth] = useState(defaultWidth)
   const sidebarWidthRef = useRef(defaultWidth)
 
-  const getMaxSidebarWidth = useCallback(() => {
-    const layoutWidth = layoutRef.current?.getBoundingClientRect().width ?? window.innerWidth
-    return Math.max(minWidth, layoutWidth - mainMinWidth)
-  }, [layoutRef, mainMinWidth, minWidth])
-
-  const setWidth = useCallback((width: number) => {
+  const setWidth = (width: number) => {
     sidebarWidthRef.current = width
     setSidebarWidth(width)
-  }, [])
+  }
 
   const handleResizeStart = (event: React.PointerEvent<HTMLDivElement>) => {
     if (!isDesktopLayout || event.button !== 0) {
@@ -56,7 +60,7 @@ export function useResizableSidebar(options: UseResizableSidebarOptions): UseRes
 
     const startX = event.clientX
     const startWidth = sidebarWidthRef.current
-    const maxWidth = getMaxSidebarWidth()
+    const maxWidth = getMaxSidebarWidth(layoutRef, minWidth, mainMinWidth)
 
     const overlay = document.createElement('div')
     overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;cursor:col-resize'
@@ -115,14 +119,14 @@ export function useResizableSidebar(options: UseResizableSidebarOptions): UseRes
     }
 
     const clampWidth = () => {
-      const maxWidth = getMaxSidebarWidth()
+      const maxWidth = getMaxSidebarWidth(layoutRef, minWidth, mainMinWidth)
       setWidth(clamp(sidebarWidthRef.current, minWidth, maxWidth))
     }
 
     clampWidth()
     window.addEventListener('resize', clampWidth)
     return () => window.removeEventListener('resize', clampWidth)
-  }, [getMaxSidebarWidth, isDesktopLayout, minWidth, setWidth])
+  }, [isDesktopLayout, mainMinWidth, minWidth, layoutRef])
 
   return {
     isDesktopLayout,
