@@ -252,12 +252,6 @@
             <li>Different ways to customize the look and feel</li>
             <li>How to export a deployable artifact from the editor</li>
           </ul>
-          <aside class="notes">
-            <ul>
-              <li>[00:00-00:50] Keycloak is a great IAM solution but platform teams might struggle with the login theme looking like a default Keycloak login and not matching their brand.</li>
-              <li>[00:00-00:50] Set expectation: This talk will try to fix that quickly by demonstrating a WYSIWYG approach to Keycloak theme editing. This is a practical workflow and will not be a deep dive into Keycloak internals. By the end you will know how to create a branded login page.</li>
-            </ul>
-          </aside>
         </section>
 
         <!-- 2) Contents -->
@@ -271,12 +265,6 @@
             <li>Preview generation logic</li>
             <li>FAQ</li>
           </ol>
-          <aside class="notes">
-            <ul>
-              <li>[00:50-01:20] Walk through agenda quickly.</li>
-              <li>[00:50-01:20] Mention a 7-minute live demo is coming.</li>
-            </ul>
-          </aside>
         </section>
 
         <!-- 3) The login page you want -->
@@ -296,13 +284,6 @@
               </ul>
             </div>
           </div>
-          <aside class="notes">
-            <ul>
-              <li>[01:20-03:00] Describe the target outcome: branded login that matches product UX.</li>
-              <li>No freemarker -> freemarker might not be in tech stack and the more ftl you write the more you need to maintain</li>
-              <li>[01:20-03:00] Emphasize speed and low template complexity for platform teams.</li>
-            </ul>
-          </aside>
         </section>
 
               <!-- 4) Existing solutions -->
@@ -322,13 +303,6 @@
                   <p style="margin: 0; font-size: 0.85em;">Build login pages with Single Page Application Frameworks with full component-level control and type safety</p>
                 </div>
               </div>
-              <aside class="notes">
-                <ul>
-                  <li>[03:00-05:30] Compare hand editing, quick theme, and Keycloakify.</li>
-                  <li>HAnd editing great because of full control, but you dont have an overview over all pages</li>
-                  <li>[03:00-05:30] Position the editor as complementary, not a replacement.</li>
-                </ul>
-              </aside>
               </section>
 
         <!-- 5) What the editor gives you -->
@@ -343,14 +317,6 @@
             <li>Export deployable output</li>
             <li>CLI for local theme development with live reload</li>
           </ul>
-          <aside class="notes">
-            <ul>
-              <li>[05:30-07:00] Summarize core editor capabilities in one pass.</li>
-              <li>Presets move away from pf look and feel</li>
-              <li>Undo redo for safe exploration</li>
-              <li>[05:30-07:00] Transition to workflow choices before demo.</li>
-            </ul>
-          </aside>
         </section>
 
         <!-- 6) Workflow overview -->
@@ -380,12 +346,6 @@
               <p style="margin-top: auto; padding-top: 0.75rem;">Full control, no fork needed</p>
             </div>
           </div>
-          <aside class="notes">
-            <ul>
-              <li>[07:00-08:30] Contrast quick start vs CLI deep customization.</li>
-              <li>[07:00-08:30] Set up the exact path you will show in the demo.</li>
-            </ul>
-          </aside>
         </section>
 
         <!-- 7) Live demo plan -->
@@ -410,12 +370,6 @@
               <li>Export as folder and test in Keycloak</li>
             </ol>
           </div>
-          <aside class="notes">
-            <ul>
-              <li>[08:30-15:30] Live demo (7:00 total): preset, colors/fonts, logo/background, CSS tweak, export.</li>
-              <li>[08:30-15:30] If something fails, switch to prepared checkpoints and keep timing.</li>
-            </ul>
-          </aside>
         </section>
 
         <!-- 8) Architecture overview -->
@@ -448,12 +402,6 @@
               </p>
             </div>
           </div>
-          <aside class="notes">
-            <ul>
-              <li>[15:30-17:30] Explain React app + sandbox preview + local persistence.</li>
-              <li>[15:30-17:30] Reinforce that output is standard Keycloak theme artifacts.</li>
-            </ul>
-          </aside>
         </section>
         <!-- 9) Preview generation logic -->
         <section>
@@ -474,12 +422,6 @@
             </div>
           </div>
           <p style="margin-top: 1.5rem;">The CLI runs this pipeline automatically and watches for file changes</p>
-          <aside class="notes">
-            <ul>
-              <li>[17:30-19:30] Explain preview pipeline: mock context -> FTL renderer -> pages.json.</li>
-              <li>[17:30-19:30] Note that CLI automates regeneration on file changes.</li>
-            </ul>
-          </aside>
         </section>
 
         <!-- 10) Theme round-trip -->
@@ -503,12 +445,6 @@
               </ul>
             </div>
           </div>
-          <aside class="notes">
-            <ul>
-              <li>[19:30-21:30] Compare browser import/export and CLI round-trip paths.</li>
-              <li>[19:30-21:30] Call out when quick-start controls are locked.</li>
-            </ul>
-          </aside>
         </section>
 
         <!-- 11) What's next -->
@@ -528,12 +464,6 @@
               Choose your Keycloak version to ensure theme compatibility
             </li>
           </ul>
-          <aside class="notes">
-            <ul>
-              <li>[21:30-22:30] Share roadmap items briefly.</li>
-              <li>[21:30-22:30] Ask which capability would help their team most.</li>
-            </ul>
-          </aside>
         </section>
         <!-- 12) FAQ + close -->
         <section>
@@ -544,12 +474,6 @@
             <li><strong>Can I use my own FreeMarker templates?</strong> Yes, run <code>npx keycloak-theme-editor init</code>, add your FTL files, then run the CLI</li>
             <li><strong>Can our team collaborate on a theme?</strong> There is no backend server, use Git</li>
           </ul>
-          <aside class="notes">
-            <ul>
-              <li>[22:30-24:00] Answer top FAQ quickly and restate key takeaway.</li>
-              <li>[22:30-24:00] Move to QR slide for closing minute.</li>
-            </ul>
-          </aside>
         </section>
 
         <!-- 13) QR Codes slide (now last) -->
@@ -570,19 +494,12 @@
           <p style="margin-top:2.5rem; margin-bottom:0.5rem; text-align:center; font-weight:500; color:var(--kc-blue);">
             What are your pain points when theming?
           </p>
-          <aside class="notes">
-            <ul>
-              <li>[24:00-25:00] Final minute: show QR codes and take last question.</li>
-              <li>[24:00-25:00] Close on the call to action: try the editor and share feedback.</li>
-            </ul>
-          </aside>
         </section>
       </div>
     </div>
 
     <!-- Reveal.js (CDN) -->
     <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/notes/notes.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js"></script>
 
     <script>
@@ -595,8 +512,6 @@
         width: 1400,
         height: 800,
         plugins: [
-          // eslint-disable-next-line no-undef
-          RevealNotes,
           // eslint-disable-next-line no-undef
           RevealHighlight,
         ],
