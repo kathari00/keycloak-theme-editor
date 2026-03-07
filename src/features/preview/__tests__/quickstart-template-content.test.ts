@@ -63,6 +63,59 @@ describe('applyQuickStartTemplateContent', () => {
     expect(textNodes[0]?.textContent).toBe('No account ')
   })
 
+  it('moves links into footer container and removes hidden when URLs are set', () => {
+    // Simulates generated HTML where footer is hidden/empty and links are on body
+    const doc = makeDoc(`
+<!doctype html>
+<html><body>
+  <div class="kc-legal-footer" data-kc-state="legal-footer" hidden>
+  </div>
+  <div class="kc-footer-legal-links" data-kc-state="footer-legal-links">
+    <a data-kc-state="imprint-link" href="#" style="display: none;">Imprint</a>
+    <a data-kc-state="data-protection-link" href="#" style="display: none;">Data Protection</a>
+  </div>
+</body></html>
+`)
+    applyQuickStartTemplateContent(doc, {
+      showClientName: true,
+      showRealmName: true,
+      infoMessage: '',
+      imprintUrl: 'https://example.com/imprint',
+      dataProtectionUrl: 'https://example.com/privacy',
+    })
+
+    const footer = doc.querySelector('[data-kc-state="legal-footer"]')!
+    expect(footer.hasAttribute('hidden')).toBe(false)
+    const linksContainer = footer.querySelector('[data-kc-state="footer-legal-links"]')
+    expect(linksContainer).not.toBeNull()
+    expect(linksContainer!.querySelector('[data-kc-state="imprint-link"]')).not.toBeNull()
+    expect(linksContainer!.querySelector('[data-kc-state="data-protection-link"]')).not.toBeNull()
+  })
+
+  it('keeps footer hidden when no URLs are set', () => {
+    const doc = makeDoc(`
+<!doctype html>
+<html><body>
+  <div class="kc-legal-footer" data-kc-state="legal-footer" hidden>
+  </div>
+  <div class="kc-footer-legal-links" data-kc-state="footer-legal-links">
+    <a data-kc-state="imprint-link" href="#" style="display: none;">Imprint</a>
+    <a data-kc-state="data-protection-link" href="#" style="display: none;">Data Protection</a>
+  </div>
+</body></html>
+`)
+    applyQuickStartTemplateContent(doc, {
+      showClientName: true,
+      showRealmName: true,
+      infoMessage: '',
+      imprintUrl: '',
+      dataProtectionUrl: '',
+    })
+
+    const footer = doc.querySelector('[data-kc-state="legal-footer"]')!
+    expect(footer.hasAttribute('hidden')).toBe(true)
+  })
+
   it('does not call document.createElement for placeholder updates', () => {
     const doc = makeDoc(baseFixture)
     const createElementSpy = vi.spyOn(doc, 'createElement')
