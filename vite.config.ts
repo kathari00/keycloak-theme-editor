@@ -48,12 +48,12 @@ export default defineConfig({
           if (!normalizedId.includes('node_modules'))
             return
           if (
-            normalizedId.includes('/react/')
-            || normalizedId.includes('/react-dom/')
-            || normalizedId.includes('/scheduler/')
-            || normalizedId.includes('/use-sync-external-store/')
-            || normalizedId.includes('/react-is/')
-            || normalizedId.includes('/prop-types/')
+            normalizedId.includes('/node_modules/react/')
+            || normalizedId.includes('/node_modules/react-dom/')
+            || normalizedId.includes('/node_modules/scheduler/')
+            || normalizedId.includes('/node_modules/use-sync-external-store/')
+            || normalizedId.includes('/node_modules/react-is/')
+            || normalizedId.includes('/node_modules/prop-types/')
           ) {
             return 'react'
           }
