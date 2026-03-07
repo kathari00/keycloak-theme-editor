@@ -20,8 +20,10 @@ describe('getEventElement', () => {
 
   it('resolves foreign realm text nodes to their parent element', () => {
     const foreignDom = new JSDOM('<!doctype html><html><body><button id="target">Click</button></body></html>')
-    const textNode = foreignDom.window.document.getElementById('target')?.firstChild
+    const button = foreignDom.window.document.getElementById('target')
+    const textNode = button?.firstChild ?? null
 
+    expect(button).not.toBeNull()
     expect(textNode).not.toBeNull()
     expect(textNode instanceof Node).toBe(false)
     expect(getEventElement(textNode)).toBe(textNode?.parentElement ?? null)

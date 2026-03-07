@@ -140,7 +140,6 @@ export default function CustomAssetUploader() {
         editorActions.addUploadedAsset(asset)
         newlyUploaded.push(asset)
       }
-
     }
     catch {
       setUploadError('Failed to process file')

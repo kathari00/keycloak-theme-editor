@@ -1,3 +1,4 @@
+import type { AppliedAssets } from '../../assets/types'
 import type { QuickSettingsMode } from '../lib/quick-settings'
 import type { QuickSettings } from '../stores/types'
 import type { QuickStartExtrasUpdate } from './css-variable-reader'
@@ -140,9 +141,8 @@ export const quickStartExtrasActions = {
     )
     const assetOldValues = { appliedAssets: prevAsset.appliedAssets }
     const { background: _, ...appliedWithoutBg } = prevAsset.appliedAssets
-    const assetNewValues = hasBgColor
-      ? { appliedAssets: appliedWithoutBg }
-      : assetOldValues
+    const nextAppliedAssets: AppliedAssets = hasBgColor ? appliedWithoutBg : prevAsset.appliedAssets
+    const assetNewValues = { appliedAssets: nextAppliedAssets }
     const { colorPresetBgColor: oldBgColor, ...oldPresetWithoutBg } = presetOldValues
     const { colorPresetBgColor: newBgColor, ...newPresetWithoutBg } = presetNewValues
     const samePresetValues = JSON.stringify(presetOldValues) === JSON.stringify(presetNewValues)

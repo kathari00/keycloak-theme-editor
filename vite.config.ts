@@ -26,8 +26,8 @@ export default defineConfig({
           dest: 'keycloak-dev-resources/resources-common/vendor/patternfly-v5/assets',
         },
         {
-          src: 'docs/presentation/wysiwyg-a-keycloak-theme-editing-approach-presentation/**/*',
-          dest: 'docs/presentation/wysiwyg-a-keycloak-theme-editing-approach-presentation',
+          src: 'docs/presentation/introduction/**/*',
+          dest: 'docs/presentation/introduction',
         },
       ],
     }),

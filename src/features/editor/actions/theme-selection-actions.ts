@@ -116,7 +116,7 @@ export const themeSelectionActions = {
 
     themeStore.setState({ themeQuickStartDefaults: quickStartDefaults })
     themeSelectionActions.setThemeData(themeId, stylesCss)
-    assetStore.setState((state) => ({
+    assetStore.setState(state => ({
       appliedAssets: state.appliedAssetsByTheme[themeId] ?? {},
     }))
     if (!quickStartExtrasActions.restoreQuickSettingsForPreset(themeId, quickSettingsMode, { restoreSharedValues: true })) {
