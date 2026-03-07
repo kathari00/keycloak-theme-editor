@@ -1,7 +1,7 @@
 import type { UploadedAsset } from '../features/assets/types'
 import type { JarImportResult as ThemeImportData } from '../features/theme-export/types'
 import { Bullseye, Flex, FlexItem, Stack, StackItem } from '@patternfly/react-core'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import ContextBar from '../components/ContextBar'
 import ErrorBoundary from '../components/ErrorBoundary'
 import RightSidebar from '../components/RightSidebar'
@@ -74,30 +74,30 @@ export default function EditorContent() {
 
   const resolvedThemeId = resolveThemeIdFromConfig(themeConfig, selectedThemeId)
   const variantId = resolvePreviewVariantId({ selectedThemeId: resolvedThemeId })
-  const pageMap = useMemo(
-    () => (previewPagesReady ? getVariantPages(variantId) : {}),
-    [previewPagesReady, variantId],
-  )
+  const pageMap = previewPagesReady ? getVariantPages(variantId) : {}
   const pageIds = Object.keys(pageMap)
-  const initialPageId = (() => {
-    if (activePageId && pageMap[activePageId]) {
-      return activePageId
-    }
-
-    if (pageMap['login.html']) {
-      return 'login.html'
-    }
-
-    const firstRegularHtmlPage = pageIds.find(pageId => pageId.endsWith('.html') && pageId !== 'cli_splash.html')
-    return firstRegularHtmlPage || pageIds[0] || 'login.html'
-  })()
   useEffect(() => {
     if (!previewPagesReady) {
       return
     }
 
     const initialize = async () => {
-      const pages = Object.entries(pageMap).map(([id, component]) => ({
+      const currentPageMap = getVariantPages(variantId)
+      const currentPageIds = Object.keys(currentPageMap)
+      const currentInitialPageId = (() => {
+        if (activePageId && currentPageMap[activePageId]) {
+          return activePageId
+        }
+
+        if (currentPageMap['login.html']) {
+          return 'login.html'
+        }
+
+        const firstRegularHtmlPage = currentPageIds.find(pageId => pageId.endsWith('.html') && pageId !== 'cli_splash.html')
+        return firstRegularHtmlPage || currentPageIds[0] || 'login.html'
+      })()
+
+      const pages = Object.entries(currentPageMap).map(([id, component]) => ({
         id,
         name: id.replace('.html', '.ftl'),
         component,
@@ -107,7 +107,7 @@ export default function EditorContent() {
       editorActions.setPages(pages)
 
       // Reset preview state for the new page map
-      editorActions.setActivePage(initialPageId)
+      editorActions.setActivePage(currentInitialPageId)
       editorActions.setActiveStoryId('default')
       editorActions.setSelectedNodeId(null)
       editorActions.setPreviewReady(false)
@@ -183,7 +183,7 @@ export default function EditorContent() {
     }
 
     void initialize()
-  }, [initialPageId, pageMap, previewPagesReady, resolvedThemeId, themeConfig.themes])
+  }, [activePageId, previewPagesReady, resolvedThemeId, themeConfig.themes, variantId])
 
   useEffect(() => {
     const method = isDarkMode ? 'add' : 'remove'
