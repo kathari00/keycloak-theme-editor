@@ -1,4 +1,4 @@
-import type { UploadedAsset } from '../assets/types'
+import type { AppliedAssets, UploadedAsset } from '../assets/types'
 import type { JarImportResult } from './types'
 import type { ThemeEditorMetadata } from './theme-file-assembler'
 import { processUploadedFile } from '../assets/upload-service'
@@ -90,6 +90,22 @@ function parseEditorMetadata(keycloakThemesJson: string): ThemeEditorMetadata | 
   return null
 }
 
+function buildAppliedAssetsFromImported(
+  importedAssets: UploadedAsset[],
+  savedApplied: AppliedAssets | undefined,
+): AppliedAssets {
+  const hasMetadata = !!savedApplied
+  const wasApplied = (role: keyof AppliedAssets) => hasMetadata && !!savedApplied[role]
+  const result: AppliedAssets = {}
+  for (const asset of importedAssets) {
+    if (asset.isDefault && !wasApplied(asset.category as keyof AppliedAssets)) continue
+    if (asset.category === 'background' && !result.background) result.background = asset.id
+    else if (asset.category === 'logo' && !result.logo) result.logo = asset.id
+    else if (asset.category === 'favicon' && !result.favicon) result.favicon = asset.id
+  }
+  return result
+}
+
 /** Parse a Keycloak theme JAR file and extract all theme data */
 export async function importJarFile(file: File): Promise<JarImportResult> {
   const { unzipSync } = await import('fflate')
@@ -153,6 +169,7 @@ export async function importJarFile(file: File): Promise<JarImportResult> {
   }
 
   const editorMetadata = parseEditorMetadata(keycloakThemesJsonText)
+  const sourceThemeId = editorMetadata?.sourceThemeId
 
   // Build quick settings: prefer metadata, fall back to CSS parsing
   const quickSettingsByMode = editorMetadata?.quickSettings
@@ -163,16 +180,7 @@ export async function importJarFile(file: File): Promise<JarImportResult> {
       messagesPropertiesText: messagesProperties,
     })
 
-  // Build applied assets: prefer metadata, fall back to empty
-  const appliedAssets = editorMetadata?.appliedAssets
-    ? { ...editorMetadata.appliedAssets }
-    : {}
-
-  // Set favicon if present and not already in metadata
-  const faviconAsset = importedAssets.find(a => a.category === 'favicon')
-  if (faviconAsset && !appliedAssets.favicon) {
-    appliedAssets.favicon = faviconAsset.id
-  }
+  const appliedAssets = buildAppliedAssetsFromImported(importedAssets, editorMetadata?.appliedAssets)
 
   const editorStylesCss = joinCssBlocks([stylesCss, customCss])
 
@@ -180,6 +188,7 @@ export async function importJarFile(file: File): Promise<JarImportResult> {
     css: editorStylesCss,
     properties: themeProps,
     themeName,
+    sourceThemeId,
     quickSettingsByMode,
     uploadedAssets: importedAssets,
     appliedAssets,

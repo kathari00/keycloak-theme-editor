@@ -73,8 +73,6 @@ export function extractGoogleFontsFromCss(cssText: string): string[] {
 }
 
 export function buildGoogleFontsImportCSS(families: string[]): string {
-  if (!families.length)
-    return ''
   const fonts = GOOGLE_FONTS.filter(font => families.includes(font.family))
   if (!fonts.length)
     return ''

@@ -23,19 +23,15 @@ describe('generateExportAppliedCSS', () => {
     expect(css).toContain('display: block;')
     expect(css).toContain('width: var(--quickstart-logo-width, 300px);')
     expect(css).toContain('margin: 0 auto;')
-    expect(css).toContain('html.login-pf #kc-header-wrapper::before {')
-    expect(css).toContain('content: none;')
-    expect(css).toContain('display: none;')
     expect(css).not.toContain('text-indent: -9999px;')
     expect(css).not.toContain('color: transparent;')
   })
 })
 
 describe('generateAppliedAssetsCSS', () => {
-  it('does not suppress the header-wrapper logo fallback in preview css', () => {
+  it('emits header-wrapper logo override in preview css', () => {
     const css = generateAppliedAssetsCSS({ logo: 'logo-1' }, [makeLogoAsset()])
 
     expect(css).toContain('#kc-header-wrapper::before {')
-    expect(css).not.toContain('html.login-pf #kc-header-wrapper::before {')
   })
 })

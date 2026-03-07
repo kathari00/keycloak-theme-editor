@@ -50,6 +50,7 @@ export interface JarImportResult {
   css: string
   properties: string
   themeName: string
+  sourceThemeId?: string
   quickSettingsByMode?: ImportedQuickSettingsByMode
   uploadedAssets: UploadedAsset[]
   appliedAssets: AppliedAssets

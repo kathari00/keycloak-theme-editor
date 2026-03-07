@@ -198,7 +198,7 @@ export default function EditorContent() {
           return
         }
 
-        const targetThemeId = resolveThemeIdFromConfig(themeConfig, detail.themeName || selectedThemeId)
+        const targetThemeId = resolveThemeIdFromConfig(themeConfig, detail.sourceThemeId || detail.themeName || selectedThemeId)
         const targetThemeStorageKey = targetThemeId
         const themeCssStructured = await getThemeCssStructuredCached(targetThemeId).catch(() => ({ quickStartDefaults: '', stylesCss: '' }))
         editorActions.setThemeQuickStartDefaults(themeCssStructured.quickStartDefaults)

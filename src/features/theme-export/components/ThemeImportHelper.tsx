@@ -1,4 +1,4 @@
-import { Button, Form, FormGroup } from '@patternfly/react-core'
+import { Button, FileUpload, Form, FormGroup } from '@patternfly/react-core'
 import { useState } from 'react'
 import { importJarFile, THEME_JAR_IMPORTED_EVENT } from '../jar-import-service'
 
@@ -9,12 +9,19 @@ interface ImportStatus {
 
 export default function ThemeImportHelper() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [filename, setFilename] = useState('')
   const [status, setStatus] = useState<ImportStatus>({ tone: 'idle', message: '' })
   const [isImporting, setIsImporting] = useState(false)
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0] || null
+  const handleFileInputChange = (_event: unknown, file: File) => {
     setSelectedFile(file)
+    setFilename(file.name)
+    setStatus({ tone: 'idle', message: '' })
+  }
+
+  const handleClear = () => {
+    setSelectedFile(null)
+    setFilename('')
     setStatus({ tone: 'idle', message: '' })
   }
 
@@ -44,32 +51,28 @@ export default function ThemeImportHelper() {
   }
 
   const statusColor = status.tone === 'error'
-    ? 'text-red-600'
+    ? 'var(--pf-t--global--color--status--danger--default)'
     : status.tone === 'success'
-      ? 'text-green-600'
-      : 'text-gray-600'
+      ? 'var(--pf-t--global--color--status--success--default)'
+      : undefined
 
   return (
-    <Form className="space-y-4">
+    <Form>
       <FormGroup label="Select JAR file" fieldId="jar-file-input">
-        <input
-          type="file"
+        <FileUpload
           id="jar-file-input"
-          accept=".jar"
-          onChange={handleFileSelect}
+          filename={filename}
+          filenamePlaceholder="Drag and drop a .jar file or browse to upload"
+          browseButtonText="Browse"
+          clearButtonText="Clear"
+          onFileInputChange={handleFileInputChange}
+          onClearClick={handleClear}
+          dropzoneProps={{ accept: { 'application/java-archive': ['.jar'] }, maxSize: undefined }}
         />
       </FormGroup>
 
-      {selectedFile && (
-        <div className="text-sm text-gray-600">
-          Selected:
-          {' '}
-          {selectedFile.name}
-        </div>
-      )}
-
       {status.message && (
-        <div className={`text-sm ${statusColor}`}>
+        <div style={{ color: statusColor }}>
           {status.message}
         </div>
       )}
@@ -77,7 +80,7 @@ export default function ThemeImportHelper() {
       <Button
         variant="primary"
         onClick={handleImport}
-        isDisabled={!selectedFile || isImporting}
+        isDisabled={isImporting}
       >
         {isImporting ? 'Importing...' : 'Import JAR Theme'}
       </Button>

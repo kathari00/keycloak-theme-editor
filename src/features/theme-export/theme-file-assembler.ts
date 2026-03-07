@@ -27,6 +27,7 @@ const textEncoder = new TextEncoder()
 
 /** Editor metadata stored in keycloak-themes.json alongside each theme entry */
 export interface ThemeEditorMetadata {
+  sourceThemeId?: string
   appliedAssets: AppliedAssets
   quickSettings?: ImportedQuickSettingsByMode
 }

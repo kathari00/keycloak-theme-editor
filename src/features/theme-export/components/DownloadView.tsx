@@ -244,6 +244,7 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
     const topLevelImportsCss = mergeCssImports(payloadCssParts.imports)
 
     const editorMetadata: ThemeEditorMetadata = {
+      sourceThemeId: resolvedThemeId,
       appliedAssets,
       quickSettings: exportQuickSettingsByMode,
     }

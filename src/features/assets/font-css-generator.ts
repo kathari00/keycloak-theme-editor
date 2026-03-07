@@ -167,7 +167,6 @@ function generateAppliedAssetsCssWithResolver(
   appliedAssets: AppliedAssets,
   uploadedAssets: UploadedAsset[],
   resolveAssetUrl: AssetUrlResolver,
-  options?: { suppressV2HeaderWrapperLogo?: boolean },
 ): string {
   const cssRules: string[] = []
   const extraRules: string[] = []
@@ -214,11 +213,6 @@ function generateAppliedAssetsCssWithResolver(
         extraRules.push(
           `#kc-header-wrapper::before {\n  content: \"\";\n  display: block;\n  background-image: url("${logoUrl}");\n  background-repeat: no-repeat;\n  background-size: contain;\n  background-position: center;\n  height: var(--quickstart-logo-height, 63px);\n  width: var(--quickstart-logo-width, 300px);\n  max-width: 100%;\n  margin: 0 auto;\n}`,
         )
-        if (options?.suppressV2HeaderWrapperLogo) {
-          extraRules.push(
-            `html.login-pf #kc-header-wrapper::before {\n  content: none;\n  display: none;\n}`,
-          )
-        }
       }
     }
   }
@@ -259,7 +253,5 @@ export function generateExportAppliedCSS(
   appliedAssets: AppliedAssets,
   uploadedAssets: UploadedAsset[],
 ): string {
-  return generateAppliedAssetsCssWithResolver(appliedAssets, uploadedAssets, resolveExportImageUrl, {
-    suppressV2HeaderWrapperLogo: true,
-  })
+  return generateAppliedAssetsCssWithResolver(appliedAssets, uploadedAssets, resolveExportImageUrl)
 }
