@@ -4,7 +4,7 @@ export default defineConfig({
   entry: ['bin/cli.ts'],
   format: 'esm',
   outDir: 'bin',
-  target: 'node18',
+  target: 'node24',
   clean: false,
   splitting: false,
   external: ['keycloakify'],
