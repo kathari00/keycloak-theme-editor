@@ -1,7 +1,7 @@
 {
   "name": "keycloak-theme-editor",
   "type": "module",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Visual theme editor for Keycloak login pages. Style, preview, and export Keycloak themes without cloning or forking.",
   "license": "Apache-2.0",
   "keywords": [
@@ -23,8 +23,6 @@
     "bin/cli.js",
     "bin/kc-mocks.js",
     "dist/",
-    "public/keycloak-dev-resources/",
-    "public/keycloak-upstream/",
     "tools/generate-preview.ts",
     "tools/preview-renderer/lib/",
     "tools/preview-renderer/preview-renderer.jar"

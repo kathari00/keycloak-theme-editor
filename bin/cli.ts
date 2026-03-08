@@ -380,11 +380,10 @@ function startServer(opts: {
   port: number
   distDir: string
   pagesJsonPath: string
-  publicDir: string
   exportDir: string
   userThemeMappings?: Array<{ urlPrefix: string, localDir: string }>
 }) {
-  const { port, distDir, pagesJsonPath, publicDir, exportDir, userThemeMappings } = opts
+  const { port, distDir, pagesJsonPath, exportDir, userThemeMappings } = opts
 
   const server = createServer((req, res) => {
     const url = req.url ?? '/'
@@ -471,9 +470,9 @@ function startServer(opts: {
       }
     }
 
-    // Serve public/ assets (keycloak-upstream, keycloak-dev-resources)
+    // Serve keycloak static assets from dist/ (Vite copies public/ there at build time)
     if (requestPath.startsWith('/keycloak-upstream/') || requestPath.startsWith('/keycloak-dev-resources/')) {
-      if (!serveStaticPath(res, publicDir, requestPath)) {
+      if (!serveStaticPath(res, distDir, requestPath)) {
         res.writeHead(404)
         res.end('Not found')
       }
@@ -644,8 +643,6 @@ async function startEditor(opts: { pages?: string, port: string, open: boolean }
   // Resolve paths
   const jarPath = path.join(PACKAGE_ROOT, 'tools', 'preview-renderer', 'preview-renderer.jar')
   const distDir = path.join(PACKAGE_ROOT, 'dist')
-  const publicDir = path.join(PACKAGE_ROOT, 'public')
-
   // Output pages.json to a temp location (not inside src/)
   const outputDir = fs.mkdtempSync(path.join(import.meta.dirname, '.preview-'))
   const pagesJsonPath = path.join(outputDir, 'pages.json')
@@ -711,7 +708,7 @@ async function startEditor(opts: { pages?: string, port: string, open: boolean }
     : process.cwd()
 
   // Start HTTP server
-  startServer({ port, distDir, pagesJsonPath, publicDir, exportDir, userThemeMappings })
+  startServer({ port, distDir, pagesJsonPath, exportDir, userThemeMappings })
 
   // Start file watcher if user has a pages dir
   if (userPagesDir) {
