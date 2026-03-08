@@ -8,6 +8,7 @@ export default defineConfig([
     target: 'node24',
     clean: false,
     splitting: false,
+    noExternal: ['keycloakify'],
     banner: { js: '#!/usr/bin/env node' },
   },
   {
@@ -16,5 +17,6 @@ export default defineConfig([
     outDir: 'bin',
     target: 'node24',
     clean: false,
+    noExternal: ['keycloakify'],
   },
 ])
