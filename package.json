@@ -1,7 +1,7 @@
 {
   "name": "keycloak-theme-editor",
   "type": "module",
-  "version": "0.1.21",
+  "version": "0.1.22",
   "description": "Visual theme editor for Keycloak login pages. Style, preview, and export Keycloak themes without cloning or forking.",
   "license": "Apache-2.0",
   "keywords": [
@@ -63,6 +63,7 @@
     "file-selector": "2.1.2",
     "immer": "^11.1.4",
     "jiti": "^2.6.1",
+    "jsdom": "^25.0.1",
     "keycloakify": "^11.15.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
@@ -82,7 +83,6 @@
     "eslint-plugin-react-hooks": "7.0.1",
     "eslint-plugin-react-refresh": "0.5.0",
     "husky": "^9.1.7",
-    "jsdom": "^25.0.1",
     "prettier": "3.8.1",
     "tsup": "^8.5.1",
     "tsx": "4.20.6",

@@ -9,6 +9,7 @@ export default defineConfig([
     clean: false,
     splitting: false,
     noExternal: ['keycloakify'],
+    external: ['jsdom'],
     banner: { js: '#!/usr/bin/env node' },
   },
   {
