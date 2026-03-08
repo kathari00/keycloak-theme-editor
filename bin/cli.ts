@@ -333,7 +333,21 @@ function writeThemeFiles(exportDir: string, themeName: string, variantId: string
     fs.writeFileSync(path.join(loginDir, 'footer.ftl'), data.footerFtl, 'utf8')
   }
   fs.writeFileSync(path.join(cssDir, 'quick-start.css'), data.quickStartCss, 'utf8')
-  fs.writeFileSync(path.join(cssDir, 'styles.css'), data.stylesCss, 'utf8')
+
+  // Write styles CSS to the original filename from theme.properties (e.g. login.css)
+  // so re-importing doesn't create duplicates
+  let stylesCssFilename = 'styles.css'
+  try {
+    const stylesMatch = data.properties.match(/^styles\s*=\s*(.+)$/m)
+    if (stylesMatch) {
+      const entries = stylesMatch[1].trim().split(/\s+/).filter((p: string) => p !== 'css/quick-start.css')
+      if (entries.length === 1) {
+        stylesCssFilename = path.basename(entries[0])
+      }
+    }
+  }
+  catch {}
+  fs.writeFileSync(path.join(cssDir, stylesCssFilename), data.stylesCss, 'utf8')
   fs.writeFileSync(path.join(messagesDir, 'messages.properties'), data.messagesContent, 'utf8')
   fs.writeFileSync(path.join(messagesDir, 'messages_en.properties'), data.messagesContent, 'utf8')
 
