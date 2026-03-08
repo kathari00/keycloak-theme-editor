@@ -1,0 +1,15 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M58 12 C34 9 14 27 14 52 C14 73 28 90 51 93 C60 94 65 88 63 81 C61 74 67 69 76 72 C89 76 106 68 106 54 C106 30 82 15 58 12Z" fill="#FFFFFF" stroke="#555555" stroke-width="2.5"/>
+  <!-- Key ring (donut) -->
+  <circle cx="41" cy="46" r="10" fill="#555555"/>
+  <circle cx="41" cy="46" r="5" fill="#FFFFFF"/>
+  <!-- Shaft: flat left, rounded right -->
+  <path d="M50 43.5 L72 43.5 Q74.5 43.5 74.5 46 Q74.5 48.5 72 48.5 L50 48.5 Z" fill="#555555"/>
+  <!-- Tooth 1: flat top, rounded bottom -->
+  <path d="M67 48.5 L71 48.5 L71 56 Q71 57.5 69 57.5 Q67 57.5 67 56 Z" fill="#555555"/>
+  <!-- Tooth 2: flat top, rounded bottom -->
+  <path d="M59 48.5 L63 48.5 L63 59 Q63 60.5 61 60.5 Q59 60.5 59 59 Z" fill="#555555"/>
+  <circle cx="74" cy="27" r="6" fill="#2cc6ea"/>
+  <circle cx="90" cy="37" r="6" fill="#00b8e3"/>
+  <circle cx="96" cy="55" r="6" fill="#0066cc"/>
+</svg>

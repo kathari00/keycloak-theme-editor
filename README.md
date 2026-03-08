@@ -1,138 +1,36 @@
-# Keycloak Theme Editor
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="public/logo-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="public/logo-light.svg">
+    <img src="public/logo-light.svg" alt="Keycloak Theme Editor" width="120">
+  </picture>
+</p>
+<h1 align="center">Keycloak Theme Editor</h1>
 
-A browser-based visual editor for designing, previewing, and exporting Keycloak login themes.
+<p align="center">
+  A visual editor for designing, previewing, and exporting Keycloak login themes.
+</p>
+
+<p align="center">
+  <a href="https://github.com/kathari00/keycloak-theme-editor/actions/workflows/pipeline.yml"><img src="https://github.com/kathari00/keycloak-theme-editor/actions/workflows/pipeline.yml/badge.svg" alt="CI"></a>
+  <a href="https://www.npmjs.com/package/keycloak-theme-editor"><img src="https://img.shields.io/npm/v/keycloak-theme-editor" alt="npm version"></a>
+  <a href="https://www.npmjs.com/package/keycloak-theme-editor"><img src="https://img.shields.io/npm/dm/keycloak-theme-editor" alt="npm downloads"></a>
+</p>
 
 ## Quick Start
 
-### Using the CLI (recommended)
+Head to **[keycloak-theme-editor.org](https://keycloak-theme-editor.org)** and start designing your theme.
 
-The CLI auto-discovers your Keycloak theme directory and starts the editor with live reload:
-
-```bash
-npx keycloak-theme-editor
-```
-
-Or point it at a specific theme directory:
-
-```bash
-npx keycloak-theme-editor --pages ./path/to/theme
-```
-
-The CLI automatically discovers all theme variants within the given directory.
-
-#### CLI Options
-
-| Option | Description |
-|---|---|
-| `--pages <dir>` | Path to your theme directory (auto-discovered if omitted) |
-| `--port <number>` | Port to run the editor on (default: 4800) |
-| `--no-open` | Don't open browser automatically |
-
-#### Init command
-
-Scaffold `kc-page.ts` and `kc-page-story.ts` for custom page mocks:
-
-```bash
-npx keycloak-theme-editor init [pages-dir]
-```
-
-### Development
-
-```bash
-npm install
-npm run dev
-```
-
-Open the URL shown in terminal (default: `http://localhost:5173`).
-
-### Docker Image
-
-If you want to run the theme editor in a Docker container, you can use the following command:
-
-```shell
-docker run --name keycloak-theme-editor -p 5173:5173 -v $(pwd):/app -w /app node:alpine sh -c "npm install && npm run dev -- --host"
-```
+Need custom FreeMarker templates? Check the [docs](https://docs.keycloak-theme-editor.org) for the CLI setup.
 
 ## Features
 
-| | |
-|---|---|
-| **Design** | Apply presets, quick-start controls (colors, fonts, radius, shadow), or edit CSS directly in CodeMirror |
-| **Assets** | Upload fonts, backgrounds, logos, favicon, and images |
-| **Preview** | Browse generated Keycloak pages across desktop/tablet/mobile viewports and dark mode |
-| **Export** | Download as deployable `.jar` or quick-export to a folder (Chrome/Edge) |
-| **Import** | Re-import a previously exported theme JAR |
+- **Design:** Apply presets, tweak colors, fonts, radius, and shadows, or edit CSS directly
+- **Assets:** Upload fonts, backgrounds, logos, favicon, and images
+- **Preview:** Browse Keycloak pages across desktop, tablet, and mobile viewports with dark mode
+- **Export:** Download as a deployable `.jar` or quick-export to a folder
+- **Import:** Re-import a previously exported theme JAR
 
-## Scripts
+## Documentation
 
-| Command | Description |
-|---|---|
-| `npm run dev` | Dev server |
-| `npm run build` | Type-check + production build |
-| `npm run build:cli` | Build the CLI bundle |
-| `npm run build:jar` | Build the Java preview renderer JAR |
-| `npm run test:run` | Run tests once |
-| `npm run lint` | ESLint |
-| `npm run sync:keycloak` | Sync upstream Keycloak templates into `public/keycloak-upstream/` |
-| `npm run generate:preview` | Regenerate preview `pages.json` (with embedded scenarios) |
-
-## Requirements
-
-- **Node.js 18+** (20+ recommended), npm
-- **JDK 25+** and **Maven** — only needed for preview artifact generation
-
-## Tech Stack
-
-React 19 and PatternFly
-
-## Architecture Diagram
-
-```mermaid
-flowchart TB
-  User[Designer in Browser] --> UI[React UI Shell<br/>EditorContent + panels]
-
-  UI --> Actions[editorActions]
-  Actions --> Stores[Zustand Stores<br/>core, preset, theme, asset, history]
-  Stores --> LocalStorage[(localStorage persistence)]
-
-  UI --> Preview[PreviewShell]
-  Preview --> Iframe[Sandboxed iframe]
-  Preview --> GeneratedPages[generated/pages.json]
-  Preview --> ThemeResources[Theme files in public/keycloak-dev-resources]
-
-  UI --> ExportImport[Import/Export services]
-  ExportImport --> Output[Theme artifacts: .jar / folder / .zip]
-
-  Tooling[Node + Java tooling<br/>sync-keycloak + generate-preview] --> ThemeResources
-  Tooling --> GeneratedPages
-```
-
-## Project Structure
-
-```
-src/
-  app/              # Editor shell & wiring
-  components/       # Sidebar, topbar, panels
-  features/
-    assets/         # Upload & asset management
-    editor/         # CSS editing, undo/redo, style layers
-    presets/         # Preset selection logic
-    preview/        # Iframe preview & generated artifacts
-    theme-export/   # JAR/folder export & import
-  styles/           # Constants & shared styles
-
-public/
-  keycloak-dev-resources/   # Shared dev resources and base theme resources (bases/base, bases/v2)
-    themes/<theme-id>/      # Theme files:
-                            # - styles.css + quick-start.css: export/runtime CSS
-                            # - preview.css: editor-preview-only CSS (never exported)
-
-bin/
-  cli.ts              # CLI entry point
-  tsup.config.ts      # CLI build configuration
-
-tools/
-  keycloak-sync/        # Upstream template sync
-  preview-renderer/     # Java-based preview generation
-  generate-preview.ts   # Preview generation script
-```
+Full documentation is available at [docs.keycloak-theme-editor.org](https://docs.keycloak-theme-editor.org).

@@ -13,11 +13,15 @@
     "css",
     "visual-editor"
   ],
+  "exports": {
+    "./kc-mocks": "./bin/kc-mocks.js"
+  },
   "bin": {
     "keycloak-theme-editor": "./bin/cli.js"
   },
   "files": [
     "bin/cli.js",
+    "bin/kc-mocks.js",
     "dist/",
     "public/keycloak-dev-resources/",
     "public/keycloak-upstream/",
