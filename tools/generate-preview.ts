@@ -4,8 +4,8 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
-import { createJiti } from 'jiti'
 import { JSDOM } from 'jsdom'
+import { createGetKcContextMock, kcContextMocks as kcContextMocksList } from '../bin/kc-mocks'
 
 const MIN_JAVA = 8
 const isWindows = process.platform === 'win32'
@@ -108,69 +108,48 @@ const stories: Record<string, Record<string, Record<string, unknown>>> = {
   },
 }
 
-async function resolveContextMocks(): Promise<ContextMocks> {
-  let getKcContextMock: (params: { pageId: string, overrides?: Record<string, unknown> }) => Record<string, unknown>
-  let kcContextMocks: Array<{ pageId: string }>
-
-  try {
-    // Use jiti to load keycloakify — it ships ESM syntax without "type": "module",
-    // so neither require() nor native import() work in bundled Node.js context.
-    const jiti = createJiti(import.meta.url, { interopDefault: true })
-    const kcModule = await jiti.import('keycloakify/login/KcContext') as any
-    const mocksModule = await jiti.import('keycloakify/login/KcContext/kcContextMocks') as any
-    const { createGetKcContextMock } = kcModule
-    kcContextMocks = mocksModule.kcContextMocks
-
-    const result = createGetKcContextMock({
-      kcContextExtension: { properties: {} },
-      overrides: {
-        url: {
-          resourcesPath: '/keycloak-dev-resources',
-          resourcesCommonPath: '/keycloak-dev-resources/resources-common',
-        },
+function resolveContextMocks(): ContextMocks {
+  const { getKcContextMock } = createGetKcContextMock({
+    kcContextExtension: { properties: {} },
+    overrides: {
+      url: {
+        resourcesPath: '/keycloak-dev-resources',
+        resourcesCommonPath: '/keycloak-dev-resources/resources-common',
       },
-      kcContextExtensionPerPage: {},
-      overridesPerPage: {
-        'login.ftl': { usernameHidden: undefined, enableWebAuthnConditionalUI: undefined, login: { username: '' }, social: { providers: socialProviders } },
-        'login-username.ftl': { usernameHidden: undefined, enableWebAuthnConditionalUI: undefined, login: { username: '' }, social: { providers: socialProviders } },
-        'register.ftl': {
-          termsAcceptanceRequired: true,
-          ...profileOverride,
-          profile: {
-            ...profileOverride.profile,
-            attributesByName: {
-              email: { readOnly: true, values: ['john@example.com'] },
-              lastName: { readOnly: true, values: ['Doe'] },
-              favoritePet: favoritePetAttribute as Attribute,
-            },
-          },
-        },
-        'login-update-profile.ftl': profileOverride,
-        'idp-review-user-profile.ftl': profileOverride,
-        'update-user-profile.ftl': profileOverride,
-        'update-email.ftl': profileOverride,
-        'login-recovery-authn-code-config.ftl': {
-          recoveryAuthnCodesConfigBean: {
-            generatedRecoveryAuthnCodesList: ['ABCD1234EFGH', 'IJKL5678MNOP', 'QRST9012UVWX'],
-            generatedRecoveryAuthnCodesAsString: 'ABCD1234EFGH, IJKL5678MNOP, QRST9012UVWX',
-            generatedAt: Date.now(),
+    },
+    kcContextExtensionPerPage: {},
+    overridesPerPage: {
+      'login.ftl': { usernameHidden: undefined, enableWebAuthnConditionalUI: undefined, login: { username: '' }, social: { providers: socialProviders } },
+      'login-username.ftl': { usernameHidden: undefined, enableWebAuthnConditionalUI: undefined, login: { username: '' }, social: { providers: socialProviders } },
+      'register.ftl': {
+        termsAcceptanceRequired: true,
+        ...profileOverride,
+        profile: {
+          ...profileOverride.profile,
+          attributesByName: {
+            email: { readOnly: true, values: ['john@example.com'] },
+            lastName: { readOnly: true, values: ['Doe'] },
+            favoritePet: favoritePetAttribute as Attribute,
           },
         },
       },
-    })
-    getKcContextMock = result.getKcContextMock
-  }
-  catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
-    process.stderr.write(
-      `Warning: Failed to load keycloakify context mocks (${message}). Preview generation will skip many templates. Install keycloakify in this runtime.\n`,
-    )
-    return { common: {}, pages: {} }
-  }
+      'login-update-profile.ftl': profileOverride,
+      'idp-review-user-profile.ftl': profileOverride,
+      'update-user-profile.ftl': profileOverride,
+      'update-email.ftl': profileOverride,
+      'login-recovery-authn-code-config.ftl': {
+        recoveryAuthnCodesConfigBean: {
+          generatedRecoveryAuthnCodesList: ['ABCD1234EFGH', 'IJKL5678MNOP', 'QRST9012UVWX'],
+          generatedRecoveryAuthnCodesAsString: 'ABCD1234EFGH, IJKL5678MNOP, QRST9012UVWX',
+          generatedAt: Date.now(),
+        },
+      },
+    },
+  })
 
   const pages: Record<string, Record<string, unknown>> = {}
 
-  for (const { pageId } of kcContextMocks) {
+  for (const { pageId } of kcContextMocksList) {
     const name = pageId.replace('.ftl', '')
     const context = JSON.parse(JSON.stringify(getKcContextMock({ pageId: pageId as any })))
     pages[name] = context

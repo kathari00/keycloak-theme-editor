@@ -1,5 +1,6 @@
 import { createServer } from 'node:http'
-import { spawn, spawnSync } from 'node:child_process'
+import { spawn } from 'node:child_process'
+import { createRequire } from 'node:module'
 import fs from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
@@ -30,10 +31,6 @@ function findNearestDirectory(startDir: string, predicate: (dir: string) => bool
     }
     current = parent
   }
-}
-
-function findNearestPackageRoot(startDir: string): string | null {
-  return findNearestDirectory(startDir, dir => fs.existsSync(path.join(dir, 'package.json')))
 }
 
 function findThemeDirs(dir: string, depth: number): string[] {
@@ -127,12 +124,7 @@ async function loadUserMocks(pagesDir: string): Promise<ContextMocks | undefined
     userPage = await jiti.import(userPageFile) as typeof userPage
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
-    if (message.includes('Cannot find module') && message.includes('keycloakify')) {
-      console.warn(`Warning: Failed to load ${path.basename(userPageFile)} — keycloakify is still missing.`)
-      console.warn('  Try installing it manually in your project: npm install keycloakify')
-    } else {
-      console.warn(`Warning: Failed to load ${path.basename(userPageFile)}: ${message}`)
-    }
+    console.warn(`Warning: Failed to load ${path.basename(userPageFile)}: ${message}`)
     console.warn('  Continuing without user mocks.\n')
     return undefined
   }
@@ -594,8 +586,8 @@ function initProject(pagesArg?: string) {
     console.log(`Already exists, skipping: ${kcPagePath}`)
   }
   else {
-    fs.writeFileSync(kcPagePath, `import { createGetKcContextMock } from "keycloakify/login/KcContext";
-export { kcContextMocks } from "keycloakify/login/KcContext/kcContextMocks";
+    fs.writeFileSync(kcPagePath, `import { createGetKcContextMock, kcContextMocks } from "keycloak-theme-editor/kc-mocks";
+export { kcContextMocks };
 
 export const { getKcContextMock } = createGetKcContextMock({
   kcContextExtension: { properties: {} },
@@ -631,18 +623,6 @@ export const stories: Record<string, Record<string, Record<string, unknown>>> = 
 };
 `)
     console.log(`Created: ${kcStoryPath}`)
-  }
-
-  const installDir = findNearestPackageRoot(pagesDir) ?? pagesDir
-  console.log(`Ensuring keycloakify is installed in: ${installDir}`)
-  const installResult = spawnSync('npm', ['install', '--no-save', '--no-package-lock', 'keycloakify'], {
-    cwd: installDir,
-    stdio: 'inherit',
-    shell: process.platform === 'win32',
-  })
-  if (installResult.status !== 0) {
-    const message = installResult.error instanceof Error ? installResult.error.message : `exit code ${installResult.status ?? 'unknown'}`
-    console.warn(`Warning: Failed to install keycloakify automatically (${message}).`)
   }
 
   console.log('\nNext steps:')
