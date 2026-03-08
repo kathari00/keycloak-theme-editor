@@ -135,7 +135,6 @@ function resolveContextMocks(): ContextMocks {
       },
       'login-update-profile.ftl': profileOverride,
       'idp-review-user-profile.ftl': profileOverride,
-      'update-user-profile.ftl': profileOverride,
       'update-email.ftl': profileOverride,
       'login-recovery-authn-code-config.ftl': {
         recoveryAuthnCodesConfigBean: {

@@ -1,6 +1,5 @@
 import { createServer } from 'node:http'
 import { spawn } from 'node:child_process'
-import { createRequire } from 'node:module'
 import fs from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
@@ -18,20 +17,6 @@ const sseClients: Set<import('node:http').ServerResponse> = new Set()
 
 const SKIP_DIRS = new Set(['node_modules', '.git', 'dist', 'build', 'target', '.next', '.nuxt'])
 const MAX_DISCOVERY_DEPTH = 5
-
-function findNearestDirectory(startDir: string, predicate: (dir: string) => boolean): string | null {
-  let current = path.resolve(startDir)
-  while (true) {
-    if (predicate(current)) {
-      return current
-    }
-    const parent = path.dirname(current)
-    if (parent === current) {
-      return null
-    }
-    current = parent
-  }
-}
 
 function findThemeDirs(dir: string, depth: number): string[] {
   if (depth <= 0) return []
