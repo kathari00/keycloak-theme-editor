@@ -21,11 +21,17 @@ describe('quick-start-css', () => {
   })
 
   describe('generated variables', () => {
-    it('always emits primary and secondary quickstart variables', () => {
+    it('always emits paired primary and secondary quickstart variables', () => {
       const result = build({ primaryColor: '#ff0000', secondaryColor: '#00ff00' })
       expect(result).toContain(':root {')
-      expect(result).toContain('--quickstart-primary-color: #ff0000;')
-      expect(result).toContain('--quickstart-secondary-color: #00ff00;')
+      expect(result).toContain('--quickstart-primary-color-light: #ff0000;')
+      expect(result).toContain('--quickstart-primary-color-dark: #ff0000;')
+      expect(result).toContain('--quickstart-primary-color: var(--quickstart-primary-color-light);')
+      expect(result).toContain('--quickstart-secondary-color-light: #00ff00;')
+      expect(result).toContain('--quickstart-secondary-color-dark: #00ff00;')
+      expect(result).toContain('--quickstart-secondary-color: var(--quickstart-secondary-color-light);')
+      expect(result).toContain('html.pf-v5-theme-dark,')
+      expect(result).toContain('html.kcDarkModeClass {')
     })
 
     it('emits optional quickstart variables only when configured', () => {
@@ -39,7 +45,9 @@ describe('quick-start-css', () => {
 
       expect(result).toContain('--quickstart-font-family: Arial, sans-serif;')
       expect(result).toContain('--quickstart-heading-font-family: Georgia, serif;')
-      expect(result).toContain('--quickstart-bg-color: #f0f4f9;')
+      expect(result).toContain('--quickstart-bg-color-light: #f0f4f9;')
+      expect(result).toContain('--quickstart-bg-color-dark: #f0f4f9;')
+      expect(result).toContain('--quickstart-bg-color: var(--quickstart-bg-color-light);')
       expect(result).toContain('--quickstart-bg-image: none;')
       expect(result).toContain('--quickstart-border-radius: 8px;')
       expect(result).toContain('--quickstart-card-shadow: 0 2px 8px rgba(0,0,0,0.10);')
@@ -50,7 +58,9 @@ describe('quick-start-css', () => {
 
     it('does not emit bg variable for invalid color', () => {
       const result = build({ bgColor: 'invalid' })
-      expect(result).not.toContain('--quickstart-bg-color:')
+      expect(result).not.toContain('--quickstart-bg-color-light:')
+      expect(result).not.toContain('--quickstart-bg-color-dark:')
+      expect(result).not.toContain('--quickstart-bg-color: var(')
       expect(result).not.toContain('--quickstart-bg-image:')
     })
   })

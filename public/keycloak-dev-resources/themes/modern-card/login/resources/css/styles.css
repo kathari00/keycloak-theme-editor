@@ -32,7 +32,7 @@ label.kcLoginOTPListClass {
 }
 
 .kcLoginMain {
-  background: var(--quickstart-card-bg-color);
+  background: var(--quickstart-card-bg-color, #ffffff);
   border-radius: var(--quickstart-border-radius);
   padding: 2rem 2rem;
   box-shadow: var(--quickstart-card-shadow);
@@ -42,7 +42,7 @@ label.kcLoginOTPListClass {
 html.pf-v5-theme-dark .kcLoginMain,
 body.pf-v5-theme-dark .kcLoginMain,
 html.kcDarkModeClass .kcLoginMain {
-  background: var(--quickstart-card-bg-color-dark);
+  background: var(--quickstart-card-bg-color-dark, #0e0e0e);
   box-shadow: var(--quickstart-card-shadow);
 }
 
@@ -75,7 +75,7 @@ html.pf-v5-theme-dark .alert-warning p {
 }
 
 html.pf-v5-theme-dark #kc-recovery-codes-list {
-  background: var(--quickstart-input-bg-color-dark);
+  background: var(--quickstart-input-bg-color-dark, #141516);
 }
 
 html.pf-v5-theme-dark #kc-recovery-codes-list li span {
@@ -802,8 +802,8 @@ html.kcDarkModeClass input[type="tel"],
 html.kcDarkModeClass input[type="number"],
 html.kcDarkModeClass select,
 html.kcDarkModeClass textarea {
-  background: var(--quickstart-input-bg-color-dark);
-  border-color: var(--quickstart-input-border-color-dark);
+  background: var(--quickstart-input-bg-color-dark, #141516);
+  border-color: var(--quickstart-input-border-color-dark, #2b2c2e);
   color: var(--quickstart-text-primary-dark);
 }
 
@@ -813,7 +813,7 @@ html.pf-v5-theme-dark textarea::placeholder,
 html.kcDarkModeClass .kcInputClass input::placeholder,
 html.kcDarkModeClass input::placeholder,
 html.kcDarkModeClass textarea::placeholder {
-  color: var(--quickstart-muted-text-color-dark);
+  color: var(--quickstart-muted-text-color-dark, #9aa0a6);
 }
 
 .kcInputClass {
@@ -1527,8 +1527,8 @@ html.pf-v5-theme-dark .kcFormSocialAccountListButtonClass,
 html.pf-v5-theme-dark a.kcFormSocialAccountListButtonClass,
 body.pf-v5-theme-dark .kcFormSocialAccountListButtonClass,
 body.pf-v5-theme-dark a.kcFormSocialAccountListButtonClass {
-  background: var(--quickstart-input-bg-color-dark);
-  border-color: var(--quickstart-input-border-color-dark);
+  background: var(--quickstart-input-bg-color-dark, #141516);
+  border-color: var(--quickstart-input-border-color-dark, #2b2c2e);
   color: var(--quickstart-text-primary-dark);
 }
 

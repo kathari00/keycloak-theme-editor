@@ -40,6 +40,7 @@ export interface ImportedQuickSettingsByMode {
 export interface JarImportResult {
   css: string
   stylesCssFiles?: Record<string, string>
+  quickStartCss?: string
   properties: string
   themeName: string
   sourceThemeId?: string

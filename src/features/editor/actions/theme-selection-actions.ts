@@ -124,10 +124,8 @@ export const themeSelectionActions = {
     }
 
     const themeId = resolveThemeIdFromConfig(themeConfig, value)
-    const currentThemeKey = getThemeStorageKey(presetStore.getState().selectedThemeId)
     const quickSettingsMode = getCurrentQuickSettingsMode()
 
-    quickStartExtrasActions.saveQuickSettingsForPreset(currentThemeKey, quickSettingsMode)
     syncDefaultAssetsForTheme(themeConfig, themeId)
 
     const { quickStartDefaults, stylesCss, stylesCssFiles } = await getThemeCssStructuredCached(themeId)
@@ -140,13 +138,8 @@ export const themeSelectionActions = {
     assetStore.setState(state => ({
       appliedAssets: state.appliedAssetsByTheme[themeId] ?? {},
     }))
-    if (!quickStartExtrasActions.restoreQuickSettingsForPreset(themeId, quickSettingsMode, { restoreSharedValues: true })) {
-      quickStartExtrasActions.applyThemeModeDefaults(quickSettingsMode, quickStartDefaults)
-      if (themeId === 'v2') {
-        quickStartExtrasActions.setQuickStartExtras({ showRealmName: false }, { recordHistory: false })
-      }
-      quickStartExtrasActions.saveQuickSettingsForPreset(themeId, quickSettingsMode)
-    }
+
+    quickStartExtrasActions.applyThemeModeDefaults(quickSettingsMode, quickStartDefaults)
     syncDefaultAssetsForTheme(themeConfig, themeId)
   },
 }

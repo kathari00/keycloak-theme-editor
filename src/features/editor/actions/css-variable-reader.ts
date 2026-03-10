@@ -1,5 +1,5 @@
 import type { QuickSettingsMode } from '../lib/quick-settings'
-import type { PresetState, QuickSettings } from '../stores/types'
+import type { PresetState, QuickSettingsStyle } from '../stores/types'
 import { findFirstDeclarationValue } from '../../../lib/css-ast'
 import { CUSTOM_PRESET_ID } from '../lib/quick-start-css'
 
@@ -18,22 +18,32 @@ export type QuickStartExtrasState = Pick<
 
 export type QuickStartExtrasUpdate = Partial<QuickStartExtrasState>
 
-export const DEFAULT_QUICK_START_EXTRAS: Omit<QuickStartExtrasState, 'colorPresetBgColor' | 'colorPresetCardShadow'> = {
-  colorPresetBorderRadius: 'rounded',
-  colorPresetHeadingFontFamily: CUSTOM_PRESET_ID,
-  showClientName: false,
-  showRealmName: true,
-  infoMessage: '',
-  imprintUrl: '',
-  dataProtectionUrl: '',
-}
-
 export function readQuickStartVariable(cssText: string, variableName: string): string {
   return findFirstDeclarationValue(cssText, variableName)
 }
 
-export function getQuickStartVariableNameForMode(mode: QuickSettingsMode, baseVariableName: string): string {
-  return mode === 'dark' ? `${baseVariableName}-dark` : baseVariableName
+function normalizeEditableQuickStartValue(value: string): string {
+  const normalized = value.trim()
+  return normalized.startsWith('var(') ? '' : normalized
+}
+
+function readQuickStartColorVariable(
+  cssText: string,
+  suffix: 'primary-color' | 'secondary-color' | 'bg-color',
+  mode: QuickSettingsMode,
+): string {
+  const candidates = mode === 'dark'
+    ? [`--quickstart-${suffix}-dark`, `--quickstart-${suffix}-light`]
+    : [`--quickstart-${suffix}-light`, `--quickstart-${suffix}-dark`]
+
+  for (const candidate of candidates) {
+    const value = normalizeEditableQuickStartValue(readQuickStartVariable(cssText, candidate))
+    if (value) {
+      return value
+    }
+  }
+
+  return ''
 }
 
 export function mapQuickStartBorderRadius(value: string): PresetState['colorPresetBorderRadius'] {
@@ -61,53 +71,28 @@ export function mapQuickStartCardShadow(value: string): PresetState['colorPreset
   return 'subtle'
 }
 
-export function buildThemeQuickStartDefaults(themeCss: string, mode: QuickSettingsMode): {
-  colorPresetId: string
-  primaryColor: string
-  secondaryColor: string
-  fontFamily: string
-  extras: QuickStartExtrasUpdate
+export function buildThemeQuickStartDefaults(themeCss: string, mode: QuickSettingsMode = 'light'): {
+  colorPresetId: QuickSettingsStyle['colorPresetId']
+  colorPresetPrimaryColor: QuickSettingsStyle['colorPresetPrimaryColor']
+  colorPresetSecondaryColor: QuickSettingsStyle['colorPresetSecondaryColor']
+  colorPresetFontFamily: QuickSettingsStyle['colorPresetFontFamily']
+  colorPresetBgColor: QuickSettingsStyle['colorPresetBgColor']
+  colorPresetBorderRadius: QuickSettingsStyle['colorPresetBorderRadius']
+  colorPresetCardShadow: QuickSettingsStyle['colorPresetCardShadow']
+  colorPresetHeadingFontFamily: QuickSettingsStyle['colorPresetHeadingFontFamily']
 } {
-  const primaryColor = readQuickStartVariable(themeCss, getQuickStartVariableNameForMode(mode, '--quickstart-primary-color'))
-  const secondaryColor = readQuickStartVariable(themeCss, '--quickstart-secondary-color')
-  const fontFamilyRaw = readQuickStartVariable(themeCss, '--quickstart-font-family')
-  const fontFamily = fontFamilyRaw.includes('var(') ? '' : fontFamilyRaw
-  const bgColor = readQuickStartVariable(themeCss, getQuickStartVariableNameForMode(mode, '--quickstart-bg-color'))
-  const borderRadiusValue
-    = readQuickStartVariable(themeCss, '--quickstart-border-radius')
-      || readQuickStartVariable(themeCss, '--quickstart-control-border-radius-default')
-  const cardShadowValue
-    = readQuickStartVariable(themeCss, '--quickstart-card-shadow')
-      || readQuickStartVariable(themeCss, '--quickstart-card-shadow-default')
+  const bgColor = readQuickStartColorVariable(themeCss, 'bg-color', mode)
+  const borderRadiusValue = readQuickStartVariable(themeCss, '--quickstart-border-radius')
+  const cardShadowValue = readQuickStartVariable(themeCss, '--quickstart-card-shadow')
   return {
     colorPresetId: CUSTOM_PRESET_ID,
-    primaryColor,
-    secondaryColor,
-    fontFamily,
-    extras: {
-      ...DEFAULT_QUICK_START_EXTRAS,
-      colorPresetBgColor: bgColor,
-      colorPresetBorderRadius: mapQuickStartBorderRadius(borderRadiusValue),
-      colorPresetCardShadow: mapQuickStartCardShadow(cardShadowValue),
-    },
-  }
-}
-
-export function buildQuickSettingsSnapshot(state: PresetState): QuickSettings {
-  return {
-    colorPresetId: state.colorPresetId,
-    colorPresetPrimaryColor: state.colorPresetPrimaryColor,
-    colorPresetSecondaryColor: state.colorPresetSecondaryColor,
-    colorPresetFontFamily: state.colorPresetFontFamily,
-    colorPresetBgColor: state.colorPresetBgColor,
-    colorPresetBorderRadius: state.colorPresetBorderRadius,
-    colorPresetCardShadow: state.colorPresetCardShadow,
-    colorPresetHeadingFontFamily: state.colorPresetHeadingFontFamily,
-    showClientName: state.showClientName,
-    showRealmName: state.showRealmName,
-    infoMessage: state.infoMessage,
-    imprintUrl: state.imprintUrl,
-    dataProtectionUrl: state.dataProtectionUrl,
+    colorPresetPrimaryColor: readQuickStartColorVariable(themeCss, 'primary-color', mode),
+    colorPresetSecondaryColor: readQuickStartColorVariable(themeCss, 'secondary-color', mode),
+    colorPresetFontFamily: normalizeEditableQuickStartValue(readQuickStartVariable(themeCss, '--quickstart-font-family')) || CUSTOM_PRESET_ID,
+    colorPresetBgColor: bgColor,
+    colorPresetBorderRadius: mapQuickStartBorderRadius(borderRadiusValue),
+    colorPresetCardShadow: mapQuickStartCardShadow(cardShadowValue),
+    colorPresetHeadingFontFamily: normalizeEditableQuickStartValue(readQuickStartVariable(themeCss, '--quickstart-heading-font-family')) || CUSTOM_PRESET_ID,
   }
 }
 

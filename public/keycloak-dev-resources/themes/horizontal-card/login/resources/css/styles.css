@@ -27,11 +27,11 @@ body#keycloak-bg{
 
 html.pf-v5-theme-dark{
   color-scheme: dark;
-  background: var(--quickstart-bg-color, #1e1f20);
+  background: var(--quickstart-bg-color-dark, #1e1f20);
 }
 
 body.pf-v5-theme-dark, body#keycloak-bg.pf-v5-theme-dark{
-  background: var(--quickstart-bg-color, #1e1f20);
+  background: var(--quickstart-bg-color-dark, #1e1f20);
   color: var(--quickstart-text-primary-dark);
 }
 
@@ -57,7 +57,7 @@ body.pf-v5-theme-dark, body#keycloak-bg.pf-v5-theme-dark{
   min-height: 384px;
   background: var(--quickstart-card-bg-color, #ffffff);
   border: 1px solid var(--quickstart-card-border-color, #d1d5db);
-  border-radius: var(--quickstart-border-radius, var(--quickstart-card-border-radius-default, 28px));
+  border-radius: var(--quickstart-border-radius, 28px);
   box-shadow: none;
   padding: clamp(24px, 4vw, 48px);
   box-sizing: border-box;
@@ -153,7 +153,7 @@ body.pf-v5-theme-dark .kc-horizontal-card-footer-under-card a, body#keycloak-bg.
 }
 
 .kc-horizontal-card-footer-language select.kcInputClass option{
-  background-color: var(--quickstart-bg-color, #1e1f20);
+  background-color: var(--quickstart-bg-color-dark, #1e1f20);
   color: var(--quickstart-text-primary-dark);
 }
 
@@ -337,11 +337,11 @@ textarea.kcInputClass,
 .kcPanelMainBodyClass,
 .kcLoginMain,
 .kcFormCardClass{
-  border-radius: var(--quickstart-border-radius, var(--quickstart-control-border-radius-default, 28px));
+  border-radius: var(--quickstart-border-radius, 28px);
 }
 
 .kcButtonClass, button.kcButtonClass, a.kcButtonClass, input.kcButtonClass{
-  border-radius: var(--quickstart-border-radius, var(--quickstart-control-border-radius-default, 28px));
+  border-radius: var(--quickstart-border-radius, 28px);
   padding: 0.6rem 1.1rem;
   min-height: 40px;
   font-weight: 500;
@@ -440,7 +440,7 @@ textarea.kcInputClass,
   background: transparent;
   color: inherit;
   border: 1px solid #d1d5db;
-  border-radius: var(--quickstart-border-radius, var(--quickstart-control-border-radius-default, 28px));
+  border-radius: var(--quickstart-border-radius, 28px);
   padding: 0.625rem 0.75rem;
   font: inherit;
   width: 100%;
@@ -482,8 +482,8 @@ input.kcInputClass:focus, .kcInputClass input:focus, .kcInputGroupItemClass.kcFi
   input[type="tel"],
   input[type="number"]
 ){
-  border-top-left-radius: var(--quickstart-border-radius, var(--quickstart-control-border-radius-default, 28px));
-  border-bottom-left-radius: var(--quickstart-border-radius, var(--quickstart-control-border-radius-default, 28px));
+  border-top-left-radius: var(--quickstart-border-radius, 28px);
+  border-bottom-left-radius: var(--quickstart-border-radius, 28px);
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
   border-right-width: 0;
@@ -505,7 +505,7 @@ body.pf-v5-theme-dark .kcButtonClass, body.pf-v5-theme-dark button.kcButtonClass
   text-decoration: none;
   padding: 0.6rem 1.1rem;
   min-height: 40px;
-  border-radius: var(--quickstart-border-radius, var(--quickstart-control-border-radius-default, 28px));
+  border-radius: var(--quickstart-border-radius, 28px);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -626,7 +626,7 @@ html.pf-v5-theme-dark :is(.kcInputErrorMessageClass, #input-error.kcInputErrorMe
   text-decoration: none;
   padding: 0.6rem 1.1rem;
   min-height: 40px;
-  border-radius: var(--quickstart-border-radius, var(--quickstart-control-border-radius-default, 28px));
+  border-radius: var(--quickstart-border-radius, 28px);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -673,7 +673,7 @@ html.pf-v5-theme-dark :is(.kcInputErrorMessageClass, #input-error.kcInputErrorMe
   text-decoration: none;
   padding: 0.6rem 1.1rem;
   min-height: 40px;
-  border-radius: var(--quickstart-border-radius, var(--quickstart-control-border-radius-default, 28px));
+  border-radius: var(--quickstart-border-radius, 28px);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -788,7 +788,7 @@ a{
   display: block;
   width: 100%;
   padding: 0.75rem 1.5rem;
-  border-radius: var(--quickstart-border-radius, var(--quickstart-control-border-radius-default, 28px));
+  border-radius: var(--quickstart-border-radius, 28px);
   border: 1px solid var(--quickstart-primary-color, #0b57d0);
   color: var(--quickstart-primary-color, #0b57d0);
   font-weight: 600;
@@ -801,7 +801,7 @@ a{
 }
 
 #authenticateWebAuthnButton.kcButtonSecondaryClass{
-  border-radius: var(--quickstart-border-radius, var(--quickstart-control-border-radius-default, 28px));
+  border-radius: var(--quickstart-border-radius, 28px);
 }
 
 body.pf-v5-theme-dark a{
@@ -897,7 +897,7 @@ body.pf-v5-theme-dark hr{
   gap: 0.35rem;
   width: 100%;
   padding: 0.75rem 1.5rem;
-  border-radius: var(--quickstart-border-radius, var(--quickstart-control-border-radius-default, 28px));
+  border-radius: var(--quickstart-border-radius, 28px);
   border: 1px solid var(--quickstart-primary-color, #0b57d0);
   color: var(--quickstart-primary-color, #0b57d0);
   font-size: 14px;
@@ -1108,7 +1108,7 @@ html:not(.pf-v5-theme-dark):not(.kcDarkModeClass), html:not(.pf-v5-theme-dark):n
 }
 
 html.pf-v5-theme-dark, html.pf-v5-theme-dark body, html.pf-v5-theme-dark body#keycloak-bg, html.kcDarkModeClass, html.kcDarkModeClass body, html.kcDarkModeClass body#keycloak-bg{
-  background-color: var(--quickstart-bg-color);
+  background-color: var(--quickstart-bg-color-dark, #1e1f20);
   background-image: var(--quickstart-bg-image);
   background-repeat: no-repeat;
   background-position: center center;
@@ -1126,8 +1126,8 @@ body .kcLogin, body#keycloak-bg .kcLogin, body .kcLoginClass, body#keycloak-bg .
 .kcInputGroup .kcFormPasswordVisibilityButtonClass{
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
-  border-top-right-radius: var(--quickstart-border-radius, var(--quickstart-control-border-radius-default, 28px));
-  border-bottom-right-radius: var(--quickstart-border-radius, var(--quickstart-control-border-radius-default, 28px));
+  border-top-right-radius: var(--quickstart-border-radius, 28px);
+  border-bottom-right-radius: var(--quickstart-border-radius, 28px);
 }
 
 html body .pf-v5-c-login{

@@ -52,8 +52,6 @@ export interface PresetState {
   infoMessage: QuickStartContentSettings['infoMessage']
   imprintUrl: QuickStartContentSettings['imprintUrl']
   dataProtectionUrl: QuickStartContentSettings['dataProtectionUrl']
-  // Key format: `${themeId}::light|dark`.
-  presetQuickSettings: Record<string, QuickSettings>
 }
 
 export interface ThemeState {

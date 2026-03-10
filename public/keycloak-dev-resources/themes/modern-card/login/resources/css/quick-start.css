@@ -1,28 +1,33 @@
-﻿:root {
-  --quickstart-primary-color: #6074A1;
+:root {
+  --quickstart-primary-color-light: #6074A1;
   --quickstart-primary-color-dark: #6074A1;
-  --quickstart-secondary-color: #A0BCAC;
+  --quickstart-primary-color: var(--quickstart-primary-color-light);
+  --quickstart-secondary-color-light: #A0BCAC;
+  --quickstart-secondary-color-dark: #A0BCAC;
+  --quickstart-secondary-color: var(--quickstart-secondary-color-light);
   --quickstart-font-family: 'Inter', sans-serif;
+  --quickstart-heading-font-family: inherit;
   --quickstart-logo-url: none;
   --quickstart-bg-logo-url: none;
   --quickstart-logo-height: 63px;
   --quickstart-logo-width: 300px;
-  --quickstart-control-border-radius-default: 8px;
-  --quickstart-card-border-radius-default: 16px;
-  --quickstart-card-shadow-default: 0 20px 60px rgba(0, 0, 0, 0.3), 0 8px 20px rgba(0, 0, 0, 0.15);
-  --quickstart-card-shadow-default-dark: 0 20px 70px rgba(0, 0, 0, 0.65), 0 10px 28px rgba(0, 0, 0, 0.35);
   --quickstart-text-primary-light: #1a1a2e;
   --quickstart-text-primary-dark: #e8eaed;
   --quickstart-text-secondary-light: #374151;
   --quickstart-text-secondary-dark: #cbd5e1;
-  --quickstart-bg-color: #6074A1;
+  --quickstart-bg-color-light: #6074A1;
   --quickstart-bg-color-dark: #6074A1;
+  --quickstart-bg-color: var(--quickstart-bg-color-light);
   --quickstart-bg-image: none;
-  --quickstart-card-bg-color: #ffffff;
-  --quickstart-card-bg-color-dark: #0e0e0e;
-  --quickstart-input-bg-color-dark: #141516;
-  --quickstart-input-border-color-dark: #2b2c2e;
-  --quickstart-muted-text-color-dark: #9aa0a6;
+  --quickstart-border-radius: 8px;
+  --quickstart-card-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+html.pf-v5-theme-dark,
+html.kcDarkModeClass {
+  --quickstart-primary-color: var(--quickstart-primary-color-dark);
+  --quickstart-secondary-color: var(--quickstart-secondary-color-dark);
+  --quickstart-bg-color: var(--quickstart-bg-color-dark);
 }
 
 body,
@@ -39,14 +44,4 @@ body#keycloak-bg {
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
-}
-
-html.pf-v5-theme-dark body,
-html.pf-v5-theme-dark body#keycloak-bg {
-  background-color: var(--quickstart-bg-color-dark);
-}
-
-html.pf-v5-theme-dark .kcLogin,
-html.pf-v5-theme-dark .kcLoginClass {
-  background-color: var(--quickstart-bg-color-dark);
 }

@@ -1,6 +1,5 @@
 import type { UploadedAsset } from '../assets/types'
-import type { ThemeEditorMetadata } from './types'
-import type { JarImportResult } from './types'
+import type { JarImportResult, ThemeEditorMetadata } from './types'
 import { processUploadedFile } from '../assets/upload-service'
 import { sanitizeThemeCssSourceForEditor } from '../editor/lib/css-source-sanitizer'
 import { readMessageProperty } from '../preview/lib/message-properties'
@@ -197,6 +196,7 @@ export async function importJarFile(file: File): Promise<JarImportResult> {
   return {
     css: editorStylesCss,
     stylesCssFiles,
+    quickStartCss,
     properties: themeProps,
     themeName,
     sourceThemeId,

@@ -5,7 +5,8 @@ import os from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
 import { JSDOM } from 'jsdom'
-import { createGetKcContextMock, kcContextMocks as kcContextMocksList } from '../bin/kc-mocks'
+import { createGetKcContextMock } from 'keycloakify/login/KcContext'
+import { kcContextMocks as kcContextMocksList } from 'keycloakify/login/KcContext/kcContextMocks'
 
 const MIN_JAVA = 8
 const isWindows = process.platform === 'win32'
@@ -108,7 +109,7 @@ const stories: Record<string, Record<string, Record<string, unknown>>> = {
   },
 }
 
-function resolveContextMocks(): ContextMocks {
+async function resolveContextMocks(): Promise<ContextMocks> {
   const { getKcContextMock } = createGetKcContextMock({
     kcContextExtension: { properties: {} },
     overrides: {

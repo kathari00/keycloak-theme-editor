@@ -1,9 +1,11 @@
 import type { KeycloakPage } from '../../assets/types'
 import type { PresetState } from '../stores/types'
-import { QUICK_START_CSS_PATH } from '../lib/css-files'
-import { combineCssFiles, firstFilePath, isQuickStartCssFile } from '../lib/css-files'
-import { BORDER_RADIUS_OPTIONS, CARD_SHADOW_OPTIONS, COLOR_REGEX } from '../lib/quick-start-css'
+import { getUploadedImageCssVarName } from '../../assets/font-css-generator'
+import { combineCssFiles, firstFilePath, isQuickStartCssFile, QUICK_START_CSS_PATH } from '../lib/css-files'
 import { getThemeStorageKey } from '../lib/quick-settings'
+import { BORDER_RADIUS_OPTIONS, CARD_SHADOW_OPTIONS, COLOR_REGEX } from '../lib/quick-start-css'
+import { assetStore } from '../stores/asset-store'
+import { coreStore } from '../stores/core-store'
 import { presetStore } from '../stores/preset-store'
 import { themeStore } from '../stores/theme-store'
 
@@ -12,6 +14,18 @@ function getActiveThemeStorageKey(): string {
 }
 
 const CSS_VAR_RE = /--quickstart-([\w-]+)\s*:\s*([^;]+)/g
+const AUTO_SWITCH_COLOR_SUFFIXES = new Set(['primary-color', 'secondary-color', 'bg-color'])
+
+function getCurrentQuickStartColorMode(): 'light' | 'dark' {
+  return coreStore.getState().isDarkMode ? 'dark' : 'light'
+}
+
+function getCurrentModeColorValue(
+  vars: Map<string, string>,
+  suffix: 'primary-color' | 'secondary-color' | 'bg-color',
+): string {
+  return vars.get(`${suffix}-${getCurrentQuickStartColorMode()}`)?.trim() || ''
+}
 
 /** Parse quick-start.css text and sync recognized variable values back to the quick-start panel. */
 function syncQuickStartCssToPresetStore(css: string): void {
@@ -19,79 +33,97 @@ function syncQuickStartCssToPresetStore(css: string): void {
   for (const match of css.matchAll(CSS_VAR_RE)) {
     vars.set(match[1], match[2].trim())
   }
-  if (vars.size === 0) return
+  if (vars.size === 0)
+    return
 
-  const updates: Record<string, unknown> = {}
-
-  const primary = vars.get('primary-color')
-  if (primary) updates.colorPresetPrimaryColor = primary
-
-  const secondary = vars.get('secondary-color')
-  if (secondary) updates.colorPresetSecondaryColor = secondary
-
-  const font = vars.get('font-family')
-  if (font) updates.colorPresetFontFamily = font
-
-  const headingFont = vars.get('heading-font-family')
-  if (headingFont) updates.colorPresetHeadingFontFamily = headingFont
-
-  const bg = vars.get('bg-color')
-  if (bg) updates.colorPresetBgColor = bg
-
-  const radius = vars.get('border-radius')
-  if (radius) {
-    const match = BORDER_RADIUS_OPTIONS.find(o => o.px === radius)
-    if (match) updates.colorPresetBorderRadius = match.value
-  }
-
-  const shadow = vars.get('card-shadow')
-  if (shadow) {
-    const match = CARD_SHADOW_OPTIONS.find(o => o.css === shadow)
-    if (match) updates.colorPresetCardShadow = match.value
-  }
-
-  if (Object.keys(updates).length > 0) {
-    presetStore.setState(state => ({ ...state, ...updates }))
-  }
+  presetStore.setState(state => ({
+    ...state,
+    colorPresetPrimaryColor: getCurrentModeColorValue(vars, 'primary-color') || state.colorPresetPrimaryColor,
+    colorPresetSecondaryColor: getCurrentModeColorValue(vars, 'secondary-color') || state.colorPresetSecondaryColor,
+    colorPresetFontFamily: vars.get('font-family') || state.colorPresetFontFamily,
+    colorPresetHeadingFontFamily: vars.get('heading-font-family') || state.colorPresetHeadingFontFamily,
+    colorPresetBgColor: getCurrentModeColorValue(vars, 'bg-color') || state.colorPresetBgColor,
+    colorPresetBorderRadius: BORDER_RADIUS_OPTIONS.find(o => o.px === vars.get('border-radius'))?.value || state.colorPresetBorderRadius,
+    colorPresetCardShadow: CARD_SHADOW_OPTIONS.find(o => o.css === vars.get('card-shadow'))?.value || state.colorPresetCardShadow,
+  }))
 }
 
-/** Replace a single CSS variable value in-place within a CSS text string. */
+/** Replace a single CSS variable value in-place, or insert it into the first :root block if missing. */
 function replaceCssVariableValue(css: string, varSuffix: string, newValue: string): string {
-  const pattern = new RegExp(`(--quickstart-${varSuffix}\\s*:\\s*)([^;]+)(;)`)
-  return css.replace(pattern, `$1${newValue}$3`)
+  const varName = `--quickstart-${varSuffix}`
+  const pattern = new RegExp(`(${varName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*:\\s*)([^;]+)(;)`)
+  if (pattern.test(css)) {
+    return css.replace(pattern, `$1${newValue}$3`)
+  }
+  const rootCloseIndex = css.indexOf('}')
+  if (rootCloseIndex === -1)
+    return css
+  return `${css.slice(0, rootCloseIndex)}  ${varName}: ${newValue};\n${css.slice(rootCloseIndex)}`
 }
 
-/** Map from preset store field → [CSS variable suffix, value transform]. */
+function replacePairedColorVariableValues(css: string, suffix: string, newValue: string): string {
+  return replaceCssVariableValue(css, `${suffix}-${getCurrentQuickStartColorMode()}`, newValue)
+}
+
+function resolveQuickStartBgImageValue(state: PresetState): string {
+  const { appliedAssets, uploadedAssets } = assetStore.getState()
+  if (appliedAssets.background) {
+    const bgAsset = uploadedAssets.find(asset => asset.id === appliedAssets.background)
+    const bgVarName = bgAsset ? getUploadedImageCssVarName(bgAsset) : null
+    if (bgVarName) {
+      return `var(${bgVarName})`
+    }
+  }
+
+  if (state.colorPresetBgColor && COLOR_REGEX.test(state.colorPresetBgColor)) {
+    return 'none'
+  }
+
+  return 'var(--quickstart-bg-logo-url)'
+}
+
+/** Map from preset store field -> [CSS variable suffix, value transform]. */
 function getPresetToCssVarMapping(state: PresetState): [suffix: string, value: string][] {
   const entries: [string, string][] = []
-  if (state.colorPresetPrimaryColor) entries.push(['primary-color', state.colorPresetPrimaryColor])
-  if (state.colorPresetSecondaryColor) entries.push(['secondary-color', state.colorPresetSecondaryColor])
-  if (state.colorPresetFontFamily && state.colorPresetFontFamily !== 'custom') entries.push(['font-family', state.colorPresetFontFamily])
-  if (state.colorPresetHeadingFontFamily && state.colorPresetHeadingFontFamily !== 'custom') entries.push(['heading-font-family', state.colorPresetHeadingFontFamily])
-  if (state.colorPresetBgColor && COLOR_REGEX.test(state.colorPresetBgColor)) {
+  if (state.colorPresetPrimaryColor)
+    entries.push(['primary-color', state.colorPresetPrimaryColor])
+  if (state.colorPresetSecondaryColor)
+    entries.push(['secondary-color', state.colorPresetSecondaryColor])
+  if (state.colorPresetFontFamily && state.colorPresetFontFamily !== 'custom')
+    entries.push(['font-family', state.colorPresetFontFamily])
+  if (state.colorPresetHeadingFontFamily && state.colorPresetHeadingFontFamily !== 'custom')
+    entries.push(['heading-font-family', state.colorPresetHeadingFontFamily])
+  if (state.colorPresetBgColor && COLOR_REGEX.test(state.colorPresetBgColor))
     entries.push(['bg-color', state.colorPresetBgColor])
-    entries.push(['bg-image', 'none'])
-  }
   const radius = BORDER_RADIUS_OPTIONS.find(o => o.value === state.colorPresetBorderRadius)
-  if (radius) entries.push(['border-radius', radius.px])
+  if (radius)
+    entries.push(['border-radius', radius.px])
   const shadow = CARD_SHADOW_OPTIONS.find(o => o.value === state.colorPresetCardShadow)
-  if (shadow) entries.push(['card-shadow', shadow.css])
+  if (shadow)
+    entries.push(['card-shadow', shadow.css])
   return entries
 }
 
 /** Sync panel state changes into the CSS text of themeQuickStartDefaults (in-place variable updates). */
 function syncPresetStoreToQuickStartCss(state: PresetState): void {
   const { themeQuickStartDefaults } = themeStore.getState()
-  if (!themeQuickStartDefaults) return
+  if (!themeQuickStartDefaults)
+    return
 
   const mappings = getPresetToCssVarMapping(state)
   let updatedCss = themeQuickStartDefaults
 
   for (const [suffix, value] of mappings) {
-    updatedCss = replaceCssVariableValue(updatedCss, suffix, value)
+    updatedCss = AUTO_SWITCH_COLOR_SUFFIXES.has(suffix)
+      ? replacePairedColorVariableValues(updatedCss, suffix, value)
+      : replaceCssVariableValue(updatedCss, suffix, value)
   }
 
-  if (updatedCss === themeQuickStartDefaults) return
+  const nextBgImageValue = resolveQuickStartBgImageValue(state)
+  updatedCss = replaceCssVariableValue(updatedCss, 'bg-image', nextBgImageValue)
+
+  if (updatedCss === themeQuickStartDefaults)
+    return
 
   const activeThemeKey = getActiveThemeStorageKey()
   themeStore.setState((s) => {
@@ -123,9 +155,25 @@ export function subscribeToQuickStartSync(): void {
   let lastKey = relevantFields(presetStore.getState())
   presetStore.subscribe((state) => {
     const key = relevantFields(state)
-    if (key === lastKey) return
+    if (key === lastKey)
+      return
     lastKey = key
     syncPresetStoreToQuickStartCss(state)
+  })
+
+  const assetRelevantFields = () => {
+    const { appliedAssets, uploadedAssets } = assetStore.getState()
+    const bgAsset = uploadedAssets.find(asset => asset.id === appliedAssets.background)
+    return [appliedAssets.background || '', bgAsset?.name || ''].join('|')
+  }
+
+  let lastAssetKey = assetRelevantFields()
+  assetStore.subscribe(() => {
+    const key = assetRelevantFields()
+    if (key === lastAssetKey)
+      return
+    lastAssetKey = key
+    syncPresetStoreToQuickStartCss(presetStore.getState())
   })
 }
 
@@ -144,7 +192,6 @@ export const themeActions = {
     themeStore.setState((state) => {
       const nextFiles = { ...state.stylesCssFiles, [filePath]: css }
 
-      // quick-start.css edits update themeQuickStartDefaults, not the user styles combined CSS
       if (isQuickStart) {
         return {
           ...state,
@@ -176,7 +223,6 @@ export const themeActions = {
       }
     })
 
-    // Sync quick-start variable values to the panel outside of themeStore.setState to avoid nested store updates
     if (isQuickStart) {
       syncQuickStartCssToPresetStore(css)
     }

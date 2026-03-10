@@ -12,6 +12,34 @@ interface ColorPickerProps {
 
 const formGroupStyle = { marginBottom: 0 }
 
+/**
+ * Convert any CSS color value to a 7-character lowercase hex string (#rrggbb)
+ * suitable for <input type="color">. Uses canvas for named/rgb/hsl colors.
+ */
+function toHexForNativeInput(cssColor: string): string | null {
+  if (!cssColor) {
+    return null
+  }
+  // Expand 3-digit hex to 6-digit
+  const short = cssColor.match(/^#([0-9a-f])([0-9a-f])([0-9a-f])$/i)
+  if (short) {
+    return `#${short[1]}${short[1]}${short[2]}${short[2]}${short[3]}${short[3]}`.toLowerCase()
+  }
+  // Already valid 6-digit hex — normalize to lowercase
+  if (COLOR_REGEX.test(cssColor)) {
+    return cssColor.toLowerCase()
+  }
+  // Use canvas to resolve named/rgb/hsl colors
+  const ctx = document.createElement('canvas').getContext('2d')
+  if (!ctx) {
+    return null
+  }
+  ctx.fillStyle = '#000000'
+  ctx.fillStyle = cssColor
+  const resolved = ctx.fillStyle
+  return resolved && resolved !== '#000000' ? resolved : null
+}
+
 export function ColorPicker({
   label,
   fieldId,
@@ -20,8 +48,7 @@ export function ColorPicker({
   placeholder,
   showTransparentPattern = false,
 }: ColorPickerProps) {
-  const isValidColor = COLOR_REGEX.test(value)
-  const validated = !value || isValidColor ? 'default' : 'error'
+  const hexValue = toHexForNativeInput(value)
 
   const swatchStyle = showTransparentPattern && !value
     ? {
@@ -29,9 +56,9 @@ export function ColorPicker({
         backgroundImage: 'repeating-conic-gradient(#aaa 0% 25%, #fff 0% 50%)',
         backgroundSize: '8px 8px',
       }
-    : { backgroundColor: value && isValidColor ? value : (value || '#000000') }
+    : { backgroundColor: value || '#000000' }
 
-  const inputColorValue = value && isValidColor ? value : '#ffffff'
+  const inputColorValue = hexValue ?? '#ffffff'
 
   return (
     <FormGroup label={label} fieldId={fieldId} style={formGroupStyle}>
@@ -70,7 +97,6 @@ export function ColorPicker({
             onChange={(_event, nextValue) => onChange(nextValue)}
             placeholder={placeholder}
             aria-label={`${label} value`}
-            validated={validated}
           />
         </FlexItem>
       </Flex>

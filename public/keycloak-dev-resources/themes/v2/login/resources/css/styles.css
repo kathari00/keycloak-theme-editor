@@ -348,8 +348,8 @@ body {
 body#keycloak-bg,
 body#keycloak-bg .kcLogin,
 body#keycloak-bg .pf-v5-c-login {
-  background-color: var(--quickstart-bg-color);
-  background-image: var(--quickstart-bg-image);
+  background-color: var(--quickstart-bg-color, transparent);
+  background-image: var(--quickstart-bg-image, var(--keycloak-bg-logo-url));
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;

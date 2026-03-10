@@ -10,10 +10,16 @@ interface QuickStartVariableDefinition extends CssEditorVariable {
 
 const QUICK_START_VARIABLE_DEFINITIONS: QuickStartVariableDefinition[] = [
   { name: '--quickstart-primary-color', detail: 'Quick Start var', includeInGeneratedRoot: true, isColor: true },
+  { name: '--quickstart-primary-color-light', detail: 'Quick Start var (light mode)', includeInGeneratedRoot: false, isColor: true },
+  { name: '--quickstart-primary-color-dark', detail: 'Quick Start var (dark mode)', includeInGeneratedRoot: false, isColor: true },
   { name: '--quickstart-secondary-color', detail: 'Quick Start var', includeInGeneratedRoot: true, isColor: true },
+  { name: '--quickstart-secondary-color-light', detail: 'Quick Start var (light mode)', includeInGeneratedRoot: false, isColor: true },
+  { name: '--quickstart-secondary-color-dark', detail: 'Quick Start var (dark mode)', includeInGeneratedRoot: false, isColor: true },
   { name: '--quickstart-font-family', detail: 'Quick Start var', includeInGeneratedRoot: true },
   { name: '--quickstart-heading-font-family', detail: 'Quick Start var', includeInGeneratedRoot: true },
   { name: '--quickstart-bg-color', detail: 'Quick Start var', includeInGeneratedRoot: true, isColor: true },
+  { name: '--quickstart-bg-color-light', detail: 'Quick Start var (light mode)', includeInGeneratedRoot: false, isColor: true },
+  { name: '--quickstart-bg-color-dark', detail: 'Quick Start var (dark mode)', includeInGeneratedRoot: false, isColor: true },
   { name: '--quickstart-bg-image', detail: 'Quick Start var', includeInGeneratedRoot: true },
   { name: '--quickstart-logo-url', detail: 'Quick Start var (theme token)', includeInGeneratedRoot: true },
   { name: '--quickstart-bg-logo-url', detail: 'Quick Start var (theme token)', includeInGeneratedRoot: true },

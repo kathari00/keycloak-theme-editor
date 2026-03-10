@@ -1,5 +1,4 @@
 import type { EditorStore } from '../stores/create-editor-store'
-import type { PresetState } from '../stores/types'
 import { useStore } from 'zustand'
 import { useShallow } from 'zustand/react/shallow'
 import { assetStore } from '../stores/asset-store'
@@ -76,27 +75,6 @@ export function usePresetState() {
   }))
 }
 
-export function usePresetExportState(): PresetState {
-  return usePresetStoreSlice(state => ({
-    selectedThemeId: state.selectedThemeId,
-    presetCss: state.presetCss,
-    colorPresetId: state.colorPresetId,
-    colorPresetPrimaryColor: state.colorPresetPrimaryColor,
-    colorPresetSecondaryColor: state.colorPresetSecondaryColor,
-    colorPresetFontFamily: state.colorPresetFontFamily,
-    colorPresetBgColor: state.colorPresetBgColor,
-    colorPresetBorderRadius: state.colorPresetBorderRadius,
-    colorPresetCardShadow: state.colorPresetCardShadow,
-    colorPresetHeadingFontFamily: state.colorPresetHeadingFontFamily,
-    showClientName: state.showClientName,
-    showRealmName: state.showRealmName,
-    infoMessage: state.infoMessage,
-    imprintUrl: state.imprintUrl,
-    dataProtectionUrl: state.dataProtectionUrl,
-    presetQuickSettings: state.presetQuickSettings,
-  }))
-}
-
 export function useQuickStartColorsState() {
   return usePresetStoreSlice(state => ({
     colorPresetId: state.colorPresetId,
@@ -117,12 +95,6 @@ export function useQuickStartContentState() {
     infoMessage: state.infoMessage,
     imprintUrl: state.imprintUrl,
     dataProtectionUrl: state.dataProtectionUrl,
-  }))
-}
-
-export function useQuickSettingsByThemeModeState() {
-  return usePresetStoreSlice(state => ({
-    quickSettingsByThemeMode: state.presetQuickSettings,
   }))
 }
 

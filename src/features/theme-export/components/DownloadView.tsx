@@ -1,12 +1,10 @@
 import type { DirectoryWriteParams, EditorCssContext, ImportedQuickSettingsByMode, JarBuildParams, ThemeEditorMetadata } from '../types'
 import { Button, Card, CardBody, CardTitle, FormGroup, Grid, GridItem, TextInput } from '@patternfly/react-core'
 import { useEffect, useState } from 'react'
-import { buildModeDefaultsSnapshot } from '../../editor/actions'
+import { buildThemeQuickStartDefaults } from '../../editor/actions/css-variable-reader'
 import {
   useCssFilesState,
-  useDarkModeState,
-  usePresetExportState,
-  useQuickSettingsByThemeModeState,
+  usePresetState,
   useQuickStartColorsState,
   useQuickStartContentState,
   useStylesCssState,
@@ -52,8 +50,10 @@ function buildExportCssFiles(
   for (let i = 0; i < paths.length; i++) {
     if (paths[i] === targetPath) {
       // The first user CSS file gets the generated CSS; quick-start.css stays separate.
-      result[paths[i]] = [topLevelImportsCss, payloadCssWithoutImports]
-        .filter(Boolean).join('\n\n')
+      result[paths[i]] = [
+        topLevelImportsCss,
+        payloadCssWithoutImports,
+      ].filter(Boolean).join('\n\n')
     }
     else {
       result[paths[i]] = editorFiles[paths[i]]
@@ -125,6 +125,27 @@ function buildOverriddenMessages(params: {
   return withLegalLinkLabels(withLegalLinks)
 }
 
+function buildExportQuickSettingsByMode(
+  quickStartCss: string,
+  sharedSettings: Omit<NonNullable<ImportedQuickSettingsByMode['light']>, 'colorPresetId' | 'colorPresetPrimaryColor' | 'colorPresetSecondaryColor' | 'colorPresetBgColor'>,
+): ImportedQuickSettingsByMode {
+  const buildModeSettings = (mode: 'light' | 'dark') => {
+    const defaults = buildThemeQuickStartDefaults(quickStartCss, mode)
+    return {
+      ...sharedSettings,
+      colorPresetId: defaults.colorPresetId,
+      colorPresetPrimaryColor: defaults.colorPresetPrimaryColor,
+      colorPresetSecondaryColor: defaults.colorPresetSecondaryColor,
+      colorPresetBgColor: defaults.colorPresetBgColor || '',
+    }
+  }
+
+  return {
+    light: buildModeSettings('light'),
+    dark: buildModeSettings('dark'),
+  }
+}
+
 export default function DownloadView({ onExportComplete }: DownloadViewProps) {
   const [themeName, setThemeName] = useState('mytheme')
   const [statusMessage, setStatusMessage] = useState('')
@@ -147,22 +168,15 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
       .catch(() => {})
   }, [])
   const { uploadedAssets, appliedAssets } = useUploadedAssetsState()
-  const presetExportState = usePresetExportState()
-  const { selectedThemeId } = presetExportState
-  const { stylesCss } = useStylesCssState()
+  const { selectedThemeId } = usePresetState()
+  const { stylesCss, themeQuickStartDefaults } = useStylesCssState()
   const { stylesCssFiles } = useCssFilesState()
-  const { isDarkMode } = useDarkModeState()
-  const { quickSettingsByThemeMode } = useQuickSettingsByThemeModeState()
   const themeConfig = useThemeConfig()
   const resolvedThemeId = resolveThemeIdFromConfig(themeConfig, selectedThemeId)
   const exportVariantId = resolvedThemeId
   const resolvedTheme = themeConfig.themes.find(t => t.id === resolvedThemeId)
   const {
-    colorPresetId,
-    colorPresetPrimaryColor,
-    colorPresetSecondaryColor,
     colorPresetFontFamily,
-    colorPresetBgColor,
     colorPresetBorderRadius,
     colorPresetCardShadow,
     colorPresetHeadingFontFamily,
@@ -193,12 +207,8 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
 
   const prepareExportFiles = async (): Promise<DirectoryWriteParams> => {
     const themeQuickStartCssPath = getThemeQuickStartCssPath(resolvedThemeId)
-    const currentSnapshot = {
-      colorPresetId,
-      colorPresetPrimaryColor,
-      colorPresetSecondaryColor,
+    const sharedSnapshot = {
       colorPresetFontFamily,
-      colorPresetBgColor,
       colorPresetBorderRadius,
       colorPresetCardShadow,
       colorPresetHeadingFontFamily,
@@ -226,33 +236,10 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
       imprintUrl: exportImprintUrl,
       dataProtectionUrl: exportDataProtectionUrl,
     })
-    const themeQuickStartDefaultsCss = themeQuickStartCssResponse.ok
+    const sourceThemeQuickStartCss = themeQuickStartDefaults.trim() || (themeQuickStartCssResponse.ok
       ? (await themeQuickStartCssResponse.text()).trim()
-      : ''
-    const lightStorageKey = `${resolvedThemeId}::light`
-    const darkStorageKey = `${resolvedThemeId}::dark`
-    const lightFallback = quickSettingsByThemeMode[lightStorageKey]
-      ?? buildModeDefaultsSnapshot(presetExportState, 'light')
-    const darkFallback = quickSettingsByThemeMode[darkStorageKey]
-      ?? buildModeDefaultsSnapshot(presetExportState, 'dark')
-    const toExportSnapshot = (settings: typeof lightFallback) => ({
-      ...settings,
-      colorPresetFontFamily,
-      colorPresetBorderRadius,
-      colorPresetCardShadow,
-      colorPresetHeadingFontFamily,
-      showClientName,
-      showRealmName,
-      infoMessage,
-      imprintUrl: exportImprintUrl,
-      dataProtectionUrl: exportDataProtectionUrl,
-    })
-    const rawLightExportSnapshot = isDarkMode ? toExportSnapshot(lightFallback) : currentSnapshot
-    const rawDarkExportSnapshot = isDarkMode ? currentSnapshot : toExportSnapshot(darkFallback)
-    const exportQuickSettingsByMode: ImportedQuickSettingsByMode = {
-      light: rawLightExportSnapshot,
-      dark: rawDarkExportSnapshot,
-    }
+      : '')
+    const exportQuickSettingsByMode = buildExportQuickSettingsByMode(sourceThemeQuickStartCss, sharedSnapshot)
     const quickStartCssParts = buildModeAwareQuickStartCssParts(exportQuickSettingsByMode)
     const editorCss = await extractEditorCssContext(quickStartCssParts.sharedCss)
     const payload = assembleExportPayload({
@@ -285,7 +272,7 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
       properties,
       templateFtl: stripDataKcStateAttributes(templateFtl),
       footerFtl: footerFtl ? stripDataKcStateAttributes(footerFtl) : footerFtl,
-      quickStartCss: [themeQuickStartDefaultsCss, quickStartCssParts.variablesCss].filter(Boolean).join('\n\n'),
+      quickStartCss: [sourceThemeQuickStartCss, quickStartCssParts.variablesCss].filter(Boolean).join('\n\n'),
       // Keep export CSS loading deterministic: template links quick-start.css and styles.css
       // via theme.properties, so styles.css must not re-import quick-start.css.
       stylesCss: combinedStylesCss,
@@ -388,7 +375,6 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
           const dirHandle = await (window as any).showDirectoryPicker({ mode: 'readwrite' })
           await writeToDirectory(dirHandle, writeParams)
           const projectPath = await saveExportToProject(writeParams).catch(() => null)
-          alert(projectPath ? `Theme exported to ${themeName}/login and saved to ${projectPath}` : `Theme exported to ${themeName}/login`)
           setStatusMessage(projectPath
             ? `Quick export finished. Saved to ${projectPath}`
             : 'Quick export finished.')

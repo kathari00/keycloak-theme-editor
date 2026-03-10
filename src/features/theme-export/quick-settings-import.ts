@@ -15,6 +15,25 @@ function normalizeCssValue(value: string | undefined): string {
   return (value || '').trim().replace(/\s+/g, ' ')
 }
 
+function getModeColorValue(
+  vars: QuickSettingsVars,
+  suffix: 'primary-color' | 'secondary-color' | 'bg-color',
+  mode: QuickSettingsMode,
+): string {
+  const candidates = mode === 'dark'
+    ? [`--quickstart-${suffix}-dark`, `--quickstart-${suffix}-light`]
+    : [`--quickstart-${suffix}-light`, `--quickstart-${suffix}-dark`]
+
+  for (const candidate of candidates) {
+    const value = normalizeCssValue(vars[candidate])
+    if (value && !value.startsWith('var(')) {
+      return value
+    }
+  }
+
+  return ''
+}
+
 function normalizeFontValue(value: string | undefined): string {
   const normalized = normalizeCssValue(value)
   if (!normalized || normalized.includes('var(')) {
@@ -127,16 +146,17 @@ function buildSharedQuickStartContent(cssText: string, messagesText: string): Pi
 }
 
 function buildModeQuickSettings(params: {
+  mode: QuickSettingsMode
   vars: QuickSettingsVars
   sharedContent: Pick<QuickSettings, 'showClientName' | 'showRealmName' | 'infoMessage' | 'imprintUrl' | 'dataProtectionUrl'>
 }): Partial<QuickSettings> {
-  const { vars, sharedContent } = params
-  const bgColorValue = normalizeCssValue(vars['--quickstart-bg-color'])
+  const { mode, vars, sharedContent } = params
+  const bgColorValue = getModeColorValue(vars, 'bg-color', mode)
 
   return {
     colorPresetId: CUSTOM_PRESET_ID,
-    colorPresetPrimaryColor: normalizeCssValue(vars['--quickstart-primary-color']) || '#0066cc',
-    colorPresetSecondaryColor: normalizeCssValue(vars['--quickstart-secondary-color']) || '#c0c0c0',
+    colorPresetPrimaryColor: getModeColorValue(vars, 'primary-color', mode) || '#0066cc',
+    colorPresetSecondaryColor: getModeColorValue(vars, 'secondary-color', mode) || '#c0c0c0',
     colorPresetFontFamily: normalizeFontValue(vars['--quickstart-font-family']),
     colorPresetBgColor: COLOR_HEX_PATTERN.test(bgColorValue) ? bgColorValue : '',
     colorPresetBorderRadius: mapBorderRadiusValue(
@@ -174,7 +194,7 @@ export function parseQuickSettingsFromImportedTheme(params: {
   const darkVars = mergeVarMaps(shared, light, dark)
 
   return {
-    light: buildModeQuickSettings({ vars: lightVars, sharedContent }),
-    dark: buildModeQuickSettings({ vars: darkVars, sharedContent }),
+    light: buildModeQuickSettings({ mode: 'light', vars: lightVars, sharedContent }),
+    dark: buildModeQuickSettings({ mode: 'dark', vars: darkVars, sharedContent }),
   }
 }

@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { presetActions } from '../actions'
-import { buildQuickSettingsStorageKey } from '../lib/quick-settings'
 import { assetStore } from '../stores/asset-store'
 import { coreStore } from '../stores/core-store'
 import { historyStore } from '../stores/history-store'
@@ -38,37 +37,42 @@ vi.mock('../../presets/queries', async (importOriginal) => {
         return {
           quickStartDefaults: `
 :root {
-  --quickstart-primary-color: #0b57d0;
+  --quickstart-primary-color-light: #0b57d0;
   --quickstart-primary-color-dark: #a8c7fa;
-  --quickstart-secondary-color: #9aa0a6;
+  --quickstart-primary-color: var(--quickstart-primary-color-light);
+  --quickstart-secondary-color-light: #9aa0a6;
+  --quickstart-secondary-color-dark: #9aa0a6;
+  --quickstart-secondary-color: var(--quickstart-secondary-color-light);
   --quickstart-font-family: custom;
-  --quickstart-bg-color: #f0f4f9;
+  --quickstart-bg-color-light: #f0f4f9;
   --quickstart-bg-color-dark: #1e1f20;
-  --quickstart-card-shadow-default: none;
+  --quickstart-bg-color: var(--quickstart-bg-color-light);
+  --quickstart-card-shadow: none;
 }
           `.trim(),
           stylesCss: '.kcFormCardClass { display: grid; }',
+          stylesCssFiles: {},
         }
       }
 
       return {
         quickStartDefaults: `
 :root {
-  --quickstart-primary-color: #0066cc;
+  --quickstart-primary-color-light: #0066cc;
   --quickstart-primary-color-dark: #0066cc;
-  --quickstart-secondary-color: #c0c0c0;
+  --quickstart-primary-color: var(--quickstart-primary-color-light);
+  --quickstart-secondary-color-light: #c0c0c0;
+  --quickstart-secondary-color-dark: #c0c0c0;
+  --quickstart-secondary-color: var(--quickstart-secondary-color-light);
   --quickstart-font-family: custom;
 }
         `.trim(),
         stylesCss: '.pf-v5-c-login__main-header { border-top-color: var(--quickstart-primary-color); }',
+        stylesCssFiles: {},
       }
     }),
   }
 })
-
-function getModePrimaryColor(themeId: string, mode: 'light' | 'dark'): string | undefined {
-  return presetStore.getState().presetQuickSettings[buildQuickSettingsStorageKey(themeId, mode)]?.colorPresetPrimaryColor
-}
 
 describe('preset background sync on preset selection', () => {
   beforeEach(() => {
@@ -141,52 +145,31 @@ describe('preset background sync on preset selection', () => {
     expect(assetStore.getState().appliedAssets.logo).toBeUndefined()
   })
 
-  it('uses horizontal-card dark defaults when no saved dark settings exist', async () => {
+  it('loads horizontal-card dark defaults from quick-start.css', async () => {
     coreStore.setState(state => ({ ...state, isDarkMode: true }))
-    presetStore.setState(state => ({
-      ...state,
-      presetQuickSettings: {},
-    }))
 
     await presetActions.applyThemeSelection('horizontal-card')
 
-    expect(getModePrimaryColor('horizontal-card', 'dark')).toBe('#a8c7fa')
+    expect(presetStore.getState().colorPresetPrimaryColor).toBe('#a8c7fa')
     expect(assetStore.getState().appliedAssets.background).toBeUndefined()
   })
 
-  it('restores shared quick-start settings from the selected theme snapshot', async () => {
+  it('keeps content settings global while theme styles come from quick-start.css', async () => {
     presetStore.setState(state => ({
       ...state,
       colorPresetFontFamily: 'current-font',
       colorPresetBorderRadius: 'sharp',
       colorPresetCardShadow: 'subtle',
       infoMessage: 'current-info',
-      presetQuickSettings: {
-        ...state.presetQuickSettings,
-        [buildQuickSettingsStorageKey('horizontal-card', 'light')]: {
-          colorPresetId: 'custom',
-          colorPresetPrimaryColor: '#123456',
-          colorPresetSecondaryColor: '#abcdef',
-          colorPresetFontFamily: 'restored-font',
-          colorPresetBgColor: '#f0f4f9',
-          colorPresetBorderRadius: 'pill',
-          colorPresetCardShadow: 'strong',
-          colorPresetHeadingFontFamily: 'restored-heading',
-          showClientName: true,
-          showRealmName: false,
-          infoMessage: 'restored-info',
-          imprintUrl: 'https://example.com/imprint',
-          dataProtectionUrl: 'https://example.com/privacy',
-        },
-      },
+      showClientName: true,
+      showRealmName: false,
     }))
 
     await presetActions.applyThemeSelection('horizontal-card')
 
-    expect(presetStore.getState().colorPresetFontFamily).toBe('restored-font')
-    expect(presetStore.getState().colorPresetBorderRadius).toBe('pill')
-    expect(presetStore.getState().colorPresetCardShadow).toBe('strong')
-    expect(presetStore.getState().infoMessage).toBe('restored-info')
+    expect(presetStore.getState().colorPresetFontFamily).toBe('custom')
+    expect(presetStore.getState().colorPresetCardShadow).toBe('none')
+    expect(presetStore.getState().infoMessage).toBe('current-info')
     expect(presetStore.getState().showClientName).toBe(true)
     expect(presetStore.getState().showRealmName).toBe(false)
   })
@@ -201,17 +184,16 @@ describe('preset background sync on preset selection', () => {
     expect(assetStore.getState().appliedAssets.logo).toBe('default-logo')
   })
 
-  it('uses v2 defaults with realm name hidden when no snapshot exists', async () => {
+  it('does not overwrite global realm visibility when switching back to v2', async () => {
     presetStore.setState(state => ({
       ...state,
       selectedThemeId: 'horizontal-card',
       showRealmName: true,
-      presetQuickSettings: {},
     }))
 
     await presetActions.applyThemeSelection('v2')
 
-    expect(presetStore.getState().showRealmName).toBe(false)
+    expect(presetStore.getState().showRealmName).toBe(true)
   })
 
   it('restores applied logos per theme instead of leaking them globally', async () => {

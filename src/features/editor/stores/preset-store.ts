@@ -28,7 +28,6 @@ export function createDefaultPresetState(): PresetState {
     presetCss: '',
     ...DEFAULT_QUICK_SETTINGS_STYLE,
     ...DEFAULT_QUICK_START_CONTENT,
-    presetQuickSettings: {},
   }
 }
 
@@ -53,6 +52,5 @@ export const presetStore = createPersistedEditorStore<PresetState>(createDefault
     infoMessage: state.infoMessage,
     imprintUrl: state.imprintUrl,
     dataProtectionUrl: state.dataProtectionUrl,
-    presetQuickSettings: state.presetQuickSettings,
   }),
 })

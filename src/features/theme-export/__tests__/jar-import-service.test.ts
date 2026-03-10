@@ -5,13 +5,13 @@ import { importJarFile } from '../jar-import-service'
 
 describe('importJarFile', () => {
   it('preserves multiple imported CSS files instead of flattening them', async () => {
-    const fileEntry = (text: string) => [new TextEncoder().encode(text), { level: 0 }] as const
+    const fileEntry = (text: string): [Uint8Array, { level: 0 }] => [new TextEncoder().encode(text), { level: 0 }]
     const jarEntries = {
       theme: {
         demo: {
           login: {
             'theme.properties': fileEntry('styles=css/a.css css/b.css css/quick-start.css'),
-            resources: {
+            'resources': {
               css: {
                 'quick-start.css': fileEntry(':root { --quickstart-primary-color: #123456; }'),
                 'a.css': fileEntry('.first { color: red; }'),

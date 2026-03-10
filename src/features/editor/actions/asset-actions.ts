@@ -1,7 +1,6 @@
 import type { AppliedAssets, ThemeAssetTarget, UploadedAsset } from '../../assets/types'
-import { buildQuickSettingsStorageKey, getThemeStorageKey, resolveQuickSettingsMode } from '../lib/quick-settings'
+import { getThemeStorageKey } from '../lib/quick-settings'
 import { assetStore } from '../stores/asset-store'
-import { coreStore } from '../stores/core-store'
 import { presetStore } from '../stores/preset-store'
 import { historyActions } from './history-actions'
 
@@ -152,34 +151,15 @@ export const assetActions = {
     if (prevAppliedAssets[target] === assetId)
       return
 
-    const activeQuickSettingsKey = buildQuickSettingsStorageKey(
-      presetStore.getState().selectedThemeId,
-      resolveQuickSettingsMode(coreStore.getState().isDarkMode),
-    )
-    const oldBgColor = presetStore.getState().presetQuickSettings[activeQuickSettingsKey]?.colorPresetBgColor || ''
+    const oldBgColor = presetStore.getState().colorPresetBgColor || ''
     const clearBgColor = target === 'background' && Boolean(oldBgColor)
 
     const setActiveModeBackgroundColor = (colorPresetBgColor: string) => {
-      presetStore.setState((current) => {
-        const activeQuickSettings = current.presetQuickSettings[activeQuickSettingsKey]
-        const nextRootBgColor = current.colorPresetBgColor === colorPresetBgColor ? current.colorPresetBgColor : colorPresetBgColor
-        if (!activeQuickSettings && current.colorPresetBgColor === nextRootBgColor) {
-          return current
-        }
-        return {
-          ...current,
-          colorPresetBgColor: nextRootBgColor,
-          presetQuickSettings: activeQuickSettings
-            ? {
-                ...current.presetQuickSettings,
-                [activeQuickSettingsKey]: {
-                  ...activeQuickSettings,
-                  colorPresetBgColor,
-                },
-              }
-            : current.presetQuickSettings,
-        }
-      })
+      presetStore.setState(current => (
+        current.colorPresetBgColor === colorPresetBgColor
+          ? current
+          : { colorPresetBgColor }
+      ))
     }
 
     historyActions.addUndoRedoAction({

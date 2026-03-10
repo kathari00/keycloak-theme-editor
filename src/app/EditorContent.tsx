@@ -118,6 +118,7 @@ export default function EditorContent() {
         editorActions.setThemeQuickStartDefaults(quickStartDefaults)
         editorActions.setBaseCss(stylesCss)
         editorActions.setThemeData(resolvedThemeId, stylesCss, stylesCssFiles)
+        editorActions.applyThemeModeDefaults(isDarkMode ? 'dark' : 'light')
       }
       catch {
         editorActions.setThemeQuickStartDefaults('')
@@ -184,7 +185,7 @@ export default function EditorContent() {
     }
 
     void initialize()
-  }, [activePageId, previewPagesReady, resolvedThemeId, themeConfig.themes, variantId])
+  }, [activePageId, isDarkMode, previewPagesReady, resolvedThemeId, themeConfig.themes, variantId])
 
   useEffect(() => {
     const method = isDarkMode ? 'add' : 'remove'
@@ -201,15 +202,16 @@ export default function EditorContent() {
         }
 
         const targetThemeId = resolveThemeIdFromConfig(themeConfig, detail.sourceThemeId || detail.themeName || selectedThemeId)
-        const targetThemeStorageKey = targetThemeId
         const themeCssStructured = await getThemeCssStructuredCached(targetThemeId).catch(() => ({ quickStartDefaults: '', stylesCss: '' }))
         const importedCss = sanitizeThemeCssSourceForEditor((detail.css || '').trim())
+        const importedQuickStartCss = (detail.quickStartCss || '').trim() || themeCssStructured.quickStartDefaults
         const importedCssFiles = detail.stylesCssFiles && Object.keys(detail.stylesCssFiles).length > 0
-          ? detail.stylesCssFiles
-          : singleFileMap(importedCss)
-        editorActions.setThemeQuickStartDefaults(themeCssStructured.quickStartDefaults)
+          ? { 'css/quick-start.css': importedQuickStartCss, ...detail.stylesCssFiles }
+          : { 'css/quick-start.css': importedQuickStartCss, ...singleFileMap(importedCss) }
+        editorActions.setThemeQuickStartDefaults(importedQuickStartCss)
         editorActions.setThemeData(targetThemeId, importedCss, importedCssFiles)
-        editorActions.applyImportedQuickSettingsForPreset(targetThemeStorageKey, detail.quickSettingsByMode)
+        editorActions.applyThemeModeDefaults(isDarkMode ? 'dark' : 'light', importedQuickStartCss)
+        editorActions.applyImportedQuickSettingsForPreset(detail.quickSettingsByMode)
         editorActions.setUploadedAssets(detail.uploadedAssets || [])
         editorActions.setAppliedAssets(detail.appliedAssets || {})
       })()
@@ -219,7 +221,7 @@ export default function EditorContent() {
     return () => {
       window.removeEventListener(THEME_JAR_IMPORTED_EVENT, handleThemeJarImported as EventListener)
     }
-  }, [selectedThemeId, themeConfig])
+  }, [isDarkMode, selectedThemeId, themeConfig])
 
   if (!previewPagesReady || !pageIds.length) {
     return loadingSpinner

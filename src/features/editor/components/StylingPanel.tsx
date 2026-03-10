@@ -7,8 +7,8 @@ import { escapeCssIdentifier } from '../../preview/lib/selector-utils'
 import { editorActions } from '../actions'
 import { useCssFilesState, useDarkModeState, useHistoryRevisionState, useUploadedAssetsState } from '../hooks/use-editor'
 import { useStyleWorkspace } from '../hooks/use-style-workspace'
-import { cssFileDisplayName, QUICK_START_CSS_PATH } from '../lib/css-files'
 import { createCssEditorExtensions } from '../lib/codemirror-config'
+import { cssFileDisplayName, QUICK_START_CSS_PATH } from '../lib/css-files'
 
 interface CssEditorImageAsset {
   name: string

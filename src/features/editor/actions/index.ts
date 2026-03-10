@@ -32,4 +32,3 @@ export const editorActions = {
 export { assetActions, coreActions, historyActions, resetActions, themeActions }
 export { buildQuickSettingsStorageKey } from '../lib/quick-settings'
 export type { QuickSettingsMode } from './preset-state'
-export { buildModeDefaultsSnapshot } from './quick-start-extras-actions'

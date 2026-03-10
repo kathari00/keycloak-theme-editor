@@ -73,7 +73,6 @@ describe('reset actions', () => {
       infoMessage: 'old',
       imprintUrl: 'https://example.com/imprint',
       dataProtectionUrl: 'https://example.com/privacy',
-      presetQuickSettings: {},
     }))
 
     themeStore.setState(() => ({
@@ -82,6 +81,9 @@ describe('reset actions', () => {
       stylesCssByTheme: {
         v2: '.old-theme { color: red; }',
       },
+      stylesCssFiles: {},
+      stylesCssFilesByTheme: {},
+      activeCssFilePath: '',
       themeQuickStartDefaults: '',
       pages: [],
     }))

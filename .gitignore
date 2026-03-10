@@ -35,5 +35,6 @@ public/keycloak-upstream/
 public/keycloak-dev-resources/resources-common/
 public/fonts/
 docker-compose.yml
-bin
+bin/*
+!bin/kc-mocks.ts
 *.tgz

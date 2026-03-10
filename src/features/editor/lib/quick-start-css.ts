@@ -50,6 +50,17 @@ interface QuickStartVisibilityState {
   hasInfoMessage: boolean
 }
 
+const AUTO_SWITCH_COLOR_VARIABLE_NAMES = new Set([
+  '--quickstart-primary-color',
+  '--quickstart-secondary-color',
+  '--quickstart-bg-color',
+])
+
+const QUICK_START_DARK_ALIAS_SELECTORS = [
+  'html.pf-v5-theme-dark',
+  'html.kcDarkModeClass',
+]
+
 function extractPrimaryFontFamily(fontFamily: string): string | null {
   const first = fontFamily.split(',')[0]?.trim()
   if (!first) {
@@ -60,13 +71,32 @@ function extractPrimaryFontFamily(fontFamily: string): string | null {
 }
 
 export function buildQuickStartRootCss(variableValues: Partial<Record<string, string>>): string {
-  const lines = QUICK_START_GENERATED_ROOT_VARIABLE_NAMES
-    .flatMap((variableName) => {
-      const variableValue = variableValues[variableName]
-      return variableValue ? [`  ${variableName}: ${variableValue};`] : []
-    })
+  const rootLines: string[] = []
+  const darkLines: string[] = []
 
-  return `:root {\n${lines.join('\n')}\n}`
+  QUICK_START_GENERATED_ROOT_VARIABLE_NAMES.forEach((variableName) => {
+    const variableValue = variableValues[variableName]
+    if (!variableValue) {
+      return
+    }
+
+    if (AUTO_SWITCH_COLOR_VARIABLE_NAMES.has(variableName)) {
+      rootLines.push(`  ${variableName}-light: ${variableValue};`)
+      rootLines.push(`  ${variableName}-dark: ${variableValue};`)
+      rootLines.push(`  ${variableName}: var(${variableName}-light);`)
+      darkLines.push(`  ${variableName}: var(${variableName}-dark);`)
+      return
+    }
+
+    rootLines.push(`  ${variableName}: ${variableValue};`)
+  })
+
+  const cssBlocks = [`:root {\n${rootLines.join('\n')}\n}`]
+  if (darkLines.length > 0) {
+    cssBlocks.push(`${QUICK_START_DARK_ALIAS_SELECTORS.join(',\n')} {\n${darkLines.join('\n')}\n}`)
+  }
+
+  return cssBlocks.join('\n\n')
 }
 
 function buildQuickStartVisibilityState(options: QuickStartCssOptions): QuickStartVisibilityState {
