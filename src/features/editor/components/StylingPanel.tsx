@@ -5,8 +5,9 @@ import { getAssetDataUrl, getUploadedImageCssVarName } from '../../assets/font-c
 import { usePreviewContext } from '../../preview/hooks/use-preview-context'
 import { escapeCssIdentifier } from '../../preview/lib/selector-utils'
 import { editorActions } from '../actions'
-import { useDarkModeState, useHistoryRevisionState, useStylesCssState, useUploadedAssetsState } from '../hooks/use-editor'
+import { useCssFilesState, useDarkModeState, useHistoryRevisionState, useUploadedAssetsState } from '../hooks/use-editor'
 import { useStyleWorkspace } from '../hooks/use-style-workspace'
+import { cssFileDisplayName, QUICK_START_CSS_PATH } from '../lib/css-files'
 import { createCssEditorExtensions } from '../lib/codemirror-config'
 
 interface CssEditorImageAsset {
@@ -94,7 +95,7 @@ function buildPageScopedUniqueSelector(doc: Document | null, selectedNodeId: str
 export default function StylingPanel() {
   const { isDarkMode } = useDarkModeState()
   const { revision } = useHistoryRevisionState()
-  const { stylesCss } = useStylesCssState()
+  const { stylesCssFiles, activeCssFilePath } = useCssFilesState()
   const { uploadedAssets } = useUploadedAssetsState()
   const {
     getDocument,
@@ -102,7 +103,13 @@ export default function StylingPanel() {
     previewReady: isPreviewReady,
   } = usePreviewContext()
 
-  const [showAllStyles, setShowAllStyles] = useState(false)
+  const [showAllStylesByFile, setShowAllStylesByFile] = useState<Record<string, boolean>>({ [QUICK_START_CSS_PATH]: true })
+  const showAllStyles = showAllStylesByFile[activeCssFilePath] ?? false
+  const setShowAllStyles = (value: boolean) => setShowAllStylesByFile(prev => ({ ...prev, [activeCssFilePath]: value }))
+
+  const filePaths = Object.keys(stylesCssFiles)
+  const hasFileTabs = filePaths.length > 0
+  const activeFileCss = stylesCssFiles[activeCssFilePath] ?? ''
 
   const previewDocument = isPreviewReady ? getDocument() : null
 
@@ -143,12 +150,12 @@ export default function StylingPanel() {
     setEditorCss,
     commitEditorCss,
   } = useStyleWorkspace({
-    stylesCss,
+    stylesCss: activeFileCss,
     selectedElement,
     hasActiveSelection: Boolean(selectedElement),
     showAllStyles,
     addUndoRedoAction: editorActions.addUndoRedoAction,
-    setStylesCss: editorActions.setStylesCss,
+    setStylesCss: editorActions.setActiveFileCss,
   })
 
   const labelTextColor = isDarkMode ? '#f3f4f6' : '#111827'
@@ -157,6 +164,11 @@ export default function StylingPanel() {
     backgroundColor: isDarkMode ? '#374151' : '#f3f4f6',
     borderColor: isDarkMode ? '#6b7280' : '#d1d5db',
   }
+
+  const tabBarBg = isDarkMode ? '#1f2937' : '#f9fafb'
+  const tabBorderColor = 'var(--pf-t--global--border--color--default)'
+  const activeTabBg = isDarkMode ? '#111827' : '#ffffff'
+  const inactiveTabColor = isDarkMode ? '#9ca3af' : '#6b7280'
 
   return (
     <Stack style={{ height: '100%', padding: 'var(--pf-t--global--spacer--sm)' }}>
@@ -174,17 +186,61 @@ export default function StylingPanel() {
         </Flex>
       </StackItem>
       <StackItem isFilled style={{ minHeight: 0 }}>
-        <div style={{ overflow: 'hidden', minHeight: 0, height: '100%', border: '1px solid var(--pf-t--global--border--color--default)', borderRadius: 'var(--pf-t--global--border--radius--medium)' }}>
-          <CodeMirror
-            key={revision}
-            value={editorCss}
-            onChange={setEditorCss}
-            onBlur={commitEditorCss}
-            basicSetup={{ autocompletion: false, indentOnInput: false }}
-            extensions={extensions}
-            height="100%"
-            style={{ height: '100%' }}
-          />
+        <div style={{ overflow: 'hidden', minHeight: 0, height: '100%', border: `1px solid ${tabBorderColor}`, borderRadius: 'var(--pf-t--global--border--radius--medium)', display: 'flex', flexDirection: 'column' }}>
+          {hasFileTabs && (
+            <div
+              role="tablist"
+              aria-label="CSS files"
+              style={{
+                display: 'flex',
+                gap: 0,
+                backgroundColor: tabBarBg,
+                borderBottom: `1px solid ${tabBorderColor}`,
+                flexShrink: 0,
+                overflowX: 'auto',
+              }}
+            >
+              {filePaths.map(filePath => (
+                <button
+                  key={filePath}
+                  role="tab"
+                  type="button"
+                  aria-selected={filePath === activeCssFilePath}
+                  onClick={() => {
+                    commitEditorCss()
+                    editorActions.setActiveCssFilePath(filePath)
+                  }}
+                  style={{
+                    padding: '4px 10px',
+                    fontSize: '11px',
+                    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                    border: 'none',
+                    borderRight: `1px solid ${tabBorderColor}`,
+                    borderBottom: filePath === activeCssFilePath ? `2px solid var(--pf-t--global--color--brand--default)` : '2px solid transparent',
+                    background: filePath === activeCssFilePath ? activeTabBg : 'transparent',
+                    color: filePath === activeCssFilePath ? labelTextColor : inactiveTabColor,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    lineHeight: '1.4',
+                  }}
+                >
+                  {cssFileDisplayName(filePath)}
+                </button>
+              ))}
+            </div>
+          )}
+          <div style={{ flex: 1, minHeight: 0 }}>
+            <CodeMirror
+              key={`${revision}-${activeCssFilePath}`}
+              value={editorCss}
+              onChange={setEditorCss}
+              onBlur={commitEditorCss}
+              basicSetup={{ autocompletion: false, indentOnInput: false }}
+              extensions={extensions}
+              height="100%"
+              style={{ height: '100%' }}
+            />
+          </div>
         </div>
       </StackItem>
 

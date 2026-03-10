@@ -13,6 +13,7 @@ vi.mock('../../presets/queries', () => ({
   getThemeCssStructuredCached: vi.fn(async () => ({
     quickStartDefaults: MOCK_V2_THEME_CSS,
     stylesCss: MOCK_V2_THEME_CSS,
+    stylesCssFiles: {},
   })),
 }))
 

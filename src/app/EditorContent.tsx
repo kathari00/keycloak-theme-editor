@@ -8,6 +8,7 @@ import RightSidebar from '../components/RightSidebar'
 import Topbar from '../components/Topbar'
 import { editorActions } from '../features/editor/actions'
 import { useDarkModeState, usePresetState, usePreviewState } from '../features/editor/hooks/use-editor'
+import { singleFileMap } from '../features/editor/lib/css-files'
 import { sanitizeThemeCssSourceForEditor } from '../features/editor/lib/css-source-sanitizer'
 import { assetStore } from '../features/editor/stores/asset-store'
 import { getThemeCssStructuredCached, resolveThemeIdFromConfig, useThemeConfig } from '../features/presets/queries'
@@ -113,10 +114,10 @@ export default function EditorContent() {
       editorActions.setPreviewReady(false)
 
       try {
-        const { quickStartDefaults, stylesCss } = await getThemeCssStructuredCached(resolvedThemeId)
+        const { quickStartDefaults, stylesCss, stylesCssFiles } = await getThemeCssStructuredCached(resolvedThemeId)
         editorActions.setThemeQuickStartDefaults(quickStartDefaults)
         editorActions.setBaseCss(stylesCss)
-        editorActions.setThemeData(resolvedThemeId, stylesCss)
+        editorActions.setThemeData(resolvedThemeId, stylesCss, stylesCssFiles)
       }
       catch {
         editorActions.setThemeQuickStartDefaults('')
@@ -202,13 +203,15 @@ export default function EditorContent() {
         const targetThemeId = resolveThemeIdFromConfig(themeConfig, detail.sourceThemeId || detail.themeName || selectedThemeId)
         const targetThemeStorageKey = targetThemeId
         const themeCssStructured = await getThemeCssStructuredCached(targetThemeId).catch(() => ({ quickStartDefaults: '', stylesCss: '' }))
+        const importedCss = sanitizeThemeCssSourceForEditor((detail.css || '').trim())
+        const importedCssFiles = detail.stylesCssFiles && Object.keys(detail.stylesCssFiles).length > 0
+          ? detail.stylesCssFiles
+          : singleFileMap(importedCss)
         editorActions.setThemeQuickStartDefaults(themeCssStructured.quickStartDefaults)
-        editorActions.setThemeData(targetThemeId, themeCssStructured.stylesCss)
+        editorActions.setThemeData(targetThemeId, importedCss, importedCssFiles)
         editorActions.applyImportedQuickSettingsForPreset(targetThemeStorageKey, detail.quickSettingsByMode)
         editorActions.setUploadedAssets(detail.uploadedAssets || [])
         editorActions.setAppliedAssets(detail.appliedAssets || {})
-        const importedCss = sanitizeThemeCssSourceForEditor((detail.css || '').trim())
-        editorActions.setStylesCss(importedCss)
       })()
     }
 

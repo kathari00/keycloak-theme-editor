@@ -17,6 +17,7 @@ interface PreviewStyleParams {
   doc: Document
   themeStylesPath: string
   stylesCss: string
+  quickStartBaseCss: string
   quickStartOverridesCss: string
   uploadedFontsCss: string
   uploadedImagesCss: string
@@ -52,6 +53,7 @@ function syncPreviewDocumentStyles(params: PreviewStyleParams): void {
     doc,
     themeStylesPath,
     stylesCss,
+    quickStartBaseCss,
     quickStartOverridesCss,
     uploadedFontsCss,
     uploadedImagesCss,
@@ -65,6 +67,7 @@ function syncPreviewDocumentStyles(params: PreviewStyleParams): void {
 
   ensureBaseHref(doc, 'preview-theme-base', new URL(themeStylesPath, window.location.href).toString())
   const styles = [
+    ['preview-quick-start-base', quickStartBaseCss],
     ['preview-theme-styles-inline', stylesCss],
     ['preview-quick-start-overrides', quickStartOverridesCss],
     ['preview-uploaded-fonts', uploadedFontsCss],
@@ -87,7 +90,7 @@ function isLegalInfoLink(anchor: HTMLAnchorElement): boolean {
 export function PreviewShell() {
   const { activeVariantId, activePageId, activeStoryId, selectedNodeId, iframeRef, setPreviewReady, selectNode } = usePreviewRuntime()
   const { selectedThemeId } = usePresetState()
-  const { stylesCss } = useStylesCssState()
+  const { stylesCss, themeQuickStartDefaults } = useStylesCssState()
   const colors = useQuickStartColorsState()
   const content = useQuickStartContentState()
   const assets = useUploadedAssetsState()
@@ -145,6 +148,7 @@ export function PreviewShell() {
       doc,
       themeStylesPath,
       stylesCss,
+      quickStartBaseCss: themeQuickStartDefaults,
       quickStartOverridesCss: quickStartCss,
       uploadedFontsCss,
       uploadedImagesCss,
@@ -161,7 +165,7 @@ export function PreviewShell() {
       noAccountMessage: messageOverrides.noAccount,
       doRegisterLabel: messageOverrides.doRegister,
     })
-  }, [appliedAssetsCss, content.dataProtectionUrl, content.imprintUrl, content.infoMessage, content.showClientName, content.showRealmName, frameLoadVersion, iframeRef, isDarkMode, messageOverrides.doRegister, messageOverrides.noAccount, quickStartCss, resolvedTheme?.darkModeClasses, stylesCss, themeStylesPath, uploadedFontsCss, uploadedImagesCss])
+  }, [appliedAssetsCss, content.dataProtectionUrl, content.imprintUrl, content.infoMessage, content.showClientName, content.showRealmName, frameLoadVersion, iframeRef, isDarkMode, messageOverrides.doRegister, messageOverrides.noAccount, quickStartCss, resolvedTheme?.darkModeClasses, stylesCss, themeQuickStartDefaults, themeStylesPath, uploadedFontsCss, uploadedImagesCss])
 
   useEffect(() => {
     const doc = iframeRef.current?.contentDocument

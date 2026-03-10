@@ -99,7 +99,7 @@ export async function getThemeCssStructuredCached(themeId: ThemeId): Promise<The
     themeId,
     cache: themeCssStructuredCache,
     inFlight: themeCssStructuredInFlight,
-    emptyValue: () => ({ quickStartDefaults: '', stylesCss: '' }),
+    emptyValue: () => ({ quickStartDefaults: '', stylesCss: '', stylesCssFiles: {} }),
     load: () => loadThemeCssStructured(themeId),
   })
 }

@@ -58,10 +58,11 @@ export interface PresetState {
 
 export interface ThemeState {
   baseCss: string
-  /** User-editable layout/styles CSS (loaded from styles.css, without quick-start content) */
   stylesCss: string
-  /** User-editable styles scoped per theme id. */
   stylesCssByTheme: Record<string, string>
+  stylesCssFiles: Record<string, string>
+  stylesCssFilesByTheme: Record<string, Record<string, string>>
+  activeCssFilePath: string
   /** Original quick-start.css content from the theme (read-only reference for defaults) */
   themeQuickStartDefaults: string
   pages: KeycloakPage[]

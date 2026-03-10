@@ -6,6 +6,7 @@ import { themeResourcePath } from './types'
 export interface ThemeCssStructured {
   quickStartDefaults: string
   stylesCss: string
+  stylesCssFiles: Record<string, string>
 }
 
 /**
@@ -113,13 +114,24 @@ export async function loadThemeCssStructured(themeId: ThemeId): Promise<ThemeCss
     ])
 
     const quickStartDefaults = rawQuickStart
-    const combinedStyles = rawUserStyles.filter(Boolean).join('\n\n')
-    const stylesCss = sanitizeThemeCssSourceForEditor(combinedStyles)
 
-    return { quickStartDefaults, stylesCss }
+    // Build individual file map (quick-start.css always first)
+    const stylesCssFiles: Record<string, string> = {
+      'css/quick-start.css': rawQuickStart,
+    }
+    for (let i = 0; i < userStyleEntries.length; i++) {
+      const css = sanitizeThemeCssSourceForEditor(rawUserStyles[i])
+      if (css) {
+        stylesCssFiles[userStyleEntries[i]] = css
+      }
+    }
+
+    const stylesCss = rawUserStyles.filter(Boolean).map(css => sanitizeThemeCssSourceForEditor(css)).filter(Boolean).join('\n\n')
+
+    return { quickStartDefaults, stylesCss, stylesCssFiles }
   }
   catch (error) {
     console.error(`Error loading theme CSS for ${themeId}:`, error)
-    return { quickStartDefaults: '', stylesCss: '' }
+    return { quickStartDefaults: '', stylesCss: '', stylesCssFiles: {} }
   }
 }

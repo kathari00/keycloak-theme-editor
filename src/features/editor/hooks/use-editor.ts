@@ -58,6 +58,14 @@ export function useEditorStore() {
 export function useStylesCssState() {
   return useThemeStoreSlice(state => ({
     stylesCss: state.stylesCss,
+    themeQuickStartDefaults: state.themeQuickStartDefaults,
+  }))
+}
+
+export function useCssFilesState() {
+  return useThemeStoreSlice(state => ({
+    stylesCssFiles: state.stylesCssFiles,
+    activeCssFilePath: state.activeCssFilePath,
   }))
 }
 

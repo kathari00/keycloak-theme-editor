@@ -1,8 +1,10 @@
 import type { AppliedAssets, UploadedAsset } from '../assets/types'
 import type { QuickSettings } from '../editor/stores/types'
-import type { ThemeEditorMetadata } from './theme-file-assembler'
 
-/** Assembled CSS + asset payload ready for JAR packing or directory writing */
+export interface ThemeEditorMetadata {
+  sourceThemeId?: string
+}
+
 export interface ThemeExportPayload {
   generatedCss: string
   uploadedFonts: UploadedAsset[]
@@ -12,42 +14,32 @@ export interface ThemeExportPayload {
   appliedFavicon: UploadedAsset | undefined
 }
 
-/** Parameters for building a complete JAR blob */
-export interface JarBuildParams {
+export interface AssembleThemeFilesParams {
   themeName: string
   properties: string
-  payload: ThemeExportPayload
   templateFtl: string
   footerFtl: string | null
   quickStartCss: string
   stylesCss: string
+  stylesCssFiles?: Record<string, string>
   messagesContent: string
+  payload: ThemeExportPayload
   editorMetadata: ThemeEditorMetadata
-  /** Extra resource blobs (e.g. default bg/logo for v2) keyed by path relative to login/resources/ */
   extraBlobs?: Record<string, Blob>
 }
 
-/** Parameters for writing theme files to a directory */
-export interface DirectoryWriteParams {
-  themeName: string
-  properties: string
-  templateFtl: string
-  footerFtl: string | null
-  quickStartCss: string
-  stylesCss: string
-  messagesContent: string
-  payload: ThemeExportPayload
-  editorMetadata: ThemeEditorMetadata
-}
+export type JarBuildParams = AssembleThemeFilesParams
+
+export type DirectoryWriteParams = Omit<AssembleThemeFilesParams, 'extraBlobs'>
 
 export interface ImportedQuickSettingsByMode {
   light?: Partial<QuickSettings>
   dark?: Partial<QuickSettings>
 }
 
-/** Result of parsing an imported JAR file */
 export interface JarImportResult {
   css: string
+  stylesCssFiles?: Record<string, string>
   properties: string
   themeName: string
   sourceThemeId?: string
@@ -56,7 +48,6 @@ export interface JarImportResult {
   appliedAssets: AppliedAssets
 }
 
-/** CSS context assembled from preset + quick-start state */
 export interface EditorCssContext {
   presetCss: string
   colorPresetCss: string

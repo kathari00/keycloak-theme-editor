@@ -1,5 +1,6 @@
 import type { ThemeConfig, ThemeId } from '../../presets/types'
 import { getThemeConfigCached, getThemeCssStructuredCached, resolveThemeIdFromConfig } from '../../presets/queries'
+import { combineCssFiles, firstFilePath, isQuickStartCssFile, singleFileMap } from '../lib/css-files'
 import { getThemeStorageKey } from '../lib/quick-settings'
 import { assetStore } from '../stores/asset-store'
 import { presetStore } from '../stores/preset-store'
@@ -62,19 +63,39 @@ export function syncDefaultAssetsForTheme(themeConfig: ThemeConfig, themeId: str
 }
 
 export const themeSelectionActions = {
-  setThemeData: (themeId: ThemeId, themeCss: string) => {
+  setThemeData: (themeId: ThemeId, themeCss: string, themeFiles?: Record<string, string>) => {
     const previousThemeKey = getThemeStorageKey(presetStore.getState().selectedThemeId)
     const nextThemeKey = getThemeStorageKey(themeId)
 
     presetStore.setState({ selectedThemeId: themeId, presetCss: themeCss })
     themeStore.setState((state) => {
+      // Save current theme's CSS before switching
       const nextStylesCssByTheme = previousThemeKey === nextThemeKey
         ? { ...state.stylesCssByTheme }
         : { ...state.stylesCssByTheme, [previousThemeKey]: state.stylesCss }
-      const nextStylesCss = nextStylesCssByTheme[nextThemeKey] ?? themeCss
+      const nextStylesCssFilesByTheme = previousThemeKey === nextThemeKey
+        ? { ...state.stylesCssFilesByTheme }
+        : { ...state.stylesCssFilesByTheme, [previousThemeKey]: state.stylesCssFiles }
+
+      const freshFiles = themeFiles && Object.keys(themeFiles).length > 0
+        ? themeFiles
+        : null
+      const restoredFiles = nextStylesCssFilesByTheme[nextThemeKey]
+      const hasRestoredFiles = restoredFiles && Object.keys(restoredFiles).length > 0
+      // Merge: persisted edits take priority, fresh files fill gaps (e.g. newly added theme files)
+      const nextFiles = hasRestoredFiles && freshFiles
+        ? { ...freshFiles, ...restoredFiles }
+        : freshFiles ?? (hasRestoredFiles ? restoredFiles : singleFileMap(themeCss))
+      const nextStylesCss = combineCssFiles(nextFiles)
+      const restoredQuickStart = Object.entries(nextFiles).find(([p]) => isQuickStartCssFile(p))
+
       return {
         stylesCss: nextStylesCss,
         stylesCssByTheme: { ...nextStylesCssByTheme, [nextThemeKey]: nextStylesCss },
+        stylesCssFiles: nextFiles,
+        stylesCssFilesByTheme: { ...nextStylesCssFilesByTheme, [nextThemeKey]: nextFiles },
+        activeCssFilePath: nextFiles[state.activeCssFilePath] ? state.activeCssFilePath : firstFilePath(nextFiles),
+        ...(restoredQuickStart ? { themeQuickStartDefaults: restoredQuickStart[1] } : {}),
       }
     })
     // Scope change is handled automatically by subscribeToScopeChanges() subscriber.
@@ -109,13 +130,13 @@ export const themeSelectionActions = {
     quickStartExtrasActions.saveQuickSettingsForPreset(currentThemeKey, quickSettingsMode)
     syncDefaultAssetsForTheme(themeConfig, themeId)
 
-    const { quickStartDefaults, stylesCss } = await getThemeCssStructuredCached(themeId)
+    const { quickStartDefaults, stylesCss, stylesCssFiles } = await getThemeCssStructuredCached(themeId)
     if (controller.signal.aborted) {
       return
     }
 
     themeStore.setState({ themeQuickStartDefaults: quickStartDefaults })
-    themeSelectionActions.setThemeData(themeId, stylesCss)
+    themeSelectionActions.setThemeData(themeId, stylesCss, stylesCssFiles)
     assetStore.setState(state => ({
       appliedAssets: state.appliedAssetsByTheme[themeId] ?? {},
     }))

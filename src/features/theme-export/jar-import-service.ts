@@ -1,7 +1,9 @@
 import type { UploadedAsset } from '../assets/types'
-import type { ThemeEditorMetadata } from './theme-file-assembler'
+import type { ThemeEditorMetadata } from './types'
 import type { JarImportResult } from './types'
 import { processUploadedFile } from '../assets/upload-service'
+import { sanitizeThemeCssSourceForEditor } from '../editor/lib/css-source-sanitizer'
+import { readMessageProperty } from '../preview/lib/message-properties'
 import { getFilename, parseAppliedAssetsFromCss } from './css-export-utils'
 import { parseQuickSettingsFromImportedTheme } from './quick-settings-import'
 
@@ -48,6 +50,15 @@ const textDecoder = new TextDecoder()
 
 function readEntryText(data: Uint8Array): string {
   return textDecoder.decode(data)
+}
+
+function getResourcePath(filename: string): string | null {
+  const resourcePrefix = '/login/resources/'
+  const resourceIndex = filename.indexOf(resourcePrefix)
+  if (resourceIndex === -1) {
+    return null
+  }
+  return filename.slice(resourceIndex + resourcePrefix.length)
 }
 
 async function importAssetByRule(
@@ -104,6 +115,7 @@ export async function importJarFile(file: File): Promise<JarImportResult> {
   let themeName = ''
   let keycloakThemesJsonText = ''
   const importedAssets: UploadedAsset[] = []
+  const importedCssFiles: Record<string, string> = {}
 
   for (const [filename, data] of Object.entries(entries)) {
     if (filename.endsWith('/') || data.length === 0) {
@@ -120,8 +132,9 @@ export async function importJarFile(file: File): Promise<JarImportResult> {
       continue
     }
 
-    if (filename.includes('/login/resources/css/styles.css')) {
-      stylesCss = readEntryText(data)
+    const resourcePath = getResourcePath(filename)
+    if (resourcePath?.startsWith('css/') && resourcePath.endsWith('.css')) {
+      importedCssFiles[resourcePath] = readEntryText(data)
       continue
     }
 
@@ -154,6 +167,20 @@ export async function importJarFile(file: File): Promise<JarImportResult> {
 
   const editorMetadata = parseEditorMetadata(keycloakThemesJsonText)
   const sourceThemeId = editorMetadata?.sourceThemeId
+  const declaredStylePaths = (readMessageProperty(themeProps, 'styles') || '')
+    .split(/\s+/)
+    .filter(Boolean)
+    .filter(path => path !== 'css/quick-start.css')
+  const orderedStylePaths = [
+    ...declaredStylePaths.filter(path => importedCssFiles[path] !== undefined),
+    ...Object.keys(importedCssFiles).filter(path => !declaredStylePaths.includes(path)),
+  ]
+  const stylesCssFiles = Object.fromEntries(
+    orderedStylePaths
+      .map(path => [path, sanitizeThemeCssSourceForEditor(importedCssFiles[path])] as const)
+      .filter(([, css]) => Boolean(css)),
+  )
+  stylesCss = joinCssBlocks(orderedStylePaths.map(path => stylesCssFiles[path] || ''))
 
   const quickSettingsByMode = parseQuickSettingsFromImportedTheme({
     quickStartCss,
@@ -169,6 +196,7 @@ export async function importJarFile(file: File): Promise<JarImportResult> {
 
   return {
     css: editorStylesCss,
+    stylesCssFiles,
     properties: themeProps,
     themeName,
     sourceThemeId,

@@ -334,20 +334,30 @@ function writeThemeFiles(exportDir: string, themeName: string, variantId: string
   }
   fs.writeFileSync(path.join(cssDir, 'quick-start.css'), data.quickStartCss, 'utf8')
 
-  // Write styles CSS to the original filename from theme.properties (e.g. login.css)
-  // so re-importing doesn't create duplicates
-  let stylesCssFilename = 'styles.css'
-  try {
-    const stylesMatch = data.properties.match(/^styles\s*=\s*(.+)$/m)
-    if (stylesMatch) {
-      const entries = stylesMatch[1].trim().split(/\s+/).filter((p: string) => p !== 'css/quick-start.css')
-      if (entries.length === 1) {
-        stylesCssFilename = path.basename(entries[0])
-      }
+  // Write individual CSS files when provided, otherwise fall back to single file
+  if (data.stylesCssFiles && typeof data.stylesCssFiles === 'object' && Object.keys(data.stylesCssFiles).length > 0) {
+    for (const [cssPath, cssContent] of Object.entries(data.stylesCssFiles)) {
+      const fullPath = path.join(loginDir, 'resources', ...cssPath.split('/'))
+      fs.mkdirSync(path.dirname(fullPath), { recursive: true })
+      fs.writeFileSync(fullPath, cssContent as string, 'utf8')
     }
   }
-  catch {}
-  fs.writeFileSync(path.join(cssDir, stylesCssFilename), data.stylesCss, 'utf8')
+  else {
+    // Write styles CSS to the original filename from theme.properties (e.g. login.css)
+    // so re-importing doesn't create duplicates
+    let stylesCssFilename = 'styles.css'
+    try {
+      const stylesMatch = data.properties.match(/^styles\s*=\s*(.+)$/m)
+      if (stylesMatch) {
+        const entries = stylesMatch[1].trim().split(/\s+/).filter((p: string) => p !== 'css/quick-start.css')
+        if (entries.length === 1) {
+          stylesCssFilename = path.basename(entries[0])
+        }
+      }
+    }
+    catch {}
+    fs.writeFileSync(path.join(cssDir, stylesCssFilename), data.stylesCss, 'utf8')
+  }
   fs.writeFileSync(path.join(messagesDir, 'messages.properties'), data.messagesContent, 'utf8')
   fs.writeFileSync(path.join(messagesDir, 'messages_en.properties'), data.messagesContent, 'utf8')
 

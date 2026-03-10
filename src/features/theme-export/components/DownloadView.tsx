@@ -1,9 +1,9 @@
-import type { ThemeEditorMetadata } from '../theme-file-assembler'
-import type { DirectoryWriteParams, EditorCssContext, ImportedQuickSettingsByMode, JarBuildParams } from '../types'
+import type { DirectoryWriteParams, EditorCssContext, ImportedQuickSettingsByMode, JarBuildParams, ThemeEditorMetadata } from '../types'
 import { Button, Card, CardBody, CardTitle, FormGroup, Grid, GridItem, TextInput } from '@patternfly/react-core'
 import { useEffect, useState } from 'react'
 import { buildModeDefaultsSnapshot } from '../../editor/actions'
 import {
+  useCssFilesState,
   useDarkModeState,
   usePresetExportState,
   useQuickSettingsByThemeModeState,
@@ -12,6 +12,7 @@ import {
   useStylesCssState,
   useUploadedAssetsState,
 } from '../../editor/hooks/use-editor'
+import { isQuickStartCssFile } from '../../editor/lib/css-files'
 import { sanitizeThemeCssSourceForEditor } from '../../editor/lib/css-source-sanitizer'
 import { getThemeCssStructuredCached, resolveThemeIdFromConfig, useThemeConfig } from '../../presets/queries'
 import { getThemeQuickStartCssPath } from '../../presets/theme-paths'
@@ -31,6 +32,34 @@ import { getThemeNameError } from '../theme-validation'
 
 interface DownloadViewProps {
   onExportComplete?: () => void
+}
+
+/**
+ * Build export CSS files from the editor's individual file map.
+ */
+function buildExportCssFiles(
+  editorFiles: Record<string, string>,
+  topLevelImportsCss: string,
+  payloadCssWithoutImports: string,
+): Record<string, string> {
+  const paths = Object.keys(editorFiles)
+  if (paths.length === 0) {
+    return {}
+  }
+  const targetPath = paths.find(path => !isQuickStartCssFile(path)) ?? paths[0]
+
+  const result: Record<string, string> = {}
+  for (let i = 0; i < paths.length; i++) {
+    if (paths[i] === targetPath) {
+      // The first user CSS file gets the generated CSS; quick-start.css stays separate.
+      result[paths[i]] = [topLevelImportsCss, payloadCssWithoutImports]
+        .filter(Boolean).join('\n\n')
+    }
+    else {
+      result[paths[i]] = editorFiles[paths[i]]
+    }
+  }
+  return result
 }
 
 function escapeJavaPropertiesValue(value: string): string {
@@ -121,6 +150,7 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
   const presetExportState = usePresetExportState()
   const { selectedThemeId } = presetExportState
   const { stylesCss } = useStylesCssState()
+  const { stylesCssFiles } = useCssFilesState()
   const { isDarkMode } = useDarkModeState()
   const { quickSettingsByThemeMode } = useQuickSettingsByThemeModeState()
   const themeConfig = useThemeConfig()
@@ -219,18 +249,9 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
     })
     const rawLightExportSnapshot = isDarkMode ? toExportSnapshot(lightFallback) : currentSnapshot
     const rawDarkExportSnapshot = isDarkMode ? currentSnapshot : toExportSnapshot(darkFallback)
-    const lightBgColor = (rawLightExportSnapshot.colorPresetBgColor || '').trim()
-    const darkBgColor = (rawDarkExportSnapshot.colorPresetBgColor || '').trim()
-
     const exportQuickSettingsByMode: ImportedQuickSettingsByMode = {
-      // If only one mode has a background color, mirror it so exported themes
-      // don't keep the default gradient in the opposite mode unexpectedly.
-      light: darkBgColor && !lightBgColor
-        ? { ...rawLightExportSnapshot, colorPresetBgColor: darkBgColor }
-        : rawLightExportSnapshot,
-      dark: lightBgColor && !darkBgColor
-        ? { ...rawDarkExportSnapshot, colorPresetBgColor: lightBgColor }
-        : rawDarkExportSnapshot,
+      light: rawLightExportSnapshot,
+      dark: rawDarkExportSnapshot,
     }
     const quickStartCssParts = buildModeAwareQuickStartCssParts(exportQuickSettingsByMode)
     const editorCss = await extractEditorCssContext(quickStartCssParts.sharedCss)
@@ -247,6 +268,18 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
       sourceThemeId: resolvedThemeId,
     }
 
+    const combinedStylesCss = [
+      topLevelImportsCss,
+      payloadCssParts.cssWithoutImports,
+    ].filter(Boolean).join('\n\n')
+
+    // When multiple CSS files exist, distribute the generated CSS into the first user CSS file
+    // and preserve the rest as-is.
+    const hasMultipleFiles = Object.keys(stylesCssFiles).length > 1
+    const exportStylesCssFiles = hasMultipleFiles
+      ? buildExportCssFiles(stylesCssFiles, topLevelImportsCss, payloadCssParts.cssWithoutImports)
+      : undefined
+
     return {
       themeName,
       properties,
@@ -255,10 +288,8 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
       quickStartCss: [themeQuickStartDefaultsCss, quickStartCssParts.variablesCss].filter(Boolean).join('\n\n'),
       // Keep export CSS loading deterministic: template links quick-start.css and styles.css
       // via theme.properties, so styles.css must not re-import quick-start.css.
-      stylesCss: [
-        topLevelImportsCss,
-        payloadCssParts.cssWithoutImports,
-      ].filter(Boolean).join('\n\n'),
+      stylesCss: combinedStylesCss,
+      stylesCssFiles: exportStylesCssFiles,
       messagesContent,
       payload,
       editorMetadata,
@@ -357,7 +388,6 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
           const dirHandle = await (window as any).showDirectoryPicker({ mode: 'readwrite' })
           await writeToDirectory(dirHandle, writeParams)
           const projectPath = await saveExportToProject(writeParams).catch(() => null)
-          // eslint-disable-next-line no-alert
           alert(projectPath ? `Theme exported to ${themeName}/login and saved to ${projectPath}` : `Theme exported to ${themeName}/login`)
           setStatusMessage(projectPath
             ? `Quick export finished. Saved to ${projectPath}`

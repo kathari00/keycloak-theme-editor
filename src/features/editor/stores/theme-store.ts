@@ -8,12 +8,15 @@ import { createPersistedEditorStore } from './create-editor-store'
  * This store handles:
  * - Base theme selection
  * - Base CSS and page definitions
- * - User-editable styles CSS overrides
+ * - User-editable styles CSS overrides (multiple files with tabs)
  */
 export const themeStore = createPersistedEditorStore<ThemeState>({
   baseCss: '',
   stylesCss: '',
   stylesCssByTheme: {},
+  stylesCssFiles: {},
+  stylesCssFilesByTheme: {},
+  activeCssFilePath: '',
   themeQuickStartDefaults: '',
   pages: [],
 }, {
@@ -21,5 +24,9 @@ export const themeStore = createPersistedEditorStore<ThemeState>({
   partialize: state => ({
     stylesCss: state.stylesCss,
     stylesCssByTheme: state.stylesCssByTheme,
+    stylesCssFiles: state.stylesCssFiles,
+    stylesCssFilesByTheme: state.stylesCssFilesByTheme,
+    activeCssFilePath: state.activeCssFilePath,
+    themeQuickStartDefaults: state.themeQuickStartDefaults,
   }),
 })
