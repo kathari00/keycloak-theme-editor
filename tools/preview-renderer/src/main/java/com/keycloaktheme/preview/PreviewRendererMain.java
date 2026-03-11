@@ -96,7 +96,7 @@ public final class PreviewRendererMain {
       }
 
       Path baseThemeDir = resolveBaseThemeDir(parentTheme, availableThemeDirs);
-      String variantId = userThemeDir.getFileName().toString();
+      String variantId = getVariantId(arguments.userThemeRoot, userThemeDir);
       if (presetId != null && !presetId.isEmpty()) {
         Path presetLogin = arguments.presetRoot.resolve(presetId).resolve("login");
         if (Files.exists(presetLogin)) {
@@ -149,6 +149,21 @@ public final class PreviewRendererMain {
     return themeDir != null
         && Files.isDirectory(themeDir)
         && Files.exists(themeDir.resolve("login").resolve("theme.properties"));
+  }
+
+  private String getVariantId(Path themesRoot, Path themeDir) {
+    Path normalizedRoot = themesRoot == null ? null : themesRoot.toAbsolutePath().normalize();
+    Path normalizedThemeDir = themeDir.toAbsolutePath().normalize();
+    if (normalizedRoot == null) {
+      return normalizedThemeDir.getFileName().toString();
+    }
+
+    Path relative = normalizedRoot.relativize(normalizedThemeDir);
+    String relativePath = relative.toString().replace('\\', '/');
+    if (relativePath.isEmpty()) {
+      return normalizedThemeDir.getFileName().toString();
+    }
+    return relativePath;
   }
 
   private Path resolveBaseThemeDir(String parent, Map<String, Path> availableThemeDirs) {
@@ -351,6 +366,7 @@ public final class PreviewRendererMain {
     private final Path presetRoot;
     private final Path outputRoot;
     private final Path contextMocksPath;
+    private final Path userThemeRoot;
     private final List<Path> userThemeDirs;
     private final String keycloakTag;
 
@@ -360,6 +376,7 @@ public final class PreviewRendererMain {
         Path presetRoot,
         Path outputRoot,
         Path contextMocksPath,
+        Path userThemeRoot,
         List<Path> userThemeDirs,
         String keycloakTag
     ) {
@@ -368,6 +385,7 @@ public final class PreviewRendererMain {
       this.presetRoot = presetRoot;
       this.outputRoot = outputRoot;
       this.contextMocksPath = contextMocksPath;
+      this.userThemeRoot = userThemeRoot;
       this.userThemeDirs = userThemeDirs;
       this.keycloakTag = keycloakTag;
     }
@@ -375,17 +393,16 @@ public final class PreviewRendererMain {
     private static final int MAX_DISCOVERY_DEPTH = 5;
 
     private static List<Path> discoverThemeDirs(Path dir) {
-      return discoverThemeDirs(dir, MAX_DISCOVERY_DEPTH);
+      return discoverThemeDirs(dir, MAX_DISCOVERY_DEPTH, true);
     }
 
-    private static List<Path> discoverThemeDirs(Path dir, int depth) {
+    private static List<Path> discoverThemeDirs(Path dir, int depth, boolean includeCurrent) {
       List<Path> result = new ArrayList<Path>();
       if (dir == null || depth <= 0 || !Files.isDirectory(dir)) {
         return result;
       }
-      if (Files.exists(dir.resolve("login").resolve("theme.properties"))) {
+      if (includeCurrent && Files.exists(dir.resolve("login").resolve("theme.properties"))) {
         result.add(dir);
-        return result;
       }
       try {
         for (Path child : Files.newDirectoryStream(dir)) {
@@ -394,7 +411,7 @@ public final class PreviewRendererMain {
             if (name.startsWith(".") || name.equals("node_modules") || name.equals("dist") || name.equals("build") || name.equals("target")) {
               continue;
             }
-            result.addAll(discoverThemeDirs(child, depth - 1));
+            result.addAll(discoverThemeDirs(child, depth - 1, true));
           }
         }
       } catch (IOException ignored) {
@@ -434,10 +451,12 @@ public final class PreviewRendererMain {
       }
       Path contextMocksPath = Paths.get(contextMocks.trim());
 
+      Path userThemeRoot = null;
       List<Path> userThemeDirs = new ArrayList<Path>();
       String userThemeValue = values.get("user-theme");
       if (userThemeValue != null && !userThemeValue.trim().isEmpty()) {
-        userThemeDirs = discoverThemeDirs(Paths.get(userThemeValue.trim()));
+        userThemeRoot = Paths.get(userThemeValue.trim()).toAbsolutePath().normalize();
+        userThemeDirs = discoverThemeDirs(userThemeRoot);
       }
 
       String keycloakTag = values.getOrDefault("tag", "26.x");
@@ -448,6 +467,7 @@ public final class PreviewRendererMain {
           presetRoot,
           outputRoot,
           contextMocksPath,
+          userThemeRoot,
           userThemeDirs,
           keycloakTag
       );

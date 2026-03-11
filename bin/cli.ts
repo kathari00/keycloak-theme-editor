@@ -12,77 +12,59 @@ const PACKAGE_ROOT = path.resolve(import.meta.dirname, '..')
 const DEFAULT_PORT = 4800
 const MIN_JAVA = 8
 
-// SSE clients for live reload
 const sseClients: Set<import('node:http').ServerResponse> = new Set()
-
 const SKIP_DIRS = new Set(['node_modules', '.git', 'dist', 'build', 'target', '.next', '.nuxt'])
 const MAX_DISCOVERY_DEPTH = 5
 
-function findThemeDirs(dir: string, depth: number): string[] {
-  if (depth <= 0) return []
+function isThemeDir(dir: string): boolean {
+  return fs.existsSync(path.join(dir, 'login', 'theme.properties'))
+}
+
+function collectThemeDirs(dir: string, depth: number, includeCurrent = true): string[] {
+  if (depth <= 0 || !fs.existsSync(dir)) return []
+
   const results: string[] = []
-  const isTheme = fs.existsSync(path.join(dir, 'login', 'theme.properties'))
-  let entries: fs.Dirent[]
-  try { entries = fs.readdirSync(dir, { withFileTypes: true }) }
-  catch { return isTheme ? [dir] : [] }
-  const childThemes: string[] = []
-  for (const entry of entries) {
-    if (!entry.isDirectory() || SKIP_DIRS.has(entry.name) || entry.name.startsWith('.')) continue
-    childThemes.push(...findThemeDirs(path.join(dir, entry.name), depth - 1))
-  }
-  // Prefer deeper nested themes over a parent that also has theme.properties
-  if (childThemes.length > 0) {
-    return childThemes
-  }
-  if (isTheme) {
+  if (includeCurrent && isThemeDir(dir)) {
     results.push(dir)
   }
+
+  let entries: fs.Dirent[]
+  try {
+    entries = fs.readdirSync(dir, { withFileTypes: true })
+  }
+  catch {
+    return results
+  }
+
+  for (const entry of entries) {
+    if (!entry.isDirectory() || SKIP_DIRS.has(entry.name) || entry.name.startsWith('.')) continue
+    results.push(...collectThemeDirs(path.join(dir, entry.name), depth - 1, true))
+  }
+
   return results
 }
 
-function resolveUserPagesDir(pagesArg?: string): string | undefined {
-  if (pagesArg) {
-    const resolved = path.resolve(pagesArg)
-    if (!fs.existsSync(resolved)) {
-      console.error(`Pages directory not found: ${resolved}`)
-      process.exit(1)
-    }
-    return resolved
+function resolveExistingThemesRoot(themesRootArg: string): string {
+  const resolved = path.resolve(themesRootArg)
+  if (!fs.existsSync(resolved)) {
+    console.error(`Themes root not found: ${resolved}`)
+    process.exit(1)
   }
-
-  // Convention discovery — recursively look for a directory containing login/theme.properties
-  const cwd = process.cwd()
-  const found = findThemeDirs(cwd, MAX_DISCOVERY_DEPTH)
-
-  if (found.length === 0) return undefined
-
-  if (found.length === 1) {
-    console.log(`Auto-discovered theme directory: ${found[0]}`)
-    return found[0]
-  }
-
-  // Multiple themes found — use common parent so all variants are loaded
-  console.log(`Auto-discovered ${found.length} theme variants:`)
-  for (const dir of found) {
-    console.log(`  - ${path.relative(cwd, dir)}`)
-  }
-
-  const parents = new Set(found.map(d => path.dirname(d)))
-  if (parents.size === 1) {
-    const parent = [...parents][0]
-    console.log(`Using parent directory: ${parent}`)
-    return parent
-  }
-
-  // Different parents — use the first theme dir
-  return found[0]
+  return resolved
 }
 
-function discoverThemeDirsIn(dir: string): string[] {
-  if (fs.existsSync(path.join(dir, 'login', 'theme.properties'))) {
-    return [dir]
-  }
-  return findThemeDirs(dir, MAX_DISCOVERY_DEPTH)
+function resolveCliThemesRootArg(opts: { themesRoot?: string }): string {
+  return opts.themesRoot?.trim() || process.cwd()
+}
+
+function getVariantId(themesRootDir: string, themeDir: string): string {
+  const relative = path.relative(themesRootDir, themeDir)
+  return relative ? relative.split(path.sep).join('/') : path.basename(themeDir)
+}
+
+function discoverThemeDirsIn(themesRootDir: string): string[] {
+  return Array.from(new Set(collectThemeDirs(themesRootDir, MAX_DISCOVERY_DEPTH)))
+    .sort((a, b) => getVariantId(themesRootDir, a).localeCompare(getVariantId(themesRootDir, b)))
 }
 
 async function loadUserMocks(pagesDir: string): Promise<ContextMocks | undefined> {
@@ -107,7 +89,8 @@ async function loadUserMocks(pagesDir: string): Promise<ContextMocks | undefined
 
   try {
     userPage = await jiti.import(userPageFile) as typeof userPage
-  } catch (err) {
+  }
+  catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     console.warn(`Warning: Failed to load ${path.basename(userPageFile)}: ${message}`)
     console.warn('  Continuing without user mocks.\n')
@@ -119,7 +102,6 @@ async function loadUserMocks(pagesDir: string): Promise<ContextMocks | undefined
     return undefined
   }
 
-  // Load user stories if available
   const storyPath = path.join(pagesDir, 'kc-page-story.ts')
   const storyJsPath = path.join(pagesDir, 'kc-page-story.js')
   const storyFile = fs.existsSync(storyPath)
@@ -134,7 +116,6 @@ async function loadUserMocks(pagesDir: string): Promise<ContextMocks | undefined
     userStories = storyModule.stories ?? {}
   }
 
-  // Build context mocks from user's pages
   const pages: Record<string, Record<string, unknown>> = {}
   for (const mock of userPage.kcContextMocks) {
     const name = mock.pageId.replace('.ftl', '')
@@ -142,7 +123,6 @@ async function loadUserMocks(pagesDir: string): Promise<ContextMocks | undefined
       userPage.getKcContextMock({ pageId: mock.pageId }),
     ))
 
-    // Add story variants
     for (const [storyId, override] of Object.entries(userStories[name] ?? {})) {
       pages[`${name}@${storyId}`] = JSON.parse(JSON.stringify(
         userPage.getKcContextMock({ pageId: mock.pageId, overrides: override }),
@@ -216,6 +196,7 @@ function resolveStaticPath(rootDir: string, requestPath: string): string | null 
   catch {
     return null
   }
+
   const normalizedPath = decodedPath.replaceAll('\\', '/').replace(/^\/+/, '')
   const resolvedPath = path.resolve(rootDir, normalizedPath)
   if (!isPathWithinRoot(rootDir, resolvedPath)) {
@@ -297,9 +278,7 @@ function openBrowser(url: string) {
     child.on('error', () => {})
     child.unref()
   }
-  catch {
-    // ignore — browser open is best-effort
-  }
+  catch {}
 }
 
 function isValidPathSegment(value: string, opts?: { allowDots?: boolean }): boolean {
@@ -314,10 +293,25 @@ function isValidPathSegment(value: string, opts?: { allowDots?: boolean }): bool
   return pattern.test(value)
 }
 
-function writeThemeFiles(exportDir: string, themeName: string, variantId: string | undefined, data: any): string {
-  const variantRoot = variantId
-    ? path.join(exportDir, variantId)
-    : path.join(exportDir, themeName)
+function isValidThemeVariantPath(value: string): boolean {
+  if (!value) return false
+  const segments = value.split('/').filter(Boolean)
+  if (segments.length === 0) return false
+  return segments.every(segment => isValidPathSegment(segment, { allowDots: true }))
+}
+
+function writeThemeFiles(
+  exportDir: string,
+  themeName: string,
+  variantId: string | undefined,
+  data: any,
+  existingThemeDir?: string,
+): string {
+  const variantRoot = existingThemeDir
+    ? existingThemeDir
+    : variantId
+      ? path.join(exportDir, ...variantId.split('/'))
+      : path.join(exportDir, themeName)
   const loginDir = path.join(variantRoot, 'login')
   const cssDir = path.join(loginDir, 'resources', 'css')
   const messagesDir = path.join(loginDir, 'messages')
@@ -334,7 +328,6 @@ function writeThemeFiles(exportDir: string, themeName: string, variantId: string
   }
   fs.writeFileSync(path.join(cssDir, 'quick-start.css'), data.quickStartCss, 'utf8')
 
-  // Write individual CSS files when provided, otherwise fall back to single file
   if (data.stylesCssFiles && typeof data.stylesCssFiles === 'object' && Object.keys(data.stylesCssFiles).length > 0) {
     for (const [cssPath, cssContent] of Object.entries(data.stylesCssFiles)) {
       const fullPath = path.join(loginDir, 'resources', ...cssPath.split('/'))
@@ -343,8 +336,6 @@ function writeThemeFiles(exportDir: string, themeName: string, variantId: string
     }
   }
   else {
-    // Write styles CSS to the original filename from theme.properties (e.g. login.css)
-    // so re-importing doesn't create duplicates
     let stylesCssFilename = 'styles.css'
     try {
       const stylesMatch = data.properties.match(/^styles\s*=\s*(.+)$/m)
@@ -358,10 +349,10 @@ function writeThemeFiles(exportDir: string, themeName: string, variantId: string
     catch {}
     fs.writeFileSync(path.join(cssDir, stylesCssFilename), data.stylesCss, 'utf8')
   }
+
   fs.writeFileSync(path.join(messagesDir, 'messages.properties'), data.messagesContent, 'utf8')
   fs.writeFileSync(path.join(messagesDir, 'messages_en.properties'), data.messagesContent, 'utf8')
 
-  // Write binary assets
   const payload = data.payload
   if (payload) {
     for (const [key, subdir] of ASSET_BUCKETS) {
@@ -376,6 +367,7 @@ function writeThemeFiles(exportDir: string, themeName: string, variantId: string
         fs.writeFileSync(path.join(assetDir, asset.name), Buffer.from(asset.base64Data, 'base64'))
       }
     }
+
     if (payload.appliedFavicon) {
       const imgDir = path.join(loginDir, 'resources', 'img')
       fs.mkdirSync(imgDir, { recursive: true })
@@ -391,7 +383,7 @@ function startServer(opts: {
   distDir: string
   pagesJsonPath: string
   exportDir: string
-  userThemeMappings?: Array<{ urlPrefix: string, localDir: string }>
+  userThemeMappings?: Array<{ variantId: string, urlPrefix: string, localDir: string }>
 }) {
   const { port, distDir, pagesJsonPath, exportDir, userThemeMappings } = opts
 
@@ -399,7 +391,6 @@ function startServer(opts: {
     const url = req.url ?? '/'
     const requestPath = getRequestPath(url)
 
-    // API: serve generated pages.json
     if (requestPath === '/api/pages.json') {
       if (!fs.existsSync(pagesJsonPath)) {
         res.writeHead(404, { 'Content-Type': 'application/json' })
@@ -414,12 +405,12 @@ function startServer(opts: {
       return
     }
 
-    // API: save theme to project directory
     if (requestPath === '/api/save-theme' && req.method === 'GET') {
       res.writeHead(200, { 'Content-Type': 'application/json' })
       res.end(JSON.stringify({ available: true, cwd: exportDir }))
       return
     }
+
     if (requestPath === '/api/save-theme' && req.method === 'POST') {
       readRequestBody(req).then((raw) => {
         try {
@@ -431,12 +422,16 @@ function startServer(opts: {
             res.end(JSON.stringify({ success: false, error: 'Invalid theme name' }))
             return
           }
-          if (variantId !== undefined && !isValidPathSegment(variantId, { allowDots: true })) {
+          if (variantId !== undefined && !isValidThemeVariantPath(variantId)) {
             res.writeHead(400, { 'Content-Type': 'application/json' })
             res.end(JSON.stringify({ success: false, error: 'Invalid variant id' }))
             return
           }
-          const writtenPath = writeThemeFiles(exportDir, themeName, variantId, body)
+
+          const existingThemeDir = typeof variantId === 'string'
+            ? userThemeMappings?.find(mapping => mapping.variantId === variantId)?.localDir
+            : undefined
+          const writtenPath = writeThemeFiles(exportDir, themeName, variantId, body, existingThemeDir)
           console.log(`Theme saved to: ${writtenPath}`)
           res.writeHead(200, { 'Content-Type': 'application/json' })
           res.end(JSON.stringify({ success: true, path: writtenPath }))
@@ -454,7 +449,6 @@ function startServer(opts: {
       return
     }
 
-    // SSE endpoint for live reload
     if (requestPath === '/api/events') {
       res.writeHead(200, {
         'Content-Type': 'text/event-stream',
@@ -467,7 +461,6 @@ function startServer(opts: {
       return
     }
 
-    // Serve user theme resources (must be checked before general public/ handler)
     if (userThemeMappings) {
       const mapping = userThemeMappings.find(m => requestPath.startsWith(m.urlPrefix))
       if (mapping) {
@@ -480,7 +473,6 @@ function startServer(opts: {
       }
     }
 
-    // Serve keycloak static assets from dist/ (Vite copies public/ there at build time)
     if (requestPath.startsWith('/keycloak-upstream/') || requestPath.startsWith('/keycloak-dev-resources/')) {
       if (!serveStaticPath(res, distDir, requestPath)) {
         res.writeHead(404)
@@ -489,7 +481,6 @@ function startServer(opts: {
       return
     }
 
-    // Serve the pre-built SPA (with SPA fallback to index.html)
     serveDistSpa(res, distDir, requestPath)
   })
 
@@ -514,7 +505,7 @@ function startWatcher(opts: {
 
   const watcher = watch(pagesDir, {
     ignoreInitial: true,
-    ignored: /(^|[/\\])\../, // ignore dotfiles
+    ignored: /(^|[/\\])\../,
   })
 
   async function regenerate() {
@@ -576,73 +567,10 @@ function startWatcher(opts: {
   return watcher
 }
 
-function initProject(pagesArg?: string) {
-  // Resolve target directory: explicit arg, or auto-discover existing theme dir
-  const pagesDir = pagesArg
-    ? path.resolve(pagesArg)
-    : resolveUserPagesDir() ?? process.cwd()
-
-  if (!fs.existsSync(pagesDir)) {
-    fs.mkdirSync(pagesDir, { recursive: true })
-    console.log(`Created pages directory: ${pagesDir}`)
-  }
-
-  const kcPagePath = path.join(pagesDir, 'kc-page.ts')
-  const kcStoryPath = path.join(pagesDir, 'kc-page-story.ts')
-
-  if (fs.existsSync(kcPagePath)) {
-    console.log(`Already exists, skipping: ${kcPagePath}`)
-  }
-  else {
-    fs.writeFileSync(kcPagePath, `import { createGetKcContextMock, kcContextMocks } from "keycloak-theme-editor/kc-mocks";
-export { kcContextMocks };
-
-export const { getKcContextMock } = createGetKcContextMock({
-  kcContextExtension: { properties: {} },
-  overrides: {
-    url: {
-      resourcesPath: "/keycloak-dev-resources",
-      resourcesCommonPath: "/keycloak-dev-resources/resources-common",
-    },
-  },
-  kcContextExtensionPerPage: {
-    // Add custom page context here:
-    // "my-custom-page.ftl": { myField: "value" },
-  },
-  overridesPerPage: {},
-});
-`)
-    console.log(`Created: ${kcPagePath}`)
-  }
-
-  if (fs.existsSync(kcStoryPath)) {
-    console.log(`Already exists, skipping: ${kcStoryPath}`)
-  }
-  else {
-    fs.writeFileSync(kcStoryPath, `// Define story variants for different page states.
-// Each story renders the page with different mock context values.
-export const stories: Record<string, Record<string, Record<string, unknown>>> = {
-  // Example:
-  // "login": {
-  //   "with-error": {
-  //     message: { type: "error", summary: "Invalid credentials" },
-  //   },
-  // },
-};
-`)
-    console.log(`Created: ${kcStoryPath}`)
-  }
-
-  console.log('\nNext steps:')
-  console.log('  npx keycloak-theme-editor         - start the editor')
-  console.log('')
-}
-
-async function startEditor(opts: { pages?: string, port: string, open: boolean }) {
+async function startEditor(opts: { themesRoot?: string, port: string, open: boolean }) {
   const port = Number.parseInt(opts.port, 10)
-  const userPagesDir = resolveUserPagesDir(opts.pages)
+  const themesRootDir = resolveExistingThemesRoot(resolveCliThemesRootArg(opts))
 
-  // Check Java
   const javaVersion = getJavaMajorVersion()
   if (!javaVersion || javaVersion < MIN_JAVA) {
     console.error(`Java ${MIN_JAVA}+ is required (found ${javaVersion ?? 'none'}).`)
@@ -650,10 +578,8 @@ async function startEditor(opts: { pages?: string, port: string, open: boolean }
     process.exit(1)
   }
 
-  // Resolve paths
   const jarPath = path.join(PACKAGE_ROOT, 'tools', 'preview-renderer', 'preview-renderer.jar')
   const distDir = path.join(PACKAGE_ROOT, 'dist')
-  // Output pages.json to a temp location (not inside src/)
   const outputDir = fs.mkdtempSync(path.join(import.meta.dirname, '.preview-'))
   const pagesJsonPath = path.join(outputDir, 'pages.json')
 
@@ -669,30 +595,29 @@ async function startEditor(opts: { pages?: string, port: string, open: boolean }
     process.exit(1)
   }
 
-  // Discover actual theme directories within the user pages dir
-  const themeDirs = userPagesDir ? discoverThemeDirsIn(userPagesDir) : []
+  const themeDirs = discoverThemeDirsIn(themesRootDir)
+  if (themeDirs.length === 0) {
+    console.error(`No themes found under themes root: ${themesRootDir}`)
+    console.error('Expected directories containing login/theme.properties beneath the current working directory or --themes-root.')
+    process.exit(1)
+  }
 
-  // Load user page mocks if available
   let additionalMocks: ContextMocks | undefined
-  if (userPagesDir) {
-    additionalMocks = await loadUserMocks(userPagesDir)
-    // If no mocks in the given dir, try each discovered theme dir
-    if (!additionalMocks) {
-      for (const dir of themeDirs) {
-        additionalMocks = await loadUserMocks(dir)
-        if (additionalMocks) break
-      }
+  additionalMocks = await loadUserMocks(themesRootDir)
+  if (!additionalMocks) {
+    for (const dir of themeDirs) {
+      additionalMocks = await loadUserMocks(dir)
+      if (additionalMocks) break
     }
   }
 
-  // Generate preview pages
   console.log('Generating preview pages...')
   const result = await generatePreview({
     packageRoot: PACKAGE_ROOT,
     jarPath,
     outputPath: pagesJsonPath,
     additionalMocks,
-    userThemeDir: userPagesDir,
+    userThemeDir: themesRootDir,
   })
 
   if (!result.success) {
@@ -700,46 +625,35 @@ async function startEditor(opts: { pages?: string, port: string, open: boolean }
     process.exit(1)
   }
 
-  // Build user theme mappings for the dev server (one per variant)
-  const userThemeMappings: Array<{ urlPrefix: string, localDir: string }> = []
+  const userThemeMappings: Array<{ variantId: string, urlPrefix: string, localDir: string }> = []
   for (const dir of themeDirs) {
-    const variantId = path.basename(dir)
+    const variantId = getVariantId(themesRootDir, dir)
     const urlPrefix = `/keycloak-dev-resources/themes/${variantId}`
     if (fs.existsSync(path.join(dir, 'login'))) {
-      userThemeMappings.push({ urlPrefix, localDir: dir })
+      userThemeMappings.push({ variantId, urlPrefix, localDir: dir })
     }
   }
 
-  // Export dir: if userPagesDir is a parent of variants, use it directly;
-  // otherwise use its parent (e.g. .../theme/custom.v2 → .../theme)
-  const isParentOfVariants = themeDirs.length > 0 && themeDirs[0] !== userPagesDir
-  const exportDir = userPagesDir
-    ? (isParentOfVariants ? userPagesDir : path.dirname(userPagesDir))
-    : process.cwd()
+  userThemeMappings.sort((a, b) => b.urlPrefix.length - a.urlPrefix.length)
+  const exportDir = themesRootDir
 
-  // Start HTTP server
   startServer({ port, distDir, pagesJsonPath, exportDir, userThemeMappings })
 
-  // Start file watcher if user has a pages dir
-  if (userPagesDir) {
-    const requiredVariantIds = themeDirs.map(d => path.basename(d))
-    startWatcher({
-      pagesDir: userPagesDir,
-      jarPath,
-      outputPath: pagesJsonPath,
-      additionalMocks,
-      requiredVariantIds,
-      userThemeDir: userPagesDir,
-    })
-    console.log(`  Watching for changes in: ${userPagesDir}`)
-  }
+  const requiredVariantIds = themeDirs.map(dir => getVariantId(themesRootDir, dir))
+  startWatcher({
+    pagesDir: themesRootDir,
+    jarPath,
+    outputPath: pagesJsonPath,
+    additionalMocks,
+    requiredVariantIds,
+    userThemeDir: themesRootDir,
+  })
+  console.log(`  Watching for changes in: ${themesRootDir}`)
 
-  // Open browser
   if (opts.open) {
     openBrowser(`http://localhost:${port}`)
   }
 
-  // Cleanup on exit
   process.on('SIGINT', () => {
     fs.rmSync(outputDir, { recursive: true, force: true })
     process.exit(0)
@@ -754,19 +668,11 @@ async function main() {
   program
     .name('keycloak-theme-editor')
     .description('Visual theme editor for Keycloak login pages')
-    .option('--pages <dir>', 'Path to custom FTL pages directory')
+    .option('--themes-root <dir>', 'Root directory to scan for theme variants; defaults to the current working directory')
     .option('--port <number>', 'Port to run the editor on', String(DEFAULT_PORT))
     .option('--no-open', 'Do not open browser automatically')
-    .action(async (opts: { pages?: string, port: string, open: boolean }) => {
+    .action(async (opts: { themesRoot?: string, port: string, open: boolean }) => {
       await startEditor(opts)
-    })
-
-  program
-    .command('init [pages-dir]')
-    .description('Add kc-page.ts and kc-page-story.ts to your pages directory')
-    .action((pagesDir?: string) => {
-      initProject(pagesDir)
-      process.exit(0)
     })
 
   await program.parseAsync()
@@ -776,5 +682,3 @@ main().catch((err) => {
   console.error(err)
   process.exit(1)
 })
-
-
