@@ -351,6 +351,17 @@ function toForwardSlashPath(filePath: string): string {
   return filePath.replaceAll('\\', '/')
 }
 
+function resolveExistingPath(packageRoot: string, candidates: string[]): string {
+  for (const relativePath of candidates) {
+    const resolvedPath = path.join(packageRoot, relativePath)
+    if (fs.existsSync(resolvedPath)) {
+      return resolvedPath
+    }
+  }
+
+  return path.join(packageRoot, candidates[0])
+}
+
 function mergeMocks(base: ContextMocks, additional: ContextMocks): ContextMocks {
   return {
     common: { ...base.common, ...additional.common },
@@ -377,13 +388,15 @@ function runJar(params: {
   userThemeDir?: string
 }) {
   const { jarPath, contextMocksPath, packageRoot, outputDir, userThemeDir } = params
+  const inputRoot = resolveExistingPath(packageRoot, ['dist/keycloak-upstream', 'public/keycloak-upstream'])
+  const overridesRoot = resolveExistingPath(packageRoot, ['dist/keycloak-dev-resources/themes', 'public/keycloak-dev-resources/themes'])
   const args = [
     '-jar',
     jarPath,
     `--context-mocks=${toForwardSlashPath(contextMocksPath)}`,
-    `--input=${toForwardSlashPath(path.join(packageRoot, 'public/keycloak-upstream'))}`,
-    `--overrides=${toForwardSlashPath(path.join(packageRoot, 'public/keycloak-dev-resources/themes'))}`,
-    `--presets=${toForwardSlashPath(path.join(packageRoot, 'public/keycloak-dev-resources/themes'))}`,
+    `--input=${toForwardSlashPath(inputRoot)}`,
+    `--overrides=${toForwardSlashPath(overridesRoot)}`,
+    `--presets=${toForwardSlashPath(overridesRoot)}`,
     `--output=${toForwardSlashPath(outputDir)}`,
     ...(userThemeDir ? [`--user-theme=${toForwardSlashPath(userThemeDir)}`] : []),
   ]
