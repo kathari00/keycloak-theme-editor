@@ -1,10 +1,33 @@
-import { Button, FileUpload, Form, FormGroup } from '@patternfly/react-core'
+import { Alert, Button, FileUpload, Form, FormGroup, HelperText, HelperTextItem } from '@patternfly/react-core'
 import { useState } from 'react'
 import { importJarFile, THEME_JAR_IMPORTED_EVENT } from '../jar-import-service'
 
 interface ImportStatus {
   tone: 'idle' | 'loading' | 'success' | 'error'
   message: string
+}
+
+function ImportStatusAlert({ status }: { status: ImportStatus }) {
+  if (!status.message) {
+    return null
+  }
+
+  const statusVariant = status.tone === 'error'
+    ? 'danger'
+    : status.tone === 'success'
+      ? 'success'
+      : 'info'
+  const statusTitle = status.tone === 'error'
+    ? 'Import failed'
+    : status.tone === 'success'
+      ? 'Theme imported'
+      : 'Importing theme'
+
+  return (
+    <Alert isInline variant={statusVariant} title={statusTitle}>
+      {status.message}
+    </Alert>
+  )
 }
 
 export default function ThemeImportHelper() {
@@ -50,12 +73,6 @@ export default function ThemeImportHelper() {
     }
   }
 
-  const statusColor = status.tone === 'error'
-    ? 'var(--pf-t--global--color--status--danger--default)'
-    : status.tone === 'success'
-      ? 'var(--pf-t--global--color--status--success--default)'
-      : undefined
-
   return (
     <Form>
       <FormGroup label="Select JAR file" fieldId="jar-file-input">
@@ -69,18 +86,17 @@ export default function ThemeImportHelper() {
           onClearClick={handleClear}
           dropzoneProps={{ accept: { 'application/java-archive': ['.jar'] }, maxSize: undefined }}
         />
+        <HelperText>
+          <HelperTextItem>Upload a previously exported Keycloak theme JAR to restore styles, quick settings, and assets.</HelperTextItem>
+        </HelperText>
       </FormGroup>
 
-      {status.message && (
-        <div style={{ color: statusColor }}>
-          {status.message}
-        </div>
-      )}
+      <ImportStatusAlert status={status} />
 
       <Button
         variant="primary"
         onClick={handleImport}
-        isDisabled={isImporting}
+        isDisabled={isImporting || !selectedFile}
       >
         {isImporting ? 'Importing...' : 'Import JAR Theme'}
       </Button>

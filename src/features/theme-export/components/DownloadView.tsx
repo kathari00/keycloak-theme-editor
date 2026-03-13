@@ -1,5 +1,17 @@
 import type { DirectoryWriteParams, EditorCssContext, ImportedQuickSettingsByMode, JarBuildParams, ThemeEditorMetadata } from '../types'
-import { Button, Card, CardBody, CardTitle, FormGroup, Grid, GridItem, TextInput } from '@patternfly/react-core'
+import {
+  Alert,
+  Button,
+  Card,
+  CardBody,
+  CardTitle,
+  FormGroup,
+  Grid,
+  GridItem,
+  HelperText,
+  HelperTextItem,
+  TextInput,
+} from '@patternfly/react-core'
 import { useEffect, useState } from 'react'
 import { buildThemeQuickStartDefaults } from '../../editor/actions/css-variable-reader'
 import {
@@ -30,6 +42,31 @@ import { getThemeNameError } from '../theme-validation'
 
 interface DownloadViewProps {
   onExportComplete?: () => void
+}
+
+function DownloadStatusAlert({
+  themeNameError,
+  statusMessage,
+}: {
+  statusMessage: string
+  themeNameError: string | null
+}) {
+  const hasStatusError = /^Error\b/i.test(statusMessage)
+  const statusAlert = themeNameError
+    ? { title: 'Theme name is invalid', variant: 'danger' as const, message: themeNameError }
+    : statusMessage
+      ? { title: hasStatusError ? 'Export failed' : 'Export status', variant: hasStatusError ? 'danger' as const : 'success' as const, message: statusMessage }
+      : null
+
+  if (!statusAlert) {
+    return null
+  }
+
+  return (
+    <Alert isInline variant={statusAlert.variant} title={statusAlert.title} style={{ marginBottom: '1rem' }}>
+      {statusAlert.message}
+    </Alert>
+  )
 }
 
 /**
@@ -473,17 +510,12 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
           validated={themeNameError ? 'error' : 'default'}
           aria-invalid={!!themeNameError}
         />
-        {themeNameError && (
-          <div style={{ marginTop: '0.5rem', color: 'var(--pf-t--global--color--status--danger--default)' }}>
-            {themeNameError}
-          </div>
-        )}
-        {!themeNameError && statusMessage && (
-          <div style={{ marginTop: '0.5rem' }}>
-            {statusMessage}
-          </div>
-        )}
+        <HelperText>
+          <HelperTextItem>Use the Keycloak theme id you want to deploy or save into your project.</HelperTextItem>
+        </HelperText>
       </FormGroup>
+
+      <DownloadStatusAlert themeNameError={themeNameError} statusMessage={statusMessage} />
 
       <Grid hasGutter>
         {cliMode?.available && (

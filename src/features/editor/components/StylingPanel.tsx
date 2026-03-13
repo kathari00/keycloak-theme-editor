@@ -1,6 +1,7 @@
 import { Flex, Stack, StackItem } from '@patternfly/react-core'
 import CodeMirror from '@uiw/react-codemirror'
 import { useState } from 'react'
+import SidebarPanel from '../../../components/SidebarPanel'
 import { getAssetDataUrl, getUploadedImageCssVarName } from '../../assets/font-css-generator'
 import { usePreviewContext } from '../../preview/hooks/use-preview-context'
 import { escapeCssIdentifier } from '../../preview/lib/selector-utils'
@@ -171,90 +172,93 @@ export default function StylingPanel() {
   const inactiveTabColor = isDarkMode ? '#9ca3af' : '#6b7280'
 
   return (
-    <Stack style={{ height: '100%', padding: 'var(--pf-t--global--spacer--sm)' }}>
-      <StackItem>
-        <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
-          <h4 style={{ color: labelTextColor, margin: 0 }}>Styling</h4>
-          <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsXs' }} style={{ color: labelTextColor, fontSize: '0.75rem' }} component="label">
-            <input
-              type="checkbox"
-              checked={showAllStyles}
-              onChange={e => setShowAllStyles(e.target.checked)}
-            />
-            <span>Show all styles</span>
-          </Flex>
-        </Flex>
-      </StackItem>
-      <StackItem isFilled style={{ minHeight: 0 }}>
-        <div style={{ overflow: 'hidden', minHeight: 0, height: '100%', border: `1px solid ${tabBorderColor}`, borderRadius: 'var(--pf-t--global--border--radius--medium)', display: 'flex', flexDirection: 'column' }}>
-          {hasFileTabs && (
-            <div
-              role="tablist"
-              aria-label="CSS files"
-              style={{
-                display: 'flex',
-                gap: 0,
-                backgroundColor: tabBarBg,
-                borderBottom: `1px solid ${tabBorderColor}`,
-                flexShrink: 0,
-                overflowX: 'auto',
-              }}
-            >
-              {filePaths.map(filePath => (
-                <button
-                  key={filePath}
-                  role="tab"
-                  type="button"
-                  aria-selected={filePath === activeCssFilePath}
-                  onClick={() => {
-                    commitEditorCss()
-                    editorActions.setActiveCssFilePath(filePath)
-                  }}
+    <SidebarPanel title="Styling" fullHeight bodyStyle={{ height: '100%' }}>
+      <div style={{ height: '100%', minHeight: 0 }}>
+        <Stack style={{ height: '100%' }}>
+          <StackItem style={{ paddingBottom: 'var(--pf-t--global--spacer--sm)' }}>
+            <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+              <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsXs' }} style={{ color: labelTextColor, fontSize: '0.75rem' }} component="label">
+                <input
+                  type="checkbox"
+                  checked={showAllStyles}
+                  onChange={e => setShowAllStyles(e.target.checked)}
+                />
+                <span>Show all styles</span>
+              </Flex>
+            </Flex>
+          </StackItem>
+          <StackItem isFilled style={{ minHeight: 0 }}>
+            <div style={{ overflow: 'hidden', minHeight: 0, height: '100%', border: `1px solid ${tabBorderColor}`, borderRadius: 'var(--pf-t--global--border--radius--medium)', display: 'flex', flexDirection: 'column' }}>
+              {hasFileTabs && (
+                <div
+                  role="tablist"
+                  aria-label="CSS files"
                   style={{
-                    padding: '4px 10px',
-                    fontSize: '11px',
-                    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-                    border: 'none',
-                    borderRight: `1px solid ${tabBorderColor}`,
-                    borderBottom: filePath === activeCssFilePath ? `2px solid var(--pf-t--global--color--brand--default)` : '2px solid transparent',
-                    background: filePath === activeCssFilePath ? activeTabBg : 'transparent',
-                    color: filePath === activeCssFilePath ? labelTextColor : inactiveTabColor,
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                    lineHeight: '1.4',
+                    display: 'flex',
+                    gap: 0,
+                    backgroundColor: tabBarBg,
+                    borderBottom: `1px solid ${tabBorderColor}`,
+                    flexShrink: 0,
+                    overflowX: 'auto',
                   }}
                 >
-                  {cssFileDisplayName(filePath)}
-                </button>
-              ))}
+                  {filePaths.map(filePath => (
+                    <button
+                      key={filePath}
+                      role="tab"
+                      type="button"
+                      aria-selected={filePath === activeCssFilePath}
+                      onClick={() => {
+                        commitEditorCss()
+                        editorActions.setActiveCssFilePath(filePath)
+                      }}
+                      style={{
+                        padding: '4px 10px',
+                        fontSize: '11px',
+                        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                        border: 'none',
+                        borderRight: `1px solid ${tabBorderColor}`,
+                        borderBottom: filePath === activeCssFilePath ? `2px solid var(--pf-t--global--color--brand--default)` : '2px solid transparent',
+                        background: filePath === activeCssFilePath ? activeTabBg : 'transparent',
+                        color: filePath === activeCssFilePath ? labelTextColor : inactiveTabColor,
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        lineHeight: '1.4',
+                      }}
+                    >
+                      {cssFileDisplayName(filePath)}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div style={{ flex: 1, minHeight: 0 }}>
+                <CodeMirror
+                  key={`${revision}-${activeCssFilePath}`}
+                  value={editorCss}
+                  onChange={setEditorCss}
+                  onBlur={commitEditorCss}
+                  basicSetup={{ autocompletion: false, indentOnInput: false }}
+                  extensions={extensions}
+                  height="100%"
+                  style={{ height: '100%' }}
+                />
+              </div>
             </div>
-          )}
-          <div style={{ flex: 1, minHeight: 0 }}>
-            <CodeMirror
-              key={`${revision}-${activeCssFilePath}`}
-              value={editorCss}
-              onChange={setEditorCss}
-              onBlur={commitEditorCss}
-              basicSetup={{ autocompletion: false, indentOnInput: false }}
-              extensions={extensions}
-              height="100%"
-              style={{ height: '100%' }}
-            />
-          </div>
-        </div>
-      </StackItem>
+          </StackItem>
 
-      <StackItem>
-        <span style={{ color: labelTextColor, userSelect: 'none', fontSize: '12px' }}>
-          Press
-          {' '}
-          <kbd style={{ ...kbdStyle, padding: '0.125rem 0.25rem', border: '1px solid', borderRadius: 'var(--pf-t--global--border--radius--small)', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace', fontSize: '10px' }}>Ctrl</kbd>
-          +
-          <kbd style={{ ...kbdStyle, padding: '0.125rem 0.25rem', border: '1px solid', borderRadius: 'var(--pf-t--global--border--radius--small)', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace', fontSize: '10px' }}>Space</kbd>
-          {' '}
-          for suggestions
-        </span>
-      </StackItem>
-    </Stack>
+          <StackItem>
+            <span style={{ color: labelTextColor, userSelect: 'none', fontSize: '12px' }}>
+              Press
+              {' '}
+              <kbd style={{ ...kbdStyle, padding: '0.125rem 0.25rem', border: '1px solid', borderRadius: 'var(--pf-t--global--border--radius--small)', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace', fontSize: '10px' }}>Ctrl</kbd>
+              +
+              <kbd style={{ ...kbdStyle, padding: '0.125rem 0.25rem', border: '1px solid', borderRadius: 'var(--pf-t--global--border--radius--small)', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace', fontSize: '10px' }}>Space</kbd>
+              {' '}
+              for suggestions
+            </span>
+          </StackItem>
+        </Stack>
+      </div>
+    </SidebarPanel>
   )
 }

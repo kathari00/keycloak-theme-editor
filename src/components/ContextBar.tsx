@@ -1,6 +1,11 @@
-import { Button, Flex, FlexItem } from '@patternfly/react-core'
+import {
+  Button,
+  Toolbar,
+  ToolbarContent,
+  ToolbarGroup,
+  ToolbarItem,
+} from '@patternfly/react-core'
 import { useEffect } from 'react'
-import { useDarkModeState } from '../features/editor/hooks/use-editor'
 import { usePreviewContext } from '../features/preview/hooks/use-preview-context'
 import { getVariantScenarioOptions } from '../features/preview/load-generated'
 import { cx } from '../lib/cx'
@@ -10,7 +15,6 @@ interface ContextBarProps {
 }
 
 export default function ContextBar({ className }: ContextBarProps) {
-  const { isDarkMode } = useDarkModeState()
   const preview = usePreviewContext()
   const {
     activeVariantId,
@@ -43,32 +47,33 @@ export default function ContextBar({ className }: ContextBarProps) {
   }
 
   return (
-    <Flex
+    <Toolbar
       className={cx(className)}
-      alignItems={{ default: 'alignItemsCenter' }}
-      spaceItems={{ default: 'spaceItemsSm' }}
+      colorVariant="secondary"
+      id="editor-context-bar"
+      inset={{ default: 'insetMd' }}
       style={{
-        overflowX: 'auto',
-        padding: 'var(--pf-t--global--spacer--sm) var(--pf-t--global--spacer--md)',
-        backgroundColor: 'var(--pf-v6-global--BackgroundColor--200)',
-        borderBottom: !isDarkMode ? '1px solid var(--pf-v6-global--BorderColor--100)' : undefined,
+        borderBottom: '1px solid var(--pf-t--global--border--color--subtle)',
       }}
     >
-      <FlexItem style={{ color: 'var(--pf-v6-global--Color--200)', fontSize: 'var(--pf-t--global--font--size--body--sm)' }}>
-        States
-      </FlexItem>
-      <Flex flexWrap={{ default: 'wrap' }} spaceItems={{ default: 'spaceItemsXs' }}>
-        {stories.map(story => (
-          <Button
-            key={story.id}
-            variant={activeStoryId === story.id ? 'primary' : 'secondary'}
-            size="sm"
-            onClick={() => setActiveStory(story.id)}
-          >
-            {story.name}
-          </Button>
-        ))}
-      </Flex>
-    </Flex>
+      <ToolbarContent>
+        <ToolbarGroup>
+          <ToolbarItem style={{ color: 'var(--pf-v6-global--Color--200)', fontSize: 'var(--pf-t--global--font--size--body--sm)' }}>
+            States
+          </ToolbarItem>
+          {stories.map(story => (
+            <ToolbarItem key={story.id}>
+              <Button
+                variant={activeStoryId === story.id ? 'primary' : 'secondary'}
+                size="sm"
+                onClick={() => setActiveStory(story.id)}
+              >
+                {story.name}
+              </Button>
+            </ToolbarItem>
+          ))}
+        </ToolbarGroup>
+      </ToolbarContent>
+    </Toolbar>
   )
 }

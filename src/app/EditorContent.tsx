@@ -1,7 +1,17 @@
 import type { UploadedAsset } from '../features/assets/types'
 import type { JarImportResult as ThemeImportData } from '../features/theme-export/types'
-import { Bullseye, Flex, FlexItem, Stack, StackItem } from '@patternfly/react-core'
-import { useEffect, useRef, useState } from 'react'
+import {
+  Bullseye,
+  Drawer,
+  DrawerContent,
+  DrawerContentBody,
+  DrawerPanelBody,
+  DrawerPanelContent,
+  Spinner,
+  Stack,
+  StackItem,
+} from '@patternfly/react-core'
+import { useEffect, useState } from 'react'
 import ContextBar from '../components/ContextBar'
 import ErrorBoundary from '../components/ErrorBoundary'
 import RightSidebar from '../components/RightSidebar'
@@ -17,16 +27,11 @@ import { PreviewProvider } from '../features/preview/components/PreviewProvider'
 import { PreviewShell } from '../features/preview/components/PreviewShell'
 import { connectLiveReload, ensureGeneratedPreviewPagesLoaded, getVariantPages, resolvePreviewVariantId } from '../features/preview/load-generated'
 import { THEME_JAR_IMPORTED_EVENT } from '../features/theme-export/jar-import-service'
-import { useResizableSidebar } from './hooks/useResizableSidebar'
 import '@patternfly/react-core/dist/styles/base.css'
 
 const loadingSpinner = (
   <Bullseye style={{ height: '100vh', backgroundColor: 'var(--pf-t--global--background--color--primary--default)' }}>
-    <div className="pf-v6-c-spinner pf-m-xl" role="progressbar" aria-label="Loading...">
-      <span className="pf-v6-c-spinner__clipper"></span>
-      <span className="pf-v6-c-spinner__lead-ball"></span>
-      <span className="pf-v6-c-spinner__tail-ball"></span>
-    </div>
+    <Spinner size="xl" aria-label="Loading editor" />
   </Bullseye>
 )
 
@@ -49,8 +54,7 @@ export default function EditorContent() {
   const { activePageId } = usePreviewState()
   const themeConfig = useThemeConfig()
   const [previewPagesReady, setPreviewPagesReady] = useState(false)
-  const layoutRef = useRef<HTMLDivElement | null>(null)
-  const { isDesktopLayout, sidebarWidth: rightSidebarWidth, handleResizeStart: handleSidebarResizeStart } = useResizableSidebar({ layoutRef })
+  const [isDesktopLayout, setIsDesktopLayout] = useState(() => window.matchMedia('(min-width: 1024px)').matches)
 
   useEffect(() => {
     let cancelled = false
@@ -194,6 +198,17 @@ export default function EditorContent() {
   }, [isDarkMode])
 
   useEffect(() => {
+    const mediaQuery = window.matchMedia('(min-width: 1024px)')
+    const handleLayoutModeChange = (event: MediaQueryListEvent) => {
+      setIsDesktopLayout(event.matches)
+    }
+    mediaQuery.addEventListener('change', handleLayoutModeChange)
+    return () => {
+      mediaQuery.removeEventListener('change', handleLayoutModeChange)
+    }
+  }, [])
+
+  useEffect(() => {
     const handleThemeJarImported = (event: Event) => {
       void (async () => {
         const detail = (event as CustomEvent<ThemeImportData | undefined>).detail
@@ -233,13 +248,39 @@ export default function EditorContent() {
       initialVariantId={variantId}
     >
       <ErrorBoundary fallbackTitle="Preview Error">
-        <div ref={layoutRef} style={{ height: '100%', overflow: 'hidden' }}>
-          <Flex
-            direction={{ default: isDesktopLayout ? 'row' : 'column' }}
-            alignItems={{ default: 'alignItemsStretch' }}
-            style={{ height: '100%', overflow: 'hidden' }}
+        <Drawer
+          isExpanded
+          isInline
+          isStatic={isDesktopLayout}
+          position={isDesktopLayout ? 'end' : 'bottom'}
+          style={{ height: '100%' }}
+        >
+          <DrawerContent
+            panelContent={(
+              <DrawerPanelContent
+                colorVariant="secondary"
+                defaultSize={isDesktopLayout ? '420px' : '33%'}
+                minSize={isDesktopLayout ? '320px' : '200px'}
+                maxSize={isDesktopLayout ? '640px' : '45%'}
+                isResizable={isDesktopLayout}
+                resizeAriaLabel="Resize editor tools panel"
+                style={isDesktopLayout
+                  ? undefined
+                  : {
+                      flexBasis: '18rem',
+                      minHeight: '12rem',
+                      maxHeight: '40vh',
+                    }}
+              >
+                <DrawerPanelBody hasNoPadding style={{ minWidth: 0, minHeight: 0, height: '100%' }}>
+                  <ErrorBoundary fallbackTitle="Sidebar Error">
+                    <RightSidebar />
+                  </ErrorBoundary>
+                </DrawerPanelBody>
+              </DrawerPanelContent>
+            )}
           >
-            <FlexItem flex={{ default: 'flex_1' }} style={{ minWidth: 0, minHeight: 0 }}>
+            <DrawerContentBody style={{ minHeight: 0, height: '100%', paddingTop: 'var(--pf-t--global--spacer--sm)' }}>
               <Stack style={{ height: '100%', minHeight: 0 }}>
                 <StackItem>
                   <ErrorBoundary fallbackTitle="Topbar Error">
@@ -257,35 +298,9 @@ export default function EditorContent() {
                   </ErrorBoundary>
                 </StackItem>
               </Stack>
-            </FlexItem>
-            {isDesktopLayout && (
-              <div
-                role="separator"
-                aria-orientation="vertical"
-                aria-label="Resize right sidebar"
-                tabIndex={-1}
-                className="editor-resize-handle"
-                onPointerDown={handleSidebarResizeStart}
-              >
-                <div className="editor-resize-handle__line" />
-              </div>
-            )}
-            <FlexItem
-              className="gjs-column-r"
-              style={{
-                width: isDesktopLayout ? `${rightSidebarWidth}px` : '100%',
-                minWidth: 0,
-                minHeight: '200px',
-                height: isDesktopLayout ? '100%' : '40vh',
-                flexShrink: 0,
-              }}
-            >
-              <ErrorBoundary fallbackTitle="Sidebar Error">
-                <RightSidebar />
-              </ErrorBoundary>
-            </FlexItem>
-          </Flex>
-        </div>
+            </DrawerContentBody>
+          </DrawerContent>
+        </Drawer>
       </ErrorBoundary>
     </PreviewProvider>
   )

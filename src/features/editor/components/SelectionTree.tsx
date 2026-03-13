@@ -1,16 +1,17 @@
 import type { TreeViewDataItem } from '@patternfly/react-core'
 import {
   Bullseye,
-  Panel,
-  PanelMain,
-  PanelMainBody,
+  EmptyState,
+  EmptyStateBody,
+  SearchInput,
   Spinner,
   Stack,
   StackItem,
   TreeView,
-  TreeViewSearch,
 } from '@patternfly/react-core'
+import { SearchIcon } from '@patternfly/react-icons'
 import { useEffect, useState } from 'react'
+import SidebarPanel from '../../../components/SidebarPanel'
 import { usePreviewContext } from '../../preview/hooks/use-preview-context'
 import { createElementSelector } from '../../preview/lib/selector-utils'
 
@@ -205,49 +206,56 @@ export default function SelectionTree() {
   }
 
   return (
-    <div style={{ height: '100%', minHeight: 0, padding: 'var(--pf-t--global--spacer--sm)' }}>
-      <Panel className="selection-tree-panel">
-        <PanelMain style={{ height: '100%', minHeight: 0 }}>
-          <PanelMainBody style={{ height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-            {!previewReady && (
-              <Bullseye style={{ height: '100%', minHeight: '240px' }}>
-                <Spinner size="md" />
-              </Bullseye>
-            )}
+    <SidebarPanel title="Selection tree" fullHeight className="selection-tree-panel" bodyStyle={{ height: '100%' }}>
+      <div style={{ height: '100%', minHeight: 0 }}>
+        {!previewReady && (
+          <Bullseye style={{ height: '100%', minHeight: '240px' }}>
+            <Spinner size="md" />
+          </Bullseye>
+        )}
 
-            {previewReady && (
-              <Stack hasGutter style={{ height: '100%', minHeight: 0 }}>
-                <StackItem>
-                  <TreeViewSearch
-                    id="selection-tree-search"
-                    name="selection-tree-search"
-                    aria-label="Search selectable elements"
-                    placeholder="Search selectors"
-                    onSearch={event => setQuery(event.target.value)}
-                    value={query}
-                  />
-                </StackItem>
+        {previewReady && (
+          <Stack hasGutter style={{ height: '100%', minHeight: 0 }}>
+            <StackItem>
+              <SearchInput
+                id="selection-tree-search"
+                aria-label="Search selectable elements"
+                placeholder="Search selectors"
+                value={query}
+                onChange={(_event, value) => setQuery(value)}
+                onClear={() => setQuery('')}
+              />
+            </StackItem>
 
-                <StackItem isFilled style={{ minHeight: 0, overflow: 'auto', paddingInlineEnd: 'var(--pf-t--global--spacer--xs)' }}>
-                  {treeData.length > 0
-                    ? (
-                        <TreeView
-                          aria-label="Selectable elements"
-                          data={treeData}
-                          activeItems={activeItems}
-                          allExpanded
-                          hasSelectableNodes
-                          className="selection-tree-view"
-                          onSelect={handleTreeSelect}
-                        />
-                      )
-                    : <div style={{ color: 'var(--pf-t--global--text--color--subtle)', fontSize: 'var(--pf-t--global--font--size--body--sm)' }}>No selectable elements found.</div>}
-                </StackItem>
-              </Stack>
-            )}
-          </PanelMainBody>
-        </PanelMain>
-      </Panel>
-    </div>
+            <StackItem isFilled style={{ minHeight: 0, overflow: 'auto', paddingInlineEnd: 'var(--pf-t--global--spacer--xs)' }}>
+              {treeData.length > 0
+                ? (
+                    <TreeView
+                      aria-label="Selectable elements"
+                      data={treeData}
+                      activeItems={activeItems}
+                      allExpanded
+                      hasSelectableNodes
+                      className="selection-tree-view"
+                      onSelect={handleTreeSelect}
+                    />
+                  )
+                : (
+                    <Bullseye style={{ height: '100%', minHeight: '200px' }}>
+                      <EmptyState
+                        headingLevel="h4"
+                        icon={SearchIcon}
+                        titleText="No selectable elements found"
+                        variant="sm"
+                      >
+                        <EmptyStateBody>Try a different selector search or reload the preview content.</EmptyStateBody>
+                      </EmptyState>
+                    </Bullseye>
+                  )}
+            </StackItem>
+          </Stack>
+        )}
+      </div>
+    </SidebarPanel>
   )
 }

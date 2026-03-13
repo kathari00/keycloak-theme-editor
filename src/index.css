@@ -76,44 +76,6 @@ p {
     color: var(--pf-t--global--color--nonstatus--default) !important;
 }
 
-
-
-/* Remove border underneath tab header buttons in CustomPageManager */
-.pf-v6-c-nav.pf-m-tertiary .pf-v6-c-nav__link {
-    border-bottom: none !important;
-}
-
-.pf-v6-c-nav.pf-m-tertiary .pf-v6-c-nav__list {
-    border-bottom: none !important;
-}
-
-.pf-v6-c-tabs {
-    border: 0px;
-}
-
-.editor-resize-handle {
-    position: relative;
-    width: 0.5rem;
-    flex-shrink: 0;
-    cursor: col-resize;
-    touch-action: none;
-    user-select: none;
-}
-
-.editor-resize-handle__line {
-    position: absolute;
-    inset-block: 0;
-    left: 50%;
-    width: 1px;
-    transform: translateX(-50%);
-    background-color: var(--pf-t--global--border--color--default);
-    transition: background-color 120ms ease;
-}
-
-.editor-resize-handle:hover .editor-resize-handle__line {
-    background-color: var(--pf-t--global--color--brand--default);
-}
-
 /* Selection tree: compact layout with clearer click affordance */
 .selection-tree-view {
     --pf-v6-c-tree-view__node--indent--base: 0.125rem;
@@ -177,13 +139,12 @@ p {
 }
 
 .selection-tree-panel,
-.selection-tree-panel .pf-v6-c-panel__main,
-.selection-tree-panel .pf-v6-c-panel__main-body {
+.selection-tree-panel .pf-v6-c-card__body {
     height: 100%;
     min-height: 0;
 }
 
-.selection-tree-panel .pf-v6-c-panel__main-body {
+.selection-tree-panel .pf-v6-c-card__body {
     display: flex;
     flex-direction: column;
 }

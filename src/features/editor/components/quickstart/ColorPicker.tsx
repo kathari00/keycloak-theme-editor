@@ -62,7 +62,11 @@ export function ColorPicker({
 
   return (
     <FormGroup label={label} fieldId={fieldId} style={formGroupStyle}>
-      <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+      <Flex
+        alignItems={{ default: 'alignItemsCenter' }}
+        flexWrap={{ default: 'nowrap' }}
+        spaceItems={{ default: 'spaceItemsSm' }}
+      >
         <div
           style={{
             ...swatchStyle,

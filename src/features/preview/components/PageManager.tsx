@@ -1,5 +1,18 @@
-import { Bullseye, Stack, StackItem, TreeViewSearch } from '@patternfly/react-core'
+import {
+  Bullseye,
+  EmptyState,
+  EmptyStateBody,
+  EmptyStateFooter,
+  Nav,
+  NavItem,
+  NavList,
+  SearchInput,
+  Stack,
+  StackItem,
+} from '@patternfly/react-core'
+import { SearchIcon } from '@patternfly/react-icons'
 import { useState } from 'react'
+import SidebarPanel from '../../../components/SidebarPanel'
 import { usePreviewContext } from '../hooks/use-preview-context'
 import { usePreviewPages } from '../hooks/usePreviewEditorState'
 
@@ -17,54 +30,70 @@ export default function PageManager() {
     : pages
   const content = filteredPages.length > 0
     ? (
-        <nav className="pf-v6-c-nav pf-m-tertiary" aria-label="Page navigation" style={{ minHeight: 0, height: '100%', overflowY: 'auto' }}>
-          <ul className="pf-v6-c-nav__list" role="menubar">
+        <Nav aria-label="Page navigation" style={{ minHeight: 0, height: '100%', overflowY: 'auto' }}>
+          <NavList>
             {filteredPages.map(page => (
-              <li key={page.id} className="pf-v6-c-nav__item" role="none">
-                <button
-                  className={`pf-v6-c-nav__link ${activePageId === page.id ? 'pf-m-current' : ''}`}
-                  style={{ paddingInlineStart: '1rem' }}
-                  onClick={() => setActivePage(page.id)}
-                  role="menuitem"
-                >
-                  {page.name || page.id}
-                </button>
-              </li>
+              <NavItem
+                key={page.id}
+                itemId={page.id}
+                isActive={activePageId === page.id}
+                preventDefault
+                to={`#${page.id}`}
+                onClick={() => setActivePage(page.id)}
+              >
+                {page.name || page.id}
+              </NavItem>
             ))}
-          </ul>
-        </nav>
+          </NavList>
+        </Nav>
       )
     : (
-        <div style={{ padding: '0.75rem 0.5rem', color: 'var(--pf-t--global--text--color--subtle)', fontSize: 'var(--pf-t--global--font--size--body--sm)' }}>
-          No pages match &quot;
-          {query}
-          &quot;
-        </div>
+        <Bullseye style={{ height: '100%', minHeight: '200px' }}>
+          <EmptyState
+            headingLevel="h4"
+            icon={SearchIcon}
+            titleText="No pages match this search"
+            variant="sm"
+          >
+            <EmptyStateBody>Adjust the page search and try again.</EmptyStateBody>
+            <EmptyStateFooter>{query.trim()}</EmptyStateFooter>
+          </EmptyState>
+        </Bullseye>
       )
 
   if (!pages.length) {
     return (
-      <Bullseye style={{ padding: 'var(--pf-t--global--spacer--lg)', color: 'var(--pf-t--global--text--color--subtle)', fontSize: 'var(--pf-t--global--font--size--body--sm)' }}>
-        No preview pages available
-      </Bullseye>
+      <SidebarPanel title="Pages" fullHeight bodyStyle={{ height: '100%' }}>
+        <div style={{ height: '100%' }}>
+          <Bullseye style={{ height: '100%', minHeight: '240px' }}>
+            <EmptyState headingLevel="h4" titleText="No preview pages available" variant="sm">
+              <EmptyStateBody>Generated preview pages will appear here when the selected theme is ready.</EmptyStateBody>
+            </EmptyState>
+          </Bullseye>
+        </div>
+      </SidebarPanel>
     )
   }
 
   return (
-    <Stack hasGutter style={{ height: '100%', minHeight: 0, padding: 'var(--pf-t--global--spacer--sm)' }}>
-      <StackItem>
-        <TreeViewSearch
-          id="page-manager-search"
-          name="page-manager-search"
-          aria-label="Search pages"
-          placeholder="Search pages"
-          onSearch={event => setQuery(event.target.value)}
-          value={query}
-        />
-      </StackItem>
-      <StackItem isFilled style={{ minHeight: 0 }}>
-        {content}
-      </StackItem>
-    </Stack>
+    <SidebarPanel title="Pages" fullHeight bodyStyle={{ height: '100%', minHeight: 0 }}>
+      <div style={{ height: '100%', minHeight: 0 }}>
+        <Stack hasGutter style={{ height: '100%', minHeight: 0 }}>
+          <StackItem>
+            <SearchInput
+              id="page-manager-search"
+              aria-label="Search pages"
+              placeholder="Search pages"
+              value={query}
+              onChange={(_event, value) => setQuery(value)}
+              onClear={() => setQuery('')}
+            />
+          </StackItem>
+          <StackItem isFilled style={{ minHeight: 0 }}>
+            {content}
+          </StackItem>
+        </Stack>
+      </div>
+    </SidebarPanel>
   )
 }

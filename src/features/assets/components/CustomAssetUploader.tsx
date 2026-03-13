@@ -2,14 +2,19 @@ import type { AssetCategory, ThemeAssetTarget, UploadedAsset } from '../types'
 import {
   Alert,
   Button,
+  Card,
+  CardBody,
+  Divider,
+  EmptyState,
+  EmptyStateBody,
   ExpandableSection,
   Flex,
   FlexItem,
-  Panel,
-  PanelMain,
-  PanelMainBody,
+  Stack,
+  StackItem,
 } from '@patternfly/react-core'
 import { useRef, useState } from 'react'
+import SidebarPanel from '../../../components/SidebarPanel'
 import { editorActions } from '../../editor/actions'
 import { useUploadedAssetsState } from '../../editor/hooks/use-editor'
 import { getAssetDataUrl } from '../font-css-generator'
@@ -44,7 +49,13 @@ const CATEGORY_CONFIG: Record<
   },
 }
 
-export default function CustomAssetUploader() {
+export default function CustomAssetUploader({
+  withCard = true,
+  title = 'Uploads',
+}: {
+  withCard?: boolean
+  title?: string
+}) {
   const { uploadedAssets, appliedAssets } = useUploadedAssetsState()
   const [isUploading, setIsUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
@@ -181,14 +192,50 @@ export default function CustomAssetUploader() {
   }
 
   const renderFontCard = (asset: UploadedAsset) => (
-    <Panel key={asset.id} variant="bordered" style={{ marginBottom: '6px' }}>
-      <PanelMain>
-        <PanelMainBody style={{ padding: '8px' }}>
+    withCard
+      ? (
+          <Card key={asset.id} isCompact variant="secondary">
+            <CardBody>
+              <Flex
+                justifyContent={{ default: 'justifyContentSpaceBetween' }}
+                alignItems={{ default: 'alignItemsCenter' }}
+              >
+                <FlexItem style={{ flexGrow: 1 }}>
+                  <div style={{ fontSize: '0.8rem' }}>{asset.name}</div>
+                </FlexItem>
+                <FlexItem>
+                  <Flex gap={{ default: 'gapSm' }}>
+                    <Button
+                      variant={isAssetApplied(asset) ? 'primary' : 'secondary'}
+                      size="sm"
+                      onClick={() =>
+                        isAssetApplied(asset) ? handleUnapply(asset) : handleApply(asset)}
+                    >
+                      {isAssetApplied(asset) ? 'Applied' : 'Apply'}
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => handleDelete(asset.id)}
+                      aria-label="Delete font"
+                    >
+                      Delete
+                    </Button>
+                  </Flex>
+                </FlexItem>
+              </Flex>
+            </CardBody>
+          </Card>
+        )
+      : (
           <Flex
             justifyContent={{ default: 'justifyContentSpaceBetween' }}
             alignItems={{ default: 'alignItemsCenter' }}
+            flexWrap={{ default: 'wrap' }}
+            gap={{ default: 'gapMd' }}
+            style={{ paddingBlock: 'var(--pf-t--global--spacer--sm)' }}
           >
-            <FlexItem style={{ flexGrow: 1 }}>
+            <FlexItem style={{ flexGrow: 1, minWidth: '12rem' }}>
               <div style={{ fontSize: '0.8rem' }}>{asset.name}</div>
             </FlexItem>
             <FlexItem>
@@ -212,35 +259,88 @@ export default function CustomAssetUploader() {
               </Flex>
             </FlexItem>
           </Flex>
-        </PanelMainBody>
-      </PanelMain>
-    </Panel>
+        )
   )
 
   const renderImageCard = (asset: UploadedAsset) => {
     const isApplied = isAssetApplied(asset)
-    const canApply = asset.category !== 'image' && asset.category !== 'background' && asset.category !== 'logo' && asset.category !== 'favicon'
+    const canApply = asset.category !== 'image'
     return (
-      <Panel key={asset.id} variant="bordered" style={{ marginBottom: '6px' }}>
-        <PanelMain>
-          <PanelMainBody style={{ padding: '8px' }}>
-            <Flex alignItems={{ default: 'alignItemsCenter' }}>
-              <FlexItem>
-                <img
-                  src={getAssetDataUrl(asset)}
-                  alt={asset.name}
-                  style={{
-                    maxWidth: '44px',
-                    maxHeight: '44px',
-                    marginRight: '10px',
-                    borderRadius: '4px',
-                    objectFit: 'contain',
-                    backgroundColor: 'var(--pf-v6-global--BackgroundColor--200)',
-                  }}
-                />
-              </FlexItem>
-              <FlexItem style={{ flexGrow: 1 }}>
-                <div style={{ fontSize: '0.8rem' }}>{asset.name}</div>
+      withCard
+        ? (
+            <Card key={asset.id} isCompact variant="secondary">
+              <CardBody>
+                <Flex alignItems={{ default: 'alignItemsCenter' }}>
+                  <FlexItem>
+                    <img
+                      src={getAssetDataUrl(asset)}
+                      alt={asset.name}
+                      style={{
+                        maxWidth: '44px',
+                        maxHeight: '44px',
+                        marginRight: '10px',
+                        borderRadius: '4px',
+                        objectFit: 'contain',
+                        backgroundColor: 'var(--pf-t--global--background--color--secondary--default)',
+                      }}
+                    />
+                  </FlexItem>
+                  <FlexItem style={{ flexGrow: 1 }}>
+                    <div style={{ fontSize: '0.8rem' }}>{asset.name}</div>
+                  </FlexItem>
+                  <FlexItem>
+                    <Flex gap={{ default: 'gapSm' }}>
+                      {canApply && (
+                        <Button
+                          variant={isApplied ? 'primary' : 'secondary'}
+                          size="sm"
+                          onClick={() =>
+                            isApplied ? handleUnapply(asset) : handleApply(asset)}
+                        >
+                          {isApplied ? 'Applied' : 'Apply'}
+                        </Button>
+                      )}
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleDelete(asset.id)}
+                        aria-label="Delete image"
+                      >
+                        Delete
+                      </Button>
+                    </Flex>
+                  </FlexItem>
+                </Flex>
+              </CardBody>
+            </Card>
+          )
+        : (
+            <Flex
+              alignItems={{ default: 'alignItemsCenter' }}
+              justifyContent={{ default: 'justifyContentSpaceBetween' }}
+              flexWrap={{ default: 'wrap' }}
+              gap={{ default: 'gapMd' }}
+              style={{ paddingBlock: 'var(--pf-t--global--spacer--sm)' }}
+            >
+              <FlexItem style={{ minWidth: 0, flexGrow: 1 }}>
+                <Flex alignItems={{ default: 'alignItemsCenter' }} gap={{ default: 'gapSm' }}>
+                  <FlexItem>
+                    <img
+                      src={getAssetDataUrl(asset)}
+                      alt={asset.name}
+                      style={{
+                        maxWidth: '44px',
+                        maxHeight: '44px',
+                        borderRadius: '4px',
+                        objectFit: 'contain',
+                        backgroundColor: 'var(--pf-t--global--background--color--secondary--default)',
+                      }}
+                    />
+                  </FlexItem>
+                  <FlexItem style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: '0.8rem' }}>{asset.name}</div>
+                  </FlexItem>
+                </Flex>
               </FlexItem>
               <FlexItem>
                 <Flex gap={{ default: 'gapSm' }}>
@@ -265,9 +365,7 @@ export default function CustomAssetUploader() {
                 </Flex>
               </FlexItem>
             </Flex>
-          </PanelMainBody>
-        </PanelMain>
-      </Panel>
+          )
     )
   }
 
@@ -296,60 +394,129 @@ export default function CustomAssetUploader() {
         onToggle={() => toggleSection(category)}
         style={{ marginBottom: '8px' }}
       >
-        <div style={{ paddingLeft: '8px', paddingTop: '8px' }}>
-          <Panel variant="bordered" style={{ marginBottom: '12px' }}>
-            <PanelMain>
-              <PanelMainBody>
-                <input
-                  ref={(el) => {
-                    fileInputRefs.current[category] = el
-                  }}
-                  type="file"
-                  accept={config.accept}
-                  onChange={handleFileSelect(category)}
-                  style={{ display: 'none' }}
-                  multiple={category !== 'background' && category !== 'logo' && category !== 'favicon'}
-                />
-                <Button
-                  variant="secondary"
-                  onClick={() => fileInputRefs.current[category]?.click()}
-                  isLoading={isUploading}
-                  isBlock
-                >
-                  Upload
-                  {' '}
-                  {uploadLabel}
-                </Button>
-                {uploadError && uploadErrorCategory === category && (
-                  <Alert
-                    variant="danger"
-                    isInline
-                    title="Upload Error"
-                    style={{ marginTop: '8px' }}
-                  >
-                    {uploadError}
-                  </Alert>
+        <Stack hasGutter style={{ paddingTop: 'var(--pf-t--global--spacer--sm)' }}>
+          <StackItem>
+            {withCard
+              ? (
+                  <Card isCompact variant="secondary">
+                    <CardBody>
+                      <input
+                        ref={(el) => {
+                          fileInputRefs.current[category] = el
+                        }}
+                        type="file"
+                        accept={config.accept}
+                        onChange={handleFileSelect(category)}
+                        style={{ display: 'none' }}
+                        multiple={category !== 'background' && category !== 'logo' && category !== 'favicon'}
+                      />
+                      <Button
+                        variant="secondary"
+                        onClick={() => fileInputRefs.current[category]?.click()}
+                        isLoading={isUploading}
+                        isBlock
+                      >
+                        Upload
+                        {' '}
+                        {uploadLabel}
+                      </Button>
+                      {uploadError && uploadErrorCategory === category && (
+                        <Alert
+                          variant="danger"
+                          isInline
+                          title="Upload Error"
+                          style={{ marginTop: '8px' }}
+                        >
+                          {uploadError}
+                        </Alert>
+                      )}
+                    </CardBody>
+                  </Card>
+                )
+              : (
+                  <>
+                    <input
+                      ref={(el) => {
+                        fileInputRefs.current[category] = el
+                      }}
+                      type="file"
+                      accept={config.accept}
+                      onChange={handleFileSelect(category)}
+                      style={{ display: 'none' }}
+                      multiple={category !== 'background' && category !== 'logo' && category !== 'favicon'}
+                    />
+                    <Button
+                      variant="secondary"
+                      onClick={() => fileInputRefs.current[category]?.click()}
+                      isLoading={isUploading}
+                      isBlock
+                    >
+                      Upload
+                      {' '}
+                      {uploadLabel}
+                    </Button>
+                    {uploadError && uploadErrorCategory === category && (
+                      <Alert
+                        variant="danger"
+                        isInline
+                        title="Upload Error"
+                        style={{ marginTop: '8px' }}
+                      >
+                        {uploadError}
+                      </Alert>
+                    )}
+                  </>
                 )}
-              </PanelMainBody>
-            </PanelMain>
-          </Panel>
-          {assets.map(asset =>
-            category === 'font'
-              ? renderFontCard(asset)
-              : renderImageCard(asset),
+          </StackItem>
+          {assets.map((asset, index) => (
+            <StackItem key={asset.id}>
+              {category === 'font'
+                ? renderFontCard(asset)
+                : renderImageCard(asset)}
+              {!withCard && index < assets.length - 1 && <Divider />}
+            </StackItem>
+          ))}
+          {assets.length === 0 && (
+            <StackItem>
+              <EmptyState headingLevel="h4" titleText={`No ${config.label.toLowerCase()} uploaded`} variant="xs">
+                <EmptyStateBody>Upload files here to make them available for this theme.</EmptyStateBody>
+              </EmptyState>
+            </StackItem>
           )}
-        </div>
+        </Stack>
       </ExpandableSection>
     )
   }
 
+  const content = (
+    <Stack hasGutter>
+      <StackItem>
+        {renderAssetSection('background')}
+      </StackItem>
+      <StackItem>
+        {renderAssetSection('logo')}
+      </StackItem>
+      <StackItem>
+        {renderAssetSection('image')}
+      </StackItem>
+      <StackItem>
+        {renderAssetSection('favicon')}
+      </StackItem>
+      <StackItem>
+        {renderAssetSection('font')}
+      </StackItem>
+    </Stack>
+  )
+
+  if (!withCard) {
+    return content
+  }
+
   return (
-    <>
-      {renderAssetSection('background')}
-      {renderAssetSection('logo')}
-      {renderAssetSection('image')}
-      {renderAssetSection('favicon')}
-      {renderAssetSection('font')}
-    </>
+    <SidebarPanel title={title} fullHeight bodyStyle={{ minHeight: 0, overflowY: 'auto' }}>
+      <div style={{ minHeight: 0, overflowY: 'auto', height: '100%' }}>
+        {content}
+      </div>
+    </SidebarPanel>
   )
 }

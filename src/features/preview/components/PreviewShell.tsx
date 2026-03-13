@@ -132,7 +132,8 @@ export function PreviewShell() {
   const srcDoc = sanitizePreviewHtml(pageHtml)
 
   const onFrameLoad = () => {
-    if (!iframeRef.current?.contentDocument)
+    const doc = iframeRef.current?.contentDocument
+    if (!doc)
       return
 
     setPreviewReady(true)
@@ -207,9 +208,23 @@ export function PreviewShell() {
   }, [frameLoadVersion, iframeRef, selectedNodeId])
 
   return (
-    <div style={{ height: '100%', overflow: 'auto' }}>
-      <div style={{ width: deviceWidthMap[(deviceId as keyof typeof deviceWidthMap) || 'desktop'], maxWidth: '100%', marginInline: 'auto', transition: 'width 200ms ease' }}>
-        <iframe ref={iframeRef} onLoad={onFrameLoad} srcDoc={srcDoc} title="Keycloak Preview" className="preview-shell__frame" style={{ width: '100%', border: 0, background: 'transparent' }} sandbox="allow-forms allow-same-origin" />
+    <div style={{ height: '100%', overflow: 'hidden' }}>
+      <div style={{ width: deviceWidthMap[(deviceId as keyof typeof deviceWidthMap) || 'desktop'], maxWidth: '100%', height: '100%', marginInline: 'auto', transition: 'width 200ms ease' }}>
+        <iframe
+          ref={iframeRef}
+          onLoad={onFrameLoad}
+          srcDoc={srcDoc}
+          title="Keycloak Preview"
+          className="preview-shell__frame"
+          style={{
+            width: '100%',
+            height: '100%',
+            minHeight: 0,
+            border: 0,
+            background: 'transparent',
+          }}
+          sandbox="allow-forms allow-same-origin"
+        />
       </div>
     </div>
   )
