@@ -8,12 +8,7 @@ const pagesJsonPath = path.resolve(__dirname, '../generated/pages.json')
 beforeAll(async () => {
   const pagesJson = fs.readFileSync(pagesJsonPath, 'utf8')
   const pagesData = JSON.parse(pagesJson)
-  const fetchMock = vi.fn().mockImplementation((input: string | URL | Request) => {
-    const url = String(input)
-
-    if (url === '/api/pages.json') {
-      throw new Error('DEV mode should not fetch /api/pages.json')
-    }
+  const fetchMock = vi.fn().mockImplementation(() => {
     return Promise.resolve({
       ok: true,
       status: 200,

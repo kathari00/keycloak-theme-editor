@@ -16,7 +16,6 @@ const EMPTY_STATE_MAP: Record<string, string> = {}
 let previewVariants: PreviewVariantMap = {}
 let variantPagesCache: Record<string, Record<string, string>> = {}
 let previewPagesLoadPromise: Promise<void> | null = null
-const USE_BUNDLED_PREVIEW_PAGES = import.meta.env.DEV
 
 async function fetchPreviewPages(url: string): Promise<PreviewPageHtmlMap> {
   const res = await fetch(url)
@@ -49,9 +48,7 @@ export async function ensureGeneratedPreviewPagesLoaded(): Promise<void> {
     return previewPagesLoadPromise
   }
 
-  previewPagesLoadPromise = (USE_BUNDLED_PREVIEW_PAGES
-    ? fetchPreviewPages(generatedPagesUrl)
-    : fetchPreviewPages('/api/pages.json'))
+  previewPagesLoadPromise = fetchPreviewPages(generatedPagesUrl)
     .then((previewPages) => {
       applyPreviewPages(previewPages)
     })
@@ -63,9 +60,6 @@ export async function ensureGeneratedPreviewPagesLoaded(): Promise<void> {
 }
 
 export async function reloadPreviewPages(): Promise<void> {
-  if (USE_BUNDLED_PREVIEW_PAGES) {
-    return
-  }
   const res = await fetch('/api/pages.json')
   if (!res.ok || !res.headers.get('content-type')?.includes('application/json')) {
     return
@@ -77,17 +71,19 @@ export async function reloadPreviewPages(): Promise<void> {
 let sseConnected = false
 
 export function connectLiveReload(onPagesUpdated: () => void): void {
-  if (USE_BUNDLED_PREVIEW_PAGES || sseConnected) {
+  if (sseConnected) {
     return
   }
   sseConnected = true
 
   const source = new EventSource('/api/events')
+  source.onopen = () => {
+    reloadPreviewPages().then(onPagesUpdated).catch(() => {})
+  }
   source.addEventListener('pages-updated', () => {
     reloadPreviewPages().then(onPagesUpdated).catch(() => {})
   })
   source.onerror = () => {
-    // SSE not available (e.g. Vite dev server) — silently ignore
     source.close()
     sseConnected = false
   }

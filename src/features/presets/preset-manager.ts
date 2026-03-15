@@ -42,34 +42,11 @@ async function fetchThemeProperty(themeId: ThemeId, key: string): Promise<string
 
 export async function loadThemes(): Promise<ThemeConfig> {
   try {
-    const pagesResponsePromise = import.meta.env.DEV
-      ? Promise.resolve(null)
-      : fetch('/api/pages.json').catch(() => null)
-
-    const [themesResponse, pagesResponse] = await Promise.all([
-      fetch('/keycloak-dev-resources/themes/themes.json'),
-      pagesResponsePromise,
-    ])
+    const themesResponse = await fetch('/keycloak-dev-resources/themes/themes.json')
     if (!themesResponse.ok) {
       throw new Error(`Failed to load themes.json: ${themesResponse.statusText}`)
     }
     const config = await themesResponse.json() as ThemeConfig
-    // Discover user theme variants from pages.json and add them to the theme list
-    if (pagesResponse?.ok && pagesResponse.headers.get('content-type')?.includes('application/json')) {
-      const pages = await pagesResponse.json()
-      const knownIds = new Set<string>(config.themes.map(t => t.id))
-      for (const variantId of Object.keys(pages.variants ?? {})) {
-        if (!knownIds.has(variantId)) {
-          config.themes.push({
-            id: variantId,
-            name: variantId,
-            description: 'Imported theme',
-            defaultAssets: [],
-            isImported: true,
-          })
-        }
-      }
-    }
 
     await Promise.all(config.themes.map(async (theme) => {
       theme.darkModeClasses = (await fetchThemeProperty(theme.id, 'kcDarkModeClass'))?.split(/\s+/).filter(Boolean) || ['kcDarkModeClass']

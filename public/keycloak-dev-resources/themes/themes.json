@@ -14,12 +14,12 @@
         {
           "category": "background",
           "name": "keycloak-bg-darken.svg",
-          "path": "img/keycloak-bg-darken.svg"
+          "path": "img/backgrounds/keycloak-bg-darken.svg"
         },
         {
           "category": "logo",
           "name": "keycloak-logo-text.svg",
-          "path": "img/keycloak-logo-text.svg"
+          "path": "img/logos/keycloak-logo-text.svg"
         }
       ]
     },
