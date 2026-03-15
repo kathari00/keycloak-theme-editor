@@ -2,8 +2,9 @@ import type {
   PreviewPageHtmlMap,
   PreviewVariantId,
 } from './types'
+import generatedPagesUrl from './generated/pages.json?url'
 
-interface PreviewScenarioOption {
+interface PreviewStateOption {
   id: string
   name: string
 }
@@ -11,16 +12,25 @@ interface PreviewScenarioOption {
 type PreviewVariantMap = PreviewPageHtmlMap['variants']
 
 const EMPTY_PAGE_MAP: Record<string, string> = {}
-const EMPTY_SCENARIO_MAP: Record<string, string> = {}
+const EMPTY_STATE_MAP: Record<string, string> = {}
 let previewVariants: PreviewVariantMap = {}
 let variantPagesCache: Record<string, Record<string, string>> = {}
 let previewPagesLoadPromise: Promise<void> | null = null
+const USE_BUNDLED_PREVIEW_PAGES = import.meta.env.DEV
+
+async function fetchPreviewPages(url: string): Promise<PreviewPageHtmlMap> {
+  const res = await fetch(url)
+  if (!res.ok || !res.headers.get('content-type')?.includes('application/json')) {
+    throw new Error(`Failed to load pages.json: ${res.status}`)
+  }
+  return await res.json() as PreviewPageHtmlMap
+}
 
 function buildVariantPagesCache(variants: PreviewVariantMap): Record<string, Record<string, string>> {
   return Object.fromEntries(Object.entries(variants).map(([variantId, variantPages]) => {
     const pages: Record<string, string> = {}
-    for (const [pageId, stories] of Object.entries(variantPages)) {
-      pages[pageId] = stories.default
+    for (const [pageId, states] of Object.entries(variantPages)) {
+      pages[pageId] = states.default
     }
     return [variantId, pages]
   }))
@@ -39,21 +49,11 @@ export async function ensureGeneratedPreviewPagesLoaded(): Promise<void> {
     return previewPagesLoadPromise
   }
 
-  previewPagesLoadPromise = fetch('/api/pages.json')
-    .then((res) => {
-      if (!res.ok || !res.headers.get('content-type')?.includes('application/json')) {
-        throw new Error(`Failed to load pages.json: ${res.status}`)
-      }
-      return res.json()
-    })
-    .then((previewPages: PreviewPageHtmlMap) => {
+  previewPagesLoadPromise = (USE_BUNDLED_PREVIEW_PAGES
+    ? fetchPreviewPages(generatedPagesUrl)
+    : fetchPreviewPages('/api/pages.json'))
+    .then((previewPages) => {
       applyPreviewPages(previewPages)
-    })
-    .catch(() => {
-      // CLI serves /api/pages.json; during Vite dev, fall back to the generated file
-      return import('./generated/pages.json').then((mod) => {
-        applyPreviewPages(mod.default as PreviewPageHtmlMap)
-      })
     })
     .finally(() => {
       previewPagesLoadPromise = null
@@ -63,6 +63,9 @@ export async function ensureGeneratedPreviewPagesLoaded(): Promise<void> {
 }
 
 export async function reloadPreviewPages(): Promise<void> {
+  if (USE_BUNDLED_PREVIEW_PAGES) {
+    return
+  }
   const res = await fetch('/api/pages.json')
   if (!res.ok || !res.headers.get('content-type')?.includes('application/json')) {
     return
@@ -74,7 +77,7 @@ export async function reloadPreviewPages(): Promise<void> {
 let sseConnected = false
 
 export function connectLiveReload(onPagesUpdated: () => void): void {
-  if (sseConnected) {
+  if (USE_BUNDLED_PREVIEW_PAGES || sseConnected) {
     return
   }
   sseConnected = true
@@ -106,54 +109,54 @@ export function getVariantPages(variantId: PreviewVariantId): Record<string, str
   return variantPagesCache[variantId] ?? EMPTY_PAGE_MAP
 }
 
-function getVariantPageScenarios(params: {
+function getVariantPageStates(params: {
   variantId: PreviewVariantId
   pageId: string
 }): Record<string, string> {
   const { variantId, pageId } = params
-  return previewVariants[variantId]?.[pageId] ?? EMPTY_SCENARIO_MAP
+  return previewVariants[variantId]?.[pageId] ?? EMPTY_STATE_MAP
 }
 
-function formatScenarioName(storyId: string): string {
-  if (storyId === 'default') {
+function formatStateName(stateId: string): string {
+  if (stateId === 'default') {
     return 'Default'
   }
-  return storyId
+  return stateId
     .split(/[-_]+/)
     .filter(Boolean)
     .map(token => token.charAt(0).toUpperCase() + token.slice(1))
     .join(' ')
 }
 
-export function getVariantScenarioOptions(params: {
+export function getVariantStateOptions(params: {
   variantId: PreviewVariantId
   pageId: string
-}): PreviewScenarioOption[] {
+}): PreviewStateOption[] {
   const { variantId, pageId } = params
-  const storyIds = Object.keys(getVariantPageScenarios({ variantId, pageId }))
-  if (storyIds.length === 0) {
+  const stateIds = Object.keys(getVariantPageStates({ variantId, pageId }))
+  if (stateIds.length === 0) {
     return []
   }
 
-  const orderedStoryIds = storyIds.includes('default')
-    ? ['default', ...storyIds.filter(storyId => storyId !== 'default')]
-    : storyIds
+  const orderedStateIds = stateIds.includes('default')
+    ? ['default', ...stateIds.filter(stateId => stateId !== 'default')]
+    : stateIds
 
-  return orderedStoryIds.map(storyId => ({
-    id: storyId,
-    name: formatScenarioName(storyId),
+  return orderedStateIds.map(stateId => ({
+    id: stateId,
+    name: formatStateName(stateId),
   }))
 }
 
-export function resolveScenarioHtml(params: {
+export function resolveStateHtml(params: {
   variantId: PreviewVariantId
   pageId: string
-  storyId: string
+  stateId: string
 }): string | null {
-  const { variantId, pageId, storyId } = params
-  if (storyId === 'default') {
+  const { variantId, pageId, stateId } = params
+  if (stateId === 'default') {
     return null
   }
-  const pageStories = getVariantPageScenarios({ variantId, pageId })
-  return pageStories[storyId] ?? null
+  const pageStates = getVariantPageStates({ variantId, pageId })
+  return pageStates[stateId] ?? null
 }

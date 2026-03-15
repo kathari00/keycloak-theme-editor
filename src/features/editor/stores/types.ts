@@ -69,7 +69,7 @@ export interface ThemeState {
 export interface CoreState {
   isDarkMode: boolean
   activePageId: string
-  activeStoryId: string
+  activeStateId: string
   selectedNodeId: string | null
   previewReady: boolean
   deviceId: 'desktop' | 'tablet' | 'mobile'

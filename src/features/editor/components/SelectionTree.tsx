@@ -144,7 +144,7 @@ export default function SelectionTree() {
     selectNode,
     activeVariantId,
     activePageId,
-    activeStoryId,
+    activeStateId,
   } = usePreviewContext()
   const [nodes, setNodes] = useState<SelectionTreeNode[]>([])
   const [query, setQuery] = useState('')
@@ -197,7 +197,7 @@ export default function SelectionTree() {
       }
       observer.disconnect()
     }
-  }, [previewReady, getDocument, activeVariantId, activePageId, activeStoryId])
+  }, [previewReady, getDocument, activeVariantId, activePageId, activeStateId])
 
   const handleTreeSelect = (_event: React.MouseEvent, item: TreeViewDataItem) => {
     if (typeof item.id === 'string') {

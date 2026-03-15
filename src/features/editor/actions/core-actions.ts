@@ -9,8 +9,8 @@ export const coreActions = {
     coreStore.setState({ activePageId })
   },
 
-  setActiveStoryId: (activeStoryId: string) => {
-    coreStore.setState({ activeStoryId })
+  setActiveStateId: (activeStateId: string) => {
+    coreStore.setState({ activeStateId })
   },
 
   setSelectedNodeId: (selectedNodeId: string | null) => {

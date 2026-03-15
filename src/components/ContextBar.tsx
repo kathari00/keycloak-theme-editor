@@ -7,7 +7,7 @@ import {
 } from '@patternfly/react-core'
 import { useEffect } from 'react'
 import { usePreviewContext } from '../features/preview/hooks/use-preview-context'
-import { getVariantScenarioOptions } from '../features/preview/load-generated'
+import { getVariantStateOptions } from '../features/preview/load-generated'
 import { cx } from '../lib/cx'
 
 interface ContextBarProps {
@@ -19,30 +19,30 @@ export default function ContextBar({ className }: ContextBarProps) {
   const {
     activeVariantId,
     activePageId,
-    activeStoryId,
-    setActiveStory,
+    activeStateId,
+    setActiveState,
   } = preview
 
-  const stories = getVariantScenarioOptions({
+  const states = getVariantStateOptions({
     variantId: activeVariantId,
     pageId: activePageId,
   })
 
   useEffect(() => {
-    if (stories.length === 0) {
+    if (states.length === 0) {
       return
     }
-    const hasCurrentStory = stories.some(story => story.id === activeStoryId)
-    if (hasCurrentStory) {
+    const hasCurrentState = states.some(state => state.id === activeStateId)
+    if (hasCurrentState) {
       return
     }
-    const initialStory = stories.find(story => story.id === 'default') ?? stories[0]
-    if (initialStory) {
-      setActiveStory(initialStory.id)
+    const initialState = states.find(state => state.id === 'default') ?? states[0]
+    if (initialState) {
+      setActiveState(initialState.id)
     }
-  }, [activeStoryId, setActiveStory, stories])
+  }, [activeStateId, setActiveState, states])
 
-  if (stories.length === 0) {
+  if (states.length === 0) {
     return null
   }
 
@@ -51,24 +51,31 @@ export default function ContextBar({ className }: ContextBarProps) {
       className={cx(className)}
       colorVariant="secondary"
       id="editor-context-bar"
-      inset={{ default: 'insetMd' }}
+      inset={{ default: 'insetSm' }}
       style={{
         borderBottom: '1px solid var(--pf-t--global--border--color--subtle)',
       }}
     >
-      <ToolbarContent>
-        <ToolbarGroup>
-          <ToolbarItem style={{ color: 'var(--pf-v6-global--Color--200)', fontSize: 'var(--pf-t--global--font--size--body--sm)' }}>
+      <ToolbarContent style={{ rowGap: '0.5rem' }}>
+        <ToolbarGroup
+          style={{
+            alignItems: 'center',
+            columnGap: '0.5rem',
+            rowGap: '0.5rem',
+            flexWrap: 'wrap',
+          }}
+        >
+          <ToolbarItem style={{ marginInlineEnd: 0, color: 'var(--pf-v6-global--Color--200)', fontSize: 'var(--pf-t--global--font--size--body--sm)' }}>
             States
           </ToolbarItem>
-          {stories.map(story => (
-            <ToolbarItem key={story.id}>
+          {states.map(state => (
+            <ToolbarItem key={state.id} style={{ marginInlineEnd: 0 }}>
               <Button
-                variant={activeStoryId === story.id ? 'primary' : 'secondary'}
+                variant={activeStateId === state.id ? 'primary' : 'secondary'}
                 size="sm"
-                onClick={() => setActiveStory(story.id)}
+                onClick={() => setActiveState(state.id)}
               >
-                {story.name}
+                {state.name}
               </Button>
             </ToolbarItem>
           ))}

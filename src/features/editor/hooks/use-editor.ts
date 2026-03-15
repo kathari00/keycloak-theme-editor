@@ -41,7 +41,7 @@ export function useDarkModeState() {
 export function usePreviewState() {
   return useCoreStoreSlice(state => ({
     activePageId: state.activePageId,
-    activeStoryId: state.activeStoryId,
+    activeStateId: state.activeStateId,
     selectedNodeId: state.selectedNodeId,
     previewReady: state.previewReady,
     deviceId: state.deviceId,

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { applyQuickStartTemplateContent } from '../lib/quickstart-template-content'
 
 function makeDoc(html: string): Document {
@@ -116,9 +116,34 @@ describe('applyQuickStartTemplateContent', () => {
     expect(footer.hasAttribute('hidden')).toBe(true)
   })
 
-  it('does not call document.createElement for placeholder updates', () => {
+  it('preserves icon markup when info message has sibling icon element', () => {
+    const doc = makeDoc(`
+<!doctype html>
+<html><body>
+  <div id="kc-info-message" data-kc-state="info-message" class="pf-m-info">
+    <div class="kcAlertIconClass">
+      <span class="kcFeedbackInfoIcon"></span>
+    </div>
+    <span class="kc-feedback-text" data-kc-state="info-message-text"></span>
+  </div>
+</body></html>
+`)
+    applyQuickStartTemplateContent(doc, {
+      showClientName: true,
+      showRealmName: true,
+      infoMessage: 'Maintenance window tonight',
+      imprintUrl: '',
+      dataProtectionUrl: '',
+    })
+
+    const messageNode = doc.getElementById('kc-info-message')!
+    expect(messageNode.querySelector('.kcAlertIconClass')).not.toBeNull()
+    expect(messageNode.querySelector('.kcFeedbackInfoIcon')).not.toBeNull()
+    expect(messageNode.querySelector('[data-kc-state="info-message-text"]')?.textContent).toBe('Maintenance window tonight')
+  })
+
+  it('does not duplicate placeholders that already exist', () => {
     const doc = makeDoc(baseFixture)
-    const createElementSpy = vi.spyOn(doc, 'createElement')
     applyQuickStartTemplateContent(doc, {
       showClientName: true,
       showRealmName: true,
@@ -126,7 +151,9 @@ describe('applyQuickStartTemplateContent', () => {
       imprintUrl: 'https://example.com/imprint',
       dataProtectionUrl: 'https://example.com/privacy',
     })
-    expect(createElementSpy).not.toHaveBeenCalled()
-    createElementSpy.mockRestore()
+    expect(doc.querySelectorAll('#kc-realm-name')).toHaveLength(1)
+    expect(doc.querySelectorAll('[data-kc-state="info-message-text"]')).toHaveLength(1)
+    expect(doc.querySelectorAll('#kc-imprint-link')).toHaveLength(1)
+    expect(doc.querySelectorAll('#kc-data-protection-link')).toHaveLength(1)
   })
 })

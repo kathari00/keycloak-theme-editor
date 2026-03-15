@@ -6,7 +6,7 @@ import { createPersistedEditorStore } from './create-editor-store'
 export const coreStore = createPersistedEditorStore<CoreState>({
   isDarkMode: getInitialDarkMode(),
   activePageId: 'login.html',
-  activeStoryId: 'default',
+  activeStateId: 'default',
   selectedNodeId: null,
   previewReady: false,
   deviceId: 'desktop',
@@ -14,7 +14,7 @@ export const coreStore = createPersistedEditorStore<CoreState>({
   name: CORE_STORE_STORAGE_KEY,
   partialize: state => ({
     activePageId: state.activePageId,
-    activeStoryId: state.activeStoryId,
+    activeStateId: state.activeStateId,
     deviceId: state.deviceId,
   }),
 })

@@ -41,7 +41,6 @@ export function applyQuickStartTemplateContent(doc: Document, options: QuickStar
   const linksContainer = doc.querySelector<HTMLElement>('[data-kc-state="footer-legal-links"]')
   let anyLinkVisible = false
 
-  // Ensure the links container lives inside the footer container (generation may place it elsewhere)
   if (footerContainer && linksContainer && !footerContainer.contains(linksContainer)) {
     footerContainer.appendChild(linksContainer)
   }

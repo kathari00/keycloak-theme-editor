@@ -11,7 +11,7 @@ export function usePreviewPages() {
 
 export const previewRuntimeActions = {
   setActivePage: editorActions.setActivePage,
-  setActiveStory: editorActions.setActiveStoryId,
+  setActiveState: editorActions.setActiveStateId,
   selectNode: editorActions.setSelectedNodeId,
   setPreviewReady: editorActions.setPreviewReady,
 }

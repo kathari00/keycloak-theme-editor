@@ -16,7 +16,7 @@ export function PreviewProvider({
   const iframeRef = useRef<HTMLIFrameElement | null>(null)
   const {
     activePageId,
-    activeStoryId,
+    activeStateId,
     selectedNodeId,
     previewReady,
   } = usePreviewRuntimeState()
@@ -26,13 +26,13 @@ export function PreviewProvider({
 
   const setActivePage = (pageId: string) => {
     previewRuntimeActions.setActivePage(pageId)
-    previewRuntimeActions.setActiveStory('default')
+    previewRuntimeActions.setActiveState('default')
     previewRuntimeActions.selectNode(null)
     previewRuntimeActions.setPreviewReady(false)
   }
 
-  const setActiveStory = (storyId: string) => {
-    previewRuntimeActions.setActiveStory(storyId)
+  const setActiveState = (stateId: string) => {
+    previewRuntimeActions.setActiveState(stateId)
     previewRuntimeActions.selectNode(null)
     previewRuntimeActions.setPreviewReady(false)
   }
@@ -48,12 +48,12 @@ export function PreviewProvider({
   const value: PreviewRuntimeValue = {
     activeVariantId,
     activePageId,
-    activeStoryId,
+    activeStateId,
     selectedNodeId,
     previewReady,
     getDocument,
     setActivePage,
-    setActiveStory,
+    setActiveState,
     selectNode,
     iframeRef,
     setPreviewReady,

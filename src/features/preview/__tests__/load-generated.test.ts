@@ -1,17 +1,27 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
-import { ensureGeneratedPreviewPagesLoaded, getVariantPages, getVariantScenarioOptions, resolveScenarioHtml } from '../load-generated'
+import { ensureGeneratedPreviewPagesLoaded, getVariantPages, getVariantStateOptions, resolveStateHtml } from '../load-generated'
 
 const pagesJsonPath = path.resolve(__dirname, '../generated/pages.json')
 
 beforeAll(async () => {
   const pagesJson = fs.readFileSync(pagesJsonPath, 'utf8')
   const pagesData = JSON.parse(pagesJson)
+  const fetchMock = vi.fn().mockImplementation((input: string | URL | Request) => {
+    const url = String(input)
 
-  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-    json: () => Promise.resolve(pagesData),
-  }))
+    if (url === '/api/pages.json') {
+      throw new Error('DEV mode should not fetch /api/pages.json')
+    }
+    return Promise.resolve({
+      ok: true,
+      status: 200,
+      headers: new Headers({ 'content-type': 'application/json' }),
+      json: () => Promise.resolve(pagesData),
+    })
+  })
+  vi.stubGlobal('fetch', fetchMock)
 
   await ensureGeneratedPreviewPagesLoaded()
 })
@@ -20,9 +30,9 @@ afterAll(() => {
   vi.restoreAllMocks()
 })
 
-describe('resolveScenarioHtml', () => {
+describe('resolveStateHtml', () => {
   it('returns scenario options as an array', () => {
-    const options = getVariantScenarioOptions({
+    const options = getVariantStateOptions({
       variantId: 'v2',
       pageId: 'login.html',
     })
@@ -37,18 +47,18 @@ describe('resolveScenarioHtml', () => {
     expect(first).toBe(second)
   })
 
-  it('does not override page html for the default story', () => {
-    const scenarioHtml = resolveScenarioHtml({
+  it('does not override page html for the default state', () => {
+    const scenarioHtml = resolveStateHtml({
       variantId: 'modern-card',
       pageId: 'login.html',
-      storyId: 'default',
+      stateId: 'default',
     })
 
     expect(scenarioHtml).toBeNull()
   })
 
-  it('includes default plus named login stories', () => {
-    const optionIds = getVariantScenarioOptions({
+  it('includes default plus named login states', () => {
+    const optionIds = getVariantStateOptions({
       variantId: 'v2',
       pageId: 'login.html',
     }).map(option => option.id)
@@ -57,21 +67,21 @@ describe('resolveScenarioHtml', () => {
     expect(optionIds[0]).toBe('default')
   })
 
-  it('returns html for non-default login stories', () => {
-    const options = getVariantScenarioOptions({
+  it('returns html for non-default login states', () => {
+    const options = getVariantStateOptions({
       variantId: 'v2',
       pageId: 'login.html',
     })
-    const nonDefaultStory = options.find(option => option.id !== 'default')
-    if (!nonDefaultStory) {
-      expect(nonDefaultStory).toBeUndefined()
+    const nonDefaultState = options.find(option => option.id !== 'default')
+    if (!nonDefaultState) {
+      expect(nonDefaultState).toBeUndefined()
       return
     }
 
-    const scenarioHtml = resolveScenarioHtml({
+    const scenarioHtml = resolveStateHtml({
       variantId: 'v2',
       pageId: 'login.html',
-      storyId: nonDefaultStory.id,
+      stateId: nonDefaultState.id,
     })
 
     expect(typeof scenarioHtml).toBe('string')
