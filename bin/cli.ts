@@ -1,12 +1,14 @@
-import { createServer } from 'node:http'
+import type { UserMocks } from '../tools/generate-preview'
+import { Buffer } from 'node:buffer'
 import { spawn } from 'node:child_process'
 import fs from 'node:fs'
+import { createServer } from 'node:http'
 import path from 'node:path'
 import process from 'node:process'
-import { program } from 'commander'
 import { watch } from 'chokidar'
+import { program } from 'commander'
 import { createJiti } from 'jiti'
-import { generatePreview, getJavaMajorVersion, type ContextMocks } from '../tools/generate-preview'
+import { generatePreview, getJavaMajorVersion } from '../tools/generate-preview'
 
 const PACKAGE_ROOT = path.resolve(import.meta.dirname, '..')
 const DEFAULT_PORT = 4800
@@ -16,12 +18,17 @@ const sseClients: Set<import('node:http').ServerResponse> = new Set()
 const SKIP_DIRS = new Set(['node_modules', '.git', 'dist', 'build', 'target', '.next', '.nuxt'])
 const MAX_DISCOVERY_DEPTH = 5
 
+function readEditorPackageJson(): { version: string } {
+  return JSON.parse(fs.readFileSync(path.join(PACKAGE_ROOT, 'package.json'), 'utf8'))
+}
+
 function isThemeDir(dir: string): boolean {
   return fs.existsSync(path.join(dir, 'login', 'theme.properties'))
 }
 
 function collectThemeDirs(dir: string, depth: number, includeCurrent = true): string[] {
-  if (depth <= 0 || !fs.existsSync(dir)) return []
+  if (depth <= 0 || !fs.existsSync(dir))
+    return []
 
   const results: string[] = []
   if (includeCurrent && isThemeDir(dir)) {
@@ -37,7 +44,8 @@ function collectThemeDirs(dir: string, depth: number, includeCurrent = true): st
   }
 
   for (const entry of entries) {
-    if (!entry.isDirectory() || SKIP_DIRS.has(entry.name) || entry.name.startsWith('.')) continue
+    if (!entry.isDirectory() || SKIP_DIRS.has(entry.name) || entry.name.startsWith('.'))
+      continue
     results.push(...collectThemeDirs(path.join(dir, entry.name), depth - 1, true))
   }
 
@@ -67,70 +75,40 @@ function discoverThemeDirsIn(themesRootDir: string): string[] {
     .sort((a, b) => getVariantId(themesRootDir, a).localeCompare(getVariantId(themesRootDir, b)))
 }
 
-async function loadUserMocks(pagesDir: string): Promise<ContextMocks | undefined> {
-  const kcPagePath = path.join(pagesDir, 'kc-page.ts')
-  const kcPageJsPath = path.join(pagesDir, 'kc-page.js')
-  const userPageFile = fs.existsSync(kcPagePath)
-    ? kcPagePath
-    : fs.existsSync(kcPageJsPath) ? kcPageJsPath : null
-
-  if (!userPageFile) {
+async function loadUserMocks(pagesDir: string): Promise<UserMocks | undefined> {
+  const userPageFile = path.join(pagesDir, 'kc-page.ts')
+  if (!fs.existsSync(userPageFile))
     return undefined
-  }
 
   console.log(`Loading user page mocks from: ${userPageFile}`)
 
-  const jiti = createJiti(pagesDir, { interopDefault: true })
-
-  let userPage: {
-    getKcContextMock?: (params: { pageId: string, overrides?: Record<string, unknown> }) => Record<string, unknown>
-    kcContextMocks?: Array<{ pageId: string }>
+  const jiti = createJiti(pagesDir, {
+    interopDefault: true,
+    moduleCache: false,
+    fsCache: false,
+  })
+  const userModule = await jiti.import(userPageFile) as {
+    default?: { pages?: Record<string, Record<string, unknown>> }
+  }
+  if (!userModule?.default) {
+    throw new Error(`Expected a default export from ${userPageFile}`)
   }
 
-  try {
-    userPage = await jiti.import(userPageFile) as typeof userPage
-  }
-  catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
-    console.warn(`Warning: Failed to load ${path.basename(userPageFile)}: ${message}`)
-    console.warn('  Continuing without user mocks.\n')
-    return undefined
-  }
+  let states: UserMocks['states'] = {}
 
-  if (!userPage.getKcContextMock || !userPage.kcContextMocks) {
-    console.warn('Warning: kc-page.ts must export getKcContextMock and kcContextMocks. Skipping user mocks.')
-    return undefined
-  }
-
-  const storyPath = path.join(pagesDir, 'kc-page-story.ts')
-  const storyJsPath = path.join(pagesDir, 'kc-page-story.js')
-  const storyFile = fs.existsSync(storyPath)
-    ? storyPath
-    : fs.existsSync(storyJsPath) ? storyJsPath : null
-
-  let userStories: Record<string, Record<string, Record<string, unknown>>> = {}
-  if (storyFile) {
-    const storyModule = await jiti.import(storyFile) as {
-      stories?: Record<string, Record<string, Record<string, unknown>>>
+  const stateFile = path.join(pagesDir, 'kc-page-state.ts')
+  if (fs.existsSync(stateFile)) {
+    const stateModule = await jiti.import(stateFile) as { default?: UserMocks['states'] }
+    if (!stateModule?.default) {
+      throw new Error(`Expected a default export from ${stateFile}`)
     }
-    userStories = storyModule.stories ?? {}
+    states = stateModule.default
   }
 
-  const pages: Record<string, Record<string, unknown>> = {}
-  for (const mock of userPage.kcContextMocks) {
-    const name = mock.pageId.replace('.ftl', '')
-    pages[name] = JSON.parse(JSON.stringify(
-      userPage.getKcContextMock({ pageId: mock.pageId }),
-    ))
-
-    for (const [storyId, override] of Object.entries(userStories[name] ?? {})) {
-      pages[`${name}@${storyId}`] = JSON.parse(JSON.stringify(
-        userPage.getKcContextMock({ pageId: mock.pageId, overrides: override }),
-      ))
-    }
+  return {
+    pages: userModule.default.pages ?? {},
+    states,
   }
-
-  return { common: {}, pages }
 }
 
 function broadcastSSE(event: string, data?: string) {
@@ -282,21 +260,26 @@ function openBrowser(url: string) {
 }
 
 function isValidPathSegment(value: string, opts?: { allowDots?: boolean }): boolean {
-  if (!value) return false
-  if (value === '.' || value === '..') return false
-  if (value.includes('/') || value.includes('\\')) return false
+  if (!value)
+    return false
+  if (value === '.' || value === '..')
+    return false
+  if (value.includes('/') || value.includes('\\'))
+    return false
 
   const pattern = opts?.allowDots
-    ? /^[A-Za-z0-9][A-Za-z0-9._-]*$/
-    : /^[A-Za-z0-9][A-Za-z0-9_-]*$/
+    ? /^[A-Z0-9][\w.-]*$/i
+    : /^[A-Z0-9][\w-]*$/i
 
   return pattern.test(value)
 }
 
 function isValidThemeVariantPath(value: string): boolean {
-  if (!value) return false
+  if (!value)
+    return false
   const segments = value.split('/').filter(Boolean)
-  if (segments.length === 0) return false
+  if (segments.length === 0)
+    return false
   return segments.every(segment => isValidPathSegment(segment, { allowDots: true }))
 }
 
@@ -307,11 +290,9 @@ function writeThemeFiles(
   data: any,
   existingThemeDir?: string,
 ): string {
-  const variantRoot = existingThemeDir
-    ? existingThemeDir
-    : variantId
-      ? path.join(exportDir, ...variantId.split('/'))
-      : path.join(exportDir, themeName)
+  const variantRoot = existingThemeDir || (variantId
+    ? path.join(exportDir, ...variantId.split('/'))
+    : path.join(exportDir, themeName))
   const loginDir = path.join(variantRoot, 'login')
   const cssDir = path.join(loginDir, 'resources', 'css')
   const messagesDir = path.join(loginDir, 'messages')
@@ -338,7 +319,7 @@ function writeThemeFiles(
   else {
     let stylesCssFilename = 'styles.css'
     try {
-      const stylesMatch = data.properties.match(/^styles\s*=\s*(.+)$/m)
+      const stylesMatch = data.properties.match(/^styles[ \t]*=[ \t]*(\S.*)$/m)
       if (stylesMatch) {
         const entries = stylesMatch[1].trim().split(/\s+/).filter((p: string) => p !== 'css/quick-start.css')
         if (entries.length === 1) {
@@ -357,12 +338,14 @@ function writeThemeFiles(
   if (payload) {
     for (const [key, subdir] of ASSET_BUCKETS) {
       const assets = payload[key] as any[] | undefined
-      if (!assets?.length) continue
+      if (!assets?.length)
+        continue
       const assetDir = path.join(loginDir, 'resources', subdir)
       fs.mkdirSync(assetDir, { recursive: true })
       const seen = new Set<string>()
       for (const asset of assets) {
-        if (seen.has(asset.name)) continue
+        if (seen.has(asset.name))
+          continue
         seen.add(asset.name)
         fs.writeFileSync(path.join(assetDir, asset.name), Buffer.from(asset.base64Data, 'base64'))
       }
@@ -496,11 +479,11 @@ function startWatcher(opts: {
   pagesDir: string
   jarPath: string
   outputPath: string
-  additionalMocks?: ContextMocks
+  loadUserMocks: () => Promise<UserMocks | undefined>
   requiredVariantIds?: string[]
   userThemeDir?: string
 }) {
-  const { pagesDir, jarPath, outputPath, additionalMocks, requiredVariantIds, userThemeDir } = opts
+  const { pagesDir, jarPath, outputPath, loadUserMocks, requiredVariantIds, userThemeDir } = opts
   let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
   const watcher = watch(pagesDir, {
@@ -514,11 +497,21 @@ function startWatcher(opts: {
       ? fs.readFileSync(outputPath, 'utf8')
       : null
 
+    let userMocks: UserMocks | undefined
+    try {
+      userMocks = await loadUserMocks()
+    }
+    catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      console.error(`Failed to load user mocks: ${message}`)
+      return
+    }
+
     const result = await generatePreview({
       packageRoot: PACKAGE_ROOT,
       jarPath,
       outputPath,
-      additionalMocks,
+      userMocks,
       userThemeDir,
       quiet: true,
     })
@@ -555,7 +548,11 @@ function startWatcher(opts: {
   }
 
   watcher.on('all', (_event, filePath) => {
-    if (!filePath.endsWith('.ftl') && !filePath.endsWith('.properties')) {
+    const fileName = path.basename(filePath)
+    if (!filePath.endsWith('.ftl')
+      && !filePath.endsWith('.properties')
+      && fileName !== 'kc-page.ts'
+      && fileName !== 'kc-page-state.ts') {
       return
     }
     if (debounceTimer) {
@@ -602,21 +599,15 @@ async function startEditor(opts: { themesRoot?: string, port: string, open: bool
     process.exit(1)
   }
 
-  let additionalMocks: ContextMocks | undefined
-  additionalMocks = await loadUserMocks(themesRootDir)
-  if (!additionalMocks) {
-    for (const dir of themeDirs) {
-      additionalMocks = await loadUserMocks(dir)
-      if (additionalMocks) break
-    }
-  }
+  const loadThemeUserMocks = () => loadUserMocks(themesRootDir)
+  const userMocks = await loadThemeUserMocks()
 
   console.log('Generating preview pages...')
   const result = await generatePreview({
     packageRoot: PACKAGE_ROOT,
     jarPath,
     outputPath: pagesJsonPath,
-    additionalMocks,
+    userMocks,
     userThemeDir: themesRootDir,
   })
 
@@ -628,7 +619,7 @@ async function startEditor(opts: { themesRoot?: string, port: string, open: bool
   const userThemeMappings: Array<{ variantId: string, urlPrefix: string, localDir: string }> = []
   for (const dir of themeDirs) {
     const variantId = getVariantId(themesRootDir, dir)
-    const urlPrefix = `/keycloak-dev-resources/themes/${variantId}`
+    const urlPrefix = `/keycloak-dev-resources/themes/${variantId}/`
     if (fs.existsSync(path.join(dir, 'login'))) {
       userThemeMappings.push({ variantId, urlPrefix, localDir: dir })
     }
@@ -644,7 +635,7 @@ async function startEditor(opts: { themesRoot?: string, port: string, open: bool
     pagesDir: themesRootDir,
     jarPath,
     outputPath: pagesJsonPath,
-    additionalMocks,
+    loadUserMocks: loadThemeUserMocks,
     requiredVariantIds,
     userThemeDir: themesRootDir,
   })
@@ -654,13 +645,78 @@ async function startEditor(opts: { themesRoot?: string, port: string, open: bool
     openBrowser(`http://localhost:${port}`)
   }
 
-  process.on('SIGINT', () => {
+  const cleanup = () => {
     fs.rmSync(outputDir, { recursive: true, force: true })
     process.exit(0)
+  }
+  process.on('SIGINT', cleanup)
+  process.on('SIGTERM', cleanup)
+}
+
+const KC_PAGE_TEMPLATE = `import { defineConfig } from 'keycloak-theme-editor'
+
+export default defineConfig({
+  pages: {
+    // Use the full page id, for example: "login.ftl".
+    // 'login.ftl': {},
+  },
+})
+`
+
+const KC_PAGE_STATE_TEMPLATE = `import { defineStates } from 'keycloak-theme-editor'
+
+export default defineStates({
+  // Add scenarios under a full page id, for example:
+  // 'login.ftl': {
+  //   example: {},
+  // },
+})
+`
+
+function initMockFiles(opts: { themesRoot?: string }) {
+  const targetDir = resolveCliThemesRootArg(opts)
+  fs.mkdirSync(targetDir, { recursive: true })
+
+  const { version: editorVersion } = readEditorPackageJson()
+
+  const pkgPath = path.join(targetDir, 'package.json')
+  const hadPackageJson = fs.existsSync(pkgPath)
+  const pkg: Record<string, unknown> = hadPackageJson
+    ? JSON.parse(fs.readFileSync(pkgPath, 'utf8').replace(/^\uFEFF/, ''))
+    : { private: true, type: 'module' }
+  const scripts = (pkg.scripts ?? {}) as Record<string, string>
+  pkg.scripts = { ...scripts, start: scripts.start ?? 'keycloak-theme-editor' }
+  fs.writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`, 'utf8')
+  console.log(`  ${hadPackageJson ? 'Updated' : 'Created'}: ${pkgPath}`)
+
+  const files: Array<[string, string]> = [
+    [path.join(targetDir, 'kc-page.ts'), KC_PAGE_TEMPLATE],
+    [path.join(targetDir, 'kc-page-state.ts'), KC_PAGE_STATE_TEMPLATE],
+  ]
+
+  for (const [filePath, content] of files) {
+    if (fs.existsSync(filePath)) {
+      console.log(`  Already exists: ${filePath}`)
+    }
+    else {
+      fs.writeFileSync(filePath, content, 'utf8')
+      console.log(`  Created: ${filePath}`)
+    }
+  }
+
+  console.log('\nInstalling dependencies...')
+  const npmInstall = spawn('npm', ['install', '-D', `keycloak-theme-editor@^${editorVersion}`], {
+    cwd: targetDir,
+    stdio: 'inherit',
+    shell: true,
   })
-  process.on('SIGTERM', () => {
-    fs.rmSync(outputDir, { recursive: true, force: true })
-    process.exit(0)
+  npmInstall.on('close', (code) => {
+    if (code === 0) {
+      console.log('\nDone. Customize the mock files, then run: npm start')
+    }
+    else {
+      console.error('\nnpm install failed. Run it manually, then: npm start')
+    }
   })
 }
 
@@ -668,6 +724,18 @@ async function main() {
   program
     .name('keycloak-theme-editor')
     .description('Visual theme editor for Keycloak login pages')
+
+  program
+    .command('init')
+    .description('Create kc-page.ts and kc-page-state.ts config files')
+    .option('--themes-root <dir>', 'Target directory; defaults to the current working directory')
+    .action((opts: { themesRoot?: string }) => {
+      initMockFiles(opts)
+    })
+
+  program
+    .command('start', { isDefault: true })
+    .description('Start the theme editor')
     .option('--themes-root <dir>', 'Root directory to scan for theme variants; defaults to the current working directory')
     .option('--port <number>', 'Port to run the editor on', String(DEFAULT_PORT))
     .option('--no-open', 'Do not open browser automatically')
