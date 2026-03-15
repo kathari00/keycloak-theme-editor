@@ -38,7 +38,7 @@ export const assetActions = {
     const prevState = assetStore.getState()
     const themeKey = getActiveThemeAssetKey()
     const nextUploadedAssets = singleAssetCategory
-      ? [...prevState.uploadedAssets.filter(a => a.category !== asset.category), asset]
+      ? [...prevState.uploadedAssets.filter(a => a.category !== asset.category || a.isDefault), asset]
       : [...prevState.uploadedAssets, asset]
 
     const target: ThemeAssetTarget | null = asset.category === 'background'
@@ -92,7 +92,9 @@ export const assetActions = {
       return
 
     const prevUploadedAssets = state.uploadedAssets
-    const nextUploadedAssets = prevUploadedAssets.filter(a => a.id !== assetId)
+    const nextUploadedAssets = asset.isDefault
+      ? prevUploadedAssets
+      : prevUploadedAssets.filter(a => a.id !== assetId)
 
     const prevAppliedAssets = { ...state.appliedAssets }
     const nextAppliedAssets = { ...prevAppliedAssets }

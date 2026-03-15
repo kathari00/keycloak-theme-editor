@@ -53,7 +53,7 @@ function resetStores() {
   coreStore.setState(() => ({
     isDarkMode: false,
     activePageId: 'login.html',
-    activeStoryId: 'default',
+    activeStateId: 'default',
     selectedNodeId: null,
     previewReady: false,
     deviceId: 'desktop',

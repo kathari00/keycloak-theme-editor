@@ -98,9 +98,10 @@ export const quickStartExtrasActions = {
       presetNewValues.colorPresetBgColor
       && COLOR_REGEX.test(presetNewValues.colorPresetBgColor),
     )
+    const bgColorChanged = 'colorPresetBgColor' in update
     const assetOldValues = { appliedAssets: prevAsset.appliedAssets }
     const { background: _background, ...appliedWithoutBg } = prevAsset.appliedAssets
-    const nextAppliedAssets: AppliedAssets = hasBgColor ? appliedWithoutBg : prevAsset.appliedAssets
+    const nextAppliedAssets: AppliedAssets = hasBgColor && bgColorChanged ? appliedWithoutBg : prevAsset.appliedAssets
     const assetNewValues = { appliedAssets: nextAppliedAssets }
     const { colorPresetBgColor: oldBgColor, ...oldPresetWithoutBg } = presetOldValues
     const { colorPresetBgColor: newBgColor, ...newPresetWithoutBg } = presetNewValues
@@ -121,7 +122,7 @@ export const quickStartExtrasActions = {
         },
         redo: () => {
           presetStore.setState(presetNewValues)
-          if (hasBgColor) {
+          if (hasBgColor && bgColorChanged) {
             assetStore.setState(assetNewValues)
           }
         },
@@ -131,7 +132,7 @@ export const quickStartExtrasActions = {
     }
 
     presetStore.setState(presetNewValues)
-    if (hasBgColor) {
+    if (hasBgColor && bgColorChanged) {
       assetStore.setState(assetNewValues)
     }
   },

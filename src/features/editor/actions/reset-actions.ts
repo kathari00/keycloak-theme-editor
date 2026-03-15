@@ -2,6 +2,7 @@ import { getThemeCssStructuredCached } from '../../presets/queries'
 import { combineCssFiles, firstFilePath, singleFileMap } from '../lib/css-files'
 import { buildQuickSettingsStorageKey, DEFAULT_THEME_ID } from '../lib/quick-settings'
 import {
+  ASSET_STORE_STORAGE_KEY,
   CORE_STORE_STORAGE_KEY,
   DARK_MODE_STORAGE_KEY,
   HISTORY_STORE_STORAGE_KEY,
@@ -24,6 +25,7 @@ function clearPersistedEditorState() {
   storage.removeItem(THEME_STORE_STORAGE_KEY)
   storage.removeItem(PRESET_STORE_STORAGE_KEY)
   storage.removeItem(CORE_STORE_STORAGE_KEY)
+  storage.removeItem(ASSET_STORE_STORAGE_KEY)
   storage.removeItem(HISTORY_STORE_STORAGE_KEY)
   storage.removeItem(USER_CSS_STORAGE_KEY)
   storage.removeItem(DARK_MODE_STORAGE_KEY)
@@ -62,19 +64,17 @@ export const resetActions = {
 
     const currentCoreState = coreStore.getState()
     const nextActivePageId = 'login.html'
-    const nextActiveStoryId = 'default'
+    const nextActiveStateId = 'default'
     const previewDocumentWillReload
       = currentCoreState.activePageId !== nextActivePageId
-        || currentCoreState.activeStoryId !== nextActiveStoryId
+        || currentCoreState.activeStateId !== nextActiveStateId
 
     coreStore.setState(state => ({
       ...state,
       isDarkMode: false,
       activePageId: nextActivePageId,
-      activeStoryId: nextActiveStoryId,
+      activeStateId: nextActiveStateId,
       selectedNodeId: null,
-      // If page/story are unchanged, the iframe srcDoc does not reload and no onLoad fires.
-      // Keeping previewReady avoids leaving selection/styling panels stuck in loading state.
       previewReady: previewDocumentWillReload ? false : state.previewReady,
       deviceId: 'desktop',
     }))

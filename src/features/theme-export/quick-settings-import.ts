@@ -179,7 +179,7 @@ export function parseQuickSettingsFromImportedTheme(params: {
   const { quickStartCss, stylesCss, customCss = '', messagesPropertiesText = '' } = params
   const cssForVars = [quickStartCss, stylesCss].filter(Boolean).join('\n\n')
   const cssForVisibility = [quickStartCss, stylesCss, customCss].filter(Boolean).join('\n\n')
-  const hasQuickStartSignal = /--quickstart-|Hide client name|Hide realm name|infoMessage|imprintUrl|dataProtectionUrl/i.test(
+  const hasQuickStartSignal = /--quickstart-(?:primary|secondary|font|heading|bg-color|border|card|gradient)|Hide client name|Hide realm name|infoMessage|imprintUrl|dataProtectionUrl/i.test(
     `${cssForVars}\n${messagesPropertiesText}`,
   )
 

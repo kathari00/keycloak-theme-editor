@@ -91,7 +91,7 @@ describe('reset actions', () => {
     coreStore.setState(() => ({
       isDarkMode: true,
       activePageId: 'register.html',
-      activeStoryId: 'error',
+      activeStateId: 'error',
       selectedNodeId: 'body',
       previewReady: true,
       deviceId: 'mobile',
@@ -125,7 +125,7 @@ describe('reset actions', () => {
     coreStore.setState(() => ({
       isDarkMode: true,
       activePageId: 'login.html',
-      activeStoryId: 'default',
+      activeStateId: 'default',
       selectedNodeId: 'body',
       previewReady: true,
       deviceId: 'mobile',
@@ -136,6 +136,6 @@ describe('reset actions', () => {
     expect(coreStore.getState().previewReady).toBe(true)
     expect(coreStore.getState().selectedNodeId).toBeNull()
     expect(coreStore.getState().activePageId).toBe('login.html')
-    expect(coreStore.getState().activeStoryId).toBe('default')
+    expect(coreStore.getState().activeStateId).toBe('default')
   })
 })

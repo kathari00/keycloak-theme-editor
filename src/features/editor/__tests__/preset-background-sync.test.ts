@@ -81,7 +81,7 @@ describe('preset background sync on preset selection', () => {
     coreStore.setState(() => ({
       isDarkMode: false,
       activePageId: 'login.html',
-      activeStoryId: 'default',
+      activeStateId: 'default',
       selectedNodeId: null,
       previewReady: false,
       deviceId: 'desktop',
@@ -227,6 +227,34 @@ describe('preset background sync on preset selection', () => {
     await presetActions.applyThemeSelection('v2')
 
     expect(assetStore.getState().appliedAssets.logo).toBe('imported-logo')
+  })
+
+  it('preserves background image when updating info message with bg color set', () => {
+    presetStore.setState(state => ({
+      ...state,
+      colorPresetBgColor: '#f0f4f9',
+    }))
+    assetStore.setState(state => ({
+      ...state,
+      appliedAssets: { background: 'default-bg', logo: 'default-logo' },
+    }))
+
+    presetActions.setQuickStartExtras({ infoMessage: 'Hello world' })
+
+    expect(assetStore.getState().appliedAssets.background).toBe('default-bg')
+    expect(presetStore.getState().infoMessage).toBe('Hello world')
+  })
+
+  it('removes background image only when bg color is explicitly changed', () => {
+    assetStore.setState(state => ({
+      ...state,
+      appliedAssets: { background: 'default-bg', logo: 'default-logo' },
+    }))
+
+    presetActions.setQuickStartExtras({ colorPresetBgColor: '#ff0000' })
+
+    expect(assetStore.getState().appliedAssets.background).toBeUndefined()
+    expect(assetStore.getState().appliedAssets.logo).toBe('default-logo')
   })
 
   it('clears persisted default background when current theme base is non-v2', async () => {

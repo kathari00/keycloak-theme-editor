@@ -108,18 +108,10 @@ export default function CustomAssetUploader({
   const isAssetApplied = (asset: UploadedAsset): boolean => {
     if (asset.category === 'font')
       return appliedAssets.bodyFont === asset.id
-    if (asset.category === 'background') {
-      return Boolean(
-        appliedAssets.background === asset.id
-        || (asset.isDefault && !appliedAssets.background),
-      )
-    }
-    if (asset.category === 'logo') {
-      return Boolean(
-        appliedAssets.logo === asset.id
-        || (asset.isDefault && !appliedAssets.logo),
-      )
-    }
+    if (asset.category === 'background')
+      return appliedAssets.background === asset.id
+    if (asset.category === 'logo')
+      return appliedAssets.logo === asset.id
     if (asset.category === 'favicon')
       return appliedAssets.favicon === asset.id
     return false
@@ -263,8 +255,9 @@ export default function CustomAssetUploader({
   )
 
   const renderImageCard = (asset: UploadedAsset) => {
+    const isSingleAssetCategory = asset.category === 'background' || asset.category === 'logo' || asset.category === 'favicon'
     const isApplied = isAssetApplied(asset)
-    const canApply = asset.category !== 'image'
+    const canApply = !isSingleAssetCategory && asset.category !== 'image'
     return (
       withCard
         ? (

@@ -34,12 +34,7 @@ export function stripDataKcStateAttributes(markup: string): string {
     .replace(/\sdata-kc-state='[^']*'/g, '')
 }
 
-/**
- * Get effective applied assets with default background fallback.
- * Only auto-applies the default Keycloak background for v2 base themes.
- * Non-v2 presets define their own backgrounds via preset CSS, so injecting
- * the default image would overwrite them in the cascade.
- */
+/** Fill in default assets for categories that have no explicit selection. */
 export function getEffectiveAppliedAssets(
   appliedAssets: AppliedAssets,
   uploadedAssets: UploadedAsset[],

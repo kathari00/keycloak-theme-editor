@@ -94,9 +94,7 @@ function parseEditorMetadata(keycloakThemesJson: string): ThemeEditorMetadata | 
       return editor as ThemeEditorMetadata
     }
   }
-  catch {
-    // Not valid JSON or missing structure
-  }
+  catch {}
   return null
 }
 
@@ -109,6 +107,7 @@ export async function importJarFile(file: File): Promise<JarImportResult> {
   let customCss = ''
   let quickStartCss = ''
   let stylesCss = ''
+  const customUserStylesPath = 'css/custom-user-styles.css'
   let themeProps = ''
   let messagesProperties = ''
   let themeName = ''
@@ -170,10 +169,15 @@ export async function importJarFile(file: File): Promise<JarImportResult> {
     .split(/\s+/)
     .filter(Boolean)
     .filter(path => path !== 'css/quick-start.css')
+  if (customCss.trim()) {
+    importedCssFiles[customUserStylesPath] = customCss
+  }
   const orderedStylePaths = [
     ...declaredStylePaths.filter(path => importedCssFiles[path] !== undefined),
     ...Object.keys(importedCssFiles).filter(path => !declaredStylePaths.includes(path)),
   ]
+  const rawStylesCss = joinCssBlocks(orderedStylePaths.map(path => importedCssFiles[path] || ''))
+
   const stylesCssFiles = Object.fromEntries(
     orderedStylePaths
       .map(path => [path, sanitizeThemeCssSourceForEditor(importedCssFiles[path])] as const)
@@ -183,18 +187,29 @@ export async function importJarFile(file: File): Promise<JarImportResult> {
 
   const quickSettingsByMode = parseQuickSettingsFromImportedTheme({
     quickStartCss,
-    stylesCss,
+    stylesCss: rawStylesCss,
     customCss,
     messagesPropertiesText: messagesProperties,
   })
 
-  const allCss = joinCssBlocks([quickStartCss, stylesCss, customCss])
+  const allCss = joinCssBlocks([quickStartCss, rawStylesCss])
   const { applied: appliedAssets } = parseAppliedAssetsFromCss(allCss, importedAssets)
 
-  const editorStylesCss = joinCssBlocks([stylesCss, customCss])
+  for (const { category, target } of [
+    { category: 'background', target: 'background' },
+    { category: 'logo', target: 'logo' },
+    { category: 'favicon', target: 'favicon' },
+  ] as const) {
+    if (!appliedAssets[target]) {
+      const candidate = importedAssets.find(a => a.category === category)
+      if (candidate) {
+        appliedAssets[target] = candidate.id
+      }
+    }
+  }
 
   return {
-    css: editorStylesCss,
+    css: stylesCss,
     stylesCssFiles,
     quickStartCss,
     properties: themeProps,
