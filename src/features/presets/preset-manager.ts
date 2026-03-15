@@ -42,9 +42,13 @@ async function fetchThemeProperty(themeId: ThemeId, key: string): Promise<string
 
 export async function loadThemes(): Promise<ThemeConfig> {
   try {
+    const pagesResponsePromise = import.meta.env.DEV
+      ? Promise.resolve(null)
+      : fetch('/api/pages.json').catch(() => null)
+
     const [themesResponse, pagesResponse] = await Promise.all([
       fetch('/keycloak-dev-resources/themes/themes.json'),
-      fetch('/api/pages.json').catch(() => null),
+      pagesResponsePromise,
     ])
     if (!themesResponse.ok) {
       throw new Error(`Failed to load themes.json: ${themesResponse.statusText}`)

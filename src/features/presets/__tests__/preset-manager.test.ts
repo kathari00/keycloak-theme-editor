@@ -31,10 +31,6 @@ describe('loadThemes', () => {
         })
       }
 
-      if (url.endsWith('/api/pages.json')) {
-        return new Response('', { status: 404 })
-      }
-
       if (url.endsWith('/keycloak-dev-resources/themes/modern-card/login/theme.properties')) {
         return new Response('kcDarkModeClass=kcDarkModeClass pf-v5-theme-dark\nstyles=css/styles.css', {
           status: 200,
@@ -48,5 +44,6 @@ describe('loadThemes', () => {
     const config = await loadThemes()
 
     expect(config.themes[0]?.darkModeClasses).toEqual(['kcDarkModeClass', 'pf-v5-theme-dark'])
+    expect(fetchMock).not.toHaveBeenCalledWith('/api/pages.json')
   })
 })
