@@ -30,6 +30,7 @@ function LocalizationHelp({ ariaLabel, tooltipContent }: { ariaLabel: string, to
       <Button
         type="button"
         variant="plain"
+        hasNoPadding
         aria-label={ariaLabel}
         icon={<LanguageIcon />}
         style={{ color: 'var(--pf-v5-global--info-color--100)' }}

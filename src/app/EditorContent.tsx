@@ -1,17 +1,16 @@
 import type { UploadedAsset } from '../features/assets/types'
 import type { JarImportResult as ThemeImportData } from '../features/theme-export/types'
 import {
-  Bullseye,
+  Alert,
   Drawer,
   DrawerContent,
   DrawerContentBody,
   DrawerPanelBody,
   DrawerPanelContent,
-  Spinner,
   Stack,
   StackItem,
 } from '@patternfly/react-core'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import ContextBar from '../components/ContextBar'
 import ErrorBoundary from '../components/ErrorBoundary'
 import RightSidebar from '../components/RightSidebar'
@@ -21,19 +20,14 @@ import { useDarkModeState, usePresetState, usePreviewState } from '../features/e
 import { singleFileMap } from '../features/editor/lib/css-files'
 import { sanitizeThemeCssSourceForEditor } from '../features/editor/lib/css-source-sanitizer'
 import { assetStore } from '../features/editor/stores/asset-store'
+import { coreStore } from '../features/editor/stores/core-store'
 import { getThemeCssStructuredCached, resolveThemeIdFromConfig, useThemeConfig } from '../features/presets/queries'
 import { themeResourcePath } from '../features/presets/types'
 import { PreviewProvider } from '../features/preview/components/PreviewProvider'
 import { PreviewShell } from '../features/preview/components/PreviewShell'
-import { connectLiveReload, ensureGeneratedPreviewPagesLoaded, getVariantPages, resolvePreviewVariantId } from '../features/preview/load-generated'
+import { connectLiveReload, ensureGeneratedPreviewPagesLoaded, getVariantPages, getVariantStateOptions, resolvePreviewVariantId } from '../features/preview/load-generated'
 import { THEME_JAR_IMPORTED_EVENT } from '../features/theme-export/jar-import-service'
-import '@patternfly/react-core/dist/styles/base.css'
-
-const loadingSpinner = (
-  <Bullseye style={{ height: '100vh', backgroundColor: 'var(--pf-t--global--background--color--primary--default)' }}>
-    <Spinner size="xl" aria-label="Loading editor" />
-  </Bullseye>
-)
+import LoadingScreen, { useLoadingIndicatorVisibility } from './LoadingScreen'
 
 async function blobToBase64(blob: Blob): Promise<string> {
   return await new Promise((resolve, reject) => {
@@ -51,10 +45,14 @@ async function blobToBase64(blob: Blob): Promise<string> {
 export default function EditorContent() {
   const { selectedThemeId } = usePresetState()
   const { isDarkMode } = useDarkModeState()
-  const { activePageId } = usePreviewState()
+  const { activePageId, activeStateId } = usePreviewState()
   const themeConfig = useThemeConfig()
   const [previewPagesReady, setPreviewPagesReady] = useState(false)
+  const [previewPagesRevision, setPreviewPagesRevision] = useState(0)
+  const [previewPagesError, setPreviewPagesError] = useState<string | null>(null)
+  const [initialBootstrapReady, setInitialBootstrapReady] = useState(false)
   const [isDesktopLayout, setIsDesktopLayout] = useState(() => window.matchMedia('(min-width: 1024px)').matches)
+  const bootstrapRequestIdRef = useRef(0)
 
   useEffect(() => {
     let cancelled = false
@@ -62,12 +60,20 @@ export default function EditorContent() {
     ensureGeneratedPreviewPagesLoaded()
       .then(() => {
         if (!cancelled) {
+          setPreviewPagesError(null)
           setPreviewPagesReady(true)
-          connectLiveReload(() => setPreviewPagesReady(true))
+          setPreviewPagesRevision(1)
+          connectLiveReload(() => {
+            setPreviewPagesError(null)
+            setPreviewPagesReady(true)
+            setPreviewPagesRevision(revision => revision + 1)
+          })
         }
       })
-      .catch(() => {
+      .catch((error: unknown) => {
         if (!cancelled) {
+          const message = error instanceof Error ? error.message : 'Failed to load preview pages.'
+          setPreviewPagesError(message)
           setPreviewPagesReady(false)
         }
       })
@@ -81,53 +87,79 @@ export default function EditorContent() {
   const variantId = resolvePreviewVariantId({ selectedThemeId: resolvedThemeId })
   const pageMap = previewPagesReady ? getVariantPages(variantId) : {}
   const pageIds = Object.keys(pageMap)
+  const isLoading = !previewPagesError && (!previewPagesReady || !pageIds.length || !initialBootstrapReady)
+  const showLoadingIndicator = useLoadingIndicatorVisibility(isLoading)
+
   useEffect(() => {
     if (!previewPagesReady) {
       return
     }
 
-    const initialize = async () => {
-      const currentPageMap = getVariantPages(variantId)
-      const currentPageIds = Object.keys(currentPageMap)
-      const currentInitialPageId = (() => {
-        if (activePageId && currentPageMap[activePageId]) {
-          return activePageId
-        }
+    const currentPageMap = getVariantPages(variantId)
+    const currentPageIds = Object.keys(currentPageMap)
+    const pageId = (() => {
+      if (activePageId && currentPageMap[activePageId]) {
+        return activePageId
+      }
 
-        if (currentPageMap['login.html']) {
-          return 'login.html'
-        }
+      if (currentPageMap['login.html']) {
+        return 'login.html'
+      }
 
-        const firstRegularHtmlPage = currentPageIds.find(pageId => pageId.endsWith('.html') && pageId !== 'cli_splash.html')
-        return firstRegularHtmlPage || currentPageIds[0] || 'login.html'
-      })()
+      const firstRegularHtmlPage = currentPageIds.find(pageId => pageId.endsWith('.html') && pageId !== 'cli_splash.html')
+      return firstRegularHtmlPage || currentPageIds[0] || 'login.html'
+    })()
+    const currentStates = getVariantStateOptions({ variantId, pageId })
+    const stateId = pageId === activePageId && currentStates.some(state => state.id === activeStateId)
+      ? activeStateId
+      : currentStates.find(state => state.id === 'default')?.id
+        ?? currentStates[0]?.id
+        ?? 'default'
 
-      const pages = Object.entries(currentPageMap).map(([id, component]) => ({
-        id,
-        name: id.replace('.html', '.ftl'),
-        component,
-      }))
-      pages.sort((left, right) => (left.id === 'login.html' ? -1 : right.id === 'login.html' ? 1 : 0))
+    const pages = Object.entries(currentPageMap).map(([id, component]) => ({
+      id,
+      name: id.replace('.html', '.ftl'),
+      component,
+    }))
+    pages.sort((left, right) => (left.id === 'login.html' ? -1 : right.id === 'login.html' ? 1 : 0))
 
-      editorActions.setPages(pages)
+    editorActions.setPages(pages)
+    editorActions.setActivePage(pageId)
+    editorActions.setActiveStateId(stateId)
+    editorActions.setSelectedNodeId(null)
+  }, [activePageId, activeStateId, previewPagesReady, previewPagesRevision, variantId])
 
-      // Reset preview state for the new page map
-      editorActions.setActivePage(currentInitialPageId)
-      editorActions.setActiveStoryId('default')
-      editorActions.setSelectedNodeId(null)
-      editorActions.setPreviewReady(false)
+  useEffect(() => {
+    let cancelled = false
+    const requestId = bootstrapRequestIdRef.current + 1
+    bootstrapRequestIdRef.current = requestId
 
+    const isCurrentRequest = () => !cancelled && bootstrapRequestIdRef.current === requestId
+
+    const initializeThemeData = async () => {
       try {
         const { quickStartDefaults, stylesCss, stylesCssFiles } = await getThemeCssStructuredCached(resolvedThemeId)
+        if (!isCurrentRequest()) {
+          return
+        }
+
         editorActions.setThemeQuickStartDefaults(quickStartDefaults)
         editorActions.setBaseCss(stylesCss)
         editorActions.setThemeData(resolvedThemeId, stylesCss, stylesCssFiles)
-        editorActions.applyThemeModeDefaults(isDarkMode ? 'dark' : 'light')
+        editorActions.applyThemeModeDefaults(coreStore.getState().isDarkMode ? 'dark' : 'light')
       }
       catch {
+        if (!isCurrentRequest()) {
+          return
+        }
+
         editorActions.setThemeQuickStartDefaults('')
         editorActions.setBaseCss('')
         editorActions.setThemeData(resolvedThemeId, '')
+      }
+
+      if (!isCurrentRequest()) {
+        return
       }
 
       // Ensure built-in background/logo show up in the asset picker (and can be applied) even without uploads.
@@ -140,56 +172,94 @@ export default function EditorContent() {
           asset => !asset.id.startsWith(managedDefaultPrefix),
         )
         if (defaults.length === 0) {
+          if (!isCurrentRequest()) {
+            return
+          }
+
           editorActions.setUploadedAssets(preservedAssets)
-          return
         }
+        else {
+          const hasExistingDefaultAsset = (category: UploadedAsset['category'], name: string) =>
+            preservedAssets.some(asset =>
+              asset.category === category && asset.name.toLowerCase() === name.toLowerCase(),
+            )
+          const rebuiltDefaultAssets: UploadedAsset[] = []
+          const now = Date.now()
 
-        const hasExistingDefaultAsset = (category: UploadedAsset['category'], name: string) =>
-          preservedAssets.some(asset =>
-            asset.category === category && asset.name.toLowerCase() === name.toLowerCase(),
-          )
-        const rebuiltDefaultAssets: UploadedAsset[] = []
-        const now = Date.now()
+          for (const item of defaults) {
+            if (!isCurrentRequest()) {
+              return
+            }
 
-        for (const item of defaults) {
-          if (hasExistingDefaultAsset(item.category, item.name)) {
-            continue
+            if (hasExistingDefaultAsset(item.category, item.name)) {
+              continue
+            }
+
+            const res = await fetch(themeResourcePath(resolvedThemeId, `resources/${item.path}`))
+            if (!isCurrentRequest()) {
+              return
+            }
+            if (!res.ok) {
+              continue
+            }
+
+            const blob = await res.blob()
+            if (!isCurrentRequest()) {
+              return
+            }
+
+            const base64Data = await blobToBase64(blob)
+            if (!isCurrentRequest()) {
+              return
+            }
+
+            rebuiltDefaultAssets.push({
+              id: `${managedDefaultPrefix}${resolvedThemeId}:${item.category}:${item.name}`,
+              name: item.name,
+              category: item.category,
+              mimeType: blob.type || 'image/svg+xml',
+              base64Data,
+              size: blob.size,
+              createdAt: now,
+              isDefault: true,
+            })
           }
 
-          const res = await fetch(themeResourcePath(resolvedThemeId, `resources/${item.path}`))
-          if (!res.ok) {
-            continue
+          if (!isCurrentRequest()) {
+            return
           }
 
-          const blob = await res.blob()
-          const base64Data = await blobToBase64(blob)
-
-          rebuiltDefaultAssets.push({
-            id: `${managedDefaultPrefix}${resolvedThemeId}:${item.category}:${item.name}`,
-            name: item.name,
-            category: item.category,
-            mimeType: blob.type || 'image/svg+xml',
-            base64Data,
-            size: blob.size,
-            createdAt: now,
-            isDefault: true,
-          })
+          editorActions.setUploadedAssets([
+            ...preservedAssets,
+            ...rebuiltDefaultAssets,
+          ])
         }
-
-        editorActions.setUploadedAssets([
-          ...preservedAssets,
-          ...rebuiltDefaultAssets,
-        ])
       }
       catch {
+        if (!isCurrentRequest()) {
+          return
+        }
         // Optional enhancement; ignore failures.
       }
 
-      void editorActions.syncBackgroundForCurrentTheme()
+      if (!isCurrentRequest()) {
+        return
+      }
+
+      await editorActions.syncBackgroundForCurrentTheme().catch(() => {})
+      if (!isCurrentRequest()) {
+        return
+      }
+
+      setInitialBootstrapReady(true)
     }
 
-    void initialize()
-  }, [activePageId, isDarkMode, previewPagesReady, resolvedThemeId, themeConfig.themes, variantId])
+    void initializeThemeData()
+
+    return () => {
+      cancelled = true
+    }
+  }, [resolvedThemeId, themeConfig.themes])
 
   useEffect(() => {
     const method = isDarkMode ? 'add' : 'remove'
@@ -227,7 +297,12 @@ export default function EditorContent() {
         editorActions.setThemeData(targetThemeId, importedCss, importedCssFiles)
         editorActions.applyThemeModeDefaults(isDarkMode ? 'dark' : 'light', importedQuickStartCss)
         editorActions.applyImportedQuickSettingsForPreset(detail.quickSettingsByMode)
-        editorActions.setUploadedAssets(detail.uploadedAssets || [])
+        const importedAssets = detail.uploadedAssets || []
+        const importedCategories = new Set(importedAssets.map(a => `${a.category}:${a.name}`))
+        const preservedDefaults = assetStore.getState().uploadedAssets.filter(
+          a => a.isDefault && !importedCategories.has(`${a.category}:${a.name}`),
+        )
+        editorActions.setUploadedAssets([...preservedDefaults, ...importedAssets])
         editorActions.setAppliedAssets(detail.appliedAssets || {})
       })()
     }
@@ -238,8 +313,26 @@ export default function EditorContent() {
     }
   }, [isDarkMode, selectedThemeId, themeConfig])
 
-  if (!previewPagesReady || !pageIds.length) {
-    return loadingSpinner
+  if (isLoading && !showLoadingIndicator) {
+    return null
+  }
+
+  if (showLoadingIndicator) {
+    return <LoadingScreen />
+  }
+
+  if (previewPagesError) {
+    return (
+      <div style={{ padding: 'var(--pf-t--global--spacer--md)' }}>
+        <Alert
+          isInline
+          variant="danger"
+          title="Preview pages unavailable"
+        >
+          {previewPagesError}
+        </Alert>
+      </div>
+    )
   }
 
   return (
@@ -280,8 +373,8 @@ export default function EditorContent() {
               </DrawerPanelContent>
             )}
           >
-            <DrawerContentBody style={{ minHeight: 0, height: '100%', paddingTop: 'var(--pf-t--global--spacer--sm)' }}>
-              <Stack style={{ height: '100%', minHeight: 0 }}>
+            <DrawerContentBody style={{ minWidth: 0, minHeight: 0, height: '100%', paddingTop: 'var(--pf-t--global--spacer--sm)' }}>
+              <Stack style={{ height: '100%', minWidth: 0, minHeight: 0 }}>
                 <StackItem>
                   <ErrorBoundary fallbackTitle="Topbar Error">
                     <Topbar />
@@ -292,7 +385,7 @@ export default function EditorContent() {
                     <ContextBar />
                   </ErrorBoundary>
                 </StackItem>
-                <StackItem isFilled style={{ minHeight: 0 }}>
+                <StackItem isFilled style={{ minWidth: 0, minHeight: 0 }}>
                   <ErrorBoundary fallbackTitle="Preview Error">
                     <PreviewShell />
                   </ErrorBoundary>

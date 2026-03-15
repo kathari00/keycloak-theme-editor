@@ -21,12 +21,12 @@ export default function SidebarPanel({
       className={cx(className)}
       style={{
         margin: 'var(--pf-t--global--spacer--sm)',
-        padding: 'var(--pf-t--global--spacer--lg)',
+        padding: 'var(--pf-t--global--spacer--md)',
         backgroundColor: 'var(--pf-t--global--background--color--primary--default)',
         borderRadius: 'var(--pf-t--global--border--radius--medium)',
         ...(fullHeight
           ? {
-              height: 'calc(100% - var(--pf-t--global--spacer--lg))',
+              height: 'calc(100% - var(--pf-t--global--spacer--md))',
               display: 'flex',
               flexDirection: 'column',
             }

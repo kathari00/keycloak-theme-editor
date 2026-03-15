@@ -1,4 +1,6 @@
+import { Bullseye, Spinner } from '@patternfly/react-core'
 import { useEffect, useState } from 'react'
+import { useLoadingIndicatorVisibility } from '../../../app/LoadingScreen'
 import { useDarkModeState, usePresetState, usePreviewState, useQuickStartColorsState, useQuickStartContentState, useStylesCssState, useUploadedAssetsState } from '../../editor/hooks/use-editor'
 import { resolveThemeIdFromConfig, useThemeConfig } from '../../presets/queries'
 import { getThemePreviewStylesPath } from '../../presets/theme-paths'
@@ -10,7 +12,7 @@ import { getEventElement } from '../lib/event-target-utils'
 import { applyQuickStartTemplateContent } from '../lib/quickstart-template-content'
 import { sanitizePreviewHtml } from '../lib/sanitize-preview-html'
 import { createElementSelector } from '../lib/selector-utils'
-import { getVariantPages, resolveScenarioHtml } from '../load-generated'
+import { getVariantPages, resolveStateHtml } from '../load-generated'
 
 const deviceWidthMap = { desktop: '100%', tablet: '900px', mobile: '430px' } as const
 interface PreviewStyleParams {
@@ -88,7 +90,7 @@ function isLegalInfoLink(anchor: HTMLAnchorElement): boolean {
 }
 
 export function PreviewShell() {
-  const { activeVariantId, activePageId, activeStoryId, selectedNodeId, iframeRef, setPreviewReady, selectNode } = usePreviewRuntime()
+  const { activeVariantId, activePageId, activeStateId, selectedNodeId, previewReady, iframeRef, setPreviewReady, selectNode } = usePreviewRuntime()
   const { selectedThemeId } = usePresetState()
   const { stylesCss, themeQuickStartDefaults } = useStylesCssState()
   const colors = useQuickStartColorsState()
@@ -104,10 +106,10 @@ export function PreviewShell() {
     ? 'login.html'
     : Object.keys(variantPages).find(pageId => pageId.endsWith('.html') && pageId !== 'cli_splash.html') || 'login.html'
   const effectivePageId = variantPages[activePageId] ? activePageId : fallbackPageId
-  const pageHtml = resolveScenarioHtml({
+  const pageHtml = resolveStateHtml({
     variantId: activeVariantId,
     pageId: effectivePageId,
-    storyId: activeStoryId,
+    stateId: activeStateId,
   }) || variantPages[effectivePageId] || '<!doctype html><html><body></body></html>'
   const resolvedThemeId = resolveThemeIdFromConfig(themeConfig, selectedThemeId)
   const resolvedTheme = themeConfig.themes.find(theme => theme.id === resolvedThemeId)
@@ -131,10 +133,28 @@ export function PreviewShell() {
   })
   const srcDoc = sanitizePreviewHtml(pageHtml)
 
+  useEffect(() => {
+    setPreviewReady(false)
+  }, [srcDoc, setPreviewReady])
+  const showLoadingIndicator = useLoadingIndicatorVisibility(!previewReady)
+
   const onFrameLoad = () => {
     const doc = iframeRef.current?.contentDocument
     if (!doc)
       return
+
+    syncPreviewDocumentStyles({
+      doc,
+      themeStylesPath,
+      stylesCss,
+      quickStartBaseCss: themeQuickStartDefaults,
+      quickStartOverridesCss: quickStartCss,
+      uploadedFontsCss,
+      uploadedImagesCss,
+      appliedAssetsCss,
+      darkModeClasses: resolvedTheme?.darkModeClasses,
+      isDarkMode,
+    })
 
     setPreviewReady(true)
     setFrameLoadVersion(version => version + 1)
@@ -208,8 +228,23 @@ export function PreviewShell() {
   }, [frameLoadVersion, iframeRef, selectedNodeId])
 
   return (
-    <div style={{ height: '100%', overflow: 'hidden' }}>
-      <div style={{ width: deviceWidthMap[(deviceId as keyof typeof deviceWidthMap) || 'desktop'], maxWidth: '100%', height: '100%', marginInline: 'auto', transition: 'width 200ms ease' }}>
+    <div style={{ height: '100%' }}>
+      {showLoadingIndicator && (
+        <Bullseye style={{ height: '100%' }}>
+          <Spinner size="lg" aria-label="Loading preview" />
+        </Bullseye>
+      )}
+      <div
+        className="preview-shell__viewport"
+        style={{
+          width: deviceWidthMap[(deviceId as keyof typeof deviceWidthMap) || 'desktop'],
+          maxWidth: '100%',
+          height: showLoadingIndicator ? 0 : '100%',
+          overflow: 'hidden',
+          marginInline: 'auto',
+          transition: 'width 200ms ease',
+        }}
+      >
         <iframe
           ref={iframeRef}
           onLoad={onFrameLoad}
@@ -222,6 +257,7 @@ export function PreviewShell() {
             minHeight: 0,
             border: 0,
             background: 'transparent',
+            visibility: previewReady ? 'visible' : 'hidden',
           }}
           sandbox="allow-forms allow-same-origin"
         />

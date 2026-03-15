@@ -30,20 +30,33 @@ export default function PageManager() {
     : pages
   const content = filteredPages.length > 0
     ? (
-        <Nav aria-label="Page navigation" style={{ minHeight: 0, height: '100%', overflowY: 'auto' }}>
+        <Nav
+          aria-label="Page navigation"
+          className="page-manager-nav"
+          style={{ minHeight: 0, height: '100%', overflowY: 'auto' }}
+        >
           <NavList>
-            {filteredPages.map(page => (
-              <NavItem
-                key={page.id}
-                itemId={page.id}
-                isActive={activePageId === page.id}
-                preventDefault
-                to={`#${page.id}`}
-                onClick={() => setActivePage(page.id)}
-              >
-                {page.name || page.id}
-              </NavItem>
-            ))}
+            {filteredPages.map((page) => {
+              const isActive = activePageId === page.id
+              return (
+                <NavItem
+                  key={page.id}
+                  itemId={page.id}
+                  isActive={isActive}
+                  preventDefault
+                  to={`#${page.id}`}
+                  onClick={() => setActivePage(page.id)}
+                  className="page-manager-nav__item"
+                >
+                  <span
+                    className="page-manager-nav__label"
+                    aria-current={isActive ? 'page' : undefined}
+                  >
+                    {page.name || page.id}
+                  </span>
+                </NavItem>
+              )
+            })}
           </NavList>
         </Nav>
       )

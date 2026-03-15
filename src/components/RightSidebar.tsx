@@ -22,7 +22,6 @@ import PageManager from '../features/preview/components/PageManager'
 import { cx } from '../lib/cx'
 
 const StylingPanel = lazy(() => import('../features/editor/components/StylingPanel'))
-
 type SidebarSectionKey = 'quick-start' | 'styling' | 'selection' | 'pages' | 'uploads'
 
 const sidebarTabs: Array<{
