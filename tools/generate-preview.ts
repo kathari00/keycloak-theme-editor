@@ -1,20 +1,43 @@
-import type { Attribute } from 'keycloakify/login/KcContext'
 import { spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
 import { JSDOM } from 'jsdom'
-import { createGetKcContextMock } from 'keycloakify/login/KcContext'
-import { kcContextMocks as kcContextMocksList } from 'keycloakify/login/KcContext/kcContextMocks'
+import kcBaseMocks from './kc-base-mocks.ts'
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+export function deepMerge<T extends Record<string, unknown>>(target: T, ...sources: Array<Record<string, unknown> | undefined>): T {
+  const result = { ...target } as Record<string, unknown>
+  for (const source of sources) {
+    if (!isPlainObject(source))
+      continue
+    for (const [key, value] of Object.entries(source)) {
+      if (isPlainObject(value) && isPlainObject(result[key])) {
+        result[key] = deepMerge(result[key] as Record<string, unknown>, value)
+      }
+      else {
+        result[key] = value
+      }
+    }
+  }
+  return result as T
+}
 
 const MIN_JAVA = 8
 const isWindows = process.platform === 'win32'
 const SCRIPT_TAG_PATTERN = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi
 
 export interface ContextMocks {
-  common: Record<string, unknown>
   pages: Record<string, Record<string, unknown>>
+}
+
+export interface UserMocks {
+  pages: Record<string, Record<string, unknown>>
+  states: Record<string, Record<string, Record<string, unknown>>>
 }
 
 export interface GeneratePreviewOptions {
@@ -24,8 +47,8 @@ export interface GeneratePreviewOptions {
   jarPath?: string
   /** Where to write the output pages.json. Defaults to src/features/preview/generated/pages.json */
   outputPath?: string
-  /** Additional context mocks to merge with built-in mocks (e.g. from user's kc-page.ts). */
-  additionalMocks?: ContextMocks
+  /** User page overrides and states loaded from kc-page.ts / kc-page-state.ts. */
+  userMocks?: UserMocks
   /** Path to user's Keycloak theme directory (contains login/ with custom .ftl files). */
   userThemeDir?: string
   /** Suppress stdout logging. */
@@ -44,58 +67,12 @@ export interface GeneratePreviewResult {
   error?: string
 }
 
-// ---------------------------------------------------------------------------
-// Built-in mock context data (loaded lazily from keycloakify)
-// ---------------------------------------------------------------------------
-
-const socialProviders = [
-  { alias: 'google', providerId: 'google', displayName: 'Google', loginUrl: '#' },
-  { alias: 'github', providerId: 'github', displayName: 'GitHub', loginUrl: '#' },
-  { alias: 'facebook', providerId: 'facebook', displayName: 'Facebook', loginUrl: '#' },
-  { alias: 'microsoft', providerId: 'microsoft', displayName: 'Microsoft', loginUrl: '#' },
-]
-
-const favoritePetAttribute: Omit<Attribute, 'group'> = {
-  name: 'favoritePet',
-  displayName: 'Favorite pet',
-  required: true,
-  readOnly: false,
-  annotations: { inputType: 'select', inputOptionLabelsI18nPrefix: 'favoritePet' },
-  html5DataAnnotations: {},
-  validators: { options: { options: ['dog', 'cat', 'bird', 'reptile'] } },
-  values: [],
+function cloneJson<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T
 }
 
-function profileAttributesArray(byName: Record<string, Partial<Attribute>>): Record<string, unknown>[] {
-  return Object.entries(byName).map(([name, attr]) => ({
-    name,
-    displayName: attr.displayName ?? `\${${name}}`,
-    required: attr.required ?? false,
-    readOnly: attr.readOnly ?? false,
-    annotations: attr.annotations ?? {},
-    html5DataAnnotations: attr.html5DataAnnotations ?? {},
-    validators: attr.validators ?? {},
-    values: attr.values ?? [],
-    value: (attr.values ?? [])[0] ?? '',
-    ...attr,
-  }))
-}
-
-/* eslint-disable no-template-curly-in-string -- FreeMarker placeholders */
-const defaultProfileAttributes = profileAttributesArray({
-  username: { displayName: '${username}', required: true, autocomplete: 'username' },
-  email: { displayName: '${email}', required: true, autocomplete: 'email' },
-  firstName: { displayName: '${firstName}', required: true },
-  lastName: { displayName: '${lastName}', required: true },
-})
-/* eslint-enable no-template-curly-in-string */
-
-const profileOverride = {
-  profile: { attributes: defaultProfileAttributes, html5DataAnnotations: {} },
-}
-
-const stories: Record<string, Record<string, Record<string, unknown>>> = {
-  login: {
+const builtInStates: Record<string, Record<string, Record<string, unknown>>> = {
+  'login.ftl': {
     'minimal': {
       realm: { internationalizationEnabled: false, rememberMe: false, registrationAllowed: false, resetPasswordAllowed: false },
       social: { displayInfo: false, providers: [] },
@@ -109,59 +86,40 @@ const stories: Record<string, Record<string, Record<string, unknown>>> = {
   },
 }
 
-async function resolveContextMocks(): Promise<ContextMocks> {
-  const { getKcContextMock } = createGetKcContextMock({
-    kcContextExtension: { properties: {} },
-    overrides: {
-      url: {
-        resourcesPath: '/keycloak-dev-resources',
-        resourcesCommonPath: '/keycloak-dev-resources/resources-common',
-      },
-    },
-    kcContextExtensionPerPage: {},
-    overridesPerPage: {
-      'login.ftl': { usernameHidden: undefined, enableWebAuthnConditionalUI: undefined, login: { username: '' }, social: { providers: socialProviders } },
-      'login-username.ftl': { usernameHidden: undefined, enableWebAuthnConditionalUI: undefined, login: { username: '' }, social: { providers: socialProviders } },
-      'register.ftl': {
-        termsAcceptanceRequired: true,
-        ...profileOverride,
-        profile: {
-          ...profileOverride.profile,
-          attributesByName: {
-            email: { readOnly: true, values: ['john@example.com'] },
-            lastName: { readOnly: true, values: ['Doe'] },
-            favoritePet: favoritePetAttribute as Attribute,
-          },
-        },
-      },
-      'login-update-profile.ftl': profileOverride,
-      'idp-review-user-profile.ftl': profileOverride,
-      'update-email.ftl': profileOverride,
-      'login-recovery-authn-code-config.ftl': {
-        recoveryAuthnCodesConfigBean: {
-          generatedRecoveryAuthnCodesList: ['ABCD1234EFGH', 'IJKL5678MNOP', 'QRST9012UVWX'],
-          generatedRecoveryAuthnCodesAsString: 'ABCD1234EFGH, IJKL5678MNOP, QRST9012UVWX',
-          generatedAt: Date.now(),
-        },
-      },
-    },
-  })
-
+export function resolveContextMocks(userMocks?: UserMocks): ContextMocks {
+  const baseMocks = cloneJson(kcBaseMocks) as Record<string, Record<string, unknown>>
   const pages: Record<string, Record<string, unknown>> = {}
+  const loginBase = baseMocks['login.ftl']
 
-  for (const { pageId } of kcContextMocksList) {
-    const name = pageId.replace('.ftl', '')
-    const context = JSON.parse(JSON.stringify(getKcContextMock({ pageId: pageId as any })))
-    pages[name] = context
-    for (const [storyId, override] of Object.entries(stories[name] ?? {})) {
-      const storyContext = JSON.parse(JSON.stringify(
-        getKcContextMock({ pageId: pageId as any, overrides: override as any }),
-      ))
-      pages[`${name}@${storyId}`] = storyContext
+  // Process all base mock pages
+  for (const [pageId, baseMock] of Object.entries(baseMocks)) {
+    const merged = deepMerge(baseMock, userMocks?.pages[pageId])
+    pages[pageId] = cloneJson(merged)
+
+    for (const [stateId, stateOverride] of Object.entries(builtInStates[pageId] ?? {})) {
+      pages[`${pageId}@${stateId}`] = cloneJson(deepMerge(merged, stateOverride))
+    }
+
+    for (const [stateId, stateOverride] of Object.entries(userMocks?.states[pageId] ?? {})) {
+      pages[`${pageId}@${stateId}`] = cloneJson(deepMerge(merged, stateOverride))
     }
   }
 
-  return { common: {}, pages }
+  // Process user-only pages (custom .ftl pages not in base mocks)
+  if (userMocks) {
+    for (const [pageId, userOverride] of Object.entries(userMocks.pages)) {
+      if (pages[pageId])
+        continue
+      const merged = deepMerge(cloneJson(loginBase), { pageId }, userOverride)
+      pages[pageId] = cloneJson(merged)
+
+      for (const [stateId, stateOverride] of Object.entries(userMocks.states[pageId] ?? {})) {
+        pages[`${pageId}@${stateId}`] = cloneJson(deepMerge(merged, stateOverride))
+      }
+    }
+  }
+
+  return { pages }
 }
 
 // ---------------------------------------------------------------------------
@@ -280,7 +238,10 @@ function injectQuickStartPlaceholders(html: string): string {
   })
   const infoMessageText = document.querySelector('[data-kc-state="info-message-text"]') as HTMLElement | null
     ?? infoMessage.querySelector('.kc-feedback-text') as HTMLElement | null
-  if (!infoMessageText) {
+  if (infoMessageText) {
+    infoMessageText.setAttribute('data-kc-state', 'info-message-text')
+  }
+  else {
     const span = document.createElement('span')
     span.setAttribute('data-kc-state', 'info-message-text')
     span.className = 'kcAlertTitleClass kc-feedback-text'
@@ -362,20 +323,12 @@ function resolveExistingPath(packageRoot: string, candidates: string[]): string 
   return path.join(packageRoot, candidates[0])
 }
 
-function mergeMocks(base: ContextMocks, additional: ContextMocks): ContextMocks {
-  return {
-    common: { ...base.common, ...additional.common },
-    pages: { ...base.pages, ...additional.pages },
-  }
-}
-
-async function writeTempContextMocksFile(additionalMocks?: ContextMocks): Promise<{ tempDir: string, filePath: string }> {
+function writeTempContextMocksFile(
+  userMocks?: UserMocks,
+): { tempDir: string, filePath: string } {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'preview-context-mocks-'))
   const filePath = path.join(tempDir, 'kc-context-mocks.json')
-  let mocks = await resolveContextMocks()
-  if (additionalMocks) {
-    mocks = mergeMocks(mocks, additionalMocks)
-  }
+  const mocks = resolveContextMocks(userMocks)
   fs.writeFileSync(filePath, `${JSON.stringify(mocks, null, 2)}\n`, 'utf8')
   return { tempDir, filePath }
 }
@@ -438,24 +391,24 @@ function resolveExpectedDataPageId(pageId: string): string {
   return `login-${normalizedPageId}`
 }
 
-function validateStoryHtmlContract(params: {
+function validateStateHtmlContract(params: {
   variantId: string
   pageId: string
-  storyId: string
+  stateId: string
   html: string
 }) {
-  const { variantId, pageId, storyId, html } = params
+  const { variantId, pageId, stateId, html } = params
   const trimmed = html.trim()
   if (!/<html\b/i.test(trimmed) || !/<body\b/i.test(trimmed)) {
     throw new Error(
-      `Invalid preview story markup for ${variantId}/${pageId}/${storyId}: expected a full HTML document with <html> and <body>.`,
+      `Invalid preview state markup for ${variantId}/${pageId}/${stateId}: expected a full HTML document with <html> and <body>.`,
     )
   }
 
   const match = trimmed.match(/<body\b[^>]+\bdata-page-id\s*=\s*(['"])([^'"]+)\1/i)
   if (!match) {
     throw new Error(
-      `Invalid preview story markup for ${variantId}/${pageId}/${storyId}: missing body[data-page-id].`,
+      `Invalid preview state markup for ${variantId}/${pageId}/${stateId}: missing body[data-page-id].`,
     )
   }
 
@@ -463,42 +416,42 @@ function validateStoryHtmlContract(params: {
   const expectedPageId = resolveExpectedDataPageId(pageId)
   if (actualPageId !== expectedPageId) {
     throw new Error(
-      `Invalid preview story markup for ${variantId}/${pageId}/${storyId}: expected data-page-id="${expectedPageId}", got "${actualPageId}".`,
+      `Invalid preview state markup for ${variantId}/${pageId}/${stateId}: expected data-page-id="${expectedPageId}", got "${actualPageId}".`,
     )
   }
 }
 
-function normalizeStoriesForPage(params: {
+function normalizeStatesForPage(params: {
   variantId: string
   pageId: string
   rawPage: unknown
 }): Record<string, string> {
   const { variantId, pageId, rawPage } = params
   if (!rawPage || typeof rawPage !== 'object' || Array.isArray(rawPage)) {
-    throw new Error(`Invalid preview page payload for ${variantId}/${pageId}: expected story object.`)
+    throw new Error(`Invalid preview page payload for ${variantId}/${pageId}: expected state object.`)
   }
 
-  const rawStories = rawPage as Record<string, unknown>
-  if (typeof rawStories.default !== 'string') {
-    throw new TypeError(`Invalid preview page payload for ${variantId}/${pageId}: missing default story.`)
+  const rawStates = rawPage as Record<string, unknown>
+  if (typeof rawStates.default !== 'string') {
+    throw new TypeError(`Invalid preview page payload for ${variantId}/${pageId}: missing default state.`)
   }
 
-  const normalizedStories: Record<string, string> = {}
-  for (const [storyId, storyHtml] of Object.entries(rawStories)) {
-    if (typeof storyHtml !== 'string') {
-      throw new TypeError(`Invalid preview story payload for ${variantId}/${pageId}/${storyId}: expected string HTML.`)
+  const normalizedStates: Record<string, string> = {}
+  for (const [stateId, stateHtml] of Object.entries(rawStates)) {
+    if (typeof stateHtml !== 'string') {
+      throw new TypeError(`Invalid preview state payload for ${variantId}/${pageId}/${stateId}: expected string HTML.`)
     }
-    const sanitizedStoryHtml = injectQuickStartPlaceholders(stripScriptTags(storyHtml))
-    validateStoryHtmlContract({
+    const sanitizedStateHtml = injectQuickStartPlaceholders(stripScriptTags(stateHtml))
+    validateStateHtmlContract({
       variantId,
       pageId,
-      storyId,
-      html: sanitizedStoryHtml,
+      stateId,
+      html: sanitizedStateHtml,
     })
-    normalizedStories[storyId] = sanitizedStoryHtml
+    normalizedStates[stateId] = sanitizedStateHtml
   }
 
-  return normalizedStories
+  return normalizedStates
 }
 
 function normalizeVariants(raw: any): Record<string, Record<string, Record<string, string>>> {
@@ -506,7 +459,7 @@ function normalizeVariants(raw: any): Record<string, Record<string, Record<strin
   for (const [variantId, pages] of Object.entries(raw.variants as Record<string, Record<string, unknown>>)) {
     const variantPages: Record<string, Record<string, string>> = {}
     for (const [pageId, rawPage] of Object.entries((pages ?? {}) as Record<string, unknown>)) {
-      variantPages[pageId] = normalizeStoriesForPage({
+      variantPages[pageId] = normalizeStatesForPage({
         variantId,
         pageId,
         rawPage,
@@ -521,7 +474,7 @@ function normalizeVariants(raw: any): Record<string, Record<string, Record<strin
  * Generate preview pages by running the Java FreeMarker renderer.
  * Can be called programmatically from the CLI or via `npm run generate:preview`.
  */
-export async function generatePreview(options: GeneratePreviewOptions = {}): Promise<GeneratePreviewResult> {
+export async function generatePreview(options: GeneratePreviewOptions): Promise<GeneratePreviewResult> {
   const packageRoot = options.packageRoot ?? process.cwd()
   const outputPath = options.outputPath ?? path.join(packageRoot, 'src', 'features', 'preview', 'generated', 'pages.json')
   const log = options.quiet ? () => {} : (msg: string) => process.stdout.write(msg)
@@ -535,7 +488,17 @@ export async function generatePreview(options: GeneratePreviewOptions = {}): Pro
 
   log(`Generating preview artifacts (Java ${javaVersion})...\n`)
 
-  const { tempDir, filePath } = await writeTempContextMocksFile(options.additionalMocks)
+  let tempArtifacts: { tempDir: string, filePath: string }
+  try {
+    tempArtifacts = writeTempContextMocksFile(options.userMocks)
+  }
+  catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    process.stderr.write(`${message}\n`)
+    return { success: false, outputPath, error: message }
+  }
+
+  const { tempDir, filePath } = tempArtifacts
 
   // Ensure output directory exists
   const outputDir = path.dirname(outputPath)
@@ -584,7 +547,9 @@ export async function generatePreview(options: GeneratePreviewOptions = {}): Pro
 const isDirectRun = process.argv[1]?.replace(/\\/g, '/').endsWith('tools/generate-preview.ts')
   || process.argv[1]?.replace(/\\/g, '/').endsWith('tools/generate-preview')
 if (isDirectRun) {
-  generatePreview().then((result) => {
+  generatePreview({
+    packageRoot: process.cwd(),
+  }).then((result) => {
     if (!result.success) {
       process.exitCode = 1
     }

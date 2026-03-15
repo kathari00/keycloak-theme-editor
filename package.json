@@ -14,16 +14,19 @@
     "visual-editor"
   ],
   "exports": {
-    "./kc-mocks": "./bin/kc-mocks.js"
+    ".": {
+      "types": "./bin/kc-mocks.d.ts",
+      "default": "./bin/kc-mocks.js"
+    }
   },
   "bin": {
     "keycloak-theme-editor": "./bin/cli.js"
   },
   "files": [
     "bin/cli.js",
+    "bin/kc-mocks.d.ts",
     "bin/kc-mocks.js",
     "dist/",
-    "tools/generate-preview.ts",
     "tools/preview-renderer/lib/",
     "tools/preview-renderer/preview-renderer.jar"
   ],
@@ -62,7 +65,6 @@
     "immer": "^11.1.4",
     "jiti": "^2.6.1",
     "jsdom": "^25.0.1",
-    "keycloakify": "^11.15.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "zustand": "5.0.11"

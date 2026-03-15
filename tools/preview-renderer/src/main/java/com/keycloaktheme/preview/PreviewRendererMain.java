@@ -208,34 +208,32 @@ public final class PreviewRendererMain {
 
     for (String pageTemplate : inputs.getPageTemplates()) {
       String pageId = pageTemplate.replace(".ftl", ".html");
-      String pageName = normalizePageName(pageTemplate);
 
-      Map<String, String> pageStories = renderPageWithStories(
-          variant, inputs, contextOverrides, pageTemplate, pageId, pageName, skippedTemplates
+      Map<String, String> pageStates = renderPageWithStates(
+          variant, inputs, contextOverrides, pageTemplate, pageId, skippedTemplates
       );
 
-      if (pageStories != null && !pageStories.isEmpty()) {
-        variantPages.put(pageId, pageStories);
+      if (pageStates != null && !pageStates.isEmpty()) {
+        variantPages.put(pageId, pageStates);
       }
     }
 
     return new VariantRenderResult(variantPages, skippedTemplates);
   }
 
-  private Map<String, String> renderPageWithStories(
+  private Map<String, String> renderPageWithStates(
       VariantSpec variant,
       VariantLoader.VariantInputs inputs,
       ContextBuilder.ContextOverrides contextOverrides,
       String pageTemplate,
       String pageId,
-      String pageName,
       List<String> skippedTemplates
   ) {
-    Map<String, Object> defaultContext = contextBuilder.buildPageContextOverride(contextOverrides, pageName);
+    Map<String, Object> defaultContext = contextBuilder.buildPageContextOverride(contextOverrides, pageTemplate);
     // If no page-specific mock exists, fall back to the login page context.
     // Most custom pages extend the login template and need url, realm, etc.
-    if (defaultContext.isEmpty() && !pageName.equals("login")) {
-      defaultContext = contextBuilder.buildPageContextOverride(contextOverrides, "login");
+    if (defaultContext.isEmpty() && !pageTemplate.equals("login.ftl")) {
+      defaultContext = contextBuilder.buildPageContextOverride(contextOverrides, "login.ftl");
     }
 
     String defaultHtml;
@@ -253,29 +251,29 @@ public final class PreviewRendererMain {
       return null;
     }
 
-    Map<String, String> stories = new LinkedHashMap<String, String>();
-    stories.put("default", defaultHtml);
+    Map<String, String> states = new LinkedHashMap<String, String>();
+    states.put("default", defaultHtml);
 
-    String storyKeyPrefix = pageName + "@";
+    String stateKeyPrefix = pageTemplate + "@";
     for (String pageKey : contextOverrides.getPages().keySet()) {
-      if (!pageKey.startsWith(storyKeyPrefix)) {
+      if (!pageKey.startsWith(stateKeyPrefix)) {
         continue;
       }
-      String storyId = pageKey.substring(storyKeyPrefix.length());
+      String stateId = pageKey.substring(stateKeyPrefix.length());
       try {
-        Map<String, Object> storyContext = contextBuilder.buildPageContextOverride(contextOverrides, pageKey);
-        String storyHtml = pageRenderer.renderPage(
-            pageTemplate, pageId, variant.id, variant.overlayDir, variant.userOverlayDir, inputs, storyContext
+        Map<String, Object> stateContext = contextBuilder.buildPageContextOverride(contextOverrides, pageKey);
+        String stateHtml = pageRenderer.renderPage(
+            pageTemplate, pageId, variant.id, variant.overlayDir, variant.userOverlayDir, inputs, stateContext
         );
-        if (!storyHtml.trim().isEmpty()) {
-          stories.put(storyId, storyHtml);
+        if (!stateHtml.trim().isEmpty()) {
+          states.put(stateId, stateHtml);
         }
-      } catch (Exception storyError) {
-        skippedTemplates.add(pageTemplate + "/" + storyId + ": " + summarizeError(storyError));
+      } catch (Exception stateError) {
+        skippedTemplates.add(pageTemplate + "/" + stateId + ": " + summarizeError(stateError));
       }
     }
 
-    return stories;
+    return states;
   }
 
   private void logSkippedTemplates(String variantId, List<String> skippedTemplates) {
@@ -323,14 +321,6 @@ public final class PreviewRendererMain {
     Files.createDirectories(outputPath.getParent());
     String json = objectMapper.writeValueAsString(value) + "\n";
     Files.write(outputPath, json.getBytes(StandardCharsets.UTF_8));
-  }
-
-  private String normalizePageName(String pageTemplateName) {
-    String value = pageTemplateName == null ? "" : pageTemplateName.trim();
-    if (value.endsWith(".ftl")) {
-      value = value.substring(0, value.length() - 4);
-    }
-    return value;
   }
 
   private static final class VariantSpec {

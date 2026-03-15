@@ -1,40 +1,15 @@
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-
 node_modules
 dist
-dist-ssr
-*.local
 
-# Editor directories and files
-.vscode/*
-example
-keycloak-jar-server
-/login
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-.agents
-.claude
-CLAUDE.md
+bin/.preview-*/
+bin/*.js
+bin/*.d.ts
 tools/preview-renderer/target/
 tools/preview-renderer/preview-renderer.jar
 tools/preview-renderer/lib/
 public/keycloak-upstream/
 public/keycloak-dev-resources/resources-common/
 public/fonts/
-docker-compose.yml
-bin/*
-!bin/kc-mocks.ts
-*.tgz
+.vscode/*
+!.vscode/extensions.json
+.idea

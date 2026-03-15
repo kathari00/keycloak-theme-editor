@@ -3,6 +3,8 @@ package com.keycloaktheme.preview;
 import freemarker.template.TemplateMethodModelEx;
 import freemarker.template.TemplateModelException;
 import java.text.MessageFormat;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -41,6 +43,41 @@ public final class ContextObjects {
     @Override
     public Object exec(@SuppressWarnings("rawtypes") List arguments) {
       return arguments.isEmpty() ? "" : String.valueOf(arguments.get(0));
+    }
+  }
+
+  public static final class AdvancedMessageMethod implements TemplateMethodModelEx {
+    private static final Pattern MESSAGE_EXPRESSION = Pattern.compile("\\$\\{([^}]+)\\}");
+    private final Map<String, String> messages;
+
+    public AdvancedMessageMethod(Map<String, String> messages) {
+      this.messages = messages;
+    }
+
+    @Override
+    public Object exec(@SuppressWarnings("rawtypes") List arguments) {
+      if (arguments.isEmpty()) {
+        return "";
+      }
+
+      String value = String.valueOf(arguments.get(0));
+      Matcher matcher = MESSAGE_EXPRESSION.matcher(value);
+      StringBuffer output = new StringBuffer();
+      boolean replaced = false;
+
+      while (matcher.find()) {
+        replaced = true;
+        String key = matcher.group(1).trim();
+        String message = messages.getOrDefault(key, matcher.group(0));
+        matcher.appendReplacement(output, Matcher.quoteReplacement(message));
+      }
+
+      if (!replaced) {
+        return value;
+      }
+
+      matcher.appendTail(output);
+      return output.toString();
     }
   }
 

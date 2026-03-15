@@ -96,7 +96,7 @@ public final class PageRenderer {
     Map<String, Object> model = contextBuilder.deepCopyMap(pageContextOverride);
     model.put("properties", properties);
     model.put("msg", new ContextObjects.MessageMethod(messages));
-    model.put("advancedMsg", new ContextObjects.MessageMethod(messages));
+    model.put("advancedMsg", new ContextObjects.AdvancedMessageMethod(messages));
     model.put("kcSanitize", new ContextObjects.PassthroughMethod());
     model.put("pageId", pageId.replace(".html", ""));
 

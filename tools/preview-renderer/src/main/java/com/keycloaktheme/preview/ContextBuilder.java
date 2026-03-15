@@ -18,10 +18,9 @@ public final class ContextBuilder {
   }
 
   public ContextOverrides readContextOverrides(Path path) throws IOException {
-    Map<String, Object> emptyCommon = new LinkedHashMap<String, Object>();
     Map<String, Map<String, Object>> emptyPages = new LinkedHashMap<String, Map<String, Object>>();
     if (path == null || !Files.exists(path)) {
-      return new ContextOverrides(emptyCommon, emptyPages);
+      return new ContextOverrides(emptyPages);
     }
 
     String json = readUtf8(path);
@@ -31,7 +30,6 @@ public final class ContextBuilder {
 
     @SuppressWarnings("unchecked")
     Map<String, Object> raw = objectMapper.readValue(json, Map.class);
-    Map<String, Object> common = asMap(raw.get("common"));
     Map<String, Map<String, Object>> pages = new LinkedHashMap<String, Map<String, Object>>();
     Map<String, Object> rawPages = asMap(raw.get("pages"));
 
@@ -40,15 +38,14 @@ public final class ContextBuilder {
       if (key == null || key.trim().isEmpty()) {
         continue;
       }
-      String normalizedKey = normalizePageKey(key.trim());
-      pages.put(normalizedKey, asMap(entry.getValue()));
+      pages.put(key.trim(), asMap(entry.getValue()));
     }
 
-    return new ContextOverrides(common, pages);
+    return new ContextOverrides(pages);
   }
 
   public Map<String, Object> buildPageContextOverride(ContextOverrides overrides, String pageKey) {
-    Map<String, Object> merged = deepCopyMap(overrides.getCommon());
+    Map<String, Object> merged = new LinkedHashMap<String, Object>();
     Map<String, Object> pageOverride = overrides.getPages().get(pageKey);
     if (pageOverride != null && !pageOverride.isEmpty()) {
       deepMergeMap(merged, pageOverride);
@@ -114,13 +111,6 @@ public final class ContextBuilder {
     return value;
   }
 
-  private String normalizePageKey(String key) {
-    if (key.endsWith(".ftl")) {
-      key = key.substring(0, key.length() - 4);
-    }
-    return key;
-  }
-
   private Map<String, Object> asMap(Object value) {
     if (!(value instanceof Map)) {
       return new LinkedHashMap<String, Object>();
@@ -135,19 +125,10 @@ public final class ContextBuilder {
   }
 
   public static final class ContextOverrides {
-    private final Map<String, Object> common;
     private final Map<String, Map<String, Object>> pages;
 
-    public ContextOverrides(
-        Map<String, Object> common,
-        Map<String, Map<String, Object>> pages
-    ) {
-      this.common = common;
+    public ContextOverrides(Map<String, Map<String, Object>> pages) {
       this.pages = pages;
-    }
-
-    public Map<String, Object> getCommon() {
-      return common;
     }
 
     public Map<String, Map<String, Object>> getPages() {
