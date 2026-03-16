@@ -1,7 +1,7 @@
 {
   "name": "keycloak-theme-editor",
   "type": "module",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Visual theme editor for Keycloak login pages. Style, preview, and export Keycloak themes without cloning or forking.",
   "license": "Apache-2.0",
   "keywords": [
@@ -54,7 +54,7 @@
     "@mdi/react": "^1.6.1",
     "@patternfly-v5/patternfly": "npm:@patternfly/patternfly@^5.4.2",
     "@patternfly/react-core": "6.3.1",
-    "@patternfly/react-icons": "6.3.1",
+    "@patternfly/react-icons": "6.4.0",
     "@patternfly/react-styles": "6.3.1",
     "@uiw/react-codemirror": "4.25.4",
     "chokidar": "^5.0.0",
