@@ -32,6 +32,7 @@ import {
   assembleExportPayload,
   buildModeAwareQuickStartCssParts,
   extractCssImports,
+  fetchCustomFtlFiles,
   fetchFooterFtl,
   fetchTemplateFtl,
   filterLocalCssFiles,
@@ -281,13 +282,20 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
     }
 
     if (!isPresetTheme) {
-      const localFiles = await filterLocalCssFiles(resolvedThemeId, stylesCssFiles)
+      const [localFiles, customFtlFiles] = await Promise.all([
+        filterLocalCssFiles(resolvedThemeId, stylesCssFiles),
+        fetchCustomFtlFiles(resolvedThemeId),
+      ])
       const localStylesCss = Object.values(localFiles).filter(Boolean).join('\n\n')
+      const sanitizedCustomFtls = Object.fromEntries(
+        Object.entries(customFtlFiles).map(([name, content]) => [name, stripDataKcStateAttributes(content)]),
+      )
       return {
         themeName,
         properties,
         templateFtl: '',
         footerFtl: null,
+        customFtlFiles: Object.keys(sanitizedCustomFtls).length > 0 ? sanitizedCustomFtls : undefined,
         quickStartCss: '',
         stylesCss: sanitizeThemeCssSourceForEditor(localStylesCss),
         stylesCssFiles: Object.keys(localFiles).length > 1 ? localFiles : undefined,

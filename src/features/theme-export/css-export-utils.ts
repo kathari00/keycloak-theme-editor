@@ -89,6 +89,35 @@ export async function fetchFooterFtl(themeId: string): Promise<string | null> {
   return await response.text()
 }
 
+/** Fetch custom FTL files (excluding template.ftl and footer.ftl) from a theme's login folder. */
+export async function fetchCustomFtlFiles(themeId: string): Promise<Record<string, string>> {
+  try {
+    const response = await fetch(`/api/ftl-files?variantId=${encodeURIComponent(themeId)}`)
+    if (!response.ok) {
+      return {}
+    }
+    const data = await response.json()
+    const filenames: string[] = data.files ?? []
+    if (filenames.length === 0) {
+      return {}
+    }
+
+    const entries = await Promise.all(
+      filenames.map(async (filename) => {
+        const ftlResponse = await fetch(themeResourcePath(themeId, filename))
+        if (!ftlResponse.ok) {
+          return null
+        }
+        return [filename, await ftlResponse.text()] as const
+      }),
+    )
+    return Object.fromEntries(entries.filter((e): e is NonNullable<typeof e> => e !== null))
+  }
+  catch {
+    return {}
+  }
+}
+
 /** Filter CSS files to only those that exist locally (not inherited from parent theme). */
 export async function filterLocalCssFiles(
   themeId: string,

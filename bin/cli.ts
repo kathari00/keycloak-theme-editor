@@ -307,6 +307,13 @@ function writeThemeFiles(
   if (data.footerFtl) {
     fs.writeFileSync(path.join(loginDir, 'footer.ftl'), data.footerFtl, 'utf8')
   }
+  if (data.customFtlFiles && typeof data.customFtlFiles === 'object') {
+    for (const [filename, content] of Object.entries(data.customFtlFiles)) {
+      if (typeof content === 'string' && filename.endsWith('.ftl') && isValidPathSegment(filename)) {
+        fs.writeFileSync(path.join(loginDir, filename), content, 'utf8')
+      }
+    }
+  }
   if (data.quickStartCss) {
     fs.writeFileSync(path.join(cssDir, 'quick-start.css'), data.quickStartCss, 'utf8')
   }
@@ -393,6 +400,34 @@ function startServer(opts: {
     if (requestPath === '/api/save-theme' && req.method === 'GET') {
       res.writeHead(200, { 'Content-Type': 'application/json' })
       res.end(JSON.stringify({ available: true, cwd: exportDir }))
+      return
+    }
+
+    if (requestPath === '/api/ftl-files' && req.method === 'GET') {
+      const urlObj = new URL(url, 'http://localhost')
+      const variantId = urlObj.searchParams.get('variantId')
+      if (!variantId || !isValidThemeVariantPath(variantId)) {
+        res.writeHead(400, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ files: [] }))
+        return
+      }
+      const mapping = userThemeMappings?.find(m => m.variantId === variantId)
+      if (!mapping) {
+        res.writeHead(200, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ files: [] }))
+        return
+      }
+      const loginDir = path.join(mapping.localDir, 'login')
+      try {
+        const ftlFiles = fs.readdirSync(loginDir)
+          .filter(f => f.endsWith('.ftl') && f !== 'template.ftl' && f !== 'footer.ftl')
+        res.writeHead(200, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ files: ftlFiles }))
+      }
+      catch {
+        res.writeHead(200, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ files: [] }))
+      }
       return
     }
 

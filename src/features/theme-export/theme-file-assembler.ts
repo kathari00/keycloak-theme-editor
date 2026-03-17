@@ -69,6 +69,12 @@ export async function assembleThemeFiles(
     addText(files, `${loginRoot}/footer.ftl`, footerFtl)
   }
 
+  if (params.customFtlFiles) {
+    for (const [filename, content] of Object.entries(params.customFtlFiles)) {
+      addText(files, `${loginRoot}/${filename}`, content)
+    }
+  }
+
   if (quickStartCss) {
     addText(files, `${loginRoot}/resources/css/quick-start.css`, quickStartCss)
   }

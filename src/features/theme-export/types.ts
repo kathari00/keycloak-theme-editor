@@ -24,6 +24,7 @@ export interface AssembleThemeFilesParams {
   stylesCssFiles?: Record<string, string>
   messagesContent: string
   payload: ThemeExportPayload
+  customFtlFiles?: Record<string, string>
   editorMetadata: ThemeEditorMetadata
   extraBlobs?: Record<string, Blob>
 }
