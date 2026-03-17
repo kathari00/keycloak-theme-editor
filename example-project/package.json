@@ -1,0 +1,10 @@
+{
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "keycloak-theme-editor"
+  },
+  "devDependencies": {
+    "keycloak-theme-editor": "^0.3.2"
+  }
+}
