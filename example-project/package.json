@@ -5,6 +5,6 @@
     "start": "keycloak-theme-editor"
   },
   "devDependencies": {
-    "keycloak-theme-editor": "^0.3.2"
+    "keycloak-theme-editor": "^0.3.3"
   }
 }
