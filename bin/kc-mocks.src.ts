@@ -5,7 +5,7 @@ export type { KnownPageId } from '../tools/kc-page-ids'
 export type Primitive = string | number | boolean | null | undefined
 export type ConfigValue = Primitive | ConfigValue[] | { [key: string]: ConfigValue }
 
-type Extendable<T extends object> = T & Record<string, unknown>
+type Extendable<T extends object> = T & Record<string & {}, unknown>
 type CustomPageId = `${string}.ftl`
 export type PageId = KnownPageId | CustomPageId | (string & {})
 
@@ -33,6 +33,7 @@ export interface RealmOverride {
   resetPasswordAllowed?: boolean
   registrationAllowed?: boolean
   duplicateEmailsAllowed?: boolean
+  attributes?: Record<string, string>
 }
 
 export interface UrlOverride {
