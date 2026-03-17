@@ -34,6 +34,7 @@ import {
   extractCssImports,
   fetchFooterFtl,
   fetchTemplateFtl,
+  filterLocalCssFiles,
   mergeCssImports,
   stripDataKcStateAttributes,
 } from '../css-export-utils'
@@ -212,6 +213,7 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
   const resolvedThemeId = resolveThemeIdFromConfig(themeConfig, selectedThemeId)
   const exportVariantId = resolvedThemeId
   const resolvedTheme = themeConfig.themes.find(t => t.id === resolvedThemeId)
+  const isPresetTheme = resolvedTheme?.type !== 'imported'
   const {
     colorPresetFontFamily,
     colorPresetBorderRadius,
@@ -257,8 +259,8 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
     }
 
     const [templateFtl, footerFtl, themeQuickStartCssResponse, propertiesResponse] = await Promise.all([
-      fetchTemplateFtl(resolvedThemeId),
-      fetchFooterFtl(resolvedThemeId),
+      isPresetTheme ? fetchTemplateFtl(resolvedThemeId) : Promise.resolve(''),
+      isPresetTheme ? fetchFooterFtl(resolvedThemeId) : Promise.resolve(null),
       fetch(themeQuickStartCssPath),
       fetch(themeResourcePath(resolvedThemeId, 'theme.properties')),
     ])
@@ -273,6 +275,33 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
       imprintUrl: exportImprintUrl,
       dataProtectionUrl: exportDataProtectionUrl,
     })
+
+    const editorMetadata: ThemeEditorMetadata = {
+      sourceThemeId: resolvedThemeId,
+    }
+
+    if (!isPresetTheme) {
+      const localFiles = await filterLocalCssFiles(resolvedThemeId, stylesCssFiles)
+      const localStylesCss = Object.values(localFiles).filter(Boolean).join('\n\n')
+      return {
+        themeName,
+        properties,
+        templateFtl: '',
+        footerFtl: null,
+        quickStartCss: '',
+        stylesCss: sanitizeThemeCssSourceForEditor(localStylesCss),
+        stylesCssFiles: Object.keys(localFiles).length > 1 ? localFiles : undefined,
+        messagesContent,
+        payload: assembleExportPayload({
+          sourceCss: sanitizeThemeCssSourceForEditor(localStylesCss),
+          appliedAssets: {},
+          uploadedAssets: [],
+          editorCssContext: { presetCss: '', colorPresetCss: '' },
+        }),
+        editorMetadata,
+      }
+    }
+
     const sourceThemeQuickStartCss = themeQuickStartDefaults.trim() || (themeQuickStartCssResponse.ok
       ? (await themeQuickStartCssResponse.text()).trim()
       : '')
@@ -287,10 +316,6 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
     })
     const payloadCssParts = extractCssImports(payload.generatedCss)
     const topLevelImportsCss = mergeCssImports(payloadCssParts.imports)
-
-    const editorMetadata: ThemeEditorMetadata = {
-      sourceThemeId: resolvedThemeId,
-    }
 
     const combinedStylesCss = [
       topLevelImportsCss,
@@ -310,34 +335,12 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
       templateFtl: stripDataKcStateAttributes(templateFtl),
       footerFtl: footerFtl ? stripDataKcStateAttributes(footerFtl) : footerFtl,
       quickStartCss: [sourceThemeQuickStartCss, quickStartCssParts.variablesCss].filter(Boolean).join('\n\n'),
-      // Keep export CSS loading deterministic: template links quick-start.css and styles.css
-      // via theme.properties, so styles.css must not re-import quick-start.css.
       stylesCss: combinedStylesCss,
       stylesCssFiles: exportStylesCssFiles,
       messagesContent,
       payload,
       editorMetadata,
     }
-  }
-
-  const saveExportToProject = async (writeParams: DirectoryWriteParams): Promise<string | null> => {
-    if (!cliMode?.available) {
-      return null
-    }
-
-    const response = await fetch('/api/save-theme', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        variantId: exportVariantId,
-        ...writeParams,
-      }),
-    })
-    const result = await response.json()
-    if (!result.success) {
-      throw new Error(result.error || 'Failed to save theme to project')
-    }
-    return typeof result.path === 'string' ? result.path : null
   }
 
   const runDownloadJar = async () => {
@@ -378,10 +381,7 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
       if (saveResult === 'unavailable') {
         downloadBlob(blob, `${themeName}.jar`)
       }
-      const projectPath = await saveExportToProject(writeParams).catch(() => null)
-      setStatusMessage(projectPath
-        ? `JAR export finished. Saved to ${projectPath}`
-        : 'JAR export finished.')
+      setStatusMessage('JAR export finished.')
       closeOnSuccess = true
     }
     catch (error) {
@@ -411,10 +411,7 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
         try {
           const dirHandle = await (window as any).showDirectoryPicker({ mode: 'readwrite' })
           await writeToDirectory(dirHandle, writeParams)
-          const projectPath = await saveExportToProject(writeParams).catch(() => null)
-          setStatusMessage(projectPath
-            ? `Quick export finished. Saved to ${projectPath}`
-            : 'Quick export finished.')
+          setStatusMessage('Quick export finished.')
           closeOnSuccess = true
           return
         }
@@ -430,10 +427,7 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
       // Fallback: download as ZIP for browsers without File System Access API
       const zipBlob = await buildFolderZipBlob(writeParams)
       downloadBlob(zipBlob, `${themeName}-theme.zip`)
-      const projectPath = await saveExportToProject(writeParams).catch(() => null)
-      setStatusMessage(projectPath
-        ? `Theme exported as ZIP. Saved to ${projectPath}`
-        : 'Theme exported as ZIP.')
+      setStatusMessage('Theme exported as ZIP.')
       closeOnSuccess = true
     }
     catch (error) {
@@ -469,8 +463,17 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
     let closeOnSuccess = false
     try {
       const writeParams = await prepareExportFiles()
-      const path = await saveExportToProject(writeParams)
-      setStatusMessage(path ? `Saved to ${path}` : 'Saved to project.')
+      const response = await fetch('/api/save-theme', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ variantId: exportVariantId, ...writeParams }),
+      })
+      const result = await response.json()
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to save theme to project')
+      }
+      const savedPath = typeof result.path === 'string' ? result.path : null
+      setStatusMessage(savedPath ? `Saved to ${savedPath}` : 'Saved to project.')
       closeOnSuccess = true
     }
     catch (error) {

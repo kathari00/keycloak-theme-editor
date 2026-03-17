@@ -12,9 +12,9 @@ export interface EditorTheme {
   id: ThemeId
   name: string
   description: string
+  type?: 'imported'
   defaultAssets: ThemeDefaultAsset[]
   darkModeClasses?: string[]
-  isImported?: boolean
 }
 
 export interface ThemeConfig {

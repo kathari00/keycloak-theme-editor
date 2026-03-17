@@ -89,6 +89,23 @@ export async function fetchFooterFtl(themeId: string): Promise<string | null> {
   return await response.text()
 }
 
+/** Filter CSS files to only those that exist locally (not inherited from parent theme). */
+export async function filterLocalCssFiles(
+  themeId: string,
+  files: Record<string, string>,
+): Promise<Record<string, string>> {
+  const result: Record<string, string> = {}
+  await Promise.all(
+    Object.entries(files).map(async ([cssPath, css]) => {
+      const response = await fetch(themeResourcePath(themeId, `resources/${cssPath}`))
+      if (response.ok && response.headers.get('X-Theme-Source') !== 'parent') {
+        result[cssPath] = css
+      }
+    }),
+  )
+  return result
+}
+
 /** Reverse-engineer applied asset references from CSS text */
 export function parseAppliedAssetsFromCss(
   cssText: string,

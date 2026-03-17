@@ -15,6 +15,7 @@ vi.mock('../../presets/queries', async (importOriginal) => {
         { id: 'base', defaultAssets: [] },
         {
           id: 'v2',
+          type: 'preset',
           defaultAssets: [
             {
               category: 'background',

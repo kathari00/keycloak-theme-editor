@@ -62,12 +62,16 @@ export async function assembleThemeFiles(
   addText(files, `${metaInfPrefix}keycloak-themes.json`, generateKeycloakThemesJson(themeName, editorMetadata))
   addText(files, `${loginRoot}/theme.properties`, properties)
 
-  addText(files, `${loginRoot}/template.ftl`, templateFtl)
+  if (templateFtl) {
+    addText(files, `${loginRoot}/template.ftl`, templateFtl)
+  }
   if (footerFtl) {
     addText(files, `${loginRoot}/footer.ftl`, footerFtl)
   }
 
-  addText(files, `${loginRoot}/resources/css/quick-start.css`, quickStartCss)
+  if (quickStartCss) {
+    addText(files, `${loginRoot}/resources/css/quick-start.css`, quickStartCss)
+  }
   if (params.stylesCssFiles && Object.keys(params.stylesCssFiles).length > 0) {
     for (const [cssPath, cssContent] of Object.entries(params.stylesCssFiles)) {
       addText(files, `${loginRoot}/resources/${cssPath}`, cssContent)

@@ -307,7 +307,9 @@ function writeThemeFiles(
   if (data.footerFtl) {
     fs.writeFileSync(path.join(loginDir, 'footer.ftl'), data.footerFtl, 'utf8')
   }
-  fs.writeFileSync(path.join(cssDir, 'quick-start.css'), data.quickStartCss, 'utf8')
+  if (data.quickStartCss) {
+    fs.writeFileSync(path.join(cssDir, 'quick-start.css'), data.quickStartCss, 'utf8')
+  }
 
   if (data.stylesCssFiles && typeof data.stylesCssFiles === 'object' && Object.keys(data.stylesCssFiles).length > 0) {
     for (const [cssPath, cssContent] of Object.entries(data.stylesCssFiles)) {
@@ -366,7 +368,7 @@ function startServer(opts: {
   distDir: string
   pagesJsonPath: string
   exportDir: string
-  userThemeMappings?: Array<{ variantId: string, urlPrefix: string, localDir: string }>
+  userThemeMappings?: Array<{ variantId: string, urlPrefix: string, localDir: string, parentThemeId?: string }>
 }) {
   const { port, distDir, pagesJsonPath, exportDir, userThemeMappings } = opts
 
@@ -449,11 +451,41 @@ function startServer(opts: {
       if (mapping) {
         const userThemePath = requestPath.slice(mapping.urlPrefix.length) || '/'
         if (!serveStaticPath(res, mapping.localDir, userThemePath)) {
-          res.writeHead(404)
-          res.end('Not found')
+          // Fall back to parent theme resources for files referenced in rendered HTML (e.g. inherited css/styles.css)
+          if (mapping.parentThemeId) {
+            const parentPath = `/keycloak-dev-resources/themes/${mapping.parentThemeId}/${userThemePath}`
+            res.setHeader('X-Theme-Source', 'parent')
+            if (!serveStaticPath(res, distDir, parentPath)) {
+              res.writeHead(404)
+              res.end('Not found')
+            }
+          }
+          else {
+            res.writeHead(404)
+            res.end('Not found')
+          }
         }
         return
       }
+    }
+
+    if (requestPath === '/keycloak-dev-resources/themes/themes.json' && userThemeMappings?.length) {
+      const themesJsonPath = path.join(distDir, 'keycloak-dev-resources', 'themes', 'themes.json')
+      try {
+        const config = JSON.parse(fs.readFileSync(themesJsonPath, 'utf8'))
+        const existingIds = new Set(config.themes.map((t: { id: string }) => t.id))
+        for (const mapping of userThemeMappings) {
+          if (!existingIds.has(mapping.variantId)) {
+            config.themes.push({ id: mapping.variantId, name: mapping.variantId, description: '', type: 'imported', defaultAssets: [] })
+          }
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' })
+        res.end(JSON.stringify(config))
+      }
+      catch {
+        serveStaticPath(res, distDir, requestPath)
+      }
+      return
     }
 
     if (requestPath.startsWith('/keycloak-upstream/') || requestPath.startsWith('/keycloak-dev-resources/')) {
@@ -596,6 +628,7 @@ async function startEditor(opts: { themesRoot?: string, port: string, open: bool
   if (themeDirs.length === 0) {
     console.error(`No themes found under themes root: ${themesRootDir}`)
     console.error('Expected directories containing login/theme.properties beneath the current working directory or --themes-root.')
+    console.error('Run "npx keycloak-theme-editor init" to create a starter theme.')
     process.exit(1)
   }
 
@@ -616,12 +649,20 @@ async function startEditor(opts: { themesRoot?: string, port: string, open: bool
     process.exit(1)
   }
 
-  const userThemeMappings: Array<{ variantId: string, urlPrefix: string, localDir: string }> = []
+  const userThemeMappings: Array<{ variantId: string, urlPrefix: string, localDir: string, parentThemeId?: string }> = []
   for (const dir of themeDirs) {
     const variantId = getVariantId(themesRootDir, dir)
     const urlPrefix = `/keycloak-dev-resources/themes/${variantId}/`
     if (fs.existsSync(path.join(dir, 'login'))) {
-      userThemeMappings.push({ variantId, urlPrefix, localDir: dir })
+      let parentThemeId: string | undefined
+      const propsPath = path.join(dir, 'login', 'theme.properties')
+      if (fs.existsSync(propsPath)) {
+        const parentMatch = fs.readFileSync(propsPath, 'utf8').match(/^parent\s*=\s*(.+)/m)
+        if (parentMatch) {
+          parentThemeId = parentMatch[1].trim().replace(/^keycloak\./, '')
+        }
+      }
+      userThemeMappings.push({ variantId, urlPrefix, localDir: dir, parentThemeId })
     }
   }
 
@@ -663,6 +704,12 @@ export default defineConfig({
 })
 `
 
+const THEME_PROPERTIES_TEMPLATE = `parent=keycloak.v2
+import=common/keycloak
+`
+
+const THEME_STYLES_CSS_TEMPLATE = ``
+
 const KC_PAGE_STATE_TEMPLATE = `import { defineStates } from 'keycloak-theme-editor'
 
 export default defineStates({
@@ -688,6 +735,21 @@ function initMockFiles(opts: { themesRoot?: string }) {
   pkg.scripts = { ...scripts, start: scripts.start ?? 'keycloak-theme-editor' }
   fs.writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`, 'utf8')
   console.log(`  ${hadPackageJson ? 'Updated' : 'Created'}: ${pkgPath}`)
+
+  const themeDir = path.join(targetDir, 'my-theme', 'login')
+  const themePropertiesPath = path.join(themeDir, 'theme.properties')
+  const stylesCssPath = path.join(themeDir, 'resources', 'css', 'custom.css')
+
+  if (!fs.existsSync(themePropertiesPath)) {
+    fs.mkdirSync(path.dirname(stylesCssPath), { recursive: true })
+    fs.writeFileSync(themePropertiesPath, THEME_PROPERTIES_TEMPLATE, 'utf8')
+    console.log(`  Created: ${themePropertiesPath}`)
+    fs.writeFileSync(stylesCssPath, THEME_STYLES_CSS_TEMPLATE, 'utf8')
+    console.log(`  Created: ${stylesCssPath}`)
+  }
+  else {
+    console.log(`  Already exists: ${themePropertiesPath}`)
+  }
 
   const files: Array<[string, string]> = [
     [path.join(targetDir, 'kc-page.ts'), KC_PAGE_TEMPLATE],

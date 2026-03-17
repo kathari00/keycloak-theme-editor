@@ -94,11 +94,13 @@ export async function loadThemeCssStructured(themeId: ThemeId): Promise<ThemeCss
       ...userStylePromises,
     ])
 
-    const quickStartDefaults = rawQuickStart
+    const hasQuickStart = Boolean(quickStartEntry && rawQuickStart)
+    const quickStartDefaults = hasQuickStart ? rawQuickStart : ''
 
-    // Build individual file map (quick-start.css always first)
-    const stylesCssFiles: Record<string, string> = {
-      'css/quick-start.css': rawQuickStart,
+    // Build individual file map (include quick-start.css only if the theme declares it)
+    const stylesCssFiles: Record<string, string> = {}
+    if (hasQuickStart) {
+      stylesCssFiles['css/quick-start.css'] = rawQuickStart
     }
     for (let i = 0; i < userStyleEntries.length; i++) {
       const css = sanitizeThemeCssSourceForEditor(rawUserStyles[i])

@@ -1,5 +1,5 @@
 import { Bullseye, Spinner } from '@patternfly/react-core'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useLoadingIndicatorVisibility } from '../../../app/LoadingScreen'
 import { useDarkModeState, usePresetState, usePreviewState, useQuickStartColorsState, useQuickStartContentState, useStylesCssState, useUploadedAssetsState } from '../../editor/hooks/use-editor'
 import { resolveThemeIdFromConfig, useThemeConfig } from '../../presets/queries'
@@ -113,24 +113,37 @@ export function PreviewShell() {
   }) || variantPages[effectivePageId] || '<!doctype html><html><body></body></html>'
   const resolvedThemeId = resolveThemeIdFromConfig(themeConfig, selectedThemeId)
   const resolvedTheme = themeConfig.themes.find(theme => theme.id === resolvedThemeId)
+  const isPresetTheme = resolvedTheme?.type !== 'imported'
   const themeStylesPath = getThemePreviewStylesPath(resolvedThemeId)
   const messageOverrides = usePreviewMessages({ reloadVersion: frameLoadVersion })
-  const { quickStartCss, uploadedFontsCss, uploadedImagesCss, appliedAssetsCss } = computePreviewCss({
-    primaryColor: colors.colorPresetPrimaryColor,
-    secondaryColor: colors.colorPresetSecondaryColor,
-    fontFamily: colors.colorPresetFontFamily,
-    bgColor: colors.colorPresetBgColor,
-    borderRadius: colors.colorPresetBorderRadius,
-    cardShadow: colors.colorPresetCardShadow,
-    headingFontFamily: colors.colorPresetHeadingFontFamily,
-    showClientName: content.showClientName,
-    showRealmName: content.showRealmName,
-    infoMessage: content.infoMessage,
-    imprintUrl: content.imprintUrl,
-    dataProtectionUrl: content.dataProtectionUrl,
-    uploadedAssets: assets.uploadedAssets,
-    appliedAssets: assets.appliedAssets,
-  })
+
+  const editorCss = isPresetTheme
+    ? computePreviewCss({
+        primaryColor: colors.colorPresetPrimaryColor,
+        secondaryColor: colors.colorPresetSecondaryColor,
+        fontFamily: colors.colorPresetFontFamily,
+        bgColor: colors.colorPresetBgColor,
+        borderRadius: colors.colorPresetBorderRadius,
+        cardShadow: colors.colorPresetCardShadow,
+        headingFontFamily: colors.colorPresetHeadingFontFamily,
+        showClientName: content.showClientName,
+        showRealmName: content.showRealmName,
+        infoMessage: content.infoMessage,
+        imprintUrl: content.imprintUrl,
+        dataProtectionUrl: content.dataProtectionUrl,
+        uploadedAssets: assets.uploadedAssets,
+        appliedAssets: assets.appliedAssets,
+      })
+    : { quickStartCss: '', uploadedFontsCss: '', uploadedImagesCss: '', appliedAssetsCss: '' }
+
+  const editorStyleParams = useMemo(() => ({
+    quickStartBaseCss: isPresetTheme ? themeQuickStartDefaults : '',
+    quickStartOverridesCss: editorCss.quickStartCss,
+    uploadedFontsCss: editorCss.uploadedFontsCss,
+    uploadedImagesCss: editorCss.uploadedImagesCss,
+    appliedAssetsCss: editorCss.appliedAssetsCss,
+  }), [isPresetTheme, themeQuickStartDefaults, editorCss.quickStartCss, editorCss.uploadedFontsCss, editorCss.uploadedImagesCss, editorCss.appliedAssetsCss])
+
   const srcDoc = sanitizePreviewHtml(pageHtml)
 
   useEffect(() => {
@@ -147,11 +160,7 @@ export function PreviewShell() {
       doc,
       themeStylesPath,
       stylesCss,
-      quickStartBaseCss: themeQuickStartDefaults,
-      quickStartOverridesCss: quickStartCss,
-      uploadedFontsCss,
-      uploadedImagesCss,
-      appliedAssetsCss,
+      ...editorStyleParams,
       darkModeClasses: resolvedTheme?.darkModeClasses,
       isDarkMode,
     })
@@ -169,24 +178,22 @@ export function PreviewShell() {
       doc,
       themeStylesPath,
       stylesCss,
-      quickStartBaseCss: themeQuickStartDefaults,
-      quickStartOverridesCss: quickStartCss,
-      uploadedFontsCss,
-      uploadedImagesCss,
-      appliedAssetsCss,
+      ...editorStyleParams,
       darkModeClasses: resolvedTheme?.darkModeClasses,
       isDarkMode,
     })
-    applyQuickStartTemplateContent(doc, {
-      showClientName: content.showClientName,
-      showRealmName: content.showRealmName,
-      infoMessage: content.infoMessage,
-      imprintUrl: content.imprintUrl,
-      dataProtectionUrl: content.dataProtectionUrl,
-      noAccountMessage: messageOverrides.noAccount,
-      doRegisterLabel: messageOverrides.doRegister,
-    })
-  }, [appliedAssetsCss, content.dataProtectionUrl, content.imprintUrl, content.infoMessage, content.showClientName, content.showRealmName, frameLoadVersion, iframeRef, isDarkMode, messageOverrides.doRegister, messageOverrides.noAccount, quickStartCss, resolvedTheme?.darkModeClasses, stylesCss, themeQuickStartDefaults, themeStylesPath, uploadedFontsCss, uploadedImagesCss])
+    if (isPresetTheme) {
+      applyQuickStartTemplateContent(doc, {
+        showClientName: content.showClientName,
+        showRealmName: content.showRealmName,
+        infoMessage: content.infoMessage,
+        imprintUrl: content.imprintUrl,
+        dataProtectionUrl: content.dataProtectionUrl,
+        noAccountMessage: messageOverrides.noAccount,
+        doRegisterLabel: messageOverrides.doRegister,
+      })
+    }
+  }, [editorStyleParams, content.dataProtectionUrl, content.imprintUrl, content.infoMessage, content.showClientName, content.showRealmName, frameLoadVersion, iframeRef, isDarkMode, isPresetTheme, messageOverrides.doRegister, messageOverrides.noAccount, resolvedTheme?.darkModeClasses, stylesCss, themeStylesPath])
 
   useEffect(() => {
     const doc = iframeRef.current?.contentDocument
