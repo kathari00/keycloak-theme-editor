@@ -71,22 +71,25 @@ export async function reloadPreviewPages(): Promise<void> {
 let sseConnected = false
 
 export function connectLiveReload(onPagesUpdated: () => void): void {
-  if (sseConnected) {
+  if (sseConnected)
     return
-  }
   sseConnected = true
-
-  const source = new EventSource('/api/events')
-  source.onopen = () => {
-    reloadPreviewPages().then(onPagesUpdated).catch(() => {})
-  }
-  source.addEventListener('pages-updated', () => {
-    reloadPreviewPages().then(onPagesUpdated).catch(() => {})
-  })
-  source.onerror = () => {
-    source.close()
+  fetch('/api/save-theme').then((r) => {
+    if (!r.ok) {
+      sseConnected = false
+      return
+    }
+    const source = new EventSource('/api/events')
+    const reload = () => reloadPreviewPages().then(onPagesUpdated).catch(() => {})
+    source.onopen = reload
+    source.addEventListener('pages-updated', reload)
+    source.onerror = () => {
+      source.close()
+      sseConnected = false
+    }
+  }).catch(() => {
     sseConnected = false
-  }
+  })
 }
 
 export function resolvePreviewVariantId(params: {

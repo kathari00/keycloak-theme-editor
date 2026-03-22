@@ -92,9 +92,7 @@ export const assetActions = {
       return
 
     const prevUploadedAssets = state.uploadedAssets
-    const nextUploadedAssets = asset.isDefault
-      ? prevUploadedAssets
-      : prevUploadedAssets.filter(a => a.id !== assetId)
+    const nextUploadedAssets = prevUploadedAssets.filter(a => a.id !== assetId)
 
     const prevAppliedAssets = { ...state.appliedAssets }
     const nextAppliedAssets = { ...prevAppliedAssets }

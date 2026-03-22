@@ -155,11 +155,12 @@ function withMessageLine(messagesContent: string, key: string, value: string): s
 }
 
 function buildOverriddenMessages(params: {
+  baseMessagesContent: string
   infoMessage: string
   imprintUrl: string
   dataProtectionUrl: string
 }): string {
-  const withInfo = withInfoMessage('', params.infoMessage)
+  const withInfo = withInfoMessage(params.baseMessagesContent, params.infoMessage)
   const withLegalLinks = withLegalLinkMessages(withInfo, params.imprintUrl, params.dataProtectionUrl)
   return withLegalLinkLabels(withLegalLinks)
 }
@@ -259,19 +260,24 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
       dataProtectionUrl: exportDataProtectionUrl,
     }
 
-    const [templateFtl, footerFtl, themeQuickStartCssResponse, propertiesResponse] = await Promise.all([
+    const [templateFtl, footerFtl, themeQuickStartCssResponse, propertiesResponse, messagesResponse] = await Promise.all([
       isPresetTheme ? fetchTemplateFtl(resolvedThemeId) : Promise.resolve(''),
       isPresetTheme ? fetchFooterFtl(resolvedThemeId) : Promise.resolve(null),
       fetch(themeQuickStartCssPath),
       fetch(themeResourcePath(resolvedThemeId, 'theme.properties')),
+      isPresetTheme ? fetch(themeResourcePath(resolvedThemeId, 'messages/messages_en.properties')) : Promise.resolve(null),
     ])
     if (!propertiesResponse.ok) {
       throw new Error(`Failed to load theme.properties for "${resolvedThemeId}" (${propertiesResponse.status})`)
     }
 
     const properties = await propertiesResponse.text()
+    const baseMessagesContent = messagesResponse?.ok
+      ? await messagesResponse.text()
+      : ''
 
     const messagesContent = buildOverriddenMessages({
+      baseMessagesContent,
       infoMessage,
       imprintUrl: exportImprintUrl,
       dataProtectionUrl: exportDataProtectionUrl,

@@ -59,6 +59,7 @@ describe('resolveStateHtml', () => {
     }).map(option => option.id)
 
     expect(optionIds).toContain('default')
+    expect(optionIds).toContain('one-social-provider')
     expect(optionIds[0]).toBe('default')
   })
 

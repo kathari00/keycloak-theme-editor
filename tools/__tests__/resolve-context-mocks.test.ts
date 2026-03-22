@@ -21,6 +21,7 @@ describe('resolveContextMocks', () => {
   it('applies built-in states as pageId@stateName entries', () => {
     const { pages } = resolveContextMocks()
     expect(pages['login.ftl@minimal']).toBeDefined()
+    expect(pages['login.ftl@one-social-provider']).toBeDefined()
     expect(pages['login.ftl@invalid-state']).toBeDefined()
   })
 
@@ -34,6 +35,16 @@ describe('resolveContextMocks', () => {
     // state overrides should differ from base
     expect((state as any).realm.rememberMe).toBe(false)
     expect((base as any).realm.rememberMe).toBe(true)
+    expect((state as any).enableWebAuthnConditionalUI).toBeNull()
+    expect((base as any).enableWebAuthnConditionalUI).toBe(false)
+  })
+
+  it('leaves registration enabled by omitting registrationDisabled on login mocks', () => {
+    const { pages } = resolveContextMocks()
+
+    expect((pages['login.ftl'] as any).registrationDisabled).toBeUndefined()
+    expect((pages['login-username.ftl'] as any).registrationDisabled).toBeUndefined()
+    expect((pages['login-passkeys-conditional-authenticate.ftl'] as any).registrationDisabled).toBeUndefined()
   })
 
   it('merges user page overrides into matching base mock pages', () => {

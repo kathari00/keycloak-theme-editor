@@ -76,6 +76,15 @@ const builtInStates: Record<string, Record<string, Record<string, unknown>>> = {
     'minimal': {
       realm: { internationalizationEnabled: false, rememberMe: false, registrationAllowed: false, resetPasswordAllowed: false },
       social: { displayInfo: false, providers: [] },
+      enableWebAuthnConditionalUI: null,
+    },
+    'one-social-provider': {
+      social: {
+        displayInfo: true,
+        providers: [
+          { alias: 'google', providerId: 'google', displayName: 'Google', loginUrl: '#' },
+        ],
+      },
     },
     'invalid-state': {
       realm: { rememberMe: false, resetPasswordAllowed: false },
@@ -160,38 +169,47 @@ function ensureQuickStartElement(params: {
 }
 
 function ensureFooterLinkContainer(doc: Document): Element {
-  const existing = doc.querySelector('[data-kc-state="footer-legal-links"], .kc-footer-legal-links')
-    ?? doc.querySelector('a[data-kc-state="imprint-link"], a#kc-imprint-link, a[data-kc-state="data-protection-link"], a#kc-data-protection-link')?.parentElement
-    ?? doc.querySelector('.kc-horizontal-card-footer-row')
-    ?? doc.querySelector('#kc-info')
-    ?? doc.body
-
-  if (!existing) {
-    return doc.body
+  const wrapper = doc.querySelector<HTMLElement>('[data-kc-state="footer-legal-links"], .kc-footer-legal-links')
+  if (wrapper) {
+    return wrapper
   }
 
-  if (existing.matches('a[data-kc-state="imprint-link"], a#kc-imprint-link, a[data-kc-state="data-protection-link"], a#kc-data-protection-link')) {
-    return existing.parentElement ?? doc.body
+  const linkParent = doc.querySelector('a[data-kc-state="imprint-link"], a#kc-imprint-link, a[data-kc-state="data-protection-link"], a#kc-data-protection-link')?.parentElement
+  if (linkParent) {
+    return linkParent
   }
 
-  if (existing.classList?.contains('kc-footer-legal-links') || existing.getAttribute('data-kc-state') === 'footer-legal-links') {
-    return existing
+  const horizontalFooterRow = doc.querySelector<HTMLElement>('.kc-horizontal-card-footer-row')
+  const modernFooterRow = doc.querySelector<HTMLElement>('.kc-footer-row')
+  const socialProviders = doc.querySelector<HTMLElement>('#kc-social-providers')
+  const infoSection = doc.querySelector<HTMLElement>('#kc-info')
+
+  const newWrapper = doc.createElement('div')
+  newWrapper.className = 'kc-footer-legal-links'
+  newWrapper.setAttribute('data-kc-state', 'footer-legal-links')
+
+  if (horizontalFooterRow?.isConnected) {
+    horizontalFooterRow.appendChild(newWrapper)
+    return newWrapper
   }
 
-  let wrapper = doc.querySelector<HTMLElement>('[data-kc-state="footer-legal-links"], .kc-footer-legal-links')
-  if (!wrapper) {
-    wrapper = doc.createElement('div')
-    wrapper.className = 'kc-footer-legal-links'
-    wrapper.setAttribute('data-kc-state', 'footer-legal-links')
-    if (!existing.isConnected) {
-      doc.body.appendChild(wrapper)
-    }
-    else {
-      existing.appendChild(wrapper)
-    }
+  if (modernFooterRow?.isConnected) {
+    modernFooterRow.prepend(newWrapper)
+    return newWrapper
   }
 
-  return wrapper
+  if (socialProviders?.parentElement) {
+    socialProviders.insertAdjacentElement('afterend', newWrapper)
+    return newWrapper
+  }
+
+  if (infoSection?.isConnected) {
+    infoSection.appendChild(newWrapper)
+    return newWrapper
+  }
+
+  doc.body.appendChild(newWrapper)
+  return newWrapper
 }
 
 function injectQuickStartPlaceholders(html: string): string {
@@ -275,6 +293,27 @@ function injectQuickStartPlaceholders(html: string): string {
   dataProtectionLink.target = '_blank'
   dataProtectionLink.rel = 'noopener noreferrer'
   dataProtectionLink.style.display = 'none'
+
+  return dom.serialize()
+}
+
+function normalizePasskeysConditionalPreviewHtml(params: {
+  html: string
+  mode: 'button' | 'autofill'
+}): string {
+  const dom = new JSDOM(params.html)
+  const { document } = dom.window
+  const loginForm = document.getElementById('kc-form-login')
+  const passkeyButton = document.getElementById('kc-form-passkey-button')
+
+  if (params.mode === 'autofill') {
+    loginForm?.removeAttribute('style')
+    passkeyButton?.setAttribute('style', 'display:none')
+  }
+  else {
+    loginForm?.setAttribute('style', 'display:none')
+    passkeyButton?.removeAttribute('style')
+  }
 
   return dom.serialize()
 }
@@ -441,7 +480,12 @@ function normalizeStatesForPage(params: {
     if (typeof stateHtml !== 'string') {
       throw new TypeError(`Invalid preview state payload for ${variantId}/${pageId}/${stateId}: expected string HTML.`)
     }
-    const sanitizedStateHtml = injectQuickStartPlaceholders(stripScriptTags(stateHtml))
+    const strippedStateHtml = stripScriptTags(stateHtml)
+    const sanitizedStateHtml = injectQuickStartPlaceholders(
+      pageId === 'login-passkeys-conditional-authenticate.html' && stateId === 'default'
+        ? normalizePasskeysConditionalPreviewHtml({ html: strippedStateHtml, mode: 'button' })
+        : strippedStateHtml,
+    )
     validateStateHtmlContract({
       variantId,
       pageId,
@@ -449,6 +493,15 @@ function normalizeStatesForPage(params: {
       html: sanitizedStateHtml,
     })
     normalizedStates[stateId] = sanitizedStateHtml
+  }
+
+  if (pageId === 'login-passkeys-conditional-authenticate.html' && normalizedStates.default && !normalizedStates.autofill) {
+    normalizedStates.autofill = injectQuickStartPlaceholders(
+      normalizePasskeysConditionalPreviewHtml({
+        html: stripScriptTags(rawStates.default as string),
+        mode: 'autofill',
+      }),
+    )
   }
 
   return normalizedStates

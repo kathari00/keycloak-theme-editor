@@ -30,7 +30,7 @@ public final class ContextObjects {
       String key = String.valueOf(arguments.get(0));
       String pattern = messages.containsKey(key) ? messages.get(key) : key;
       if (arguments.size() == 1) {
-        return pattern;
+        return pattern.replace("''", "'");
       }
       Object[] values = arguments.subList(1, arguments.size()).stream()
           .map(value -> value == null ? "" : value.toString())
