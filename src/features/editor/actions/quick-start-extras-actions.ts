@@ -115,13 +115,19 @@ export const quickStartExtrasActions = {
     }
 
     if (options?.recordHistory !== false) {
+      const updateKeys = Object.keys(update) as (keyof QuickStartExtrasUpdate)[]
+      const undoSlice = Object.fromEntries(updateKeys.map(k => [k, presetOldValues[k]])) as Partial<QuickStartExtrasUpdate>
+      const redoSlice = Object.fromEntries(updateKeys.map(k => [k, presetNewValues[k]])) as Partial<QuickStartExtrasUpdate>
+
       historyActions.addUndoRedoAction({
         undo: () => {
-          presetStore.setState(presetOldValues)
-          assetStore.setState(assetOldValues)
+          presetStore.setState(undoSlice)
+          if (bgColorChanged) {
+            assetStore.setState(assetOldValues)
+          }
         },
         redo: () => {
-          presetStore.setState(presetNewValues)
+          presetStore.setState(redoSlice)
           if (hasBgColor && bgColorChanged) {
             assetStore.setState(assetNewValues)
           }

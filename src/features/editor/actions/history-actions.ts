@@ -45,17 +45,27 @@ function getPreferredScopeKey(params: {
   primaryStack: UndoRedoAction[]
   secondaryScopeKey: string
   secondaryStack: UndoRedoAction[]
+  preferRecent?: boolean
 }): string | null {
   const {
     primaryScopeKey,
     primaryStack,
     secondaryScopeKey,
     secondaryStack,
+    preferRecent = true,
   } = params
-  if (primaryStack.length > 0) {
+  const primaryTop = primaryStack[primaryStack.length - 1]
+  const secondaryTop = secondaryStack[secondaryStack.length - 1]
+  if (primaryTop && secondaryTop) {
+    const primaryTime = primaryTop.createdAt
+    const secondaryTime = secondaryTop.createdAt
+    const pickPrimary = preferRecent ? primaryTime >= secondaryTime : primaryTime <= secondaryTime
+    return pickPrimary ? primaryScopeKey : secondaryScopeKey
+  }
+  if (primaryTop) {
     return primaryScopeKey
   }
-  if (secondaryStack.length > 0) {
+  if (secondaryTop) {
     return secondaryScopeKey
   }
   return null
@@ -77,6 +87,7 @@ function getVisibleHistoryState(state: typeof historyStore.state, modeScopeKey: 
     primaryStack: modeStacks.redoStack,
     secondaryScopeKey: themeScopeKey,
     secondaryStack: themeStacks.redoStack,
+    preferRecent: false,
   })
 
   return {
@@ -185,6 +196,7 @@ export const historyActions = {
       primaryStack: getScopeStacks(state, modeScopeKey).redoStack,
       secondaryScopeKey: themeScopeKey,
       secondaryStack: getScopeStacks(state, themeScopeKey).redoStack,
+      preferRecent: false,
     })
     if (!scopeKey) {
       return false
@@ -223,11 +235,11 @@ export const historyActions = {
     const scopeStacks = getScopeStacks(state, scopeKey)
     const nextAction: UndoRedoAction = {
       ...action,
-      createdAt: action.createdAt ?? Date.now(),
+      createdAt: action.createdAt || Date.now(),
     }
     const lastAction = scopeStacks.undoStack[scopeStacks.undoStack.length - 1]
     const coalesceWindowMs = nextAction.coalesceWindowMs ?? DEFAULT_COALESCE_WINDOW_MS
-    const elapsedMs = (nextAction.createdAt ?? 0) - (lastAction?.createdAt ?? 0)
+    const elapsedMs = nextAction.createdAt - (lastAction?.createdAt ?? 0)
     const coalesceKey = nextAction.coalesceKey
     const canCoalesce
       = Boolean(coalesceKey)
