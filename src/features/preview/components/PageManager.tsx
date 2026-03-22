@@ -1,3 +1,4 @@
+import type { KeyboardEvent } from 'react'
 import {
   Bullseye,
   EmptyState,
@@ -11,7 +12,7 @@ import {
   StackItem,
 } from '@patternfly/react-core'
 import { SearchIcon } from '@patternfly/react-icons'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import SidebarPanel from '../../../components/SidebarPanel'
 import { usePreviewContext } from '../hooks/use-preview-context'
 import { usePreviewPages } from '../hooks/usePreviewEditorState'
@@ -20,6 +21,7 @@ export default function PageManager() {
   const { pages } = usePreviewPages()
   const { activePageId, setActivePage } = usePreviewContext()
   const [query, setQuery] = useState('')
+  const pageButtonsRef = useRef(new Map<string, HTMLButtonElement>())
 
   const normalizedQuery = query.trim().toLowerCase()
   const filteredPages = normalizedQuery
@@ -28,6 +30,49 @@ export default function PageManager() {
         return searchableText.includes(normalizedQuery)
       })
     : pages
+
+  const focusPageAtIndex = (index: number) => {
+    const nextPage = filteredPages[index]
+    if (!nextPage) {
+      return
+    }
+
+    pageButtonsRef.current.get(nextPage.id)?.focus()
+  }
+
+  const handleSearchKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'ArrowDown' && filteredPages.length > 0) {
+      event.preventDefault()
+      focusPageAtIndex(0)
+    }
+  }
+
+  const handlePageKeyDown = (event: KeyboardEvent<HTMLButtonElement>, pageIndex: number) => {
+    switch (event.key) {
+      case 'ArrowDown':
+        event.preventDefault()
+        focusPageAtIndex(Math.min(pageIndex + 1, filteredPages.length - 1))
+        break
+      case 'ArrowUp':
+        event.preventDefault()
+        if (pageIndex === 0) {
+          const searchInput = document.getElementById('page-manager-search') as HTMLInputElement | null
+          searchInput?.focus()
+          break
+        }
+        focusPageAtIndex(pageIndex - 1)
+        break
+      case 'Home':
+        event.preventDefault()
+        focusPageAtIndex(0)
+        break
+      case 'End':
+        event.preventDefault()
+        focusPageAtIndex(filteredPages.length - 1)
+        break
+    }
+  }
+
   const content = filteredPages.length > 0
     ? (
         <Nav
@@ -36,24 +81,31 @@ export default function PageManager() {
           style={{ minHeight: 0, height: '100%', overflowY: 'auto' }}
         >
           <NavList>
-            {filteredPages.map((page) => {
+            {filteredPages.map((page, pageIndex) => {
               const isActive = activePageId === page.id
               return (
                 <NavItem
                   key={page.id}
                   itemId={page.id}
                   isActive={isActive}
-                  preventDefault
-                  to={`#${page.id}`}
                   onClick={() => setActivePage(page.id)}
                   className="page-manager-nav__item"
                 >
-                  <span
+                  <button
+                    ref={(element) => {
+                      if (element) {
+                        pageButtonsRef.current.set(page.id, element)
+                      }
+                      else {
+                        pageButtonsRef.current.delete(page.id)
+                      }
+                    }}
+                    type="button"
                     className="page-manager-nav__label"
-                    aria-current={isActive ? 'page' : undefined}
+                    onKeyDown={event => handlePageKeyDown(event, pageIndex)}
                   >
                     {page.name || page.id}
-                  </span>
+                  </button>
                 </NavItem>
               )
             })}
@@ -100,6 +152,7 @@ export default function PageManager() {
               value={query}
               onChange={(_event, value) => setQuery(value)}
               onClear={() => setQuery('')}
+              onKeyDown={handleSearchKeyDown}
             />
           </StackItem>
           <StackItem isFilled style={{ minHeight: 0 }}>

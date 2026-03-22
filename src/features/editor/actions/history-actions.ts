@@ -57,8 +57,8 @@ function getPreferredScopeKey(params: {
   const primaryTop = primaryStack[primaryStack.length - 1]
   const secondaryTop = secondaryStack[secondaryStack.length - 1]
   if (primaryTop && secondaryTop) {
-    const primaryTime = primaryTop.createdAt
-    const secondaryTime = secondaryTop.createdAt
+    const primaryTime = primaryTop.createdAt ?? 0
+    const secondaryTime = secondaryTop.createdAt ?? 0
     const pickPrimary = preferRecent ? primaryTime >= secondaryTime : primaryTime <= secondaryTime
     return pickPrimary ? primaryScopeKey : secondaryScopeKey
   }
@@ -239,7 +239,7 @@ export const historyActions = {
     }
     const lastAction = scopeStacks.undoStack[scopeStacks.undoStack.length - 1]
     const coalesceWindowMs = nextAction.coalesceWindowMs ?? DEFAULT_COALESCE_WINDOW_MS
-    const elapsedMs = nextAction.createdAt - (lastAction?.createdAt ?? 0)
+    const elapsedMs = nextAction.createdAt! - (lastAction?.createdAt ?? 0)
     const coalesceKey = nextAction.coalesceKey
     const canCoalesce
       = Boolean(coalesceKey)

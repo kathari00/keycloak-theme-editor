@@ -147,7 +147,8 @@ p {
 }
 
 .page-manager-nav .pf-v6-c-nav__list {
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 0.25rem;
 }
 
