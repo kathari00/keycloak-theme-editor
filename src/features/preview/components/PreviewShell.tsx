@@ -20,6 +20,7 @@ interface PreviewStyleParams {
   themeStylesPath: string
   stylesCss: string
   quickStartBaseCss: string
+  googleFontUrls: string[]
   quickStartOverridesCss: string
   uploadedFontsCss: string
   uploadedImagesCss: string
@@ -50,12 +51,45 @@ function ensureBaseHref(doc: Document, id: string, href: string): void {
   base.href = href
 }
 
-function syncPreviewDocumentStyles(params: PreviewStyleParams): void {
+/**
+ * Ensures <link> elements exist for each Google Font URL.
+ */
+function syncGoogleFontLinks(doc: Document, urls: string[]): void {
+  const activeIds = new Set<string>()
+
+  for (const url of urls) {
+    const linkId = `preview-google-font-${hashUrl(url)}`
+    activeIds.add(linkId)
+    if (doc.getElementById(linkId))
+      continue
+
+    const link = doc.createElement('link')
+    link.id = linkId
+    link.rel = 'stylesheet'
+    link.setAttribute('data-google-font', '')
+    link.href = url
+    doc.head.appendChild(link)
+  }
+
+  doc.querySelectorAll('link[data-google-font]').forEach((el) => {
+    if (!activeIds.has(el.id))
+      el.remove()
+  })
+}
+
+function hashUrl(url: string): string {
+  let hash = 0
+  for (let i = 0; i < url.length; i++) {
+    hash = ((hash << 5) - hash + url.charCodeAt(i)) | 0
+  }
+  return (hash >>> 0).toString(36)
+}
+
+function applyPreviewStyles(params: PreviewStyleParams): void {
   const {
     doc,
-    themeStylesPath,
-    stylesCss,
     quickStartBaseCss,
+    stylesCss,
     quickStartOverridesCss,
     uploadedFontsCss,
     uploadedImagesCss,
@@ -64,10 +98,6 @@ function syncPreviewDocumentStyles(params: PreviewStyleParams): void {
     isDarkMode,
   } = params
 
-  if (!doc.head || !doc.body)
-    return
-
-  ensureBaseHref(doc, 'preview-theme-base', new URL(themeStylesPath, window.location.href).toString())
   const styles = [
     ['preview-quick-start-base', quickStartBaseCss],
     ['preview-theme-styles-inline', stylesCss],
@@ -83,6 +113,17 @@ function syncPreviewDocumentStyles(params: PreviewStyleParams): void {
   }
 
   syncPreviewDarkModeClasses(doc, darkModeClasses, isDarkMode)
+}
+
+function syncPreviewDocumentStyles(params: PreviewStyleParams): void {
+  const { doc, themeStylesPath, googleFontUrls } = params
+
+  if (!doc.head || !doc.body)
+    return
+
+  ensureBaseHref(doc, 'preview-theme-base', new URL(themeStylesPath, window.location.href).toString())
+  syncGoogleFontLinks(doc, googleFontUrls)
+  applyPreviewStyles(params)
 }
 
 function isLegalInfoLink(anchor: HTMLAnchorElement): boolean {
@@ -134,15 +175,16 @@ export function PreviewShell() {
         uploadedAssets: assets.uploadedAssets,
         appliedAssets: assets.appliedAssets,
       })
-    : { quickStartCss: '', uploadedFontsCss: '', uploadedImagesCss: '', appliedAssetsCss: '' }
+    : { googleFontUrls: [] as string[], quickStartCss: '', uploadedFontsCss: '', uploadedImagesCss: '', appliedAssetsCss: '' }
 
   const editorStyleParams = useMemo(() => ({
     quickStartBaseCss: isPresetTheme ? themeQuickStartDefaults : '',
+    googleFontUrls: editorCss.googleFontUrls,
     quickStartOverridesCss: editorCss.quickStartCss,
     uploadedFontsCss: editorCss.uploadedFontsCss,
     uploadedImagesCss: editorCss.uploadedImagesCss,
     appliedAssetsCss: editorCss.appliedAssetsCss,
-  }), [isPresetTheme, themeQuickStartDefaults, editorCss.quickStartCss, editorCss.uploadedFontsCss, editorCss.uploadedImagesCss, editorCss.appliedAssetsCss])
+  }), [isPresetTheme, themeQuickStartDefaults, editorCss.googleFontUrls, editorCss.quickStartCss, editorCss.uploadedFontsCss, editorCss.uploadedImagesCss, editorCss.appliedAssetsCss])
 
   const srcDoc = sanitizePreviewHtml(pageHtml)
 

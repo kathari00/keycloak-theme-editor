@@ -78,3 +78,10 @@ export function buildGoogleFontsImportCSS(families: string[]): string {
     return ''
   return `@import url('${buildGoogleFontsHref(fonts)}');`
 }
+
+export function buildGoogleFontUrl(family: string): string {
+  const font = GOOGLE_FONTS.find(f => f.family === family)
+  if (!font)
+    return ''
+  return buildGoogleFontsHref([font])
+}

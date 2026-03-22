@@ -35,6 +35,23 @@ describe('sanitizePreviewHtml', () => {
     expect(result).toContain('action="#"')
   })
 
+  it('removes nested browsing contexts that can stall iframe load', () => {
+    const html = `
+      <body>
+        <p>Logging out</p>
+        <iframe src="https://example.com/logout" style="display:none;"></iframe>
+        <object data="/preview.pdf"></object>
+        <embed src="/preview.svg" />
+      </body>
+    `
+
+    const result = sanitizePreviewHtml(html)
+    expect(result).not.toContain('<iframe')
+    expect(result).not.toContain('<object')
+    expect(result).not.toContain('<embed')
+    expect(result).toContain('<p>Logging out</p>')
+  })
+
   it('returns fallback html for empty input', () => {
     expect(sanitizePreviewHtml('')).toBe('<!doctype html><html><body></body></html>')
   })

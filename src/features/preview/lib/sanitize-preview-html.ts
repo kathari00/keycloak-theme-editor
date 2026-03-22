@@ -10,6 +10,7 @@ export function sanitizePreviewHtml(html: string): string {
   const doc = new DOMParser().parseFromString(html, 'text/html')
 
   doc.querySelectorAll('script').forEach(element => element.remove())
+  doc.querySelectorAll('iframe, frame, object, embed').forEach(element => element.remove())
 
   doc.querySelectorAll('*').forEach((element) => {
     for (const attributeName of element.getAttributeNames()) {

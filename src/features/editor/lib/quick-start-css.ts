@@ -111,13 +111,13 @@ function buildQuickStartVisibilityState(options: QuickStartCssOptions): QuickSta
   }
 }
 
-interface QuickStartCssParts {
+export interface QuickStartCssParts {
   googleFontsImport: string
   rootVariablesCss: string
   rulesCss: string
 }
 
-function buildQuickStartCssParts(options: QuickStartCssOptions): QuickStartCssParts {
+export function buildQuickStartCssParts(options: QuickStartCssOptions): QuickStartCssParts {
   const {
     primaryColor,
     secondaryColor,
