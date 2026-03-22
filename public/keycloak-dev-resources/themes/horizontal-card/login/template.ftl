@@ -226,9 +226,14 @@
         </div>
     </div>
 
-    <div class="kc-horizontal-card-footer-under-card">
+    <#assign footerContent>
         <@loginFooter.content/>
-    </div>
+    </#assign>
+    <#if footerContent?markup_string?trim?has_content>
+        <div class="kc-horizontal-card-footer-under-card">
+            ${footerContent?no_esc}
+        </div>
+    </#if>
 </div>
 </body>
 </html>

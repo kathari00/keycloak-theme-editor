@@ -226,8 +226,6 @@
 
                 <#nested "form">
 
-                <#nested "socialProviders">
-
         <#if auth?has_content && auth.showTryAnotherWayLink()>
           <form id="kc-select-try-another-way-form" action="${url.loginAction}" method="post" novalidate="novalidate">
               <input type="hidden" name="tryAnotherWay" value="on"/>
@@ -249,14 +247,16 @@
             </div>
           </#if>
 
-            <div class="${properties.kcLoginMainFooter!}">
-            </div>
+                <#nested "socialProviders">
 
           <#assign hasLanguageSelector = realm.internationalizationEnabled && locale.supported?size gt 1>
           <#assign hasLegalLinks = msg("imprintUrl")?has_content || msg("dataProtectionUrl")?has_content>
-          <#if hasLanguageSelector || hasLegalLinks>
+          <#if hasLegalLinks || hasLanguageSelector>
             <div class="${properties.kcLoginMainFooter!}">
               <div class="${properties.kcLoginMainFooterBand!} kc-footer-row" data-kc-state="footer-row">
+                <#if hasLegalLinks>
+                  <@loginFooter.content/>
+                </#if>
                 <#if hasLanguageSelector>
                   <div class="${properties.kcLoginMainFooterBandItem!} kc-footer-language" data-kc-state="language-selector">
                     <select
@@ -274,16 +274,6 @@
                         </option>
                       </#list>
                     </select>
-                  </div>
-                </#if>
-                <#if hasLegalLinks>
-                  <div class="kc-footer-legal-links ${properties.kcLoginMainFooterBandItem!}">
-                    <#if msg("imprintUrl")?has_content>
-                      <a data-kc-state="imprint-link" href="${msg("imprintUrl")}" target="_blank" rel="noopener noreferrer">${msg("imprintLabel")}</a>
-                    </#if>
-                    <#if msg("dataProtectionUrl")?has_content>
-                      <a data-kc-state="data-protection-link" href="${msg("dataProtectionUrl")}" target="_blank" rel="noopener noreferrer">${msg("dataProtectionLabel")}</a>
-                    </#if>
                   </div>
                 </#if>
               </div>

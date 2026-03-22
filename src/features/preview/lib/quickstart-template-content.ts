@@ -62,7 +62,10 @@ export function applyQuickStartTemplateContent(doc: Document, options: QuickStar
       anyLinkVisible = true
   }
 
-  // Toggle hidden on the legal footer container to match link visibility
+  // Toggle visibility on the link containers to match link visibility
+  if (linksContainer)
+    linksContainer.style.display = anyLinkVisible ? '' : 'none'
+
   if (footerContainer) {
     if (anyLinkVisible)
       footerContainer.removeAttribute('hidden')

@@ -266,7 +266,7 @@
           </form>
         </#if>
 
-          <div class="${properties.kcLoginMainFooter!}">
+          <#assign footerContent>
               <#nested "socialProviders">
 
               <#if displayInfo>
@@ -276,7 +276,12 @@
                       </div>
                   </div>
               </#if>
-          </div>
+          </#assign>
+          <#if footerContent?markup_string?trim?has_content>
+            <div class="${properties.kcLoginMainFooter!}">
+              ${footerContent?no_esc}
+            </div>
+          </#if>
       </div>
 
       <@loginFooter.content/>

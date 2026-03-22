@@ -1,3 +1,11 @@
+body[data-page-id="login-delete-account-confirm"] p:nth-of-type(2) {
+  margin-top: 10px;
+}
+
+body[data-page-id="login-delete-account-confirm"] form:nth-of-type(1) > p:nth-of-type(1) {
+  margin-bottom: 10px;
+}
+
 .checkbox {
   display: flex;
 }
@@ -45,6 +53,14 @@ body.pf-v5-theme-dark, body#keycloak-bg.pf-v5-theme-dark{
   justify-content: center;
   gap: 12px;
   padding: clamp(16px, 4vw, 48px);
+}
+
+body .kcLogin, body#keycloak-bg .kcLogin, body .kcLoginClass, body#keycloak-bg .kcLoginClass{
+  background-color: var(--quickstart-bg-color);
+  background-image: var(--quickstart-bg-image);
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
 }
 
 #kc-header{
@@ -207,6 +223,10 @@ h1, h2, h3, h4, h5, h6, body h1, body h2, body h3, body h4, body h5, body h6, ht
   font-family: var(--quickstart-heading-font-family, inherit);
 }
 
+body[data-page-id="login-login-oauth-grant"] h3:nth-of-type(1) {
+  margin-bottom: 10px;
+}
+
 .kc-horizontal-card-subtitle{
   margin: 0;
   color: var(--quickstart-text-secondary-light);
@@ -219,7 +239,7 @@ h1, h2, h3, h4, h5, h6, body h1, body h2, body h3, body h4, body h5, body h6, ht
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 20px;
+  gap: 4px;
 }
 
 .kc-horizontal-card-subtitle-separator{
@@ -246,20 +266,30 @@ body.pf-v5-theme-dark .kc-horizontal-card-subtitle, body#keycloak-bg.pf-v5-theme
   min-height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   height: 100%;
 }
 
-#kc-content-wrapper ul:not([class]):not([id]){
+#kc-content-wrapper:not(:has(#kc-form)){
+  gap: 1rem;
+}
+
+#kc-content-wrapper:not(:has(#kc-form)) > #kc-form-buttons,
+#kc-content-wrapper:not(:has(#kc-form)) > .form-actions{
+  padding-top: 0.5rem;
+}
+
+#kc-content-wrapper ul:not([class]):not([id]),
+.kc-delete-account-list{
   list-style: none;
-  margin: 0.75rem 0 0;
+  margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-#kc-content-wrapper ul:not([class]):not([id]) > li{
+#kc-content-wrapper ul:not([class]):not([id]) > li,
+.kc-delete-account-list > li{
   list-style: none;
   color: var(--quickstart-text-primary-light);
   margin: 0;
@@ -270,7 +300,9 @@ body.pf-v5-theme-dark .kc-horizontal-card-subtitle, body#keycloak-bg.pf-v5-theme
 }
 
 body.pf-v5-theme-dark #kc-content-wrapper ul:not([class]):not([id]) > li,
-body#keycloak-bg.pf-v5-theme-dark #kc-content-wrapper ul:not([class]):not([id]) > li{
+body#keycloak-bg.pf-v5-theme-dark #kc-content-wrapper ul:not([class]):not([id]) > li,
+body.pf-v5-theme-dark .kc-delete-account-list > li,
+body#keycloak-bg.pf-v5-theme-dark .kc-delete-account-list > li{
   color: var(--quickstart-text-primary-dark);
 }
 
@@ -305,8 +337,20 @@ body#keycloak-bg.pf-v5-theme-dark #kc-content-wrapper ul:not([class]):not([id]) 
   margin-top: auto;
 }
 
+#kc-user-verify-device-user-code-form{
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+#kc-user-verify-device-user-code-form > .kcFormGroupClass:last-child{
+  margin-top: auto;
+}
+
 #kc-form-buttons, .form-actions{
   margin-top: auto;
+  padding-top: 1.25rem;
   margin-bottom: 0;
   display: flex;
   flex-direction: column;
@@ -320,10 +364,22 @@ body#keycloak-bg.pf-v5-theme-dark #kc-content-wrapper ul:not([class]):not([id]) 
 }
 
 #kc-form-buttons > *, .form-actions > *{
-  width: 100%;
+  width: 100% !important;
   box-sizing: border-box;
   margin-left: 0 !important;
   margin-right: 0 !important;
+}
+
+#kc-form-buttons > div, .form-actions > div{
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+#kc-form-buttons button, #kc-form-buttons input[type="submit"],
+.form-actions button, .form-actions input[type="submit"]{
+  width: 100% !important;
+  box-sizing: border-box;
 }
 
 input.kcInputClass,
@@ -333,6 +389,7 @@ textarea.kcInputClass,
 .kcButtonClass,
 .kcButtonPrimaryClass,
 .kcButtonSecondaryClass,
+.kcButtonDefaultClass,
 .kcFormSocialAccountListButtonClass,
 .kcPanelMainBodyClass,
 .kcLoginMain,
@@ -351,24 +408,45 @@ textarea.kcInputClass,
   cursor: pointer;
   font: inherit;
   line-height: 1.2;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
 }
 
-.kcButtonPrimaryClass, button.kcButtonPrimaryClass, a.kcButtonPrimaryClass, button[type="submit"], input[type="submit"]{
+.kcButtonPrimaryClass, button.kcButtonPrimaryClass, a.kcButtonPrimaryClass, button[type="submit"]:not([name="cancel-aia"]):not([name="cancel"]):not(.kcSelectAuthListItemClass), input[type="submit"]{
   border-color: var(--quickstart-primary-color);
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
 }
 
-.kcButtonPrimaryClass, button.kcButtonPrimaryClass, input.kcButtonPrimaryClass{
+.kcButtonPrimaryClass, button.kcButtonPrimaryClass, input.kcButtonPrimaryClass, button[type="submit"]:not([name="cancel-aia"]):not([name="cancel"]):not(.kcSelectAuthListItemClass), input[type="submit"]{
   background: var(--quickstart-primary-color, #0b57d0);
   border-color: var(--quickstart-primary-color, #0b57d0);
   color: #ffffff;
 }
 
-.kcButtonPrimaryClass:hover, button.kcButtonPrimaryClass:hover, input.kcButtonPrimaryClass:hover{
-  filter: brightness(1.03);
+button[type="submit"]:not([name="cancel-aia"]):not([name="cancel"]):not(.kcSelectAuthListItemClass), input[type="submit"]{
+  border-radius: var(--quickstart-border-radius, 28px);
+  border: none;
+  padding: 0.6rem 1.1rem;
+  min-height: 40px;
+  font-weight: 500;
+  cursor: pointer;
+  font: inherit;
+  line-height: 1.2;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
 }
 
-.kcButtonPrimaryClass:hover, .kcButtonPrimaryClass:focus, button[type="submit"]:hover, button[type="submit"]:focus{
+.kcButtonPrimaryClass:hover, .kcButtonPrimaryClass:focus, button[type="submit"]:hover, button[type="submit"]:focus, input[type="submit"]:hover, input[type="submit"]:focus:hover:focus{
   filter: brightness(0.9);
+}
+
+.kcButtonPrimaryClass:active, button[type="submit"]:active, input[type="submit"]:active:active{
+  filter: brightness(0.8);
+  transform: translateY(1px);
 }
 
 .kcButtonBlockClass{
@@ -379,10 +457,58 @@ textarea.kcInputClass,
   margin-bottom: 1.25rem;
 }
 
+.kcFormGroupClass:has(> label):has(:is(input.kcInputClass, .kcInputClass input, select.kcInputClass, textarea.kcInputClass, .kcInputGroup)) {
+  position: relative;
+  margin-bottom: 0;
+  padding-bottom: 1.5rem;
+}
+
 #kc-form-login .kcFormSettingClass{
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+#kc-reset-password-form .kcFormSettingClass{
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+#kc-reset-password-form .kcFormSettingClass #kc-form-options{
+  order: 1;
+  width: 100%;
+}
+
+#kc-reset-password-form .kcFormSettingClass #kc-form-buttons{
+  width: 100%;
+}
+
+#kc-reset-password-form .kcFormOptionsWrapperClass{
+  margin-bottom: 0;
+}
+
+#kc-reset-password-form .kcFormOptionsWrapperClass a{
+  border: 1px solid var(--quickstart-primary-color, #0b57d0);
+  background: transparent;
+  color: var(--quickstart-primary-color, #0b57d0);
+  text-decoration: none;
+  padding: 0.6rem 1.1rem;
+  min-height: 40px;
+  border-radius: var(--quickstart-border-radius, 28px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font: inherit;
+  line-height: 1.2;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+#kc-reset-password-form .kcFormOptionsWrapperClass a:hover{
+  background: color-mix(in srgb, var(--quickstart-primary-color, #0b57d0) 12%, transparent);
+  text-decoration: none;
 }
 
 .kcLabelClass{
@@ -422,6 +548,93 @@ textarea.kcInputClass,
 
 #kc-totp-settings-form{
   margin-top: 1rem;
+}
+
+#saveTOTPBtn{
+  margin-top: 1.25rem;
+}
+
+#cancelTOTPBtn{
+  margin-top: 0.75rem;
+}
+
+#kc-otp-reset-form-description{
+  margin-bottom: 0.75rem;
+}
+
+input[type="radio"][name="selectedCredentialId"]{
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+label.kcLoginOTPListClass{
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid var(--quickstart-card-border-color, #d1d5db);
+  border-radius: var(--quickstart-border-radius, 28px);
+  cursor: pointer;
+  margin-bottom: 0.5rem;
+  transition: border-color 150ms, background 150ms;
+}
+
+label.kcLoginOTPListClass::before{
+  content: '';
+  width: 1.1rem;
+  height: 1.1rem;
+  flex: 0 0 1.1rem;
+  border-radius: 50%;
+  border: 2px solid var(--quickstart-card-border-color, #d1d5db);
+  box-sizing: border-box;
+  transition: border-color 150ms, box-shadow 150ms;
+}
+
+input[type="radio"][name="selectedCredentialId"]:checked + label.kcLoginOTPListClass{
+  border-color: var(--quickstart-primary-color, #0b57d0);
+  background: color-mix(in srgb, var(--quickstart-primary-color, #0b57d0) 6%, transparent);
+}
+
+input[type="radio"][name="selectedCredentialId"]:checked + label.kcLoginOTPListClass::before{
+  border-color: var(--quickstart-primary-color, #0b57d0);
+  box-shadow: inset 0 0 0 3px var(--quickstart-primary-color, #0b57d0);
+}
+
+label.kcLoginOTPListClass:hover{
+  border-color: var(--quickstart-primary-color, #0b57d0);
+}
+
+input[type="radio"][name="selectedCredentialId"]:focus-visible + label.kcLoginOTPListClass{
+  outline: 2px solid var(--quickstart-primary-color, #0b57d0);
+  outline-offset: 2px;
+}
+
+.kcLoginOTPListItemHeaderClass{
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.kcLoginOTPListItemIconBodyClass{
+  display: none;
+}
+
+.kcLoginOTPListItemTitleClass{
+  font-weight: 500;
+}
+
+body.pf-v5-theme-dark label.kcLoginOTPListClass{
+  border-color: var(--quickstart-card-border-color-dark, #2b2c2e);
+}
+
+body.pf-v5-theme-dark label.kcLoginOTPListClass::before{
+  border-color: var(--quickstart-card-border-color-dark, #2b2c2e);
+}
+
+body.pf-v5-theme-dark input[type="radio"][name="selectedCredentialId"]:checked + label.kcLoginOTPListClass{
+  border-color: var(--quickstart-primary-color, #0b57d0);
+  background: color-mix(in srgb, var(--quickstart-primary-color, #0b57d0) 10%, transparent);
 }
 
 .kcInputGroup{
@@ -466,7 +679,7 @@ input.kcInputClass:focus, .kcInputClass input:focus, select.kcInputClass:focus, 
   border-bottom-color: var(--quickstart-primary-color);
 }
 
-input.kcInputClass:focus, .kcInputClass input:focus, .kcInputGroupItemClass.kcFill > input:focus, .kcInputGroupItemClass.kcFill > .kcInputClass input:focus, input[type="password"]:focus, input[type="text"]:focus, input[type="email"]:focus, input[type="tel"]:focus, input[type="number"]:focus, input.kcInputClass[aria-invalid="true"], .kcInputClass input[aria-invalid="true"], .kcInputGroupItemClass.kcFill > input[aria-invalid="true"], .kcInputGroupItemClass.kcFill > .kcInputClass input[aria-invalid="true"]{
+.kcInputGroup input.kcInputClass:focus, .kcInputGroup .kcInputClass input:focus, .kcInputGroupItemClass.kcFill > input:focus, .kcInputGroupItemClass.kcFill > .kcInputClass input:focus, input.kcInputClass[aria-invalid="true"], .kcInputClass input[aria-invalid="true"], .kcInputGroupItemClass.kcFill > input[aria-invalid="true"], .kcInputGroupItemClass.kcFill > .kcInputClass input[aria-invalid="true"]{
   box-shadow: none;
 }
 
@@ -498,7 +711,7 @@ body.pf-v5-theme-dark .kcButtonClass, body.pf-v5-theme-dark button.kcButtonClass
   border-color: #2b2c2e;
 }
 
-.kcButtonSecondaryClass, #kc-form-buttons [name="cancel-aia"], #kc-form-buttons [name="cancel"], #kc-form-buttons #kc-cancel, #kc-form-buttons #kc-decline, #backToApplication{
+.kcButtonSecondaryClass, .kcButtonDefaultClass, button.kcButtonClass[name="cancel-aia"], button[name="cancel-aia"], button[name="cancel"],#kc-form-buttons [name="cancel-aia"], #kc-form-buttons [name="cancel"], #kc-form-buttons #kc-cancel, #kc-form-buttons #kc-decline, .form-actions [name="cancel-aia"], .form-actions [name="cancel"], .form-actions #kc-cancel, .form-actions #kc-decline, #backToApplication, #kc-registration-container #kc-registration > a, #kc-registration-container #kc-registration > span > a{
   border: 1px solid var(--quickstart-primary-color, #0b57d0);
   background: transparent;
   color: var(--quickstart-primary-color, #0b57d0);
@@ -514,17 +727,17 @@ body.pf-v5-theme-dark .kcButtonClass, body.pf-v5-theme-dark button.kcButtonClass
   line-height: 1.2;
 }
 
-.kcButtonSecondaryClass:hover, #kc-form-buttons [name="cancel-aia"]:hover, #kc-form-buttons [name="cancel"]:hover, #kc-form-buttons #kc-cancel:hover, #kc-form-buttons #kc-decline:hover, #backToApplication:hover, .kcButtonLinkClass:hover{
+.kcButtonSecondaryClass:hover, .kcButtonDefaultClass:hover, .kcButtonClass:not(.kcButtonPrimaryClass):hover, #kc-form-buttons [name="cancel-aia"]:hover, #kc-form-buttons [name="cancel"]:hover, #kc-form-buttons #kc-cancel:hover, #kc-form-buttons #kc-decline:hover, .form-actions [name="cancel-aia"]:hover, .form-actions [name="cancel"]:hover, .form-actions #kc-cancel:hover, .form-actions #kc-decline:hover, #backToApplication:hover, .kcButtonLinkClass:hover, #kc-registration-container #kc-registration > a:hover, #kc-registration-container #kc-registration > span > a:hover{
   text-decoration: none;
   background: color-mix(in srgb, var(--quickstart-primary-color, #0b57d0) 12%, transparent);
 }
 
-body.pf-v5-theme-dark .kcButtonSecondaryClass, body.pf-v5-theme-dark #kc-form-buttons [name="cancel-aia"], body.pf-v5-theme-dark #kc-form-buttons [name="cancel"], body.pf-v5-theme-dark #kc-form-buttons #kc-cancel, body.pf-v5-theme-dark #kc-form-buttons #kc-decline, body.pf-v5-theme-dark #backToApplication{
+body.pf-v5-theme-dark .kcButtonSecondaryClass, body.pf-v5-theme-dark .kcButtonDefaultClass, body.pf-v5-theme-dark button[name="cancel-aia"], button[name="cancel"],body.pf-v5-theme-dark #kc-form-buttons [name="cancel-aia"], body.pf-v5-theme-dark #kc-form-buttons [name="cancel"], body.pf-v5-theme-dark #kc-form-buttons #kc-cancel, body.pf-v5-theme-dark #kc-form-buttons #kc-decline, body.pf-v5-theme-dark .form-actions [name="cancel-aia"], body.pf-v5-theme-dark .form-actions [name="cancel"], body.pf-v5-theme-dark .form-actions #kc-cancel, body.pf-v5-theme-dark .form-actions #kc-decline, body.pf-v5-theme-dark #backToApplication, body.pf-v5-theme-dark #kc-registration-container #kc-registration > a, body.pf-v5-theme-dark #kc-registration-container #kc-registration > span > a{
   border-color: var(--quickstart-primary-color, #a8c7fa);
   color: var(--quickstart-primary-color, #a8c7fa);
 }
 
-body.pf-v5-theme-dark .kcButtonSecondaryClass:hover, body.pf-v5-theme-dark #kc-form-buttons [name="cancel-aia"]:hover, body.pf-v5-theme-dark #kc-form-buttons [name="cancel"]:hover, body.pf-v5-theme-dark #kc-form-buttons #kc-cancel:hover, body.pf-v5-theme-dark #kc-form-buttons #kc-decline:hover, body.pf-v5-theme-dark #backToApplication:hover, body.pf-v5-theme-dark .kcButtonLinkClass:hover{
+body.pf-v5-theme-dark .kcButtonSecondaryClass:hover, body.pf-v5-theme-dark .kcButtonDefaultClass:hover, body.pf-v5-theme-dark .kcButtonClass:not(.kcButtonPrimaryClass):hover, body.pf-v5-theme-dark #kc-form-buttons [name="cancel-aia"]:hover, body.pf-v5-theme-dark #kc-form-buttons [name="cancel"]:hover, body.pf-v5-theme-dark #kc-form-buttons #kc-cancel:hover, body.pf-v5-theme-dark #kc-form-buttons #kc-decline:hover, body.pf-v5-theme-dark .form-actions [name="cancel-aia"]:hover, body.pf-v5-theme-dark .form-actions [name="cancel"]:hover, body.pf-v5-theme-dark .form-actions #kc-cancel:hover, body.pf-v5-theme-dark .form-actions #kc-decline:hover, body.pf-v5-theme-dark #backToApplication:hover, body.pf-v5-theme-dark .kcButtonLinkClass:hover, body.pf-v5-theme-dark #kc-registration-container #kc-registration > a:hover, body.pf-v5-theme-dark #kc-registration-container #kc-registration > span > a:hover{
   background: color-mix(in srgb, var(--quickstart-primary-color, #a8c7fa) 14%, transparent);
 }
 
@@ -598,14 +811,24 @@ body.pf-v5-theme-dark input.kcInputClass:focus, body.pf-v5-theme-dark .kcInputCl
   background: transparent;
 }
 
-.kcInputErrorMessageClass, #input-error.kcInputErrorMessageClass{
+.kcFormGroupClass .kcInputErrorMessageClass,
+.kcFormGroupClass #input-error.kcInputErrorMessageClass,
+.kcInputErrorMessageClass,
+#input-error.kcInputErrorMessageClass{
   display: inline-flex;
   align-items: center;
   padding: 0.2rem 0.55rem;
-  margin-top: 0.45rem;
+  margin-top: 0;
   border-radius: var(--quickstart-border-radius);
-  color: var(--quickstart-error-text-color, var(--quickstart-text-secondary-light, #1f1f1f));
-  background: var(--quickstart-error-label-bg-color, rgba(11, 12, 13, 0.06));
+  color: var(--quickstart-error-text-color, #b42318);
+  background-color: var(--quickstart-error-label-bg-color, #fdecea);
+}
+
+.kcFormGroupClass:has(> label):has(:is(input.kcInputClass, .kcInputClass input, select.kcInputClass, textarea.kcInputClass, .kcInputGroup)) > :is(.kcInputErrorMessageClass, #input-error.kcInputErrorMessageClass){
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  max-width: 100%;
 }
 
 body.pf-v5-theme-dark .kcFormGroupClass:has(.kcInputHelperTextItemClass.kcError) input.kcInputClass, body.pf-v5-theme-dark .kcFormGroupClass:has(.kcInputHelperTextItemClass.kcError) .kcInputClass input, body.pf-v5-theme-dark .kcFormGroupClass:has(.kcInputHelperTextItemClass.kcError) select.kcInputClass, body.pf-v5-theme-dark .kcFormGroupClass:has(.kcInputHelperTextItemClass.kcError) textarea.kcInputClass, body.pf-v5-theme-dark .kcFormGroupClass:has(input[aria-invalid="true"]) input.kcInputClass, body.pf-v5-theme-dark .kcFormGroupClass:has(input[aria-invalid="true"]) .kcInputClass input, body.pf-v5-theme-dark .kcFormGroupClass:has(select[aria-invalid="true"]) select.kcInputClass, body.pf-v5-theme-dark .kcFormGroupClass:has(textarea[aria-invalid="true"]) textarea.kcInputClass, body.pf-v5-theme-dark input.kcInputClass[aria-invalid="true"], body.pf-v5-theme-dark .kcInputClass input[aria-invalid="true"], body.pf-v5-theme-dark select.kcInputClass[aria-invalid="true"], body.pf-v5-theme-dark textarea.kcInputClass[aria-invalid="true"], body#keycloak-bg.pf-v5-theme-dark .kcFormGroupClass:has(.kcInputHelperTextItemClass.kcError) input.kcInputClass, body#keycloak-bg.pf-v5-theme-dark .kcFormGroupClass:has(.kcInputHelperTextItemClass.kcError) .kcInputClass input, body#keycloak-bg.pf-v5-theme-dark .kcFormGroupClass:has(.kcInputHelperTextItemClass.kcError) select.kcInputClass, body#keycloak-bg.pf-v5-theme-dark .kcFormGroupClass:has(.kcInputHelperTextItemClass.kcError) textarea.kcInputClass, body#keycloak-bg.pf-v5-theme-dark .kcFormGroupClass:has(input[aria-invalid="true"]) input.kcInputClass, body#keycloak-bg.pf-v5-theme-dark .kcFormGroupClass:has(input[aria-invalid="true"]) .kcInputClass input, body#keycloak-bg.pf-v5-theme-dark .kcFormGroupClass:has(select[aria-invalid="true"]) select.kcInputClass, body#keycloak-bg.pf-v5-theme-dark .kcFormGroupClass:has(textarea[aria-invalid="true"]) textarea.kcInputClass, body#keycloak-bg.pf-v5-theme-dark input.kcInputClass[aria-invalid="true"], body#keycloak-bg.pf-v5-theme-dark .kcInputClass input[aria-invalid="true"], body#keycloak-bg.pf-v5-theme-dark select.kcInputClass[aria-invalid="true"], body#keycloak-bg.pf-v5-theme-dark textarea.kcInputClass[aria-invalid="true"]{
@@ -614,9 +837,17 @@ body.pf-v5-theme-dark .kcFormGroupClass:has(.kcInputHelperTextItemClass.kcError)
   background: transparent;
 }
 
-html.pf-v5-theme-dark :is(.kcInputErrorMessageClass, #input-error.kcInputErrorMessageClass), body.pf-v5-theme-dark :is(.kcInputErrorMessageClass, #input-error.kcInputErrorMessageClass), html.pf-v6-theme-dark :is(.kcInputErrorMessageClass, #input-error.kcInputErrorMessageClass), body.pf-v6-theme-dark :is(.kcInputErrorMessageClass, #input-error.kcInputErrorMessageClass), html.kcDarkModeClass :is(.kcInputErrorMessageClass, #input-error.kcInputErrorMessageClass), body.kcDarkModeClass :is(.kcInputErrorMessageClass, #input-error.kcInputErrorMessageClass), body#keycloak-bg.pf-v5-theme-dark :is(.kcInputErrorMessageClass, #input-error.kcInputErrorMessageClass), body#keycloak-bg.pf-v6-theme-dark :is(.kcInputErrorMessageClass, #input-error.kcInputErrorMessageClass), body#keycloak-bg.kcDarkModeClass :is(.kcInputErrorMessageClass, #input-error.kcInputErrorMessageClass){
-  color: var(--quickstart-error-text-color-dark, var(--quickstart-text-secondary-dark, #ffffff));
-  background: var(--quickstart-error-label-bg-color-dark, rgba(255, 255, 255, 0.14));
+html.pf-v5-theme-dark .kcFormGroupClass :is(.kcInputErrorMessageClass, #input-error.kcInputErrorMessageClass),
+body.pf-v5-theme-dark .kcFormGroupClass :is(.kcInputErrorMessageClass, #input-error.kcInputErrorMessageClass),
+html.pf-v6-theme-dark .kcFormGroupClass :is(.kcInputErrorMessageClass, #input-error.kcInputErrorMessageClass),
+body.pf-v6-theme-dark .kcFormGroupClass :is(.kcInputErrorMessageClass, #input-error.kcInputErrorMessageClass),
+html.kcDarkModeClass .kcFormGroupClass :is(.kcInputErrorMessageClass, #input-error.kcInputErrorMessageClass),
+body.kcDarkModeClass .kcFormGroupClass :is(.kcInputErrorMessageClass, #input-error.kcInputErrorMessageClass),
+body#keycloak-bg.pf-v5-theme-dark .kcFormGroupClass :is(.kcInputErrorMessageClass, #input-error.kcInputErrorMessageClass),
+body#keycloak-bg.pf-v6-theme-dark .kcFormGroupClass :is(.kcInputErrorMessageClass, #input-error.kcInputErrorMessageClass),
+body#keycloak-bg.kcDarkModeClass .kcFormGroupClass :is(.kcInputErrorMessageClass, #input-error.kcInputErrorMessageClass){
+  color: var(--quickstart-error-text-color-dark, #fec5bb);
+  background-color: var(--quickstart-error-label-bg-color-dark, rgba(249, 112, 102, 0.12));
 }
 
 .kcButtonLinkClass, a.kcButtonLinkClass, button.kcButtonLinkClass{
@@ -730,8 +961,10 @@ body.pf-v5-theme-dark #kc-social-providers .kcFormSocialAccountListButtonClass s
 
 #kc-social-providers .kcFormSocialAccountListButtonClass#social-github::before{
   opacity: 1;
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M12 .5A12 12 0 0 0 8.2 23.9c.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.4-4-1.4-.5-1.3-1.2-1.6-1.2-1.6-1-.7.1-.7.1-.7 1.1.1 1.7 1.2 1.7 1.2 1 .1 1.9.9 2.2 1.7.9 1.5 2.6 1.1 3.3.8.1-.7.4-1.2.7-1.5-2.7-.3-5.4-1.4-5.4-6A4.7 4.7 0 0 1 7.7 10c-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.2 1.2a11 11 0 0 1 5.9 0C19 6.6 20 7 20 7c.6 1.6.2 2.8.1 3.1a4.7 4.7 0 0 1 1.3 3.3c0 4.6-2.7 5.6-5.4 6 .4.3.8 1 .8 2v3c0 .3.2.7.8.6A12 12 0 0 0 12 .5z'/%3E%3C/svg%3E");
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M12 .5A12 12 0 0 0 8.2 23.9c.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.4-4-1.4-.5-1.3-1.2-1.6-1.2-1.6-1-.7.1-.7.1-.7 1.1.1 1.7 1.2 1.7 1.2 1 .1 1.9.9 2.2 1.7.9 1.5 2.6 1.1 3.3.8.1-.7.4-1.2.7-1.5-2.7-.3-5.4-1.4-5.4-6A4.7 4.7 0 0 1 7.7 10c-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.2 1.2a11 11 0 0 1 5.9 0C19 6.6 20 7 20 7c.6 1.6.2 2.8.1 3.1a4.7 4.7 0 0 1 1.3 3.3c0 4.6-2.7 5.6-5.4 6 .4.3.8 1 .8 2v3c0 .3.2.7.8.6A12 12 0 0 0 12 .5z'/%3E%3C/svg%3E");
+  -webkit-mask-size: 112% 112%;
+  mask-size: 112% 112%;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-2 -2 28 28'%3E%3Cpath fill='black' d='M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-2 -2 28 28'%3E%3Cpath fill='black' d='M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12'/%3E%3C/svg%3E");
 }
 
 #kc-social-providers .kcFormSocialAccountListButtonClass#social-facebook::before{
@@ -768,36 +1001,28 @@ body.pf-v5-theme-dark #kc-social-providers .kcFormSocialAccountListButtonClass s
   background: color-mix(in srgb, var(--quickstart-primary-color, #0b57d0) 12%, transparent);
 }
 
-#kc-registration > span > a{
-  font-size: inherit;
-  color: inherit;
-  font-weight: 600;
-  text-decoration: none;
-}
-
-#kc-registration-container #kc-registration > a{
-  font-size: 14px;
-  color: var(--quickstart-primary-color);
-}
-
 a{
   color: var(--quickstart-primary-color);
+  text-decoration: none;
 }
 
-#kc-registration-container #kc-registration > a{
-  display: block;
+a:hover{
+  text-decoration: underline;
+}
+
+a:focus-visible{
+  outline: 2px solid var(--quickstart-primary-color);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+#kc-registration-container #kc-registration > a,
+#kc-registration-container #kc-registration > span > a{
+  display: flex;
   width: 100%;
-  padding: 0.75rem 1.5rem;
-  border-radius: var(--quickstart-border-radius, 28px);
-  border: 1px solid var(--quickstart-primary-color, #0b57d0);
-  color: var(--quickstart-primary-color, #0b57d0);
-  font-weight: 600;
-  font-size: 14px;
-  text-decoration: none;
-  text-align: center;
-  background: transparent;
   box-sizing: border-box;
-  margin: 0;
+  font-size: 1rem;
+  line-height: 1.2;
 }
 
 #authenticateWebAuthnButton.kcButtonSecondaryClass{
@@ -806,16 +1031,6 @@ a{
 
 body.pf-v5-theme-dark a{
   color: var(--quickstart-primary-color, #0b57d0);
-}
-
-body.pf-v5-theme-dark #kc-registration-container #kc-registration > a{
-  border-color: var(--quickstart-primary-color, #a8c7fa);
-  color: var(--quickstart-primary-color, #a8c7fa);
-}
-
-body.pf-v5-theme-dark #kc-registration > span{
-  border-color: var(--quickstart-primary-color, #a8c7fa);
-  color: var(--quickstart-primary-color, #a8c7fa);
 }
 
 body.pf-v5-theme-dark #kc-social-providers .kcFormSocialAccountListButtonClass, body.pf-v5-theme-dark #kc-social-providers a.kcFormSocialAccountListButtonClass{
@@ -838,20 +1053,11 @@ body.pf-v5-theme-dark #kc-social-providers .kcFormSocialAccountListButtonClass, 
   box-sizing: border-box;
 }
 
-body.pf-v5-theme-dark #kc-registration-container #kc-registration > a:hover{
-  background: color-mix(in srgb, var(--quickstart-primary-color, #a8c7fa) 14%, transparent);
-}
-
 body.pf-v5-theme-dark #kc-social-providers .kcFormSocialAccountListButtonClass:hover, body.pf-v5-theme-dark #kc-social-providers a.kcFormSocialAccountListButtonClass:hover{
   background: color-mix(in srgb, var(--quickstart-primary-color, #a8c7fa) 14%, transparent);
 }
 
-.kcButtonSecondaryClass:focus-visible, #kc-form-buttons [name="cancel-aia"]:focus-visible, #kc-form-buttons [name="cancel"]:focus-visible, #kc-form-buttons #kc-cancel:focus-visible, #kc-form-buttons #kc-decline:focus-visible, #backToApplication:focus-visible, .kcButtonLinkClass:focus-visible, .kcButtonPrimaryClass:focus-visible{
-  outline: 2px solid var(--quickstart-primary-color, #0b57d0);
-  outline-offset: 2px;
-}
-
-#kc-registration-container #kc-registration > a:focus-visible{
+.kcButtonSecondaryClass:focus-visible, .kcButtonDefaultClass:focus-visible, .kcButtonClass:not(.kcButtonPrimaryClass):focus-visible, #kc-form-buttons [name="cancel-aia"]:focus-visible, #kc-form-buttons [name="cancel"]:focus-visible, #kc-form-buttons #kc-cancel:focus-visible, #kc-form-buttons #kc-decline:focus-visible, .form-actions [name="cancel-aia"]:focus-visible, .form-actions [name="cancel"]:focus-visible, .form-actions #kc-cancel:focus-visible, .form-actions #kc-decline:focus-visible, #backToApplication:focus-visible, .kcButtonLinkClass:focus-visible, .kcButtonPrimaryClass:focus-visible, #kc-registration-container #kc-registration > a:focus-visible, #kc-registration-container #kc-registration > span > a:focus-visible{
   outline: 2px solid var(--quickstart-primary-color, #0b57d0);
   outline-offset: 2px;
 }
@@ -861,13 +1067,8 @@ body.pf-v5-theme-dark #kc-social-providers .kcFormSocialAccountListButtonClass:h
   outline-offset: 2px;
 }
 
-body.pf-v5-theme-dark .kcButtonSecondaryClass:focus-visible, body.pf-v5-theme-dark #kc-form-buttons [name="cancel-aia"]:focus-visible, body.pf-v5-theme-dark #kc-form-buttons [name="cancel"]:focus-visible, body.pf-v5-theme-dark #kc-form-buttons #kc-cancel:focus-visible, body.pf-v5-theme-dark #kc-form-buttons #kc-decline:focus-visible, body.pf-v5-theme-dark #backToApplication:focus-visible, body.pf-v5-theme-dark .kcButtonLinkClass:focus-visible, body.pf-v5-theme-dark .kcButtonPrimaryClass:focus-visible{
+body.pf-v5-theme-dark .kcButtonSecondaryClass:focus-visible, body.pf-v5-theme-dark .kcButtonDefaultClass:focus-visible, body.pf-v5-theme-dark .kcButtonClass:not(.kcButtonPrimaryClass):focus-visible, body.pf-v5-theme-dark #kc-form-buttons [name="cancel-aia"]:focus-visible, body.pf-v5-theme-dark #kc-form-buttons [name="cancel"]:focus-visible, body.pf-v5-theme-dark #kc-form-buttons #kc-cancel:focus-visible, body.pf-v5-theme-dark #kc-form-buttons #kc-decline:focus-visible, body.pf-v5-theme-dark .form-actions [name="cancel-aia"]:focus-visible, body.pf-v5-theme-dark .form-actions [name="cancel"]:focus-visible, body.pf-v5-theme-dark .form-actions #kc-cancel:focus-visible, body.pf-v5-theme-dark .form-actions #kc-decline:focus-visible, body.pf-v5-theme-dark #backToApplication:focus-visible, body.pf-v5-theme-dark .kcButtonLinkClass:focus-visible, body.pf-v5-theme-dark .kcButtonPrimaryClass:focus-visible, body.pf-v5-theme-dark #kc-registration-container #kc-registration > a:focus-visible, body.pf-v5-theme-dark #kc-registration-container #kc-registration > span > a:focus-visible{
   outline: 2px solid var(--quickstart-primary-color, #a8c7fa);
-}
-
-body.pf-v5-theme-dark #kc-registration-container #kc-registration > a:focus-visible{
-  outline: 2px solid var(--quickstart-primary-color, #a8c7fa);
-  outline-offset: 2px;
 }
 
 body.pf-v5-theme-dark #kc-social-providers .kcFormSocialAccountListButtonClass:focus-visible, body.pf-v5-theme-dark #kc-social-providers a.kcFormSocialAccountListButtonClass:focus-visible{
@@ -890,27 +1091,16 @@ body.pf-v5-theme-dark hr{
 }
 
 #kc-registration > span{
-  display: inline-flex;
-  position: relative;
-  align-items: center;
-  justify-content: center;
-  gap: 0.35rem;
+  display: block;
   width: 100%;
-  padding: 0.75rem 1.5rem;
-  border-radius: var(--quickstart-border-radius, 28px);
-  border: 1px solid var(--quickstart-primary-color, #0b57d0);
-  color: var(--quickstart-primary-color, #0b57d0);
-  font-size: 14px;
-  box-sizing: border-box;
-  text-align: center;
-  background: transparent;
-  cursor: pointer;
+  font-size: 0;
 }
 
 .kcAlertClass,
+.pf-c-alert,
 .alert-warning,
 .alert-warnning{
-  --kc-alert-surface: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+  --kc-alert-surface: #eef2ff;
   --kc-alert-border: #8b5cf6;
   --kc-alert-icon: #5b21b6;
   --kc-alert-title: #312e81;
@@ -930,6 +1120,7 @@ body.pf-v5-theme-dark hr{
 }
 
 .kcAlertClass .kcAlertIconClass,
+.pf-c-alert .pf-c-alert__icon,
 .alert-warning .pficon,
 .alert-warnning .pficon{
   color: var(--kc-alert-icon);
@@ -955,25 +1146,60 @@ body.pf-v5-theme-dark hr{
   content: "\2713";
 }
 
+.pficon-warning-triangle-o{
+  font-style: normal;
+}
+
 .pficon-warning-triangle-o::before{
   content: "\26A0";
 }
 
 .alert-warning,
 .alert-warnning{
-  font-weight: 600;
+  font-weight: 400;
   font-size: 0.92rem;
 }
 
-.kcAlertClass .kcAlertTitleClass, .kcAlertClass .kc-feedback-text{
+.kcAlertClass .kcAlertTitleClass, .kcAlertClass .kc-feedback-text,
+.pf-c-alert .pf-c-alert__title{
   color: var(--kc-alert-title);
-  font-weight: 600;
+  font-weight: 400;
   font-size: 0.92rem;
   margin: 0;
 }
 
-.kcAlertClass.pf-m-danger, .kcAlertClass.kcError{
-  --kc-alert-surface: linear-gradient(135deg, #ffe8e8 0%, #ffd5db 100%);
+.pf-c-alert .pf-c-alert__description{
+  color: var(--kc-alert-title);
+  font-size: 0.85rem;
+  font-weight: 400;
+  line-height: 1.4;
+  margin-top: 0.25rem;
+}
+
+.pf-c-alert .pf-c-alert__description p{
+  margin: 0;
+}
+
+.pf-c-alert:has(.pf-c-alert__description){
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.pf-c-alert .pf-c-alert__title,
+.pf-c-alert .pf-c-alert__description{
+  flex: 1 1 calc(100% - 2rem);
+}
+
+.pf-screen-reader{
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+}
+
+.kcAlertClass.pf-m-danger, .kcAlertClass.kcError, .pf-c-alert.pf-m-danger, .pf-v5-c-alert.pf-m-danger, .alert-error{
+  --kc-alert-surface: #ffe8e8;
   --kc-alert-border: #f9738b;
   --kc-alert-icon: #be123c;
   --kc-alert-title: #9f1239;
@@ -983,36 +1209,36 @@ body.pf-v5-theme-dark hr{
   color: #b42318;
 }
 
-.kcAlertClass.pf-m-warning, .kcAlertClass.kcWarning, .alert-warning, .alert-warnning{
-  --kc-alert-surface: linear-gradient(135deg, #fff7db 0%, #ffe9c2 100%);
+.kcAlertClass.pf-m-warning, .kcAlertClass.kcWarning, .pf-c-alert.pf-m-warning, .alert-warning, .alert-warnning{
+  --kc-alert-surface: #fff7db;
   --kc-alert-border: #f59e0b;
   --kc-alert-icon: #b45309;
   --kc-alert-title: #92400e;
 }
 
 .kcAlertClass.pf-m-success, .kcAlertClass.kcSuccess{
-  --kc-alert-surface: linear-gradient(135deg, #e8fff4 0%, #cff7e4 100%);
+  --kc-alert-surface: #e8fff4;
   --kc-alert-border: #22c55e;
   --kc-alert-icon: #15803d;
   --kc-alert-title: #166534;
 }
 
 .kcAlertClass.pf-m-info, .kcAlertClass.kcInfo{
-  --kc-alert-surface: linear-gradient(135deg, #e8f2ff 0%, #d8e7ff 100%);
+  --kc-alert-surface: #e8f2ff;
   --kc-alert-border: #3b82f6;
   --kc-alert-icon: #1d4ed8;
   --kc-alert-title: #1e3a8a;
 }
 
 html.pf-v5-theme-dark .kcAlertClass, body.pf-v5-theme-dark .kcAlertClass, html.kcDarkModeClass .kcAlertClass{
-  --kc-alert-surface: linear-gradient(135deg, #20233a 0%, #1a1f35 100%);
+  --kc-alert-surface: #20233a;
   --kc-alert-border: #6366f1;
   --kc-alert-icon: #c7d2fe;
   --kc-alert-title: #e0e7ff;
 }
 
 html.pf-v5-theme-dark .kcAlertClass.pf-m-danger, body.pf-v5-theme-dark .kcAlertClass.pf-m-danger, html.kcDarkModeClass .kcAlertClass.pf-m-danger, html.pf-v5-theme-dark .kcAlertClass.kcError, body.pf-v5-theme-dark .kcAlertClass.kcError, html.kcDarkModeClass .kcAlertClass.kcError{
-  --kc-alert-surface: linear-gradient(135deg, #3a1e28 0%, #301721 100%);
+  --kc-alert-surface: #3a1e28;
   --kc-alert-border: #fb7185;
   --kc-alert-icon: #fb7185;
   --kc-alert-title: #fb7185;
@@ -1023,7 +1249,7 @@ html.pf-v5-theme-dark .kcAlertClass.pf-m-danger .kcAlertTitleClass, html.pf-v5-t
 }
 
 html.pf-v5-theme-dark .kcAlertClass.pf-m-warning, body.pf-v5-theme-dark .kcAlertClass.pf-m-warning, html.kcDarkModeClass .kcAlertClass.pf-m-warning, html.pf-v5-theme-dark .kcAlertClass.kcWarning, body.pf-v5-theme-dark .kcAlertClass.kcWarning, html.kcDarkModeClass .kcAlertClass.kcWarning{
-  --kc-alert-surface: linear-gradient(135deg, #3a2c12 0%, #31240e 100%);
+  --kc-alert-surface: #3a2c12;
   --kc-alert-border: #fbbf24;
   --kc-alert-icon: #fef3c7;
   --kc-alert-title: #fef3c7;
@@ -1035,21 +1261,21 @@ html.kcDarkModeClass .alert-warning,
 html.pf-v5-theme-dark .alert-warnning,
 body.pf-v5-theme-dark .alert-warnning,
 html.kcDarkModeClass .alert-warnning{
-  --kc-alert-surface: linear-gradient(135deg, #3a2c12 0%, #31240e 100%);
+  --kc-alert-surface: #3a2c12;
   --kc-alert-border: #fbbf24;
   --kc-alert-icon: #fef3c7;
   --kc-alert-title: #fef3c7;
 }
 
 html.pf-v5-theme-dark .kcAlertClass.pf-m-success, body.pf-v5-theme-dark .kcAlertClass.pf-m-success, html.kcDarkModeClass .kcAlertClass.pf-m-success, html.pf-v5-theme-dark .kcAlertClass.kcSuccess, body.pf-v5-theme-dark .kcAlertClass.kcSuccess, html.kcDarkModeClass .kcAlertClass.kcSuccess{
-  --kc-alert-surface: linear-gradient(135deg, #143127 0%, #10281f 100%);
+  --kc-alert-surface: #143127;
   --kc-alert-border: #4ade80;
   --kc-alert-icon: #dcfce7;
   --kc-alert-title: #dcfce7;
 }
 
 html.pf-v5-theme-dark .kcAlertClass.pf-m-info, body.pf-v5-theme-dark .kcAlertClass.pf-m-info, html.kcDarkModeClass .kcAlertClass.pf-m-info, html.pf-v5-theme-dark .kcAlertClass.kcInfo, body.pf-v5-theme-dark .kcAlertClass.kcInfo, html.kcDarkModeClass .kcAlertClass.kcInfo{
-  --kc-alert-surface: linear-gradient(135deg, #12283f 0%, #102236 100%);
+  --kc-alert-surface: #12283f;
   --kc-alert-border: #60a5fa;
   --kc-alert-icon: #dbeafe;
   --kc-alert-title: #dbeafe;
@@ -1078,7 +1304,7 @@ html.pf-v5-theme-dark .kcAlertClass.pf-m-info, body.pf-v5-theme-dark .kcAlertCla
   font-size: 1.3rem;
 }
 
-.kcButtonSecondaryClass, a.kcButtonSecondaryClass, button.kcButtonSecondaryClass, .kcButtonSecondaryClass.kcButtonSecondaryClass{
+.kcButtonSecondaryClass, .kcButtonDefaultClass, button[name="cancel-aia"], button[name="cancel"],a.kcButtonSecondaryClass, a.kcButtonDefaultClass, button.kcButtonSecondaryClass, button.kcButtonDefaultClass, .kcButtonSecondaryClass.kcButtonSecondaryClass{
   border-color: var(--quickstart-primary-color);
   color: var(--quickstart-primary-color);
 }
@@ -1115,14 +1341,6 @@ html.pf-v5-theme-dark, html.pf-v5-theme-dark body, html.pf-v5-theme-dark body#ke
   background-size: cover;
 }
 
-body .kcLogin, body#keycloak-bg .kcLogin, body .kcLoginClass, body#keycloak-bg .kcLoginClass{
-  background-color: var(--quickstart-bg-color);
-  background-image: var(--quickstart-bg-image);
-  background-repeat: no-repeat;
-  background-position: center center;
-  background-size: cover;
-}
-
 .kcInputGroup .kcFormPasswordVisibilityButtonClass{
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
@@ -1136,9 +1354,90 @@ html body .pf-v5-c-login{
 
 #kc-register-form {
   height: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  gap: 1.25rem;
 }
 
-#kc-error-message { 
+#kc-register-form > .kcFormGroupClass{
+  margin-bottom: 0;
+}
+
+#kc-register-form > .kcButtonClass{
+  margin-top: auto;
+}
+
+#kc-register-form > .kcFormGroupClass:last-child{
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+#kc-register-form > .kcFormGroupClass:last-child #kc-form-buttons{
+  order: 1;
+  width: 100%;
+  padding-top: 0;
+}
+
+#kc-register-form > .kcFormGroupClass:last-child #kc-form-options{
+  order: 2;
+  width: 100%;
+}
+
+#kc-register-form > .kcFormGroupClass:last-child .kcFormOptionsWrapperClass{
+  margin-bottom: 0;
+  width: 100%;
+}
+
+#kc-register-form > .kcFormGroupClass:last-child .kcFormOptionsWrapperClass > span{
+  display: block;
+  width: 100%;
+}
+
+#kc-register-form > .kcFormGroupClass:last-child .kcFormOptionsWrapperClass a{
+  border: 1px solid var(--quickstart-primary-color, #0b57d0);
+  background: transparent;
+  color: var(--quickstart-primary-color, #0b57d0);
+  text-decoration: none;
+  padding: 0.6rem 1.1rem;
+  min-height: 40px;
+  border-radius: var(--quickstart-border-radius, 28px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font: inherit;
+  line-height: 1.2;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+#kc-register-form > .kcFormGroupClass:last-child .kcFormOptionsWrapperClass a:hover{
+  background: color-mix(in srgb, var(--quickstart-primary-color, #0b57d0) 12%, transparent);
+  text-decoration: none;
+}
+
+#kc-register-form > .kcFormGroupClass:last-child .kcFormOptionsWrapperClass a:focus-visible{
+  outline: 2px solid var(--quickstart-primary-color, #0b57d0);
+  outline-offset: 2px;
+}
+
+body.pf-v5-theme-dark #kc-register-form > .kcFormGroupClass:last-child .kcFormOptionsWrapperClass a,
+body#keycloak-bg.pf-v5-theme-dark #kc-register-form > .kcFormGroupClass:last-child .kcFormOptionsWrapperClass a,
+body.kcDarkModeClass #kc-register-form > .kcFormGroupClass:last-child .kcFormOptionsWrapperClass a{
+  border-color: var(--quickstart-primary-color, #a8c7fa);
+  color: var(--quickstart-primary-color, #a8c7fa);
+}
+
+body.pf-v5-theme-dark #kc-register-form > .kcFormGroupClass:last-child .kcFormOptionsWrapperClass a:hover,
+body#keycloak-bg.pf-v5-theme-dark #kc-register-form > .kcFormGroupClass:last-child .kcFormOptionsWrapperClass a:hover,
+body.kcDarkModeClass #kc-register-form > .kcFormGroupClass:last-child .kcFormOptionsWrapperClass a:hover{
+  background: color-mix(in srgb, var(--quickstart-primary-color, #a8c7fa) 14%, transparent);
+}
+
+#kc-error-message {
   min-height: 16rem;
   height: auto;
   flex: 1 1 auto;
@@ -1146,4 +1445,262 @@ html body .pf-v5-c-login{
   flex-direction: column;
   justify-content: space-between;
   margin-bottom: 1rem;
+}
+
+.kcSelectAuthListClass{
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.kcSelectAuthListItemClass{
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  padding: 1rem 1.25rem;
+  background: transparent;
+  border: 1px solid var(--quickstart-primary-color, #0b57d0);
+  border-radius: var(--quickstart-border-radius, 28px);
+  color: var(--quickstart-text-primary-light);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  transition: background 0.2s ease;
+  box-sizing: border-box;
+}
+
+.kcSelectAuthListItemClass:hover{
+  background: color-mix(in srgb, var(--quickstart-primary-color, #0b57d0) 8%, transparent);
+}
+
+.kcSelectAuthListItemClass:active{
+  background: color-mix(in srgb, var(--quickstart-primary-color, #0b57d0) 16%, transparent);
+}
+
+.kcSelectAuthListItemClass:focus-visible{
+  outline: 2px solid var(--quickstart-primary-color, #0b57d0);
+  outline-offset: 2px;
+}
+
+body.pf-v5-theme-dark .kcSelectAuthListItemClass{
+  border-color: var(--quickstart-primary-color, #a8c7fa);
+  color: var(--quickstart-text-primary-dark);
+}
+
+body.pf-v5-theme-dark .kcSelectAuthListItemClass:hover{
+  background: color-mix(in srgb, var(--quickstart-primary-color, #a8c7fa) 14%, transparent);
+}
+
+.kcSelectAuthListItemIconClass{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  color: var(--quickstart-primary-color, #0b57d0);
+}
+
+.kcSelectAuthListItemIconClass i{
+  display: block;
+  width: 1.5rem;
+  height: 1.5rem;
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4'/%3E%3C/svg%3E") no-repeat center / contain;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4'/%3E%3C/svg%3E") no-repeat center / contain;
+}
+
+body.pf-v5-theme-dark .kcSelectAuthListItemIconClass{
+  color: var(--quickstart-primary-color, #a8c7fa);
+}
+
+.kcSelectAuthListItemHeadingClass{
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1.3;
+  text-align: left;
+}
+
+.kcSelectAuthListItemDescriptionClass{
+  font-size: 0.875rem;
+  color: var(--quickstart-text-secondary-light);
+  line-height: 1.4;
+  text-align: left;
+}
+
+body.pf-v5-theme-dark .kcSelectAuthListItemDescriptionClass{
+  color: var(--quickstart-text-secondary-dark);
+}
+
+.kcSelectAuthListItemFillClass{
+  flex: 1;
+}
+
+.kcSelectAuthListItemArrowIconClass{
+  display: none;
+}
+
+#kc-recovery-codes-list{
+  list-style: none;
+  margin: 0;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-family: monospace;
+  font-size: 0.95rem;
+  border: 1px solid color-mix(in srgb, var(--quickstart-secondary-color, #9aa0a6) 45%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--quickstart-secondary-color, #9aa0a6) 14%, transparent);
+  color: var(--quickstart-text-primary-light);
+}
+
+#kc-recovery-codes-list > li{
+  margin: 0;
+  padding: 0.2rem 0;
+}
+
+body.pf-v5-theme-dark #kc-recovery-codes-list{
+  color: var(--quickstart-text-primary-dark);
+}
+
+#printRecoveryCodes{
+  margin-left: 0;
+}
+
+#printRecoveryCodes,
+#downloadRecoveryCodes,
+#copyRecoveryCodes{
+  padding: 0.4rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--quickstart-primary-color, #0b57d0) 50%, transparent);
+  border-radius: var(--quickstart-border-radius, 28px);
+  background: transparent;
+  color: var(--quickstart-primary-color, #0b57d0);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  text-decoration: none;
+  box-shadow: none;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+#printRecoveryCodes:hover,
+#downloadRecoveryCodes:hover,
+#copyRecoveryCodes:hover{
+  background: color-mix(in srgb, var(--quickstart-primary-color, #0b57d0) 8%, transparent);
+  color: var(--quickstart-primary-color, #0b57d0);
+  text-decoration: none;
+  box-shadow: none;
+}
+
+#printRecoveryCodes:focus,
+#downloadRecoveryCodes:focus,
+#copyRecoveryCodes:focus{
+  box-shadow: none;
+  outline: 2px solid color-mix(in srgb, var(--quickstart-primary-color, #0b57d0) 40%, transparent);
+  outline-offset: 2px;
+}
+
+#printRecoveryCodes::after,
+#downloadRecoveryCodes::after,
+#copyRecoveryCodes::after{
+  display: none;
+}
+
+#printRecoveryCodes i,
+#downloadRecoveryCodes i,
+#copyRecoveryCodes i{
+  display: none;
+}
+
+#kc-recovery-codes-settings-form{
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: auto;
+  padding-top: 0.5rem;
+}
+
+#kc-info-message {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex: 1;
+}
+
+:not(#kc-logout-confirm) > #kc-info-message > p > a{
+  border-radius: var(--quickstart-border-radius, 28px);
+  padding: 0.6rem 1.1rem;
+  min-height: 40px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  line-height: 1.2;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+  text-decoration: none;
+  display: block;
+  background: var(--quickstart-primary-color, #0b57d0);
+  border-color: var(--quickstart-primary-color, #0b57d0);
+  color: #ffffff;
+}
+
+:not(#kc-logout-confirm) > #kc-info-message > p > a:hover, :not(#kc-logout-confirm) > #kc-info-message > p > a:focus{
+  filter: brightness(0.9);
+  text-decoration: none;
+}
+
+:not(#kc-logout-confirm) > #kc-info-message > p > a:active{
+  filter: brightness(0.8);
+  transform: translateY(1px);
+}
+
+body.pf-v5-theme-dark :not(#kc-logout-confirm) > #kc-info-message > p > a{
+  background: var(--quickstart-primary-color, #a8c7fa);
+  border-color: var(--quickstart-primary-color, #a8c7fa);
+  color: #0b0c0d;
+}
+
+#kc-logout-confirm #kc-info-message > p > a{
+  border: 1px solid var(--quickstart-primary-color, #0b57d0);
+  background: transparent;
+  color: var(--quickstart-primary-color, #0b57d0);
+  text-decoration: none;
+  padding: 0.6rem 1.1rem;
+  min-height: 40px;
+  border-radius: var(--quickstart-border-radius, 28px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font: inherit;
+  line-height: 1.2;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+  margin-top: 0.75rem;
+}
+
+#kc-logout-confirm #kc-info-message > p > a:hover{
+  background: color-mix(in srgb, var(--quickstart-primary-color, #0b57d0) 12%, transparent);
+  text-decoration: none;
+}
+
+body.pf-v5-theme-dark #kc-logout-confirm #kc-info-message > p > a{
+  border-color: var(--quickstart-primary-color, #a8c7fa);
+  color: var(--quickstart-primary-color, #a8c7fa);
+}
+
+body.pf-v5-theme-dark #kc-logout-confirm #kc-info-message > p > a:hover{
+  background: color-mix(in srgb, var(--quickstart-primary-color, #a8c7fa) 14%, transparent);
 }
