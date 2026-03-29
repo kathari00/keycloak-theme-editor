@@ -5,7 +5,7 @@ import {
   mdiRocketLaunch,
   mdiUpload,
 } from '@mdi/js'
-import Icon from '@mdi/react'
+import { Icon as MdiIcon } from '@mdi/react'
 import {
   Stack,
   StackItem,
@@ -63,7 +63,7 @@ export default function RightSidebar({
               aria-label={tab.label}
               title={(
                 <TabTitleIcon>
-                  <Icon size={0.9} path={tab.icon} />
+                  <MdiIcon size={0.9} path={tab.icon} />
                 </TabTitleIcon>
               )}
             />

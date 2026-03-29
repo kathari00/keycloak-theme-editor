@@ -85,7 +85,7 @@ export function getAssetDataUrl(asset: UploadedAsset): string {
  */
 export function base64ToBlob(base64: string, mimeType: string): Blob {
   const byteCharacters = atob(base64)
-  const byteArrays: Uint8Array[] = []
+  const byteArrays: ArrayBuffer[] = []
 
   for (let offset = 0; offset < byteCharacters.length; offset += 512) {
     const slice = byteCharacters.slice(offset, offset + 512)
@@ -93,7 +93,9 @@ export function base64ToBlob(base64: string, mimeType: string): Blob {
     for (let i = 0; i < slice.length; i++) {
       byteNumbers.push(slice.charCodeAt(i))
     }
-    byteArrays.push(new Uint8Array(byteNumbers))
+    const buffer = new ArrayBuffer(byteNumbers.length)
+    new Uint8Array(buffer).set(byteNumbers)
+    byteArrays.push(buffer)
   }
 
   return new Blob(byteArrays, { type: mimeType })

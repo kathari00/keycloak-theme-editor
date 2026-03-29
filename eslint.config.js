@@ -7,4 +7,8 @@ export default antfu({
   ignores: [
     'public/**',
   ],
+  rules: {
+    'e18e/prefer-array-at': 'off',
+    'e18e/prefer-static-regex': 'off',
+  },
 })

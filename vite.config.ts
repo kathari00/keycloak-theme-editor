@@ -1,15 +1,13 @@
-import react from '@vitejs/plugin-react'
+import babel from '@rolldown/plugin-babel'
+import react, { reactCompilerPreset } from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 import { viteStaticCopy } from 'vite-plugin-static-copy'
 
 export default defineConfig({
   plugins: [
-    react({
-      babel: {
-        plugins: [
-          ['babel-plugin-react-compiler', {}],
-        ],
-      },
+    react(),
+    babel({
+      presets: [reactCompilerPreset()],
     }),
     viteStaticCopy({
       targets: [
@@ -35,9 +33,6 @@ export default defineConfig({
 
   optimizeDeps: {
     include: ['react', 'react-dom', 'react/jsx-runtime'],
-    esbuildOptions: {
-      target: 'esnext',
-    },
   },
   build: {
     rollupOptions: {
