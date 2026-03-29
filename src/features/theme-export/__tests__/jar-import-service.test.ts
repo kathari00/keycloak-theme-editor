@@ -45,6 +45,31 @@ describe('importJarFile', () => {
     expect(result.css).toBe('.first { color: red; }\n\n.second { color: blue; }')
   })
 
+  it('reads editor metadata from standalone keycloak-theme-editor.json', async () => {
+    const result = await importZippedTheme({
+      'META-INF': {
+        'keycloak-themes.json': fileEntry(JSON.stringify({
+          themes: [{ name: 'test', types: ['login'] }],
+        })),
+        'keycloak-theme-editor.json': fileEntry(JSON.stringify({
+          sourceThemeId: 'keycloak/login',
+        })),
+      },
+      'theme': {
+        test: {
+          login: {
+            'theme.properties': fileEntry('styles=css/styles.css'),
+            'resources': {
+              css: { 'styles.css': fileEntry('.test { color: red; }') },
+            },
+          },
+        },
+      },
+    })
+
+    expect(result.sourceThemeId).toBe('keycloak/login')
+  })
+
   it('loads legacy single-file exports without quick-start css or editor metadata', async () => {
     const result = await importZippedTheme({
       theme: {

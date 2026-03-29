@@ -27,15 +27,19 @@ const textEncoder = new TextEncoder()
 
 export function generateKeycloakThemesJson(
   themeName: string,
-  editorMetadata: ThemeEditorMetadata,
 ): string {
   return JSON.stringify({
     themes: [{
       name: themeName,
       types: ['login'],
-      editor: editorMetadata,
     }],
   }, null, 2)
+}
+
+export function generateEditorMetadataJson(
+  editorMetadata: ThemeEditorMetadata,
+): string {
+  return JSON.stringify(editorMetadata, null, 2)
 }
 
 export async function assembleThemeFiles(
@@ -59,7 +63,8 @@ export async function assembleThemeFiles(
   const files: Record<string, Uint8Array> = {}
   const loginRoot = `${themeRoot}/login`
 
-  addText(files, `${metaInfPrefix}keycloak-themes.json`, generateKeycloakThemesJson(themeName, editorMetadata))
+  addText(files, `${metaInfPrefix}keycloak-themes.json`, generateKeycloakThemesJson(themeName))
+  addText(files, `${metaInfPrefix}keycloak-theme-editor.json`, generateEditorMetadataJson(editorMetadata))
   addText(files, `${loginRoot}/theme.properties`, properties)
 
   if (templateFtl) {

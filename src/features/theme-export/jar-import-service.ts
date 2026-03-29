@@ -8,6 +8,8 @@ import { parseQuickSettingsFromImportedTheme } from './quick-settings-import'
 
 export const THEME_JAR_IMPORTED_EVENT = 'themeJarImported'
 
+const WHITESPACE_RE = /\s+/
+
 interface AssetImportRule {
   path: string
   category: UploadedAsset['category']
@@ -85,13 +87,14 @@ async function importAssetByRule(
   importedAssets.push(asset)
 }
 
-/** Try to extract editor metadata from keycloak-themes.json */
-function parseEditorMetadata(keycloakThemesJson: string): ThemeEditorMetadata | null {
+/** Try to extract editor metadata from standalone keycloak-theme-editor.json */
+function parseStandaloneEditorMetadata(json: string): ThemeEditorMetadata | null {
+  if (!json)
+    return null
   try {
-    const parsed = JSON.parse(keycloakThemesJson)
-    const editor = parsed?.themes?.[0]?.editor
-    if (editor && typeof editor === 'object') {
-      return editor as ThemeEditorMetadata
+    const parsed = JSON.parse(json)
+    if (parsed && typeof parsed === 'object') {
+      return parsed as ThemeEditorMetadata
     }
   }
   catch {}
@@ -111,7 +114,7 @@ export async function importJarFile(file: File): Promise<JarImportResult> {
   let themeProps = ''
   let messagesProperties = ''
   let themeName = ''
-  let keycloakThemesJsonText = ''
+  let editorMetadataJsonText = ''
   const importedAssets: UploadedAsset[] = []
   const importedCssFiles: Record<string, string> = {}
 
@@ -142,8 +145,8 @@ export async function importJarFile(file: File): Promise<JarImportResult> {
       continue
     }
 
-    if (filename.endsWith('/keycloak-themes.json') || filename === 'keycloak-themes.json') {
-      keycloakThemesJsonText = readEntryText(data)
+    if (filename.endsWith('/keycloak-theme-editor.json') || filename === 'keycloak-theme-editor.json') {
+      editorMetadataJsonText = readEntryText(data)
       continue
     }
 
@@ -163,10 +166,10 @@ export async function importJarFile(file: File): Promise<JarImportResult> {
     }
   }
 
-  const editorMetadata = parseEditorMetadata(keycloakThemesJsonText)
+  const editorMetadata = parseStandaloneEditorMetadata(editorMetadataJsonText)
   const sourceThemeId = editorMetadata?.sourceThemeId
   const declaredStylePaths = (readMessageProperty(themeProps, 'styles') || '')
-    .split(/\s+/)
+    .split(WHITESPACE_RE)
     .filter(Boolean)
     .filter(path => path !== 'css/quick-start.css')
   if (customCss.trim()) {
