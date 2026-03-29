@@ -4,6 +4,7 @@ import { useLoadingIndicatorVisibility } from '../../../app/LoadingScreen'
 import { useDarkModeState, usePresetState, usePreviewState, useQuickStartColorsState, useQuickStartContentState, useStylesCssState, useUploadedAssetsState } from '../../editor/hooks/use-editor'
 import { resolveThemeIdFromConfig, useThemeConfig } from '../../presets/queries'
 import { getThemePreviewStylesPath } from '../../presets/theme-paths'
+import patternflyV5PreviewStylesheetUrl from '../assets/patternfly-v5-preview.css?url'
 import { usePreviewRuntime } from '../hooks/use-preview-context'
 import { usePreviewMessages } from '../hooks/usePreviewMessages'
 import { computePreviewCss } from '../lib/compute-preview-css'
@@ -49,6 +50,18 @@ function ensureBaseHref(doc: Document, id: string, href: string): void {
   }
 
   base.href = href
+}
+
+function ensureStylesheetLink(doc: Document, id: string, href: string): void {
+  let link = doc.getElementById(id) as HTMLLinkElement | null
+  if (!link) {
+    link = doc.createElement('link')
+    link.id = id
+    link.rel = 'stylesheet'
+    doc.head.appendChild(link)
+  }
+
+  link.href = href
 }
 
 /**
@@ -122,6 +135,7 @@ function syncPreviewDocumentStyles(params: PreviewStyleParams): void {
     return
 
   ensureBaseHref(doc, 'preview-theme-base', new URL(themeStylesPath, window.location.href).toString())
+  ensureStylesheetLink(doc, 'preview-patternfly-v5', new URL(patternflyV5PreviewStylesheetUrl, window.location.href).toString())
   syncGoogleFontLinks(doc, googleFontUrls)
   applyPreviewStyles(params)
 }

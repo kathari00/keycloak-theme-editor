@@ -12,18 +12,6 @@ export default defineConfig({
     viteStaticCopy({
       targets: [
         {
-          src: 'node_modules/@patternfly-v5/patternfly/patternfly.min.css',
-          dest: 'keycloak-dev-resources/resources-common/vendor/patternfly-v5',
-        },
-        {
-          src: 'node_modules/@patternfly-v5/patternfly/patternfly-addons.css',
-          dest: 'keycloak-dev-resources/resources-common/vendor/patternfly-v5',
-        },
-        {
-          src: 'node_modules/@patternfly-v5/patternfly/assets/**/*',
-          dest: 'keycloak-dev-resources/resources-common/vendor/patternfly-v5/assets',
-        },
-        {
           src: 'docs/presentation/introduction/**/*',
           dest: 'docs/presentation/introduction',
         },

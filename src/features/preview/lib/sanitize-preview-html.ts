@@ -11,6 +11,7 @@ export function sanitizePreviewHtml(html: string): string {
 
   doc.querySelectorAll('script').forEach(element => element.remove())
   doc.querySelectorAll('iframe, frame, object, embed').forEach(element => element.remove())
+  doc.querySelectorAll<HTMLLinkElement>('link[href*="patternfly-v5"]').forEach(element => element.remove())
 
   doc.querySelectorAll('*').forEach((element) => {
     for (const attributeName of element.getAttributeNames()) {

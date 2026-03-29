@@ -59,7 +59,8 @@ describe('sanitizePreviewHtml', () => {
   it('preserves stylesheet links', () => {
     const html = `
       <head>
-        <link href="/keycloak-dev-resources/vendor/patternfly-v5/patternfly.min.css" rel="stylesheet" />
+        <link href="/keycloak-dev-resources/resources-common/patternfly-v5/patternfly.min.css" rel="stylesheet" />
+        <link rel="stylesheet" href="/theme.css" />
         <link rel="icon" href="/keycloak-dev-resources/img/favicon.ico" />
       </head>
     `
@@ -67,5 +68,7 @@ describe('sanitizePreviewHtml', () => {
     const result = sanitizePreviewHtml(html)
     expect(result).toContain('rel="stylesheet"')
     expect(result).toContain('rel="icon"')
+    expect(result).not.toContain('patternfly-v5')
+    expect(result).toContain('href="/theme.css"')
   })
 })
