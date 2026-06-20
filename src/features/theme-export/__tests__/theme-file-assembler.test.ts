@@ -16,7 +16,7 @@ function makeParams(overrides?: Partial<AssembleThemeFilesParams>): AssembleThem
   return {
     themeName: 'test-theme',
     properties: 'parent=keycloak',
-    templateFtl: null,
+    templateFtl: '',
     footerFtl: null,
     quickStartCss: '',
     stylesCss: '.base {}',
@@ -90,8 +90,8 @@ describe('assembleThemeFiles', () => {
     expect(decode(files, `${loginRoot}/template.ftl`)).toBe('<html/>')
   })
 
-  it('omits template.ftl when not provided', async () => {
-    const files = await assembleThemeFiles(makeParams({ templateFtl: null }), themeRoot, metaInf)
+  it('omits template.ftl when empty', async () => {
+    const files = await assembleThemeFiles(makeParams({ templateFtl: '' }), themeRoot, metaInf)
     expect(files[`${loginRoot}/template.ftl`]).toBeUndefined()
   })
 
