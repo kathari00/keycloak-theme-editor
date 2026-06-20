@@ -117,12 +117,11 @@ describe('assembleThemeFiles', () => {
   })
 
   it('deduplicates assets with the same name (last wins)', async () => {
-    const a1 = { ...makeAsset('logo.png'), base64Data: 'AAAA' }
-    const a2 = { ...makeAsset('logo.png'), base64Data: 'BBBB' }
+    const a1 = { ...makeAsset('logo.png'), base64Data: 'Zmlyc3Q=' }
+    const a2 = { ...makeAsset('logo.png'), base64Data: 'c2Vjb25k' }
     const params = makeParams({ payload: { ...makeParams().payload, uploadedLogos: [a1, a2] } })
     const files = await assembleThemeFiles(params, themeRoot, metaInf)
-    const content = files[`${loginRoot}/resources/img/logos/logo.png`]
-    expect(content).toBeDefined()
+    expect(decode(files, `${loginRoot}/resources/img/logos/logo.png`)).toBe('second')
     // Only one file should exist (deduped)
     const logoKeys = Object.keys(files).filter(k => k.includes('img/logos'))
     expect(logoKeys).toHaveLength(1)
