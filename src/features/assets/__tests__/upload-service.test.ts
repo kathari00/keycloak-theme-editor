@@ -6,8 +6,8 @@ function makeFile(name: string, type: string, sizeBytes = 100): File {
 }
 
 beforeEach(() => {
-  URL.createObjectURL = vi.fn(() => 'blob:mock')
-  URL.revokeObjectURL = vi.fn()
+  vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock')
+  vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
 
   vi.stubGlobal('Image', class {
     width = 100
@@ -27,6 +27,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  vi.restoreAllMocks()
   vi.unstubAllGlobals()
 })
 
