@@ -70,8 +70,7 @@ export default function CustomAssetUploader({
     image: false,
   })
 
-  // eslint-disable-next-line react-naming-convention/ref-name
-  const fileInputRefs = useRef<Record<AssetCategory, HTMLInputElement | null>>({
+  const fileInputRef = useRef<Record<AssetCategory, HTMLInputElement | null>>({
     font: null,
     background: null,
     logo: null,
@@ -152,7 +151,7 @@ export default function CustomAssetUploader({
     setIsUploading(false)
 
     // Reset input
-    const inputEl = fileInputRefs.current[category]
+    const inputEl = fileInputRef.current[category]
     if (inputEl) {
       inputEl.value = ''
     }
@@ -395,7 +394,7 @@ export default function CustomAssetUploader({
                     <CardBody>
                       <input
                         ref={(el) => {
-                          fileInputRefs.current[category] = el
+                          fileInputRef.current[category] = el
                         }}
                         type="file"
                         accept={config.accept}
@@ -405,7 +404,7 @@ export default function CustomAssetUploader({
                       />
                       <Button
                         variant="secondary"
-                        onClick={() => fileInputRefs.current[category]?.click()}
+                        onClick={() => fileInputRef.current[category]?.click()}
                         isLoading={isUploading}
                         isBlock
                       >
@@ -430,7 +429,7 @@ export default function CustomAssetUploader({
                   <>
                     <input
                       ref={(el) => {
-                        fileInputRefs.current[category] = el
+                        fileInputRef.current[category] = el
                       }}
                       type="file"
                       accept={config.accept}
@@ -440,7 +439,7 @@ export default function CustomAssetUploader({
                     />
                     <Button
                       variant="secondary"
-                      onClick={() => fileInputRefs.current[category]?.click()}
+                      onClick={() => fileInputRef.current[category]?.click()}
                       isLoading={isUploading}
                       isBlock
                     >
