@@ -14,6 +14,7 @@ export default defineConfig({
         {
           src: 'docs/presentation/introduction/**/*',
           dest: 'docs/presentation/introduction',
+          rename: { stripBase: 3 },
         },
       ],
     }),
