@@ -1,5 +1,7 @@
 node_modules
 dist
+test-results/
+playwright-report/
 
 bin/.preview-*/
 bin/*.js
