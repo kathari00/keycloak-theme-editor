@@ -1,7 +1,8 @@
 import type { Zippable } from 'fflate'
 // @vitest-environment node
+import { Buffer } from 'node:buffer'
 import { zipSync } from 'fflate'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { importJarFile } from '../jar-import-service'
 
 function fileEntry(text: string): [Uint8Array, { level: 0 }] {
@@ -17,7 +18,30 @@ async function importZippedTheme(jarEntries: Zippable) {
   return await importJarFile(file)
 }
 
+function stubFileReader() {
+  vi.stubGlobal('FileReader', class {
+    onerror: (() => void) | null = null
+    onload: (() => void) | null = null
+    result: string | null = null
+
+    readAsDataURL(file: File) {
+      void file.arrayBuffer()
+        .then((buffer) => {
+          this.result = `data:${file.type};base64,${Buffer.from(buffer).toString('base64')}`
+          this.onload?.()
+        })
+        .catch(() => {
+          this.onerror?.()
+        })
+    }
+  })
+}
+
 describe('importJarFile', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
   it('preserves multiple imported CSS files instead of flattening them', async () => {
     const jarEntries = {
       theme: {
@@ -125,6 +149,77 @@ describe('importJarFile', () => {
     })
     expect(result.css).toBe('.from-styles { color: green; }\n\n.from-layout { color: purple; }')
     expect(result.quickStartCss).toBe(':root { --quickstart-primary-color-light: #123456; }')
+  })
+
+  it('does not apply imported default background assets over explicit quick-start background color', async () => {
+    stubFileReader()
+
+    const result = await importZippedTheme({
+      theme: {
+        demo: {
+          login: {
+            'theme.properties': fileEntry('styles=css/quick-start.css css/styles.css'),
+            'resources': {
+              css: {
+                'quick-start.css': fileEntry(`
+:root {
+  --quickstart-primary-color: #123456;
+  --quickstart-bg-color: #f0f4f9;
+  --quickstart-bg-image: none;
+}
+                `.trim()),
+                'styles.css': fileEntry('.demo { color: red; }'),
+              },
+              img: {
+                backgrounds: {
+                  'keycloak-bg-darken.svg': fileEntry('<svg></svg>'),
+                },
+              },
+            },
+          },
+        },
+      },
+    })
+
+    expect(result.uploadedAssets.some(asset => asset.name === 'keycloak-bg-darken.svg')).toBe(true)
+    expect(result.quickSettingsByMode?.light?.colorPresetBgColor).toBe('#f0f4f9')
+    expect(result.appliedAssets.background).toBeUndefined()
+  })
+
+  it('removes parsed V2 background tokens when quick-start background color is explicit', async () => {
+    stubFileReader()
+
+    const result = await importZippedTheme({
+      theme: {
+        demo: {
+          login: {
+            'theme.properties': fileEntry('styles=css/quick-start.css css/styles.css'),
+            'resources': {
+              css: {
+                'quick-start.css': fileEntry(`:root {
+  --quickstart-bg-color: #f0f4f9;
+  --quickstart-bg-image: none;
+}`),
+                'styles.css': fileEntry(`:root {
+  --keycloak-bg-logo-url: url("../img/backgrounds/keycloak-bg-darken.svg");
+}
+.login-pf body {
+  background: var(--keycloak-bg-logo-url) no-repeat center center fixed;
+}`),
+              },
+              img: {
+                backgrounds: {
+                  'keycloak-bg-darken.svg': fileEntry('<svg></svg>'),
+                },
+              },
+            },
+          },
+        },
+      },
+    })
+
+    expect(result.quickSettingsByMode?.light?.colorPresetBgColor).toBe('#f0f4f9')
+    expect(result.appliedAssets.background).toBeUndefined()
   })
 
   it('loads even when only custom user css is present', async () => {

@@ -49,6 +49,8 @@ describe('quick-start-css', () => {
       expect(result).toContain('--quickstart-bg-color-dark: #f0f4f9;')
       expect(result).toContain('--quickstart-bg-color: var(--quickstart-bg-color-light);')
       expect(result).toContain('--quickstart-bg-image: none;')
+      expect(result).toContain('--quickstart-bg-logo-url: none;')
+      expect(result).toContain('--keycloak-bg-logo-url: none;')
       expect(result).toContain('--quickstart-border-radius: 8px;')
       expect(result).toContain('--quickstart-card-shadow: 0 2px 8px rgba(0,0,0,0.10);')
       expect(result).not.toContain('--pf-v5-global--FontFamily--text:')

@@ -21,8 +21,8 @@ function getModeColorValue(
   mode: QuickSettingsMode,
 ): string {
   const candidates = mode === 'dark'
-    ? [`--quickstart-${suffix}-dark`, `--quickstart-${suffix}-light`]
-    : [`--quickstart-${suffix}-light`, `--quickstart-${suffix}-dark`]
+    ? [`--quickstart-${suffix}`, `--quickstart-${suffix}-dark`, `--quickstart-${suffix}-light`]
+    : [`--quickstart-${suffix}`, `--quickstart-${suffix}-light`, `--quickstart-${suffix}-dark`]
 
   for (const candidate of candidates) {
     const value = normalizeCssValue(vars[candidate])

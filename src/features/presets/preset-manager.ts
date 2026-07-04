@@ -1,7 +1,13 @@
 import type { ThemeConfig, ThemeId } from './types'
 import { sanitizeThemeCssSourceForEditor } from '../editor/lib/css-source-sanitizer'
+import {
+  KEYCLOAK_THEMES_CONFIG_PATH,
+  THEME_PROPERTIES_PATH,
+  THEME_QUICK_START_CSS_PATH,
+  themeLoginPath,
+  themeLoginResourcePath,
+} from '../keycloak-theme/paths'
 import { readMessageProperty } from '../preview/lib/message-properties'
-import { themeResourcePath } from './types'
 
 export interface ThemeCssStructured {
   quickStartDefaults: string
@@ -29,7 +35,7 @@ async function fetchCssFile(path: string): Promise<string> {
 
 async function fetchThemeProperty(themeId: ThemeId, key: string): Promise<string | undefined> {
   try {
-    const response = await fetch(themeResourcePath(themeId, 'theme.properties'))
+    const response = await fetch(themeLoginPath(themeId, THEME_PROPERTIES_PATH))
     if (!response.ok) {
       return undefined
     }
@@ -42,7 +48,7 @@ async function fetchThemeProperty(themeId: ThemeId, key: string): Promise<string
 
 export async function loadThemes(): Promise<ThemeConfig> {
   try {
-    const themesResponse = await fetch('/keycloak-dev-resources/themes/themes.json')
+    const themesResponse = await fetch(KEYCLOAK_THEMES_CONFIG_PATH)
     if (!themesResponse.ok) {
       throw new Error(`Failed to load themes.json: ${themesResponse.statusText}`)
     }
@@ -79,14 +85,14 @@ export async function loadThemeCssStructured(themeId: ThemeId): Promise<ThemeCss
     const stylePaths = await fetchThemeStylesPaths(themeId)
 
     // Separate quick-start.css (editor-managed) from user styles
-    const quickStartEntry = stylePaths.find(p => p === 'css/quick-start.css')
-    const userStyleEntries = stylePaths.filter(p => p !== 'css/quick-start.css')
+    const quickStartEntry = stylePaths.find(p => p === THEME_QUICK_START_CSS_PATH)
+    const userStyleEntries = stylePaths.filter(p => p !== THEME_QUICK_START_CSS_PATH)
 
     const quickStartPromise = quickStartEntry
-      ? fetchCssFile(themeResourcePath(themeId, `resources/${quickStartEntry}`))
+      ? fetchCssFile(themeLoginResourcePath(themeId, quickStartEntry))
       : Promise.resolve('')
     const userStylePromises = userStyleEntries.map(entry =>
-      fetchCssFile(themeResourcePath(themeId, `resources/${entry}`)),
+      fetchCssFile(themeLoginResourcePath(themeId, entry)),
     )
 
     const [rawQuickStart, ...rawUserStyles] = await Promise.all([
@@ -100,7 +106,7 @@ export async function loadThemeCssStructured(themeId: ThemeId): Promise<ThemeCss
     // Build individual file map (include quick-start.css only if the theme declares it)
     const stylesCssFiles: Record<string, string> = {}
     if (hasQuickStart) {
-      stylesCssFiles['css/quick-start.css'] = rawQuickStart
+      stylesCssFiles[THEME_QUICK_START_CSS_PATH] = rawQuickStart
     }
     for (let i = 0; i < userStyleEntries.length; i++) {
       const css = sanitizeThemeCssSourceForEditor(rawUserStyles[i])

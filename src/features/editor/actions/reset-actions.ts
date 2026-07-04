@@ -1,5 +1,4 @@
 import { getThemeCssStructuredCached } from '../../presets/queries'
-import { combineCssFiles, firstFilePath, singleFileMap } from '../lib/css-files'
 import { buildQuickSettingsStorageKey, DEFAULT_THEME_ID } from '../lib/quick-settings'
 import {
   ASSET_STORE_STORAGE_KEY,
@@ -15,6 +14,7 @@ import { coreStore } from '../stores/core-store'
 import { historyStore } from '../stores/history-store'
 import { createDefaultPresetState, presetStore } from '../stores/preset-store'
 import { themeStore } from '../stores/theme-store'
+import { themeSelectionActions } from './theme-selection-actions'
 
 function clearPersistedEditorState() {
   if (typeof window === 'undefined') {
@@ -89,20 +89,11 @@ export const resetActions = {
     }))
 
     const { quickStartDefaults, stylesCss, stylesCssFiles } = await getThemeCssStructuredCached(DEFAULT_THEME_ID)
-    const files = Object.keys(stylesCssFiles).length > 0 ? stylesCssFiles : singleFileMap(stylesCss)
-    const combined = combineCssFiles(files)
-    presetStore.setState(state => ({
-      ...state,
-      presetCss: combined,
-    }))
-    themeStore.setState(state => ({
-      ...state,
-      stylesCss: combined,
-      stylesCssByTheme: { [DEFAULT_THEME_ID]: combined },
-      stylesCssFiles: files,
-      stylesCssFilesByTheme: { [DEFAULT_THEME_ID]: files },
-      activeCssFilePath: firstFilePath(files),
-      themeQuickStartDefaults: quickStartDefaults,
-    }))
+    themeSelectionActions.applyThemeCssData({
+      themeId: DEFAULT_THEME_ID,
+      stylesCss,
+      stylesCssFiles,
+      quickStartDefaults,
+    })
   },
 }

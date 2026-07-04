@@ -176,6 +176,8 @@ export function buildQuickStartCssParts(options: QuickStartCssOptions): QuickSta
   if (bgColor && COLOR_REGEX.test(bgColor)) {
     quickStartRootVariableValues['--quickstart-bg-color'] = bgColor
     quickStartRootVariableValues['--quickstart-bg-image'] = 'none'
+    quickStartRootVariableValues['--quickstart-bg-logo-url'] = 'none'
+    quickStartRootVariableValues['--keycloak-bg-logo-url'] = 'none'
   }
 
   if (radiusEntry) {

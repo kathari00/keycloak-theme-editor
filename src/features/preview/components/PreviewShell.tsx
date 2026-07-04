@@ -1,13 +1,12 @@
 import { Bullseye, Spinner } from '@patternfly/react-core'
 import { useEffect, useMemo, useState } from 'react'
 import { useLoadingIndicatorVisibility } from '../../../app/LoadingScreen'
-import { useDarkModeState, usePresetState, usePreviewState, useQuickStartColorsState, useQuickStartContentState, useStylesCssState, useUploadedAssetsState } from '../../editor/hooks/use-editor'
-import { resolveThemeIdFromConfig, useThemeConfig } from '../../presets/queries'
+import { useDarkModeState, usePreviewState } from '../../editor/hooks/use-editor'
 import { getThemePreviewStylesPath } from '../../presets/theme-paths'
+import { themeDocumentToPreviewCss, useThemeDocument } from '../../theme-document'
 import patternflyV5PreviewStylesheetUrl from '../assets/patternfly-v5-preview.css?url'
 import { usePreviewRuntime } from '../hooks/use-preview-context'
 import { usePreviewMessages } from '../hooks/usePreviewMessages'
-import { computePreviewCss } from '../lib/compute-preview-css'
 import { syncPreviewDarkModeClasses } from '../lib/dark-mode-classes'
 import { getEventElement } from '../lib/event-target-utils'
 import { applyQuickStartTemplateContent } from '../lib/quickstart-template-content'
@@ -146,14 +145,9 @@ function isLegalInfoLink(anchor: HTMLAnchorElement): boolean {
 
 export function PreviewShell() {
   const { activeVariantId, activePageId, activeStateId, selectedNodeId, previewReady, iframeRef, setPreviewReady, selectNode } = usePreviewRuntime()
-  const { selectedThemeId } = usePresetState()
-  const { stylesCss, themeQuickStartDefaults } = useStylesCssState()
-  const colors = useQuickStartColorsState()
-  const content = useQuickStartContentState()
-  const assets = useUploadedAssetsState()
+  const { themeDocument, resolvedThemeId, resolvedTheme, isPresetTheme } = useThemeDocument()
   const { isDarkMode } = useDarkModeState()
   const { deviceId } = usePreviewState()
-  const themeConfig = useThemeConfig()
   const [frameLoadVersion, setFrameLoadVersion] = useState(0)
 
   const variantPages = getVariantPages(activeVariantId)
@@ -166,39 +160,19 @@ export function PreviewShell() {
     pageId: effectivePageId,
     stateId: activeStateId,
   }) || variantPages[effectivePageId] || '<!doctype html><html><body></body></html>'
-  const resolvedThemeId = resolveThemeIdFromConfig(themeConfig, selectedThemeId)
-  const resolvedTheme = themeConfig.themes.find(theme => theme.id === resolvedThemeId)
-  const isPresetTheme = resolvedTheme?.type !== 'imported'
   const themeStylesPath = getThemePreviewStylesPath(resolvedThemeId)
   const messageOverrides = usePreviewMessages({ reloadVersion: frameLoadVersion })
-
-  const editorCss = isPresetTheme
-    ? computePreviewCss({
-        primaryColor: colors.colorPresetPrimaryColor,
-        secondaryColor: colors.colorPresetSecondaryColor,
-        fontFamily: colors.colorPresetFontFamily,
-        bgColor: colors.colorPresetBgColor,
-        borderRadius: colors.colorPresetBorderRadius,
-        cardShadow: colors.colorPresetCardShadow,
-        headingFontFamily: colors.colorPresetHeadingFontFamily,
-        showClientName: content.showClientName,
-        showRealmName: content.showRealmName,
-        infoMessage: content.infoMessage,
-        imprintUrl: content.imprintUrl,
-        dataProtectionUrl: content.dataProtectionUrl,
-        uploadedAssets: assets.uploadedAssets,
-        appliedAssets: assets.appliedAssets,
-      })
-    : { googleFontUrls: [] as string[], quickStartCss: '', uploadedFontsCss: '', uploadedImagesCss: '', appliedAssetsCss: '' }
+  const editorCss = themeDocumentToPreviewCss(themeDocument)
+  const quickSettings = themeDocument.quickSettings
 
   const editorStyleParams = useMemo(() => ({
-    quickStartBaseCss: isPresetTheme ? themeQuickStartDefaults : '',
+    quickStartBaseCss: themeDocument.isPresetTheme ? themeDocument.quickStartCss : '',
     googleFontUrls: editorCss.googleFontUrls,
     quickStartOverridesCss: editorCss.quickStartCss,
     uploadedFontsCss: editorCss.uploadedFontsCss,
     uploadedImagesCss: editorCss.uploadedImagesCss,
     appliedAssetsCss: editorCss.appliedAssetsCss,
-  }), [isPresetTheme, themeQuickStartDefaults, editorCss.googleFontUrls, editorCss.quickStartCss, editorCss.uploadedFontsCss, editorCss.uploadedImagesCss, editorCss.appliedAssetsCss])
+  }), [themeDocument.isPresetTheme, themeDocument.quickStartCss, editorCss.googleFontUrls, editorCss.quickStartCss, editorCss.uploadedFontsCss, editorCss.uploadedImagesCss, editorCss.appliedAssetsCss])
 
   const srcDoc = sanitizePreviewHtml(pageHtml)
 
@@ -215,7 +189,7 @@ export function PreviewShell() {
     syncPreviewDocumentStyles({
       doc,
       themeStylesPath,
-      stylesCss,
+      stylesCss: themeDocument.stylesCss,
       ...editorStyleParams,
       darkModeClasses: resolvedTheme?.darkModeClasses,
       isDarkMode,
@@ -233,23 +207,23 @@ export function PreviewShell() {
     syncPreviewDocumentStyles({
       doc,
       themeStylesPath,
-      stylesCss,
+      stylesCss: themeDocument.stylesCss,
       ...editorStyleParams,
       darkModeClasses: resolvedTheme?.darkModeClasses,
       isDarkMode,
     })
     if (isPresetTheme) {
       applyQuickStartTemplateContent(doc, {
-        showClientName: content.showClientName,
-        showRealmName: content.showRealmName,
-        infoMessage: content.infoMessage,
-        imprintUrl: content.imprintUrl,
-        dataProtectionUrl: content.dataProtectionUrl,
+        showClientName: quickSettings.showClientName,
+        showRealmName: quickSettings.showRealmName,
+        infoMessage: quickSettings.infoMessage,
+        imprintUrl: quickSettings.imprintUrl,
+        dataProtectionUrl: quickSettings.dataProtectionUrl,
         noAccountMessage: messageOverrides.noAccount,
         doRegisterLabel: messageOverrides.doRegister,
       })
     }
-  }, [editorStyleParams, content.dataProtectionUrl, content.imprintUrl, content.infoMessage, content.showClientName, content.showRealmName, frameLoadVersion, iframeRef, isDarkMode, isPresetTheme, messageOverrides.doRegister, messageOverrides.noAccount, resolvedTheme?.darkModeClasses, stylesCss, themeStylesPath])
+  }, [editorStyleParams, frameLoadVersion, iframeRef, isDarkMode, isPresetTheme, messageOverrides.doRegister, messageOverrides.noAccount, quickSettings.dataProtectionUrl, quickSettings.imprintUrl, quickSettings.infoMessage, quickSettings.showClientName, quickSettings.showRealmName, resolvedTheme?.darkModeClasses, themeDocument.stylesCss, themeStylesPath])
 
   useEffect(() => {
     const doc = iframeRef.current?.contentDocument
