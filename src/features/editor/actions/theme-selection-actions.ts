@@ -97,16 +97,19 @@ export function syncDefaultAssetsForTheme(themeConfig: ThemeConfig, themeId: str
   syncDefaultAppliedAssetForTheme(themeConfig, themeId, 'logo')
 }
 
-function hasDefaultQuickStartContent(): boolean {
+function hasDefaultQuickStartContentFor(keys: (keyof typeof DEFAULT_QUICK_START_CONTENT)[]): boolean {
   const state = presetStore.getState()
-  return Object.entries(DEFAULT_QUICK_START_CONTENT).every(([key, value]) => (
-    state[key as keyof typeof DEFAULT_QUICK_START_CONTENT] === value
-  ))
+  return keys.every(key => state[key] === DEFAULT_QUICK_START_CONTENT[key])
 }
 
 function applyThemeContentDefaults(themeConfig: ThemeConfig, themeId: string): void {
   const contentDefaults = themeConfig.themes.find(candidate => candidate.id === themeId)?.contentDefaults
-  if (!contentDefaults || Object.keys(contentDefaults).length === 0 || !hasDefaultQuickStartContent()) {
+  if (!contentDefaults || Object.keys(contentDefaults).length === 0) {
+    return
+  }
+
+  const keysToApply = Object.keys(contentDefaults) as (keyof typeof DEFAULT_QUICK_START_CONTENT)[]
+  if (!hasDefaultQuickStartContentFor(keysToApply)) {
     return
   }
 

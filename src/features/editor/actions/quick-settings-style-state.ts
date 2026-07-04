@@ -157,15 +157,41 @@ export function replaceQuickSettingsStylesForThemeFromCss(params: {
   css: string
   activeMode?: QuickSettingsMode
 }): void {
+  // Bail out entirely on CSS with no quickstart variables at all (e.g. mid-edit,
+  // or a plain custom stylesheet) rather than overwriting saved colors with defaults.
+  if (!/--quickstart-/.test(params.css)) {
+    return
+  }
+
   const themeKey = getActiveThemeKey(params.themeId)
   const activeMode = params.activeMode ?? getActiveQuickSettingsMode()
-  const nextThemeStyles = buildQuickSettingsStylesByModeFromCss(params.css)
+  const parsedStyles = buildQuickSettingsStylesByModeFromCss(params.css)
 
-  presetStore.setState(state => ({
-    ...nextThemeStyles[activeMode],
-    quickSettingsStylesByThemeMode: {
-      ...state.quickSettingsStylesByThemeMode,
-      [themeKey]: nextThemeStyles,
-    },
-  }))
+  presetStore.setState((state) => {
+    const currentStyle = getQuickSettingsStyleFromPresetState(state)
+    const existingThemeStyles = state.quickSettingsStylesByThemeMode[themeKey] ?? {}
+
+    const nextThemeStyles: QuickSettingsStylesByMode = {}
+    for (const mode of QUICK_SETTINGS_MODES) {
+      const base = existingThemeStyles[mode] ?? currentStyle
+      const parsed = parsedStyles[mode]
+      // Colors absent from this parse (e.g. no dark-mode variant declared) keep
+      // their previous value instead of falling back to buildThemeQuickStartDefaults'
+      // "not found" sentinel ('').
+      nextThemeStyles[mode] = {
+        ...parsed,
+        colorPresetPrimaryColor: parsed.colorPresetPrimaryColor || base.colorPresetPrimaryColor,
+        colorPresetSecondaryColor: parsed.colorPresetSecondaryColor || base.colorPresetSecondaryColor,
+        colorPresetBgColor: parsed.colorPresetBgColor || base.colorPresetBgColor,
+      }
+    }
+
+    return {
+      ...nextThemeStyles[activeMode],
+      quickSettingsStylesByThemeMode: {
+        ...state.quickSettingsStylesByThemeMode,
+        [themeKey]: nextThemeStyles,
+      },
+    }
+  })
 }

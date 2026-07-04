@@ -182,16 +182,15 @@ describe('preset background sync on preset selection', () => {
     expect(presetStore.getState().showRealmName).toBe(true)
   })
 
-  it('does not overwrite non-default content settings with theme content defaults', async () => {
+  it('applies theme content defaults even when unrelated content settings are customized', async () => {
     presetStore.setState(state => ({
       ...state,
       infoMessage: 'custom-info',
-      showRealmName: false,
     }))
 
     await presetActions.applyThemeSelection('modern-card')
 
-    expect(presetStore.getState().showRealmName).toBe(false)
+    expect(presetStore.getState().showRealmName).toBe(true)
     expect(presetStore.getState().infoMessage).toBe('custom-info')
   })
 
