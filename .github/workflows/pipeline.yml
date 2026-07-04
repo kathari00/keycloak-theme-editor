@@ -21,6 +21,7 @@ jobs:
       - run: npm run test
       - run: npm run build
       - run: npx playwright install --with-deps chromium
+        timeout-minutes: 10
       - run: npm run test:e2e
       - if: github.event_name == 'push'
         uses: actions/upload-artifact@v7
