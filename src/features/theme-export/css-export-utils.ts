@@ -1,6 +1,7 @@
 import type { AppliedAssets, UploadedAsset } from '../assets/types'
 import type { QuickSettings } from '../editor/stores/types'
 import type { EditorCssContext, ImportedQuickSettingsByMode, ThemeExportPayload } from './types'
+import { collectDeclarationsBySelector } from '../../lib/css-ast'
 import {
   generateExportAppliedCSS,
   generateExportFontCSS,
@@ -20,7 +21,12 @@ import {
   COLOR_REGEX,
   CUSTOM_PRESET_ID,
 } from '../editor/lib/quick-start-css'
-import { themeResourcePath } from '../presets/types'
+import {
+  THEME_FOOTER_FTL_PATH,
+  THEME_TEMPLATE_FTL_PATH,
+  themeLoginPath,
+  themeLoginResourcePath,
+} from '../keycloak-theme/paths'
 
 /** Remove editor-only data-kc-state attributes from exported templates */
 export function stripDataKcStateAttributes(markup: string): string {
@@ -38,11 +44,19 @@ export function stripDataKcStateAttributes(markup: string): string {
 export function getEffectiveAppliedAssets(
   appliedAssets: AppliedAssets,
   uploadedAssets: UploadedAsset[],
+  options: { suppressBackground?: boolean, suppressDefaultBackground?: boolean } = {},
 ): AppliedAssets {
   const next: AppliedAssets = { ...appliedAssets }
+  if (options.suppressBackground) {
+    delete next.background
+  }
+
   const defaultAssetsByCategory: Array<'background' | 'logo'> = ['background', 'logo']
 
   for (const category of defaultAssetsByCategory) {
+    if (category === 'background' && (options.suppressBackground || options.suppressDefaultBackground)) {
+      continue
+    }
     if (!next[category]) {
       const defaultAsset = uploadedAssets.find(
         asset => asset.category === category && asset.isDefault,
@@ -53,6 +67,22 @@ export function getEffectiveAppliedAssets(
     }
   }
   return next
+}
+
+function isConcreteQuickStartBackgroundColor(value: string | undefined): boolean {
+  const normalized = (value || '').trim().toLowerCase()
+  return Boolean(normalized && !normalized.startsWith('var(') && normalized !== 'transparent')
+}
+
+export function hasExplicitQuickStartBackgroundColor(cssText: string): boolean {
+  for (const [, declarations] of collectDeclarationsBySelector(cssText)) {
+    for (const [property, value] of Object.entries(declarations)) {
+      if (property.startsWith('--quickstart-bg-color') && isConcreteQuickStartBackgroundColor(value)) {
+        return true
+      }
+    }
+  }
+  return false
 }
 
 /** Extract last path segment as filename */
@@ -73,7 +103,7 @@ function getGoogleFontsCss(cssText: string, applied: AppliedAssets): string {
 
 /** Fetch the correct template.ftl for a theme */
 export async function fetchTemplateFtl(themeId: string): Promise<string> {
-  const response = await fetch(themeResourcePath(themeId, 'template.ftl'))
+  const response = await fetch(themeLoginPath(themeId, THEME_TEMPLATE_FTL_PATH))
   if (!response.ok) {
     throw new Error(`Failed to load template.ftl for "${themeId}" (${response.status})`)
   }
@@ -82,7 +112,7 @@ export async function fetchTemplateFtl(themeId: string): Promise<string> {
 
 /** Fetch the optional footer.ftl for a theme */
 export async function fetchFooterFtl(themeId: string): Promise<string | null> {
-  const response = await fetch(themeResourcePath(themeId, 'footer.ftl'))
+  const response = await fetch(themeLoginPath(themeId, THEME_FOOTER_FTL_PATH))
   if (!response.ok) {
     return null
   }
@@ -104,7 +134,7 @@ export async function fetchCustomFtlFiles(themeId: string): Promise<Record<strin
 
     const entries = await Promise.all(
       filenames.map(async (filename) => {
-        const ftlResponse = await fetch(themeResourcePath(themeId, filename))
+        const ftlResponse = await fetch(themeLoginPath(themeId, filename))
         if (!ftlResponse.ok) {
           return null
         }
@@ -126,7 +156,7 @@ export async function filterLocalCssFiles(
   const result: Record<string, string> = {}
   await Promise.all(
     Object.entries(files).map(async ([cssPath, css]) => {
-      const response = await fetch(themeResourcePath(themeId, `resources/${cssPath}`))
+      const response = await fetch(themeLoginResourcePath(themeId, cssPath))
       if (response.ok && response.headers.get('X-Theme-Source') !== 'parent') {
         result[cssPath] = css
       }
@@ -219,8 +249,9 @@ export function assembleExportPayload(params: {
   uploadedAssets: UploadedAsset[]
   appliedAssets: AppliedAssets
   editorCssContext: EditorCssContext
+  assetResolutionCss?: string
 }): ThemeExportPayload {
-  const { sourceCss, uploadedAssets, appliedAssets, editorCssContext } = params
+  const { sourceCss, uploadedAssets, appliedAssets, editorCssContext, assetResolutionCss = '' } = params
 
   const uploadedFonts = uploadedAssets.filter(a => a.category === 'font')
   const uploadedBackgrounds = uploadedAssets.filter(a => a.category === 'background')
@@ -231,7 +262,12 @@ export function assembleExportPayload(params: {
 
   const uploadedFontsCss = generateExportFontCSS(uploadedFonts)
   const uploadedImagesCss = generateExportImageCSS(uploadedVarImages)
-  const effectiveAppliedAssets = getEffectiveAppliedAssets(appliedAssets, uploadedAssets)
+  const cssForAssetResolution = [editorCssContext.colorPresetCss, assetResolutionCss].filter(Boolean).join('\n\n')
+  const hasExplicitBackgroundColor = hasExplicitQuickStartBackgroundColor(cssForAssetResolution)
+  const effectiveAppliedAssets = getEffectiveAppliedAssets(appliedAssets, uploadedAssets, {
+    suppressBackground: hasExplicitBackgroundColor,
+    suppressDefaultBackground: hasExplicitBackgroundColor,
+  })
   const appliedAssetsCss = generateExportAppliedCSS(effectiveAppliedAssets, uploadedAssets)
   const googleFontsCss = getGoogleFontsCss(sourceCss, appliedAssets)
 
@@ -326,6 +362,8 @@ function buildQuickStartVariableMap(settings: QuickSettings): Record<string, str
   if (settings.colorPresetBgColor && COLOR_REGEX.test(settings.colorPresetBgColor)) {
     variables['--quickstart-bg-color'] = settings.colorPresetBgColor
     variables['--quickstart-bg-image'] = 'none'
+    variables['--quickstart-bg-logo-url'] = 'none'
+    variables['--keycloak-bg-logo-url'] = 'none'
   }
 
   const borderRadius = BORDER_RADIUS_OPTIONS.find(option => option.value === settings.colorPresetBorderRadius)?.px

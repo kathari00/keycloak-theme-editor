@@ -1,0 +1,32 @@
+import type { Page } from '@playwright/test'
+import { expect } from '@playwright/test'
+
+export async function prepareAppTest(page: Page) {
+  await page.addInitScript(() => {
+    localStorage.clear()
+    delete (window as Window & { showSaveFilePicker?: unknown }).showSaveFilePicker
+    delete (window as Window & { showDirectoryPicker?: unknown }).showDirectoryPicker
+  })
+}
+
+export async function openApp(page: Page) {
+  await page.goto('/')
+  await expect(page.locator('#root')).not.toBeEmpty()
+  await expect(page.getByRole('button', { name: 'Open editor menu' })).toBeVisible()
+  await expect(page.locator('iframe')).toBeVisible()
+}
+
+export async function openTopbarMenuItem(page: Page, name: string) {
+  await page.getByRole('button', { name: 'Open editor menu' }).click()
+  await page.getByRole('menuitem', { name }).click()
+}
+
+export async function openExportDialog(page: Page) {
+  await openTopbarMenuItem(page, 'Export theme')
+  await expect(page.getByRole('dialog', { name: 'Export Theme' })).toBeVisible()
+}
+
+export async function openImportDialog(page: Page) {
+  await openTopbarMenuItem(page, 'Import theme')
+  await expect(page.getByRole('dialog', { name: 'Import Theme' })).toBeVisible()
+}

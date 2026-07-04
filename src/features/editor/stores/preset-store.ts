@@ -26,6 +26,7 @@ export function createDefaultPresetState(): PresetState {
   return {
     selectedThemeId: DEFAULT_THEME_ID,
     presetCss: '',
+    quickSettingsStylesByThemeMode: {},
     ...DEFAULT_QUICK_SETTINGS_STYLE,
     ...DEFAULT_QUICK_START_CONTENT,
   }
@@ -39,6 +40,7 @@ export const presetStore = createPersistedEditorStore<PresetState>(createDefault
   partialize: state => ({
     selectedThemeId: state.selectedThemeId,
     presetCss: state.presetCss,
+    quickSettingsStylesByThemeMode: state.quickSettingsStylesByThemeMode,
     colorPresetId: state.colorPresetId,
     colorPresetPrimaryColor: state.colorPresetPrimaryColor,
     colorPresetSecondaryColor: state.colorPresetSecondaryColor,

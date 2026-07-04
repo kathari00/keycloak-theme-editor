@@ -29,7 +29,7 @@ vi.mock('../../presets/queries', async (importOriginal) => {
             },
           ],
         },
-        { id: 'modern-card', defaultAssets: [] },
+        { id: 'modern-card', defaultAssets: [], contentDefaults: { showRealmName: true } },
         { id: 'horizontal-card', defaultAssets: [] },
       ],
     })),
@@ -175,6 +175,26 @@ describe('preset background sync on preset selection', () => {
     expect(presetStore.getState().showRealmName).toBe(false)
   })
 
+  it('applies modern-card content defaults while content settings are untouched', async () => {
+    await presetActions.applyThemeSelection('modern-card')
+
+    expect(presetStore.getState().selectedThemeId).toBe('modern-card')
+    expect(presetStore.getState().showRealmName).toBe(true)
+  })
+
+  it('does not overwrite non-default content settings with theme content defaults', async () => {
+    presetStore.setState(state => ({
+      ...state,
+      infoMessage: 'custom-info',
+      showRealmName: false,
+    }))
+
+    await presetActions.applyThemeSelection('modern-card')
+
+    expect(presetStore.getState().showRealmName).toBe(false)
+    expect(presetStore.getState().infoMessage).toBe('custom-info')
+  })
+
   it('keeps default background active when selecting v2', async () => {
     assetStore.setState(state => ({ ...state, appliedAssets: {} }))
 
@@ -183,6 +203,24 @@ describe('preset background sync on preset selection', () => {
     expect(presetStore.getState().selectedThemeId).toBe('v2')
     expect(assetStore.getState().appliedAssets.background).toBe('default-bg')
     expect(assetStore.getState().appliedAssets.logo).toBe('default-logo')
+  })
+
+  it('does not reapply the v2 default background when quick-start background color is set', async () => {
+    presetStore.setState(state => ({
+      ...state,
+      colorPresetBgColor: '#f0f4f9',
+    }))
+    assetStore.setState(state => ({
+      ...state,
+      appliedAssets: {},
+      appliedAssetsByTheme: {},
+    }))
+
+    await presetActions.syncBackgroundForCurrentTheme()
+
+    expect(assetStore.getState().appliedAssets.background).toBeUndefined()
+    expect(assetStore.getState().appliedAssets.logo).toBe('default-logo')
+    expect(assetStore.getState().appliedAssetsByTheme.v2?.background).toBeUndefined()
   })
 
   it('does not overwrite global realm visibility when switching back to v2', async () => {

@@ -1,4 +1,5 @@
 import type { AppliedAssets, KeycloakPage, UploadedAsset } from '../../assets/types'
+import type { QuickSettingsMode } from '../lib/quick-settings'
 
 export interface AssetState {
   uploadedAssets: UploadedAsset[]
@@ -36,9 +37,14 @@ export interface QuickStartContentSettings {
 
 export interface QuickSettings extends QuickSettingsStyle, QuickStartContentSettings {}
 
+export type QuickSettingsStylesByMode = Partial<Record<QuickSettingsMode, QuickSettingsStyle>>
+
+export type QuickSettingsStylesByThemeMode = Record<string, QuickSettingsStylesByMode>
+
 export interface PresetState {
   selectedThemeId: string
   presetCss: string
+  quickSettingsStylesByThemeMode: QuickSettingsStylesByThemeMode
   colorPresetId: QuickSettingsStyle['colorPresetId']
   colorPresetPrimaryColor: QuickSettingsStyle['colorPresetPrimaryColor']
   colorPresetSecondaryColor: QuickSettingsStyle['colorPresetSecondaryColor']

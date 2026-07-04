@@ -88,6 +88,12 @@ export function useQuickStartColorsState() {
   }))
 }
 
+export function useQuickSettingsStylesByThemeModeState() {
+  return usePresetStoreSlice(state => ({
+    quickSettingsStylesByThemeMode: state.quickSettingsStylesByThemeMode,
+  }))
+}
+
 export function useQuickStartContentState() {
   return usePresetStoreSlice(state => ({
     showClientName: state.showClientName,

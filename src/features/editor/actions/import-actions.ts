@@ -1,16 +1,72 @@
-import type { QuickSettings } from '../stores/types'
+import type { QuickSettingsMode } from '../lib/quick-settings'
+import type { QuickSettings, QuickSettingsStyle, QuickSettingsStylesByMode } from '../stores/types'
+import { getThemeStorageKey } from '../lib/quick-settings'
 import { presetStore } from '../stores/preset-store'
 import { withoutUndefinedValues } from './css-variable-reader'
 import { getCurrentQuickSettingsMode } from './preset-state'
+import { getQuickSettingsStyleFromPresetState } from './quick-settings-style-state'
 
 interface ImportedQuickSettingsByMode {
   light?: Partial<QuickSettings>
   dark?: Partial<QuickSettings>
 }
 
-function pickActiveImportedSettings(quickSettingsByMode: ImportedQuickSettingsByMode): Partial<QuickSettings> | undefined {
-  const currentMode = getCurrentQuickSettingsMode()
+const QUICK_SETTINGS_MODES: QuickSettingsMode[] = ['light', 'dark']
+
+function pickActiveImportedSettings(
+  quickSettingsByMode: ImportedQuickSettingsByMode,
+  currentMode: QuickSettingsMode,
+): Partial<QuickSettings> | undefined {
   return quickSettingsByMode[currentMode] ?? quickSettingsByMode.light ?? quickSettingsByMode.dark
+}
+
+function pickImportedContentSettings(settings: Partial<QuickSettings> | undefined) {
+  return withoutUndefinedValues({
+    showClientName: settings?.showClientName,
+    showRealmName: settings?.showRealmName,
+    infoMessage: settings?.infoMessage,
+    imprintUrl: settings?.imprintUrl,
+    dataProtectionUrl: settings?.dataProtectionUrl,
+  })
+}
+
+function pickImportedStyleSettings(settings: Partial<QuickSettings> | undefined): Partial<QuickSettingsStyle> {
+  return withoutUndefinedValues({
+    colorPresetId: settings?.colorPresetId,
+    colorPresetPrimaryColor: settings?.colorPresetPrimaryColor,
+    colorPresetSecondaryColor: settings?.colorPresetSecondaryColor,
+    colorPresetFontFamily: settings?.colorPresetFontFamily,
+    colorPresetBgColor: settings?.colorPresetBgColor,
+    colorPresetBorderRadius: settings?.colorPresetBorderRadius,
+    colorPresetCardShadow: settings?.colorPresetCardShadow,
+    colorPresetHeadingFontFamily: settings?.colorPresetHeadingFontFamily,
+  })
+}
+
+function hasValues(value: Record<string, unknown>): boolean {
+  return Object.keys(value).length > 0
+}
+
+function buildImportedStylesByMode(
+  quickSettingsByMode: ImportedQuickSettingsByMode,
+  existingStyles: QuickSettingsStylesByMode,
+  fallbackStyle: QuickSettingsStyle,
+): QuickSettingsStylesByMode {
+  const nextStyles: QuickSettingsStylesByMode = {}
+
+  for (const mode of QUICK_SETTINGS_MODES) {
+    const styleUpdate = pickImportedStyleSettings(quickSettingsByMode[mode])
+    if (!hasValues(styleUpdate)) {
+      continue
+    }
+
+    nextStyles[mode] = {
+      ...(existingStyles[mode] ?? fallbackStyle),
+      ...styleUpdate,
+    }
+  }
+
+  return nextStyles
 }
 
 export const importActions = {
@@ -19,23 +75,38 @@ export const importActions = {
       return
     }
 
-    const activeSettings = pickActiveImportedSettings(quickSettingsByMode)
+    const currentMode = getCurrentQuickSettingsMode()
+    const activeSettings = pickActiveImportedSettings(quickSettingsByMode, currentMode)
     if (!activeSettings) {
       return
     }
 
-    const nextContent = withoutUndefinedValues({
-      showClientName: activeSettings.showClientName,
-      showRealmName: activeSettings.showRealmName,
-      infoMessage: activeSettings.infoMessage,
-      imprintUrl: activeSettings.imprintUrl,
-      dataProtectionUrl: activeSettings.dataProtectionUrl,
-    })
+    const nextContent = pickImportedContentSettings(activeSettings)
+    const nextActiveStyle = pickImportedStyleSettings(activeSettings)
 
-    if (Object.keys(nextContent).length === 0) {
+    if (!hasValues(nextContent) && !hasValues(nextActiveStyle)) {
       return
     }
 
-    presetStore.setState(nextContent)
+    presetStore.setState((state) => {
+      const themeKey = getThemeStorageKey(state.selectedThemeId)
+      const existingStyles = state.quickSettingsStylesByThemeMode[themeKey] ?? {}
+      const currentStyle = getQuickSettingsStyleFromPresetState(state)
+      const importedStylesByMode = buildImportedStylesByMode(quickSettingsByMode, existingStyles, currentStyle)
+      const nextThemeStyles = hasValues(importedStylesByMode)
+        ? { ...existingStyles, ...importedStylesByMode }
+        : existingStyles
+
+      return {
+        ...nextContent,
+        ...nextActiveStyle,
+        quickSettingsStylesByThemeMode: hasValues(importedStylesByMode)
+          ? {
+              ...state.quickSettingsStylesByThemeMode,
+              [themeKey]: nextThemeStyles,
+            }
+          : state.quickSettingsStylesByThemeMode,
+      }
+    })
   },
 }
