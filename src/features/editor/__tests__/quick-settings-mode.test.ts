@@ -1,8 +1,8 @@
+import type { QuickSettingsMode } from '../lib/quick-settings'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { editorActions, presetActions, themeActions } from '../actions'
 import { coreActions } from '../actions/core-actions'
 import { historyActions, subscribeToScopeChanges } from '../actions/history-actions'
-import { subscribeToQuickStartSync } from '../actions/theme-actions'
 import { QUICK_START_CSS_PATH } from '../lib/css-files'
 import { DARK_MODE_STORAGE_KEY } from '../lib/storage-keys'
 import { assetStore } from '../stores/asset-store'
@@ -41,11 +41,8 @@ const V2_THEME_CSS = `
 }
 `.trim()
 
-subscribeToQuickStartSync()
-
-function readQuickStartVar(name: string): string | undefined {
-  const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  return themeStore.getState().themeQuickStartDefaults.match(new RegExp(`${escapedName}\\s*:\\s*([^;]+);`))?.[1]?.trim()
+function readStoredModeStyle(mode: QuickSettingsMode, themeId = 'v2') {
+  return presetStore.getState().quickSettingsStylesByThemeMode[themeId]?.[mode]
 }
 
 function resetStores() {
@@ -97,18 +94,18 @@ describe('quick settings mode separation', () => {
     unsubscribeScopeChanges?.()
   })
 
-  it('keeps quick-start colors isolated per mode via quick-start.css', () => {
+  it('keeps quick-start colors isolated per mode in explicit state', () => {
     presetActions.setQuickStartStyle('#111111', '#222222', 'custom')
 
-    expect(readQuickStartVar('--quickstart-primary-color-light')).toBe('#111111')
-    expect(readQuickStartVar('--quickstart-primary-color-dark')).toBe('#0066cc')
+    expect(readStoredModeStyle('light')?.colorPresetPrimaryColor).toBe('#111111')
+    expect(readStoredModeStyle('dark')?.colorPresetPrimaryColor).toBe('#0066cc')
 
     coreActions.toggleDarkMode()
     expect(coreStore.getState().isDarkMode).toBe(true)
     expect(presetStore.getState().colorPresetPrimaryColor).toBe('#0066cc')
 
     presetActions.setQuickStartStyle('#aaaaaa', '#bbbbbb', 'custom')
-    expect(readQuickStartVar('--quickstart-primary-color-dark')).toBe('#aaaaaa')
+    expect(readStoredModeStyle('dark')?.colorPresetPrimaryColor).toBe('#aaaaaa')
 
     coreActions.toggleDarkMode()
     expect(coreStore.getState().isDarkMode).toBe(false)
@@ -130,8 +127,10 @@ describe('quick settings mode separation', () => {
     expect(presetStore.getState().colorPresetHeadingFontFamily).toBe('\'Poppins\', sans-serif')
     expect(presetStore.getState().colorPresetBorderRadius).toBe('pill')
     expect(presetStore.getState().colorPresetCardShadow).toBe('strong')
-    expect(readQuickStartVar('--quickstart-font-family')).toBe('\'Poppins\', sans-serif')
-    expect(readQuickStartVar('--quickstart-heading-font-family')).toBe('\'Poppins\', sans-serif')
+    expect(readStoredModeStyle('light')?.colorPresetFontFamily).toBe('\'Poppins\', sans-serif')
+    expect(readStoredModeStyle('dark')?.colorPresetFontFamily).toBe('\'Poppins\', sans-serif')
+    expect(readStoredModeStyle('light')?.colorPresetHeadingFontFamily).toBe('\'Poppins\', sans-serif')
+    expect(readStoredModeStyle('dark')?.colorPresetHeadingFontFamily).toBe('\'Poppins\', sans-serif')
   })
 
   it('keeps template content global when switching modes', () => {
@@ -171,7 +170,7 @@ describe('quick settings mode separation', () => {
     expect(presetStore.getState().colorPresetCardShadow).toBe('none')
   })
 
-  it('applies imported quick settings content from the active mode only', () => {
+  it('applies imported quick settings content from the active mode and stores imported styles by mode', () => {
     coreStore.setState(state => ({ ...state, isDarkMode: false }))
 
     presetActions.applyImportedQuickSettingsForPreset({
@@ -187,7 +186,13 @@ describe('quick settings mode separation', () => {
       },
     })
 
-    expect(presetStore.getState().colorPresetPrimaryColor).toBe('#0066cc')
+    expect(presetStore.getState().colorPresetPrimaryColor).toBe('#123456')
+    expect(presetStore.getState().infoMessage).toBe('light-message')
+    expect(readStoredModeStyle('light')?.colorPresetPrimaryColor).toBe('#123456')
+    expect(readStoredModeStyle('dark')?.colorPresetPrimaryColor).toBe('#a8c7fa')
+
+    coreActions.toggleDarkMode()
+    expect(presetStore.getState().colorPresetPrimaryColor).toBe('#a8c7fa')
     expect(presetStore.getState().infoMessage).toBe('light-message')
   })
 
@@ -218,7 +223,7 @@ describe('quick settings mode separation', () => {
     expect(presetStore.getState().colorPresetPrimaryColor).toBe('#222222')
   })
 
-  it('writes the selected background asset into quick-start bg-image', () => {
+  it('keeps selected background assets out of quick-start CSS state', () => {
     assetStore.setState(() => ({
       uploadedAssets: [{
         id: 'custom-bg',
@@ -236,7 +241,8 @@ describe('quick settings mode separation', () => {
 
     editorActions.applyAsset('background', 'custom-bg')
 
-    expect(readQuickStartVar('--quickstart-bg-image')).toBe('var(--uploaded-bg-custom-bg)')
+    expect(assetStore.getState().appliedAssets.background).toBe('custom-bg')
+    expect(themeStore.getState().themeQuickStartDefaults).toBe(V2_THEME_CSS)
   })
 
   it('keeps undo and redo scoped per mode', () => {

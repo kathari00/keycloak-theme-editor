@@ -2,13 +2,31 @@ import type { UploadedAsset } from '../assets/types'
 import type { JarImportResult, ThemeEditorMetadata } from './types'
 import { processUploadedFile } from '../assets/upload-service'
 import { sanitizeThemeCssSourceForEditor } from '../editor/lib/css-source-sanitizer'
+import {
+  THEME_FAVICON_RESOURCE_PATH,
+  THEME_MESSAGES_DEFAULT_PATH,
+  THEME_MESSAGES_EN_PATH,
+  THEME_PROPERTIES_PATH,
+  THEME_QUICK_START_CSS_PATH,
+  THEME_RESOURCES_PATH,
+} from '../keycloak-theme/paths'
 import { readMessageProperty } from '../preview/lib/message-properties'
-import { getFilename, parseAppliedAssetsFromCss } from './css-export-utils'
+import { getFilename, hasExplicitQuickStartBackgroundColor, parseAppliedAssetsFromCss } from './css-export-utils'
 import { parseQuickSettingsFromImportedTheme } from './quick-settings-import'
 
 export const THEME_JAR_IMPORTED_EVENT = 'themeJarImported'
 
 const WHITESPACE_RE = /\s+/
+const LOGIN_PATH_MARKER = '/login/'
+const CUSTOM_USER_STYLES_CSS_PATH = 'css/custom-user-styles.css'
+
+function themeArchiveLoginMarker(loginRelativePath: string): string {
+  return `${LOGIN_PATH_MARKER}${loginRelativePath}`
+}
+
+function themeArchiveLoginResourceMarker(resourceRelativePath: string): string {
+  return themeArchiveLoginMarker(`${THEME_RESOURCES_PATH}/${resourceRelativePath}`)
+}
 
 interface AssetImportRule {
   path: string
@@ -18,20 +36,20 @@ interface AssetImportRule {
 }
 
 const ASSET_IMPORT_RULES: AssetImportRule[] = [
-  { path: '/login/resources/fonts/', category: 'font' },
+  { path: themeArchiveLoginResourceMarker('fonts/'), category: 'font' },
   {
-    path: '/login/resources/img/backgrounds/',
+    path: themeArchiveLoginResourceMarker('img/backgrounds/'),
     category: 'background',
     defaultName: 'keycloak-bg-darken.svg',
   },
   {
-    path: '/login/resources/img/logos/',
+    path: themeArchiveLoginResourceMarker('img/logos/'),
     category: 'logo',
     defaultName: 'keycloak-logo-text.svg',
   },
-  { path: '/login/resources/img/assets/', category: 'image' },
+  { path: themeArchiveLoginResourceMarker('img/assets/'), category: 'image' },
   {
-    path: '/login/resources/img/favicon.ico',
+    path: themeArchiveLoginResourceMarker(THEME_FAVICON_RESOURCE_PATH),
     category: 'favicon',
     fixedName: 'favicon.ico',
   },
@@ -54,7 +72,7 @@ function readEntryText(data: Uint8Array): string {
 }
 
 function getResourcePath(filename: string): string | null {
-  const resourcePrefix = '/login/resources/'
+  const resourcePrefix = themeArchiveLoginResourceMarker('')
   const resourceIndex = filename.indexOf(resourcePrefix)
   if (resourceIndex === -1) {
     return null
@@ -110,7 +128,6 @@ export async function importJarFile(file: File): Promise<JarImportResult> {
   let customCss = ''
   let quickStartCss = ''
   let stylesCss = ''
-  const customUserStylesPath = 'css/custom-user-styles.css'
   let themeProps = ''
   let messagesProperties = ''
   let themeName = ''
@@ -123,12 +140,12 @@ export async function importJarFile(file: File): Promise<JarImportResult> {
       continue
     }
 
-    if (filename.includes('/login/resources/css/custom-user-styles.css')) {
+    if (filename.includes(themeArchiveLoginResourceMarker(CUSTOM_USER_STYLES_CSS_PATH))) {
       customCss = readEntryText(data)
       continue
     }
 
-    if (filename.includes('/login/resources/css/quick-start.css')) {
+    if (filename.includes(themeArchiveLoginResourceMarker(THEME_QUICK_START_CSS_PATH))) {
       quickStartCss = readEntryText(data)
       continue
     }
@@ -139,7 +156,7 @@ export async function importJarFile(file: File): Promise<JarImportResult> {
       continue
     }
 
-    if (filename.includes('/login/theme.properties')) {
+    if (filename.includes(themeArchiveLoginMarker(THEME_PROPERTIES_PATH))) {
       themeProps = readEntryText(data)
       themeName = extractThemeNameFromPath(filename)
       continue
@@ -150,12 +167,12 @@ export async function importJarFile(file: File): Promise<JarImportResult> {
       continue
     }
 
-    if (filename.includes('/login/messages/messages.properties')) {
+    if (filename.includes(themeArchiveLoginMarker(THEME_MESSAGES_DEFAULT_PATH))) {
       messagesProperties = readEntryText(data)
       continue
     }
 
-    if (!messagesProperties && filename.includes('/login/messages/messages_en.properties')) {
+    if (!messagesProperties && filename.includes(themeArchiveLoginMarker(THEME_MESSAGES_EN_PATH))) {
       messagesProperties = readEntryText(data)
       continue
     }
@@ -171,9 +188,9 @@ export async function importJarFile(file: File): Promise<JarImportResult> {
   const declaredStylePaths = (readMessageProperty(themeProps, 'styles') || '')
     .split(WHITESPACE_RE)
     .filter(Boolean)
-    .filter(path => path !== 'css/quick-start.css')
+    .filter(path => path !== THEME_QUICK_START_CSS_PATH)
   if (customCss.trim()) {
-    importedCssFiles[customUserStylesPath] = customCss
+    importedCssFiles[CUSTOM_USER_STYLES_CSS_PATH] = customCss
   }
   const orderedStylePaths = [
     ...declaredStylePaths.filter(path => importedCssFiles[path] !== undefined),
@@ -197,12 +214,19 @@ export async function importJarFile(file: File): Promise<JarImportResult> {
 
   const allCss = joinCssBlocks([quickStartCss, rawStylesCss])
   const { applied: appliedAssets } = parseAppliedAssetsFromCss(allCss, importedAssets)
+  const hasExplicitBackgroundColor = hasExplicitQuickStartBackgroundColor(allCss)
+  if (hasExplicitBackgroundColor) {
+    delete appliedAssets.background
+  }
 
   for (const { category, target } of [
     { category: 'background', target: 'background' },
     { category: 'logo', target: 'logo' },
     { category: 'favicon', target: 'favicon' },
   ] as const) {
+    if (category === 'background' && hasExplicitBackgroundColor) {
+      continue
+    }
     if (!appliedAssets[target]) {
       const candidate = importedAssets.find(a => a.category === category)
       if (candidate) {

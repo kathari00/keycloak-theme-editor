@@ -3,6 +3,7 @@ import { getThemeStorageKey } from '../lib/quick-settings'
 import { assetStore } from '../stores/asset-store'
 import { presetStore } from '../stores/preset-store'
 import { historyActions } from './history-actions'
+import { applyQuickSettingsStyleUpdate } from './quick-settings-style-state'
 
 function getActiveThemeAssetKey(): string {
   return getThemeStorageKey(presetStore.getState().selectedThemeId)
@@ -155,11 +156,10 @@ export const assetActions = {
     const clearBgColor = target === 'background' && Boolean(oldBgColor)
 
     const setActiveModeBackgroundColor = (colorPresetBgColor: string) => {
-      presetStore.setState(current => (
-        current.colorPresetBgColor === colorPresetBgColor
-          ? current
-          : { colorPresetBgColor }
-      ))
+      if (presetStore.getState().colorPresetBgColor === colorPresetBgColor) {
+        return
+      }
+      applyQuickSettingsStyleUpdate({ colorPresetBgColor })
     }
 
     historyActions.addUndoRedoAction({

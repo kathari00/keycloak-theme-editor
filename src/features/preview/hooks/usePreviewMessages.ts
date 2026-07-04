@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { usePresetState } from '../../editor/hooks/use-editor'
+import { THEME_MESSAGES_EN_PATH, themeLoginPath } from '../../keycloak-theme/paths'
 import { resolveThemeIdFromConfig, useThemeConfig } from '../../presets/queries'
-import { themeResourcePath } from '../../presets/types'
 import { readMessageProperty } from '../lib/message-properties'
 
 interface PreviewMessageOverrides {
@@ -23,7 +23,7 @@ export function usePreviewMessages(params: UsePreviewMessagesParams = {}): Previ
 
   useEffect(() => {
     let disposed = false
-    const messagesPath = themeResourcePath(resolvedThemeId, 'messages/messages_en.properties')
+    const messagesPath = themeLoginPath(resolvedThemeId, THEME_MESSAGES_EN_PATH)
 
     fetch(messagesPath)
       .then(response => response.ok ? response.text() : '')

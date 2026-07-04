@@ -27,7 +27,10 @@
       "id": "modern-card",
       "name": "Modern Card",
       "description": "Modern card design with primary color background and soft shadows",
-      "defaultAssets": []
+      "defaultAssets": [],
+      "contentDefaults": {
+        "showRealmName": true
+      }
     },
     {
       "id": "horizontal-card",
