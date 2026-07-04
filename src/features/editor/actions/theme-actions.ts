@@ -10,6 +10,10 @@ function getActiveThemeStorageKey(): string {
 }
 
 export const themeActions = {
+  setBaseCss: (baseCss: string) => {
+    themeStore.setState(state => ({ ...state, baseCss }))
+  },
+
   /** Update the CSS content of the currently active file tab. */
   setActiveFileCss: (css: string) => {
     const activeThemeKey = getActiveThemeStorageKey()
@@ -61,6 +65,10 @@ export const themeActions = {
   /** Switch the active CSS file tab. */
   setActiveCssFilePath: (filePath: string) => {
     themeStore.setState(state => ({ ...state, activeCssFilePath: filePath }))
+  },
+
+  setThemeQuickStartDefaults: (themeQuickStartDefaults: string) => {
+    themeStore.setState(state => ({ ...state, themeQuickStartDefaults }))
   },
 
   setPages: (pages: KeycloakPage[]) => {
