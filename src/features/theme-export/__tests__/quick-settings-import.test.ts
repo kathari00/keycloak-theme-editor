@@ -77,4 +77,50 @@ describe('quick-settings-import parser', () => {
     expect(parsed?.light?.colorPresetBgColor).toBe('#f0f4f9')
     expect(parsed?.dark?.colorPresetBgColor).toBe('#1e1f20')
   })
+
+  it('reads mode-scoped quickstart variables emitted by export', () => {
+    const parsed = parseQuickSettingsFromImportedTheme({
+      quickStartCss: `:root,
+html:not(.kcDarkModeClass) body:not(.kcDarkModeClass) {
+  --quickstart-primary-color: #123456;
+  --quickstart-secondary-color: #234567;
+  --quickstart-font-family: Light Body, sans-serif;
+  --quickstart-heading-font-family: Light Heading, serif;
+  --quickstart-bg-color: #f0f4f9;
+  --quickstart-bg-image: none;
+  --quickstart-border-radius: 24px;
+  --quickstart-card-shadow: none;
+}
+
+html.kcDarkModeClass,
+body.kcDarkModeClass {
+  --quickstart-primary-color: #abcdef;
+  --quickstart-secondary-color: #bcdef0;
+  --quickstart-font-family: Dark Body, sans-serif;
+  --quickstart-heading-font-family: Dark Heading, serif;
+  --quickstart-bg-color: #1e1f20;
+  --quickstart-bg-image: none;
+  --quickstart-border-radius: 0;
+  --quickstart-card-shadow: 0 8px 32px rgba(0,0,0,0.30);
+}`,
+      stylesCss: '',
+      customCss: '',
+      messagesPropertiesText: '',
+    })
+
+    expect(parsed?.light?.colorPresetPrimaryColor).toBe('#123456')
+    expect(parsed?.light?.colorPresetSecondaryColor).toBe('#234567')
+    expect(parsed?.light?.colorPresetFontFamily).toBe('Light Body, sans-serif')
+    expect(parsed?.light?.colorPresetHeadingFontFamily).toBe('Light Heading, serif')
+    expect(parsed?.light?.colorPresetBgColor).toBe('#f0f4f9')
+    expect(parsed?.light?.colorPresetBorderRadius).toBe('pill')
+    expect(parsed?.light?.colorPresetCardShadow).toBe('none')
+    expect(parsed?.dark?.colorPresetPrimaryColor).toBe('#abcdef')
+    expect(parsed?.dark?.colorPresetSecondaryColor).toBe('#bcdef0')
+    expect(parsed?.dark?.colorPresetFontFamily).toBe('Dark Body, sans-serif')
+    expect(parsed?.dark?.colorPresetHeadingFontFamily).toBe('Dark Heading, serif')
+    expect(parsed?.dark?.colorPresetBgColor).toBe('#1e1f20')
+    expect(parsed?.dark?.colorPresetBorderRadius).toBe('sharp')
+    expect(parsed?.dark?.colorPresetCardShadow).toBe('strong')
+  })
 })

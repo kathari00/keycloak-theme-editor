@@ -1,4 +1,3 @@
-import type { DirectoryWriteParams, EditorCssContext, ImportedQuickSettingsByMode, JarBuildParams, ThemeEditorMetadata } from '../types'
 import {
   Alert,
   Button,
@@ -13,33 +12,8 @@ import {
   TextInput,
 } from '@patternfly/react-core'
 import { useEffect, useState } from 'react'
-import { buildThemeQuickStartDefaults } from '../../editor/actions/css-variable-reader'
-import {
-  useCssFilesState,
-  usePresetState,
-  useQuickStartColorsState,
-  useQuickStartContentState,
-  useStylesCssState,
-  useUploadedAssetsState,
-} from '../../editor/hooks/use-editor'
-import { isQuickStartCssFile } from '../../editor/lib/css-files'
-import { sanitizeThemeCssSourceForEditor } from '../../editor/lib/css-source-sanitizer'
-import { getThemeCssStructuredCached, resolveThemeIdFromConfig, useThemeConfig } from '../../presets/queries'
-import { getThemeQuickStartCssPath } from '../../presets/theme-paths'
-import { themeResourcePath } from '../../presets/types'
-import { normalizeExternalLegalLinkUrl } from '../../preview/lib/legal-link-url'
-import {
-  assembleExportPayload,
-  buildModeAwareQuickStartCssParts,
-  extractCssImports,
-  fetchCustomFtlFiles,
-  fetchFooterFtl,
-  fetchTemplateFtl,
-  filterLocalCssFiles,
-  mergeCssImports,
-  stripDataKcStateAttributes,
-} from '../css-export-utils'
-import { buildFolderZipBlob, buildJarBlob, downloadBlob, saveWithFilePicker, writeToDirectory } from '../jar-export-service'
+import { useThemeDocument } from '../../theme-document'
+import { useThemeExportActions } from '../hooks/use-theme-export-actions'
 import { getThemeNameError } from '../theme-validation'
 
 interface DownloadViewProps {
@@ -71,132 +45,10 @@ function DownloadStatusAlert({
   )
 }
 
-/**
- * Build export CSS files from the editor's individual file map.
- */
-function buildExportCssFiles(
-  editorFiles: Record<string, string>,
-  topLevelImportsCss: string,
-  payloadCssWithoutImports: string,
-): Record<string, string> {
-  const paths = Object.keys(editorFiles)
-  if (paths.length === 0) {
-    return {}
-  }
-  const targetPath = paths.find(path => !isQuickStartCssFile(path)) ?? paths[0]
-
-  const result: Record<string, string> = {}
-  for (let i = 0; i < paths.length; i++) {
-    if (paths[i] === targetPath) {
-      // The first user CSS file gets the generated CSS; quick-start.css stays separate.
-      result[paths[i]] = [
-        topLevelImportsCss,
-        payloadCssWithoutImports,
-      ].filter(Boolean).join('\n\n')
-    }
-    else {
-      result[paths[i]] = editorFiles[paths[i]]
-    }
-  }
-  return result
-}
-
-function escapeJavaPropertiesValue(value: string): string {
-  return value
-    .replace(/\\/g, '\\\\')
-    .replace(/\r\n/g, '\n')
-    .replace(/\r/g, '\n')
-    .replace(/\n/g, '\\n')
-}
-
-function withInfoMessage(messagesContent: string, infoMessage: string): string {
-  const normalized = infoMessage.trim()
-  if (!normalized) {
-    return messagesContent
-  }
-
-  const escaped = escapeJavaPropertiesValue(normalized)
-  const infoLine = `infoMessage=${escaped}`
-  if (/^\s*infoMessage\s*=.*$/m.test(messagesContent)) {
-    return messagesContent.replace(/^\s*infoMessage\s*=.*$/m, infoLine)
-  }
-
-  const suffix = messagesContent.endsWith('\n') ? '' : '\n'
-  return `${messagesContent}${suffix}${infoLine}\n`
-}
-
-function withMessageProperty(messagesContent: string, key: 'imprintUrl' | 'dataProtectionUrl', value: string): string {
-  return withMessageLine(messagesContent, key, value)
-}
-
-function withLegalLinkMessages(messagesContent: string, imprintUrl: string, dataProtectionUrl: string): string {
-  const withImprint = withMessageProperty(messagesContent, 'imprintUrl', imprintUrl)
-  return withMessageProperty(withImprint, 'dataProtectionUrl', dataProtectionUrl)
-}
-
-function withLegalLinkLabels(messagesContent: string): string {
-  let result = messagesContent
-  result = withMessageLine(result, 'imprintLabel', 'Imprint')
-  result = withMessageLine(result, 'dataProtectionLabel', 'Data Protection')
-  return result
-}
-
-function withMessageLine(messagesContent: string, key: string, value: string): string {
-  const escaped = escapeJavaPropertiesValue(value.trim())
-  const propertyLine = `${key}=${escaped}`
-  const propertyPattern = new RegExp(`^\\s*${key}\\s*=.*$`, 'm')
-
-  if (propertyPattern.test(messagesContent)) {
-    return messagesContent.replace(propertyPattern, propertyLine)
-  }
-
-  const suffix = messagesContent.endsWith('\n') ? '' : '\n'
-  return `${messagesContent}${suffix}${propertyLine}\n`
-}
-
-function buildOverriddenMessages(params: {
-  baseMessagesContent: string
-  infoMessage: string
-  imprintUrl: string
-  dataProtectionUrl: string
-}): string {
-  const withInfo = withInfoMessage(params.baseMessagesContent, params.infoMessage)
-  const withLegalLinks = withLegalLinkMessages(withInfo, params.imprintUrl, params.dataProtectionUrl)
-  return withLegalLinkLabels(withLegalLinks)
-}
-
-function buildExportQuickSettingsByMode(
-  quickStartCss: string,
-  sharedSettings: Omit<NonNullable<ImportedQuickSettingsByMode['light']>, 'colorPresetId' | 'colorPresetPrimaryColor' | 'colorPresetSecondaryColor' | 'colorPresetBgColor'>,
-): ImportedQuickSettingsByMode {
-  const buildModeSettings = (mode: 'light' | 'dark') => {
-    const defaults = buildThemeQuickStartDefaults(quickStartCss, mode)
-    return {
-      ...sharedSettings,
-      colorPresetId: defaults.colorPresetId,
-      colorPresetPrimaryColor: defaults.colorPresetPrimaryColor,
-      colorPresetSecondaryColor: defaults.colorPresetSecondaryColor,
-      colorPresetBgColor: defaults.colorPresetBgColor || '',
-    }
-  }
-
-  return {
-    light: buildModeSettings('light'),
-    dark: buildModeSettings('dark'),
-  }
-}
-
 export default function DownloadView({ onExportComplete }: DownloadViewProps) {
   const [themeName, setThemeName] = useState('mytheme')
-  const [statusMessage, setStatusMessage] = useState('')
-  const [activeTask, setActiveTask] = useState<'jar' | 'quick' | 'save' | null>(null)
   const [cliMode, setCliMode] = useState<{ available: boolean, cwd: string } | null>(null)
-  const clearStatusMessage = () => setStatusMessage('')
   const themeNameError = getThemeNameError(themeName)
-  const isDownloadingJar = activeTask === 'jar'
-  const isQuickExporting = activeTask === 'quick'
-  const isSavingToProject = activeTask === 'save'
-  const isExportBusy = activeTask !== null
 
   useEffect(() => {
     fetch('/api/save-theme')
@@ -207,307 +59,26 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
       })
       .catch(() => {})
   }, [])
-  const { uploadedAssets, appliedAssets } = useUploadedAssetsState()
-  const { selectedThemeId } = usePresetState()
-  const { stylesCss, themeQuickStartDefaults } = useStylesCssState()
-  const { stylesCssFiles } = useCssFilesState()
-  const themeConfig = useThemeConfig()
-  const resolvedThemeId = resolveThemeIdFromConfig(themeConfig, selectedThemeId)
+  const { themeDocument, resolvedThemeId, resolvedTheme } = useThemeDocument()
   const exportVariantId = resolvedThemeId
-  const resolvedTheme = themeConfig.themes.find(t => t.id === resolvedThemeId)
-  const isPresetTheme = resolvedTheme?.type !== 'imported'
   const {
-    colorPresetFontFamily,
-    colorPresetBorderRadius,
-    colorPresetCardShadow,
-    colorPresetHeadingFontFamily,
-  } = useQuickStartColorsState()
-  const {
-    showClientName,
-    showRealmName,
-    infoMessage,
-    imprintUrl,
-    dataProtectionUrl,
-  } = useQuickStartContentState()
-  const exportImprintUrl = normalizeExternalLegalLinkUrl(imprintUrl)
-  const exportDataProtectionUrl = normalizeExternalLegalLinkUrl(dataProtectionUrl)
-
-  const extractEditorCssContext = async (quickStartSharedCss: string): Promise<EditorCssContext> => {
-    let presetCss = sanitizeThemeCssSourceForEditor(stylesCss)
-
-    if (resolvedThemeId && !presetCss.trim()) {
-      const baselineThemeCss = (await getThemeCssStructuredCached(resolvedThemeId).catch(() => ({ stylesCss: '' }))).stylesCss
-      presetCss = sanitizeThemeCssSourceForEditor((baselineThemeCss || '').trim())
-    }
-
-    return {
-      presetCss,
-      colorPresetCss: quickStartSharedCss,
-    }
-  }
-
-  const prepareExportFiles = async (): Promise<DirectoryWriteParams> => {
-    const themeQuickStartCssPath = getThemeQuickStartCssPath(resolvedThemeId)
-    const sharedSnapshot = {
-      colorPresetFontFamily,
-      colorPresetBorderRadius,
-      colorPresetCardShadow,
-      colorPresetHeadingFontFamily,
-      showClientName,
-      showRealmName,
-      infoMessage,
-      imprintUrl: exportImprintUrl,
-      dataProtectionUrl: exportDataProtectionUrl,
-    }
-
-    const [templateFtl, footerFtl, themeQuickStartCssResponse, propertiesResponse, messagesResponse] = await Promise.all([
-      isPresetTheme ? fetchTemplateFtl(resolvedThemeId) : Promise.resolve(''),
-      isPresetTheme ? fetchFooterFtl(resolvedThemeId) : Promise.resolve(null),
-      fetch(themeQuickStartCssPath),
-      fetch(themeResourcePath(resolvedThemeId, 'theme.properties')),
-      isPresetTheme ? fetch(themeResourcePath(resolvedThemeId, 'messages/messages_en.properties')) : Promise.resolve(null),
-    ])
-    if (!propertiesResponse.ok) {
-      throw new Error(`Failed to load theme.properties for "${resolvedThemeId}" (${propertiesResponse.status})`)
-    }
-
-    const properties = await propertiesResponse.text()
-    const baseMessagesContent = messagesResponse?.ok
-      ? await messagesResponse.text()
-      : ''
-
-    const messagesContent = buildOverriddenMessages({
-      baseMessagesContent,
-      infoMessage,
-      imprintUrl: exportImprintUrl,
-      dataProtectionUrl: exportDataProtectionUrl,
-    })
-
-    const editorMetadata: ThemeEditorMetadata = {
-      sourceThemeId: resolvedThemeId,
-    }
-
-    if (!isPresetTheme) {
-      const [localFiles, customFtlFiles] = await Promise.all([
-        filterLocalCssFiles(resolvedThemeId, stylesCssFiles),
-        fetchCustomFtlFiles(resolvedThemeId),
-      ])
-      const localStylesCss = Object.values(localFiles).filter(Boolean).join('\n\n')
-      const sanitizedCustomFtls = Object.fromEntries(
-        Object.entries(customFtlFiles).map(([name, content]) => [name, stripDataKcStateAttributes(content)]),
-      )
-      return {
-        themeName,
-        properties,
-        templateFtl: '',
-        footerFtl: null,
-        customFtlFiles: Object.keys(sanitizedCustomFtls).length > 0 ? sanitizedCustomFtls : undefined,
-        quickStartCss: '',
-        stylesCss: sanitizeThemeCssSourceForEditor(localStylesCss),
-        stylesCssFiles: Object.keys(localFiles).length > 1 ? localFiles : undefined,
-        messagesContent,
-        payload: assembleExportPayload({
-          sourceCss: sanitizeThemeCssSourceForEditor(localStylesCss),
-          appliedAssets: {},
-          uploadedAssets: [],
-          editorCssContext: { presetCss: '', colorPresetCss: '' },
-        }),
-        editorMetadata,
-      }
-    }
-
-    const sourceThemeQuickStartCss = themeQuickStartDefaults.trim() || (themeQuickStartCssResponse.ok
-      ? (await themeQuickStartCssResponse.text()).trim()
-      : '')
-    const exportQuickSettingsByMode = buildExportQuickSettingsByMode(sourceThemeQuickStartCss, sharedSnapshot)
-    const quickStartCssParts = buildModeAwareQuickStartCssParts(exportQuickSettingsByMode)
-    const editorCss = await extractEditorCssContext(quickStartCssParts.sharedCss)
-    const payload = assembleExportPayload({
-      sourceCss: editorCss.presetCss,
-      appliedAssets,
-      uploadedAssets,
-      editorCssContext: editorCss,
-    })
-    const payloadCssParts = extractCssImports(payload.generatedCss)
-    const topLevelImportsCss = mergeCssImports(payloadCssParts.imports)
-
-    const combinedStylesCss = [
-      topLevelImportsCss,
-      payloadCssParts.cssWithoutImports,
-    ].filter(Boolean).join('\n\n')
-
-    // When multiple CSS files exist, distribute the generated CSS into the first user CSS file
-    // and preserve the rest as-is.
-    const hasMultipleFiles = Object.keys(stylesCssFiles).length > 1
-    const exportStylesCssFiles = hasMultipleFiles
-      ? buildExportCssFiles(stylesCssFiles, topLevelImportsCss, payloadCssParts.cssWithoutImports)
-      : undefined
-
-    return {
-      themeName,
-      properties,
-      templateFtl: stripDataKcStateAttributes(templateFtl),
-      footerFtl: footerFtl ? stripDataKcStateAttributes(footerFtl) : footerFtl,
-      quickStartCss: [sourceThemeQuickStartCss, quickStartCssParts.variablesCss].filter(Boolean).join('\n\n'),
-      stylesCss: combinedStylesCss,
-      stylesCssFiles: exportStylesCssFiles,
-      messagesContent,
-      payload,
-      editorMetadata,
-    }
-  }
-
-  const runDownloadJar = async () => {
-    if (isExportBusy) {
-      return
-    }
-
-    setActiveTask('jar')
-    let closeOnSuccess = false
-    try {
-      const writeParams = await prepareExportFiles()
-      let extraBlobs: Record<string, Blob> | undefined
-
-      const defaultAssets = resolvedTheme?.defaultAssets ?? []
-      if (defaultAssets.length > 0) {
-        const entries = await Promise.all(
-          defaultAssets.map(async (asset) => {
-            const response = await fetch(themeResourcePath(resolvedThemeId, `resources/${asset.path}`))
-            return [asset.path, await response.blob()] as const
-          }),
-        )
-        extraBlobs = Object.fromEntries(entries)
-      }
-
-      const params: JarBuildParams = {
-        ...writeParams,
-        extraBlobs,
-      }
-
-      const blob = await buildJarBlob(params)
-      const saveResult = await saveWithFilePicker(blob, `${themeName}.jar`, [{
-        description: 'Keycloak Theme JAR',
-        accept: { 'application/java-archive': ['.jar'] },
-      }])
-      if (saveResult === 'cancelled') {
-        return
-      }
-      if (saveResult === 'unavailable') {
-        downloadBlob(blob, `${themeName}.jar`)
-      }
-      setStatusMessage('JAR export finished.')
-      closeOnSuccess = true
-    }
-    catch (error) {
-      console.error('Error creating JAR file:', error)
-      setStatusMessage('Error creating JAR file.')
-    }
-    finally {
-      setActiveTask(null)
-      if (closeOnSuccess) {
-        onExportComplete?.()
-      }
-    }
-  }
-
-  const runQuickExport = async () => {
-    if (isExportBusy) {
-      return
-    }
-
-    setActiveTask('quick')
-    let closeOnSuccess = false
-    try {
-      const writeParams = await prepareExportFiles()
-
-      // Try File System Access API first
-      if ('showDirectoryPicker' in window) {
-        try {
-          const dirHandle = await (window as any).showDirectoryPicker({ mode: 'readwrite' })
-          await writeToDirectory(dirHandle, writeParams)
-          setStatusMessage('Quick export finished.')
-          closeOnSuccess = true
-          return
-        }
-        catch (err: any) {
-          if (err.name === 'AbortError') {
-            return
-          }
-          console.error('File System Access API error:', err)
-          // Fall through to download fallback
-        }
-      }
-
-      // Fallback: download as ZIP for browsers without File System Access API
-      const zipBlob = await buildFolderZipBlob(writeParams)
-      downloadBlob(zipBlob, `${themeName}-theme.zip`)
-      setStatusMessage('Theme exported as ZIP.')
-      closeOnSuccess = true
-    }
-    catch (error) {
-      console.error('Error exporting theme:', error)
-      setStatusMessage('Error exporting theme.')
-    }
-    finally {
-      setActiveTask(null)
-      if (closeOnSuccess) {
-        onExportComplete?.()
-      }
-    }
-  }
-
-  const handleDownloadJar = () => {
-    if (themeNameError)
-      return
-    clearStatusMessage()
-    void runDownloadJar()
-  }
-
-  const handleDownloadQuickExport = () => {
-    if (themeNameError)
-      return
-    clearStatusMessage()
-    void runQuickExport()
-  }
-
-  const runSaveToProject = async () => {
-    if (isExportBusy)
-      return
-    setActiveTask('save')
-    let closeOnSuccess = false
-    try {
-      const writeParams = await prepareExportFiles()
-      const response = await fetch('/api/save-theme', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ variantId: exportVariantId, ...writeParams }),
-      })
-      const result = await response.json()
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to save theme to project')
-      }
-      const savedPath = typeof result.path === 'string' ? result.path : null
-      setStatusMessage(savedPath ? `Saved to ${savedPath}` : 'Saved to project.')
-      closeOnSuccess = true
-    }
-    catch (error) {
-      console.error('Error saving to project:', error)
-      setStatusMessage('Error saving to project.')
-    }
-    finally {
-      setActiveTask(null)
-      if (closeOnSuccess) {
-        onExportComplete?.()
-      }
-    }
-  }
-
-  const handleSaveToProject = () => {
-    if (themeNameError)
-      return
-    clearStatusMessage()
-    void runSaveToProject()
-  }
+    clearStatusMessage,
+    handleDownloadJar,
+    handleDownloadQuickExport,
+    handleSaveToProject,
+    isDownloadingJar,
+    isExportBusy,
+    isQuickExporting,
+    isSavingToProject,
+    statusMessage,
+  } = useThemeExportActions({
+    defaultAssets: resolvedTheme?.defaultAssets ?? [],
+    exportVariantId,
+    onExportComplete,
+    themeDocument,
+    themeName,
+    themeNameError,
+  })
 
   return (
     <div>

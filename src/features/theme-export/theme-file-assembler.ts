@@ -1,6 +1,17 @@
 import type { UploadedAsset } from '../assets/types'
 import type { AssembleThemeFilesParams, ThemeEditorMetadata } from './types'
 import { base64ToBlob } from '../assets/font-css-generator'
+import {
+  THEME_FAVICON_RESOURCE_PATH,
+  THEME_FOOTER_FTL_PATH,
+  THEME_MESSAGES_DEFAULT_PATH,
+  THEME_MESSAGES_EN_PATH,
+  THEME_PROPERTIES_PATH,
+  THEME_QUICK_START_CSS_PATH,
+  THEME_RESOURCES_PATH,
+  THEME_STYLES_CSS_PATH,
+  THEME_TEMPLATE_FTL_PATH,
+} from '../keycloak-theme/paths'
 
 type AssetBucketKey = 'uploadedFonts' | 'uploadedBackgrounds' | 'uploadedLogos' | 'uploadedImages'
 
@@ -24,6 +35,14 @@ function toAssetBlob(asset: UploadedAsset): Blob {
 }
 
 const textEncoder = new TextEncoder()
+
+function themeArchiveLoginPath(loginRoot: string, loginRelativePath: string): string {
+  return `${loginRoot}/${loginRelativePath}`
+}
+
+function themeArchiveLoginResourcePath(loginRoot: string, resourceRelativePath: string): string {
+  return themeArchiveLoginPath(loginRoot, `${THEME_RESOURCES_PATH}/${resourceRelativePath}`)
+}
 
 export function generateKeycloakThemesJson(
   themeName: string,
@@ -65,49 +84,49 @@ export async function assembleThemeFiles(
 
   addText(files, `${metaInfPrefix}keycloak-themes.json`, generateKeycloakThemesJson(themeName))
   addText(files, `${metaInfPrefix}keycloak-theme-editor.json`, generateEditorMetadataJson(editorMetadata))
-  addText(files, `${loginRoot}/theme.properties`, properties)
+  addText(files, themeArchiveLoginPath(loginRoot, THEME_PROPERTIES_PATH), properties)
 
   if (templateFtl) {
-    addText(files, `${loginRoot}/template.ftl`, templateFtl)
+    addText(files, themeArchiveLoginPath(loginRoot, THEME_TEMPLATE_FTL_PATH), templateFtl)
   }
   if (footerFtl) {
-    addText(files, `${loginRoot}/footer.ftl`, footerFtl)
+    addText(files, themeArchiveLoginPath(loginRoot, THEME_FOOTER_FTL_PATH), footerFtl)
   }
 
   if (params.customFtlFiles) {
     for (const [filename, content] of Object.entries(params.customFtlFiles)) {
-      addText(files, `${loginRoot}/${filename}`, content)
+      addText(files, themeArchiveLoginPath(loginRoot, filename), content)
     }
   }
 
   if (quickStartCss) {
-    addText(files, `${loginRoot}/resources/css/quick-start.css`, quickStartCss)
+    addText(files, themeArchiveLoginResourcePath(loginRoot, THEME_QUICK_START_CSS_PATH), quickStartCss)
   }
   if (params.stylesCssFiles && Object.keys(params.stylesCssFiles).length > 0) {
     for (const [cssPath, cssContent] of Object.entries(params.stylesCssFiles)) {
-      addText(files, `${loginRoot}/resources/${cssPath}`, cssContent)
+      addText(files, themeArchiveLoginResourcePath(loginRoot, cssPath), cssContent)
     }
   }
   else {
-    addText(files, `${loginRoot}/resources/css/styles.css`, stylesCss)
+    addText(files, themeArchiveLoginResourcePath(loginRoot, THEME_STYLES_CSS_PATH), stylesCss)
   }
 
-  addText(files, `${loginRoot}/messages/messages.properties`, messagesContent)
-  addText(files, `${loginRoot}/messages/messages_en.properties`, messagesContent)
+  addText(files, themeArchiveLoginPath(loginRoot, THEME_MESSAGES_DEFAULT_PATH), messagesContent)
+  addText(files, themeArchiveLoginPath(loginRoot, THEME_MESSAGES_EN_PATH), messagesContent)
 
   for (const [key, directory] of ASSET_BUCKETS) {
     for (const asset of dedupeAssetsByName(payload[key])) {
-      await addBlob(files, `${loginRoot}/resources/${directory}/${asset.name}`, toAssetBlob(asset))
+      await addBlob(files, themeArchiveLoginResourcePath(loginRoot, `${directory}/${asset.name}`), toAssetBlob(asset))
     }
   }
 
   if (payload.appliedFavicon) {
-    await addBlob(files, `${loginRoot}/resources/img/favicon.ico`, toAssetBlob(payload.appliedFavicon))
+    await addBlob(files, themeArchiveLoginResourcePath(loginRoot, THEME_FAVICON_RESOURCE_PATH), toAssetBlob(payload.appliedFavicon))
   }
 
   if (extraBlobs) {
     for (const [path, blob] of Object.entries(extraBlobs)) {
-      await addBlob(files, `${loginRoot}/resources/${path}`, blob)
+      await addBlob(files, themeArchiveLoginResourcePath(loginRoot, path), blob)
     }
   }
 

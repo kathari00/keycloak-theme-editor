@@ -23,6 +23,7 @@ const QUICK_START_VARIABLE_DEFINITIONS: QuickStartVariableDefinition[] = [
   { name: '--quickstart-bg-image', detail: 'Quick Start var', includeInGeneratedRoot: true },
   { name: '--quickstart-logo-url', detail: 'Quick Start var (theme token)', includeInGeneratedRoot: true },
   { name: '--quickstart-bg-logo-url', detail: 'Quick Start var (theme token)', includeInGeneratedRoot: true },
+  { name: '--keycloak-bg-logo-url', detail: 'Keycloak v2 background token', includeInGeneratedRoot: true },
   { name: '--quickstart-logo-height', detail: 'Quick Start var (theme token)', includeInGeneratedRoot: true },
   { name: '--quickstart-logo-width', detail: 'Quick Start var (theme token)', includeInGeneratedRoot: true },
   { name: '--quickstart-text-primary-light', detail: 'Quick Start var (theme token)', includeInGeneratedRoot: true, isColor: true },

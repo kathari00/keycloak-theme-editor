@@ -1,12 +1,13 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { importActions } from '../actions/import-actions'
+import { getThemeStorageKey } from '../lib/quick-settings'
 import { coreStore } from '../stores/core-store'
-import { presetStore } from '../stores/preset-store'
+import { createDefaultPresetState, presetStore } from '../stores/preset-store'
 
 function resetStores() {
   coreStore.setState(s => ({ ...s, isDarkMode: false }))
-  presetStore.setState(s => ({
-    ...s,
+  presetStore.setState(() => ({
+    ...createDefaultPresetState(),
     showClientName: false,
     showRealmName: false,
     infoMessage: '',
@@ -82,5 +83,66 @@ describe('importActions.applyImportedQuickSettingsForPreset', () => {
     expect(s.infoMessage).toBe('Hello')
     expect(s.imprintUrl).toBe('https://example.com/imprint')
     expect(s.dataProtectionUrl).toBe('https://example.com/privacy')
+  })
+
+  it('applies imported style fields to the active preset state', () => {
+    importActions.applyImportedQuickSettingsForPreset({
+      light: {
+        colorPresetId: 'custom',
+        colorPresetPrimaryColor: '#123456',
+        colorPresetSecondaryColor: '#234567',
+        colorPresetFontFamily: 'Light Body, sans-serif',
+        colorPresetBgColor: '#f0f4f9',
+        colorPresetBorderRadius: 'pill',
+        colorPresetCardShadow: 'none',
+        colorPresetHeadingFontFamily: 'Light Heading, serif',
+      },
+    })
+
+    const state = presetStore.getState()
+    expect(state.colorPresetId).toBe('custom')
+    expect(state.colorPresetPrimaryColor).toBe('#123456')
+    expect(state.colorPresetSecondaryColor).toBe('#234567')
+    expect(state.colorPresetFontFamily).toBe('Light Body, sans-serif')
+    expect(state.colorPresetBgColor).toBe('#f0f4f9')
+    expect(state.colorPresetBorderRadius).toBe('pill')
+    expect(state.colorPresetCardShadow).toBe('none')
+    expect(state.colorPresetHeadingFontFamily).toBe('Light Heading, serif')
+  })
+
+  it('stores imported light and dark style fields by selected theme', () => {
+    presetStore.setState(s => ({ ...s, selectedThemeId: 'modern-card' }))
+    importActions.applyImportedQuickSettingsForPreset({
+      light: {
+        colorPresetId: 'custom',
+        colorPresetPrimaryColor: '#123456',
+        colorPresetSecondaryColor: '#234567',
+        colorPresetFontFamily: 'Light Body, sans-serif',
+        colorPresetBgColor: '#f0f4f9',
+        colorPresetBorderRadius: 'pill',
+        colorPresetCardShadow: 'none',
+        colorPresetHeadingFontFamily: 'Light Heading, serif',
+      },
+      dark: {
+        colorPresetId: 'custom',
+        colorPresetPrimaryColor: '#abcdef',
+        colorPresetSecondaryColor: '#bcdef0',
+        colorPresetFontFamily: 'Dark Body, sans-serif',
+        colorPresetBgColor: '#1e1f20',
+        colorPresetBorderRadius: 'sharp',
+        colorPresetCardShadow: 'strong',
+        colorPresetHeadingFontFamily: 'Dark Heading, serif',
+      },
+    })
+
+    const storedStyles = presetStore.getState().quickSettingsStylesByThemeMode[getThemeStorageKey('modern-card')]
+    expect(storedStyles?.light?.colorPresetPrimaryColor).toBe('#123456')
+    expect(storedStyles?.light?.colorPresetBgColor).toBe('#f0f4f9')
+    expect(storedStyles?.light?.colorPresetBorderRadius).toBe('pill')
+    expect(storedStyles?.light?.colorPresetCardShadow).toBe('none')
+    expect(storedStyles?.dark?.colorPresetPrimaryColor).toBe('#abcdef')
+    expect(storedStyles?.dark?.colorPresetBgColor).toBe('#1e1f20')
+    expect(storedStyles?.dark?.colorPresetBorderRadius).toBe('sharp')
+    expect(storedStyles?.dark?.colorPresetCardShadow).toBe('strong')
   })
 })
