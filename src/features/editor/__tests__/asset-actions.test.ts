@@ -1,5 +1,6 @@
 import type { UploadedAsset } from '../../assets/types'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { NONE_ASSET_ID } from '../../assets/types'
 import { assetActions } from '../actions/asset-actions'
 import { historyActions, subscribeToScopeChanges } from '../actions/history-actions'
 import { assetStore } from '../stores/asset-store'
@@ -147,7 +148,9 @@ describe('assetActions', () => {
         appliedAssets: { background: 'bg' },
       }))
       assetActions.removeUploadedAsset('bg')
-      expect(assetStore.getState().appliedAssets.background).toBeUndefined()
+      // background/logo use an explicit "cleared" sentinel instead of an absent
+      // key, so theme-default resync doesn't silently reapply a removed default.
+      expect(assetStore.getState().appliedAssets.background).toBe(NONE_ASSET_ID)
     })
 
     it('does not clear background when removing a non-applied background asset', () => {
@@ -247,13 +250,25 @@ describe('assetActions', () => {
   })
 
   describe('unapplyAsset', () => {
-    it('removes target from appliedAssets', () => {
+    it('sets the cleared sentinel for a default-backed target (logo)', () => {
       assetStore.setState(s => ({ ...s, appliedAssets: { logo: 'logo1' } }))
       assetActions.unapplyAsset('logo')
-      expect(assetStore.getState().appliedAssets.logo).toBeUndefined()
+      expect(assetStore.getState().appliedAssets.logo).toBe(NONE_ASSET_ID)
+    })
+
+    it('removes target from appliedAssets for a non-default-backed target (bodyFont)', () => {
+      assetStore.setState(s => ({ ...s, appliedAssets: { bodyFont: 'font1' } }))
+      assetActions.unapplyAsset('bodyFont')
+      expect(assetStore.getState().appliedAssets.bodyFont).toBeUndefined()
     })
 
     it('does nothing and skips history if target not applied', () => {
+      assetActions.unapplyAsset('logo')
+      expect(historyStore.getState().undoStack).toHaveLength(0)
+    })
+
+    it('does nothing and skips history if target is already explicitly cleared', () => {
+      assetStore.setState(s => ({ ...s, appliedAssets: { logo: NONE_ASSET_ID } }))
       assetActions.unapplyAsset('logo')
       expect(historyStore.getState().undoStack).toHaveLength(0)
     })

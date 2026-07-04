@@ -1,5 +1,6 @@
 import type { AppliedAssets, UploadedAsset } from './types'
 import { getGoogleFontFamilyFromId, normalizeGoogleFontFamily } from './google-fonts'
+import { NONE_ASSET_ID } from './types'
 
 type AssetUrlResolver = (asset: UploadedAsset) => string
 
@@ -173,7 +174,14 @@ function generateAppliedAssetsCssWithResolver(
   const extraRules: string[] = []
 
   // Background image override
-  if (appliedAssets.background) {
+  if (appliedAssets.background === NONE_ASSET_ID) {
+    // User explicitly removed the background asset; suppress the theme's own
+    // default background instead of letting its CSS fall back to it.
+    cssRules.push(`  --quickstart-bg-image: none;`)
+    cssRules.push(`  --quickstart-bg-logo-url: none;`)
+    cssRules.push(`  --keycloak-bg-logo-url: none;`)
+  }
+  else if (appliedAssets.background) {
     const bgAsset = uploadedAssets.find(asset => asset.id === appliedAssets.background)
     if (bgAsset) {
       const bgUrl = resolveAssetUrl(bgAsset)
@@ -188,7 +196,14 @@ function generateAppliedAssetsCssWithResolver(
   }
 
   // Logo override
-  if (appliedAssets.logo) {
+  if (appliedAssets.logo === NONE_ASSET_ID) {
+    // User explicitly removed the logo asset; suppress the theme's own
+    // default logo instead of letting its CSS fall back to it.
+    cssRules.push(`  --quickstart-logo-url: none;`)
+    cssRules.push(`  --keycloak-logo-url: none;`)
+    cssRules.push(`  --kc-applied-logo-url: none;`)
+  }
+  else if (appliedAssets.logo) {
     const logoAsset = uploadedAssets.find(asset => asset.id === appliedAssets.logo)
     if (logoAsset) {
       const logoUrl = resolveAssetUrl(logoAsset)

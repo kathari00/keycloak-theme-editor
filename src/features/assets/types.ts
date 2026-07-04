@@ -40,3 +40,13 @@ export interface AppliedAssets {
   bodyFont?: string // asset ID or google:{family}
   favicon?: string // asset ID
 }
+
+/**
+ * Sentinel applied-asset value meaning "the user explicitly removed this
+ * target's asset" as opposed to an absent key, which means "never decided."
+ * Only used for targets backed by theme-declared defaults (background, logo)
+ * so that default-asset resync doesn't silently reapply a removed default.
+ * It never matches a real UploadedAsset id, so it resolves to "no asset" in
+ * every lookup that finds assets by id.
+ */
+export const NONE_ASSET_ID = '__none__'

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { NONE_ASSET_ID } from '../../assets/types'
 import { presetActions } from '../actions'
 import { assetStore } from '../stores/asset-store'
 import { coreStore } from '../stores/core-store'
@@ -201,6 +202,24 @@ describe('preset background sync on preset selection', () => {
 
     expect(presetStore.getState().selectedThemeId).toBe('v2')
     expect(assetStore.getState().appliedAssets.background).toBe('default-bg')
+    expect(assetStore.getState().appliedAssets.logo).toBe('default-logo')
+  })
+
+  it('does not resurrect the v2 default background after the user explicitly removes it', async () => {
+    assetStore.setState(state => ({
+      ...state,
+      appliedAssets: { ...state.appliedAssets, background: NONE_ASSET_ID },
+      appliedAssetsByTheme: {
+        ...state.appliedAssetsByTheme,
+        v2: { ...state.appliedAssetsByTheme.v2, background: NONE_ASSET_ID },
+      },
+    }))
+
+    // Reselecting v2 exercises the same resync path a page reload or a
+    // switch-away-and-back would trigger.
+    await presetActions.applyThemeSelection('v2')
+
+    expect(assetStore.getState().appliedAssets.background).toBe(NONE_ASSET_ID)
     expect(assetStore.getState().appliedAssets.logo).toBe('default-logo')
   })
 

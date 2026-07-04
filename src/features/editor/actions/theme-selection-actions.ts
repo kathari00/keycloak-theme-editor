@@ -1,5 +1,6 @@
 import type { ThemeConfig, ThemeId } from '../../presets/types'
 import type { QuickSettingsMode } from '../lib/quick-settings'
+import { NONE_ASSET_ID } from '../../assets/types'
 import { getThemeConfigCached, getThemeCssStructuredCached, resolveThemeIdFromConfig } from '../../presets/queries'
 import { combineCssFiles, firstFilePath, isQuickStartCssFile, singleFileMap } from '../lib/css-files'
 import { getThemeStorageKey } from '../lib/quick-settings'
@@ -43,6 +44,7 @@ function syncDefaultAppliedAssetForTheme(
   )
 
   const currentAssetId = appliedAssets[category]
+  const isExplicitlyCleared = currentAssetId === NONE_ASSET_ID
   const currentAsset = currentAssetId
     ? uploadedAssets.find(asset => asset.id === currentAssetId)
     : undefined
@@ -72,6 +74,11 @@ function syncDefaultAppliedAssetForTheme(
     return
   }
   if (hasThemeDefaultAsset) {
+    // The user explicitly removed the theme's default asset for this category;
+    // respect that instead of silently reapplying it on the next resync.
+    if (isExplicitlyCleared) {
+      return
+    }
     if (!defaultAsset) {
       return
     }
