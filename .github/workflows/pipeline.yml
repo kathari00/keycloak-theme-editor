@@ -16,10 +16,17 @@ jobs:
         with:
           node-version: 24
           cache: npm
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
       - run: npm ci
       - run: npm run lint
       - run: npm run test
       - run: npm run build
+      - run: npm run build:jar
+      - run: npm run build:cli
+      - run: npm pack --dry-run
       - run: npx playwright install --with-deps chromium
         timeout-minutes: 10
       - run: npm run test:e2e
