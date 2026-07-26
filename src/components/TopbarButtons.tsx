@@ -34,6 +34,12 @@ const TopbarButtons = React.memo(({
   if (mode === 'menu') {
     return (
       <>
+        <DropdownItem isDisabled={!canUndo} onClick={editorActions.undo}>
+          Undo
+        </DropdownItem>
+        <DropdownItem isDisabled={!canRedo} onClick={editorActions.redo}>
+          Redo
+        </DropdownItem>
         <DropdownItem onClick={onOpenImport}>
           Import theme
         </DropdownItem>

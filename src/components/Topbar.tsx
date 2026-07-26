@@ -1,4 +1,6 @@
 import type { MenuToggleElement } from '@patternfly/react-core'
+import { mdiGithub } from '@mdi/js'
+import { Icon as MdiIcon } from '@mdi/react'
 import {
   Alert,
   Button,
@@ -20,7 +22,7 @@ import {
   ToolbarGroup,
   ToolbarItem,
 } from '@patternfly/react-core'
-import { BarsIcon, MoonIcon, SunIcon } from '@patternfly/react-icons'
+import { BarsIcon, ChevronLeftIcon, ChevronRightIcon, MoonIcon, SunIcon } from '@patternfly/react-icons'
 import { useEffect, useRef, useState } from 'react'
 import { editorActions } from '../features/editor/actions'
 import { useDarkModeState, usePreviewState } from '../features/editor/hooks/use-editor'
@@ -30,12 +32,41 @@ import { cx } from '../lib/cx'
 import TopbarButtons from './TopbarButtons'
 
 interface TopbarProps extends React.HTMLAttributes<HTMLDivElement> {
+  mobilePane?: 'preview' | 'tools'
+  onToggleMobilePane?: () => void
 }
 
 const MOBILE_TOPBAR_MAX_WIDTH = 980
+const GITHUB_REPOSITORY_URL = 'https://github.com/kathari00/keycloak-theme-editor'
+const TOPBAR_ICON_BUTTON_STYLE: React.CSSProperties = {
+  alignItems: 'center',
+  display: 'inline-flex',
+  flex: '0 0 3.25rem',
+  height: '2.5rem',
+  justifyContent: 'center',
+  padding: 0,
+  width: '3.25rem',
+}
+
+function GitHubRepositoryLink() {
+  return (
+    <Button
+      component="a"
+      variant="secondary"
+      href={GITHUB_REPOSITORY_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="View source on GitHub"
+      icon={<MdiIcon path={mdiGithub} size={1} style={{ display: 'block' }} />}
+      style={TOPBAR_ICON_BUTTON_STYLE}
+    />
+  )
+}
 
 export default function Topbar({
   className,
+  mobilePane = 'preview',
+  onToggleMobilePane,
 }: TopbarProps) {
   const { isDarkMode } = useDarkModeState()
   const { deviceId } = usePreviewState()
@@ -99,11 +130,12 @@ export default function Topbar({
   }
 
   const logoSrc = isDarkMode ? '/logo-dark.svg' : '/logo-light.svg'
+  const shouldUseMobileLayout = isMobileLayout || Boolean(onToggleMobilePane)
 
   return (
     <div ref={toolbarRef}>
       <Toolbar
-        className={cx('gjs-top-sidebar', className)}
+        className={cx('gjs-top-sidebar', shouldUseMobileLayout && 'gjs-top-sidebar--mobile', className)}
         colorVariant="secondary"
         id="editor-topbar"
         inset={{ default: 'insetSm' }}
@@ -112,7 +144,7 @@ export default function Topbar({
         }}
       >
         <ToolbarContent
-          style={isMobileLayout
+          style={shouldUseMobileLayout
             ? {
                 alignItems: 'center',
                 width: '100%',
@@ -123,18 +155,21 @@ export default function Topbar({
                 alignItems: 'center',
               }}
         >
-          {isMobileLayout
+          {shouldUseMobileLayout
             ? (
                 <>
                   <ToolbarGroup variant="filter-group" style={{ alignItems: 'center' }}>
                     <ToolbarItem>
-                      <Title headingLevel="h1" size="md" style={{ margin: 0, flexShrink: 0 }}>
-                        <img
-                          src={logoSrc}
-                          alt="Keycloak theme editor"
-                          style={{ height: '2rem', width: 'auto', display: 'inline-block', verticalAlign: 'middle' }}
-                        />
-                      </Title>
+                      <Flex gap={{ default: 'gapXs' }} alignItems={{ default: 'alignItemsCenter' }} flexWrap={{ default: 'nowrap' }}>
+                        <Title headingLevel="h1" size="md" style={{ margin: 0, flexShrink: 0 }}>
+                          <img
+                            src={logoSrc}
+                            alt="Keycloak theme editor"
+                            style={{ height: '2rem', width: 'auto', display: 'inline-block', verticalAlign: 'middle' }}
+                          />
+                        </Title>
+                        <GitHubRepositoryLink />
+                      </Flex>
                     </ToolbarItem>
                   </ToolbarGroup>
                   <ToolbarGroup variant="action-group" style={{ marginInlineStart: 'auto', alignItems: 'center', flexWrap: 'nowrap' }}>
@@ -146,11 +181,13 @@ export default function Topbar({
                         toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
                           <MenuToggle
                             ref={toggleRef}
-                            variant="plain"
+                            className="mobile-editor-menu-toggle"
+                            variant="secondary"
                             aria-label="Open editor menu"
                             icon={<BarsIcon />}
                             isExpanded={isMobileMenuOpen}
                             onClick={() => setIsMobileMenuOpen(prev => !prev)}
+                            style={TOPBAR_ICON_BUTTON_STYLE}
                           />
                         )}
                       >
@@ -183,16 +220,26 @@ export default function Topbar({
                       </Dropdown>
                     </ToolbarItem>
                     <ToolbarItem>
-                      <TopbarButtons mode="history" />
-                    </ToolbarItem>
-                    <ToolbarItem>
                       <Button
                         variant="secondary"
                         onClick={editorActions.toggleDarkMode}
                         aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
                         icon={isDarkMode ? <SunIcon /> : <MoonIcon />}
+                        style={TOPBAR_ICON_BUTTON_STYLE}
                       />
                     </ToolbarItem>
+                    {onToggleMobilePane && (
+                      <ToolbarItem>
+                        <Button
+                          variant="secondary"
+                          onClick={onToggleMobilePane}
+                          aria-label={mobilePane === 'preview' ? 'Open editor tools' : 'Show preview'}
+                          aria-controls={mobilePane === 'preview' ? 'mobile-tools-pane' : 'mobile-preview-pane'}
+                          icon={mobilePane === 'preview' ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+                          style={TOPBAR_ICON_BUTTON_STYLE}
+                        />
+                      </ToolbarItem>
+                    )}
                   </ToolbarGroup>
                 </>
               )
@@ -217,6 +264,7 @@ export default function Topbar({
                             </span>
                           </Flex>
                         </Title>
+                        <GitHubRepositoryLink />
                         <FormSelect
                           value={deviceId}
                           onChange={(_event, value) => editorActions.setDeviceId(value as 'desktop' | 'tablet' | 'mobile')}
@@ -232,6 +280,7 @@ export default function Topbar({
                           onClick={editorActions.toggleDarkMode}
                           aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
                           icon={isDarkMode ? <SunIcon /> : <MoonIcon />}
+                          style={TOPBAR_ICON_BUTTON_STYLE}
                         />
                       </Flex>
                     </ToolbarItem>

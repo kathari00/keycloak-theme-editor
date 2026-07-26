@@ -29,6 +29,50 @@ p {
     min-height: 0;
 }
 
+.mobile-editor-layout {
+    height: 100%;
+    min-height: 0;
+    min-width: 0;
+}
+
+.mobile-editor-pager {
+    display: grid;
+    grid-template-columns: repeat(2, 100%);
+    height: 100%;
+    min-height: 0;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    scroll-behavior: smooth;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    touch-action: pan-x pan-y;
+}
+
+.mobile-editor-pager::-webkit-scrollbar {
+    display: none;
+}
+
+.mobile-editor-page {
+    height: 100%;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+}
+
+.mobile-editor-page--tools {
+    background: var(--pf-t--global--background--color--secondary--default);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mobile-editor-pager {
+        scroll-behavior: auto;
+    }
+}
+
 /* Less intense disabled state for undo/redo buttons */
 .pf-v6-c-button:disabled {
     opacity: 0.6 !important;
@@ -184,3 +228,16 @@ p {
     display: flex;
 }
 
+.gjs-top-sidebar--mobile .pf-v6-c-toolbar__content {
+    grid-template-columns: 100%;
+}
+
+.gjs-top-sidebar--mobile .pf-v6-c-toolbar__content-section {
+    flex: 1 1 auto;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.mobile-editor-menu-toggle .pf-v6-c-menu-toggle__controls {
+    display: none;
+}

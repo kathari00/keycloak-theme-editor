@@ -29,6 +29,10 @@ interface PreviewStyleParams {
   isDarkMode: boolean
 }
 
+interface PreviewShellProps {
+  onHorizontalSwipe?: () => void
+}
+
 function ensureStyle(doc: Document, id: string, css: string): void {
   let style = doc.getElementById(id) as HTMLStyleElement | null
   if (!style) {
@@ -143,7 +147,7 @@ function isLegalInfoLink(anchor: HTMLAnchorElement): boolean {
   return anchor.matches('[data-kc-state="imprint-link"], [data-kc-state="data-protection-link"], #kc-imprint-link, #kc-data-protection-link')
 }
 
-export function PreviewShell() {
+export function PreviewShell({ onHorizontalSwipe }: PreviewShellProps = {}) {
   const { activeVariantId, activePageId, activeStateId, selectedNodeId, previewReady, iframeRef, setPreviewReady, selectNode } = usePreviewRuntime()
   const { themeDocument, resolvedThemeId, resolvedTheme, isPresetTheme } = useThemeDocument()
   const { isDarkMode } = useDarkModeState()
@@ -230,6 +234,7 @@ export function PreviewShell() {
     if (!doc)
       return
 
+    let touchStart: { x: number, y: number } | null = null
     const onClick = (event: MouseEvent) => {
       const target = getEventElement(event.target)
       const anchor = target?.closest('a[href]') as HTMLAnchorElement | null
@@ -244,14 +249,43 @@ export function PreviewShell() {
     }
 
     const onSubmit = (event: Event) => event.preventDefault()
+    const onTouchStart = (event: TouchEvent) => {
+      const touch = event.touches[0]
+      touchStart = touch ? { x: touch.clientX, y: touch.clientY } : null
+    }
+    const onTouchEnd = (event: TouchEvent) => {
+      const touch = event.changedTouches[0]
+      if (!touchStart || !touch)
+        return
+
+      const deltaX = touch.clientX - touchStart.x
+      const deltaY = touch.clientY - touchStart.y
+      touchStart = null
+      if (Math.abs(deltaX) >= 50 && Math.abs(deltaX) > Math.abs(deltaY) * 1.25)
+        onHorizontalSwipe?.()
+    }
+    const onTouchCancel = () => {
+      touchStart = null
+    }
+
     doc.addEventListener('click', onClick, true)
     doc.addEventListener('submit', onSubmit, true)
+    if (onHorizontalSwipe) {
+      doc.addEventListener('touchstart', onTouchStart, { passive: true })
+      doc.addEventListener('touchend', onTouchEnd, { passive: true })
+      doc.addEventListener('touchcancel', onTouchCancel, { passive: true })
+    }
 
     return () => {
       doc.removeEventListener('click', onClick, true)
       doc.removeEventListener('submit', onSubmit, true)
+      if (onHorizontalSwipe) {
+        doc.removeEventListener('touchstart', onTouchStart)
+        doc.removeEventListener('touchend', onTouchEnd)
+        doc.removeEventListener('touchcancel', onTouchCancel)
+      }
     }
-  }, [frameLoadVersion, iframeRef, selectNode])
+  }, [frameLoadVersion, iframeRef, onHorizontalSwipe, selectNode])
 
   useEffect(() => {
     const doc = iframeRef.current?.contentDocument
