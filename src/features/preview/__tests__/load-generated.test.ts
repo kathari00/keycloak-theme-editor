@@ -26,6 +26,18 @@ afterAll(() => {
 })
 
 describe('resolveStateHtml', () => {
+  it('ships non-empty document titles for generated preview states', () => {
+    const pagesData = JSON.parse(fs.readFileSync(pagesJsonPath, 'utf8'))
+
+    for (const pages of Object.values(pagesData.variants) as Array<Record<string, Record<string, string>>>) {
+      for (const states of Object.values(pages)) {
+        for (const html of Object.values(states)) {
+          expect(html).toMatch(/<title>\s*\S[\s\S]*?<\/title>/i)
+        }
+      }
+    }
+  })
+
   it('returns scenario options as an array', () => {
     const options = getVariantStateOptions({
       variantId: 'v2',

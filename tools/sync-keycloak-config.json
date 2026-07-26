@@ -1,6 +1,6 @@
 {
   "repo": "keycloak/keycloak",
-  "tag": "26.5.3",
+  "tag": "26.6.4",
   "themes": [
     {
       "id": "base",

@@ -42,10 +42,9 @@ public final class VariantLoader {
     if (!Files.exists(baseThemeLoginDir) || !Files.exists(themePropertiesPath)) {
       return null;
     }
-    if (!Files.exists(messagesPath)) {
-      messagesPath = inheritedMessagesPath;
-    }
-    if (!Files.exists(messagesPath)) {
+    boolean hasMessagesPath = Files.exists(messagesPath);
+    boolean hasInheritedMessagesPath = Files.exists(inheritedMessagesPath);
+    if (!hasMessagesPath && !hasInheritedMessagesPath) {
       return null;
     }
 
@@ -70,7 +69,16 @@ public final class VariantLoader {
       }
     }
 
-    Map<String, String> messages = parseJavaProperties(readUtf8(messagesPath));
+    // Merge inherited (e.g. base) messages first, then layer the more-specific
+    // theme's own messages on top -- mirrors real Keycloak's parent-bundle +
+    // child-override inheritance, and the theme.properties merging above.
+    Map<String, String> messages = new LinkedHashMap<String, String>();
+    if (hasInheritedMessagesPath) {
+      messages.putAll(parseJavaProperties(readUtf8(inheritedMessagesPath)));
+    }
+    if (hasMessagesPath) {
+      messages.putAll(parseJavaProperties(readUtf8(messagesPath)));
+    }
     Path overrideMessagesPath = localOverrideLoginDir.resolve("messages").resolve("messages_en.properties");
     if (Files.exists(overrideMessagesPath)) {
       messages.putAll(parseJavaProperties(readUtf8(overrideMessagesPath)));
