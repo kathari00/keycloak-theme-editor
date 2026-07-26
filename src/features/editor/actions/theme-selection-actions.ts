@@ -1,5 +1,6 @@
 import type { ThemeConfig, ThemeId } from '../../presets/types'
 import type { QuickSettingsMode } from '../lib/quick-settings'
+import { NONE_ASSET_ID } from '../../assets/types'
 import { getThemeConfigCached, getThemeCssStructuredCached, resolveThemeIdFromConfig } from '../../presets/queries'
 import { combineCssFiles, firstFilePath, isQuickStartCssFile, singleFileMap } from '../lib/css-files'
 import { getThemeStorageKey } from '../lib/quick-settings'
@@ -43,6 +44,7 @@ function syncDefaultAppliedAssetForTheme(
   )
 
   const currentAssetId = appliedAssets[category]
+  const isExplicitlyCleared = currentAssetId === NONE_ASSET_ID
   const currentAsset = currentAssetId
     ? uploadedAssets.find(asset => asset.id === currentAssetId)
     : undefined
@@ -72,6 +74,11 @@ function syncDefaultAppliedAssetForTheme(
     return
   }
   if (hasThemeDefaultAsset) {
+    // The user explicitly removed the theme's default asset for this category;
+    // respect that instead of silently reapplying it on the next resync.
+    if (isExplicitlyCleared) {
+      return
+    }
     if (!defaultAsset) {
       return
     }
@@ -97,16 +104,19 @@ export function syncDefaultAssetsForTheme(themeConfig: ThemeConfig, themeId: str
   syncDefaultAppliedAssetForTheme(themeConfig, themeId, 'logo')
 }
 
-function hasDefaultQuickStartContent(): boolean {
+function hasDefaultQuickStartContentFor(keys: (keyof typeof DEFAULT_QUICK_START_CONTENT)[]): boolean {
   const state = presetStore.getState()
-  return Object.entries(DEFAULT_QUICK_START_CONTENT).every(([key, value]) => (
-    state[key as keyof typeof DEFAULT_QUICK_START_CONTENT] === value
-  ))
+  return keys.every(key => state[key] === DEFAULT_QUICK_START_CONTENT[key])
 }
 
 function applyThemeContentDefaults(themeConfig: ThemeConfig, themeId: string): void {
   const contentDefaults = themeConfig.themes.find(candidate => candidate.id === themeId)?.contentDefaults
-  if (!contentDefaults || Object.keys(contentDefaults).length === 0 || !hasDefaultQuickStartContent()) {
+  if (!contentDefaults || Object.keys(contentDefaults).length === 0) {
+    return
+  }
+
+  const keysToApply = Object.keys(contentDefaults) as (keyof typeof DEFAULT_QUICK_START_CONTENT)[]
+  if (!hasDefaultQuickStartContentFor(keysToApply)) {
     return
   }
 

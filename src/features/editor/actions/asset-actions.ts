@@ -1,9 +1,27 @@
 import type { AppliedAssets, ThemeAssetTarget, UploadedAsset } from '../../assets/types'
+import { NONE_ASSET_ID } from '../../assets/types'
 import { getThemeStorageKey } from '../lib/quick-settings'
 import { assetStore } from '../stores/asset-store'
 import { presetStore } from '../stores/preset-store'
 import { historyActions } from './history-actions'
 import { applyQuickSettingsStyleUpdate } from './quick-settings-style-state'
+
+// Targets whose applied asset can be silently re-filled by a theme's declared
+// defaults (see theme-selection-actions.syncDefaultAssetsForTheme). Clearing
+// these writes NONE_ASSET_ID instead of deleting the key, so that resync
+// logic can tell "explicitly removed" apart from "never decided."
+const DEFAULT_BACKED_TARGETS = new Set<ThemeAssetTarget>(['background', 'logo'])
+
+function clearAppliedTarget(applied: AppliedAssets, target: ThemeAssetTarget): AppliedAssets {
+  const next = { ...applied }
+  if (DEFAULT_BACKED_TARGETS.has(target)) {
+    next[target] = NONE_ASSET_ID
+  }
+  else {
+    delete next[target]
+  }
+  return next
+}
 
 function getActiveThemeAssetKey(): string {
   return getThemeStorageKey(presetStore.getState().selectedThemeId)
@@ -96,19 +114,19 @@ export const assetActions = {
     const nextUploadedAssets = prevUploadedAssets.filter(a => a.id !== assetId)
 
     const prevAppliedAssets = { ...state.appliedAssets }
-    const nextAppliedAssets = { ...prevAppliedAssets }
+    let nextAppliedAssets = { ...prevAppliedAssets }
 
     if (asset.category === 'background' && (!prevAppliedAssets.background || prevAppliedAssets.background === assetId)) {
-      delete nextAppliedAssets.background
+      nextAppliedAssets = clearAppliedTarget(nextAppliedAssets, 'background')
     }
     if (asset.category === 'logo' && (!prevAppliedAssets.logo || prevAppliedAssets.logo === assetId)) {
-      delete nextAppliedAssets.logo
+      nextAppliedAssets = clearAppliedTarget(nextAppliedAssets, 'logo')
     }
     if (asset.category === 'font' && prevAppliedAssets.bodyFont === assetId) {
-      delete nextAppliedAssets.bodyFont
+      nextAppliedAssets = clearAppliedTarget(nextAppliedAssets, 'bodyFont')
     }
     if (asset.category === 'favicon' && prevAppliedAssets.favicon === assetId) {
-      delete nextAppliedAssets.favicon
+      nextAppliedAssets = clearAppliedTarget(nextAppliedAssets, 'favicon')
     }
     const prevAppliedAssetsByTheme = state.appliedAssetsByTheme
     const nextAppliedAssetsByTheme = withThemeAppliedAssets(prevAppliedAssetsByTheme, themeKey, nextAppliedAssets)
@@ -199,11 +217,10 @@ export const assetActions = {
     const state = assetStore.getState()
     const themeKey = getActiveThemeAssetKey()
     const prevAppliedAssets = { ...state.appliedAssets }
-    if (!prevAppliedAssets[target])
+    if (!prevAppliedAssets[target] || prevAppliedAssets[target] === NONE_ASSET_ID)
       return
 
-    const nextAppliedAssets = { ...prevAppliedAssets }
-    delete nextAppliedAssets[target]
+    const nextAppliedAssets = clearAppliedTarget(prevAppliedAssets, target)
     const prevAppliedAssetsByTheme = state.appliedAssetsByTheme
     const nextAppliedAssetsByTheme = withThemeAppliedAssets(prevAppliedAssetsByTheme, themeKey, nextAppliedAssets)
 

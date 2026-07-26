@@ -1,6 +1,7 @@
 import type { UploadedAsset } from '../types'
 import { describe, expect, it } from 'vitest'
 import { generateAppliedAssetsCSS, generateExportAppliedCSS } from '../font-css-generator'
+import { NONE_ASSET_ID } from '../types'
 
 function makeLogoAsset(): UploadedAsset {
   return {
@@ -33,5 +34,30 @@ describe('generateAppliedAssetsCSS', () => {
     const css = generateAppliedAssetsCSS({ logo: 'logo-1' }, [makeLogoAsset()])
 
     expect(css).toContain('#kc-header-wrapper::before {')
+  })
+
+  it('suppresses the theme default background when explicitly cleared', () => {
+    const css = generateAppliedAssetsCSS({ background: NONE_ASSET_ID }, [])
+
+    expect(css).toContain('--quickstart-bg-image: none;')
+    expect(css).toContain('--quickstart-bg-logo-url: none;')
+    expect(css).toContain('--keycloak-bg-logo-url: none;')
+    // No matching asset exists for the sentinel, so no override image URL is emitted.
+    expect(css).not.toContain('url(')
+  })
+
+  it('suppresses the theme default logo when explicitly cleared', () => {
+    const css = generateAppliedAssetsCSS({ logo: NONE_ASSET_ID }, [])
+
+    expect(css).toContain('--quickstart-logo-url: none;')
+    expect(css).toContain('--keycloak-logo-url: none;')
+    expect(css).toContain('--kc-applied-logo-url: none;')
+    expect(css).not.toContain('#kc-header-wrapper::before {')
+  })
+
+  it('emits nothing for a category that was never decided (absent key)', () => {
+    const css = generateAppliedAssetsCSS({}, [])
+
+    expect(css).toBe('')
   })
 })

@@ -97,6 +97,7 @@ const profile = {
 }
 
 const common = {
+  title: `Sign in to ${realm.displayName}`,
   url,
   realm,
   messagesPerField: {},

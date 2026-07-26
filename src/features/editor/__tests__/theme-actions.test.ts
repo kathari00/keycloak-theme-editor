@@ -135,6 +135,39 @@ describe('themeActions', () => {
       expect(presetStore.getState().colorPresetPrimaryColor).toBe('#ff0000')
     })
 
+    it('preserves colors missing from a partial CSS edit instead of blanking them', () => {
+      presetStore.setState(s => ({
+        ...s,
+        quickSettingsStylesByThemeMode: {
+          v2: {
+            light: {
+              colorPresetId: 'custom',
+              colorPresetPrimaryColor: '#000000',
+              colorPresetSecondaryColor: '#abcdef',
+              colorPresetFontFamily: 'custom',
+              colorPresetBgColor: '',
+              colorPresetBorderRadius: 'rounded',
+              colorPresetCardShadow: 'subtle',
+              colorPresetHeadingFontFamily: 'custom',
+            },
+          },
+        },
+      }))
+
+      themeActions.setActiveFileCss(updatedCss)
+
+      expect(presetStore.getState().colorPresetPrimaryColor).toBe('#ff0000')
+      expect(presetStore.getState().colorPresetSecondaryColor).toBe('#abcdef')
+    })
+
+    it('does not touch stored colors when the edited CSS has no quickstart variables', () => {
+      presetStore.setState(s => ({ ...s, colorPresetPrimaryColor: '#123456' }))
+
+      themeActions.setActiveFileCss('.some-unrelated-rule { color: red; }')
+
+      expect(presetStore.getState().colorPresetPrimaryColor).toBe('#123456')
+    })
+
     it('saves updated file under active theme key', () => {
       themeActions.setActiveFileCss(updatedCss)
       expect(themeStore.getState().stylesCssFilesByTheme.v2?.['css/quick-start.css']).toBe(updatedCss)
