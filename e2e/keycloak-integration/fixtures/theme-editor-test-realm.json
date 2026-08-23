@@ -1,0 +1,8 @@
+{
+  "realm": "theme-editor-test",
+  "enabled": true,
+  "internationalizationEnabled": true,
+  "supportedLocales": ["en", "de", "ar"],
+  "defaultLocale": "en",
+  "loginTheme": "modern-card"
+}

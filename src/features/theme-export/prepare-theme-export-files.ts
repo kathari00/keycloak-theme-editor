@@ -16,11 +16,15 @@ import {
 import { getThemeCssStructuredCached } from '../presets/queries'
 import { getThemeQuickStartCssPath } from '../presets/theme-paths'
 import { normalizeExternalLegalLinkUrl } from '../preview/lib/legal-link-url'
+// Imported from the concrete module, not the `theme-document` barrel index:
+// that barrel also re-exports `useThemeDocument`, whose module graph reaches
+// React store hooks - pulling that in here would be needless coupling for a
+// module that's otherwise environment-agnostic (see tools/build-theme-fixture.ts).
 import {
   themeDocumentToExportLocaleMessages,
   themeDocumentToExportLocales,
   themeDocumentToExportQuickSettingsByMode,
-} from '../theme-document'
+} from '../theme-document/export-projection'
 import {
   assembleExportPayload,
   buildModeAwareQuickStartCssParts,

@@ -48,7 +48,9 @@
     "sync:keycloak": "npx --no-install tsx tools/sync-keycloak.ts",
     "generate:preview": "npx --no-install tsx tools/generate-preview.ts",
     "vendor:check": "npx --no-install tsx tools/apply-vendor-adaptations.ts --check",
-    "vendor:apply": "npx --no-install tsx tools/apply-vendor-adaptations.ts"
+    "vendor:apply": "npx --no-install tsx tools/apply-vendor-adaptations.ts",
+    "build:keycloak-fixture": "npx --no-install tsx tools/build-theme-fixture.ts",
+    "test:keycloak-integration": "npm run build:keycloak-fixture && playwright test --config=e2e/keycloak-integration/playwright.config.ts"
   },
   "dependencies": {
     "@codemirror/autocomplete": "6.20.3",
@@ -89,6 +91,7 @@
     "eslint-plugin-react-refresh": "0.5.3",
     "husky": "^9.1.7",
     "prettier": "3.9.1",
+    "testcontainers": "^12.0.4",
     "tsup": "^8.5.1",
     "tsx": "4.22.4",
     "typescript": "~6.0.3",

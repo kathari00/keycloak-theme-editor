@@ -13,6 +13,7 @@ npm run lint         # ESLint
 npm run test         # Vitest unit tests (watch mode)
 npm run test:run     # Vitest unit tests (single run)
 npm run test:e2e     # Playwright E2E (starts dev server automatically)
+npm run test:keycloak-integration  # Real-Keycloak login theme test (Docker required)
 npm run build:jar    # Maven build for tools/preview-renderer
 npm run build:cli    # tsup build for bin/cli.js
 ```
@@ -46,9 +47,11 @@ Unit tests live next to source in `__tests__/` subdirectories. Currently 25 test
 
 The single E2E smoke test (`e2e/smoke.test.ts`) loads the app and checks for JS errors. Playwright's `webServer` config starts `npm run dev` automatically.
 
+`e2e/keycloak-integration/` is a separate Playwright suite (own config, no `webServer`) that boots a real Keycloak container (`testcontainers`) with a fixture theme jar (built by `tools/build-theme-fixture.ts`, reusing the real export pipeline) and asserts on the actual rendered login page - the one thing nothing else in this repo proves. Requires Docker. See `e2e/manual-qa-languages.md` for the manual checklist this suite automates.
+
 ## CI
 
-GitHub Actions pipeline (`.github/workflows/pipeline.yml`): lint -> test -> build -> playwright. Runs on push to main and PRs. On push to main, also deploys to GitHub Pages.
+GitHub Actions pipeline (`.github/workflows/pipeline.yml`): lint -> test -> build -> playwright -> real-Keycloak integration test. Runs on push to main and PRs. On push to main, also deploys to GitHub Pages.
 
 ## Commit conventions
 

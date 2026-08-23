@@ -21,8 +21,12 @@ function buildNestedZipData(files: Record<string, Uint8Array>): Record<string, a
   return root
 }
 
-/** Build a complete Keycloak theme JAR as a Blob */
-export async function buildJarBlob(params: JarBuildParams): Promise<Blob> {
+/**
+ * Build a complete Keycloak theme JAR as raw bytes. Environment-agnostic (no
+ * Blob) so it can run in Node as well as the browser - see
+ * `tools/build-theme-fixture.ts` for the Node caller.
+ */
+export async function buildJarBytes(params: JarBuildParams): Promise<Uint8Array> {
   const { themeName, extraBlobs, ...rest } = params
   const { zipSync } = await import('fflate')
 
@@ -33,7 +37,12 @@ export async function buildJarBlob(params: JarBuildParams): Promise<Blob> {
   )
 
   const nested = buildNestedZipData(files)
-  const zipped = zipSync(nested)
+  return zipSync(nested)
+}
+
+/** Build a complete Keycloak theme JAR as a Blob */
+export async function buildJarBlob(params: JarBuildParams): Promise<Blob> {
+  const zipped = await buildJarBytes(params)
   return new Blob([new Uint8Array(zipped) as BlobPart], { type: 'application/java-archive' })
 }
 
