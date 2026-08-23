@@ -166,30 +166,32 @@ export default function Topbar({
               <FormSelectOption value="mobile" label="Mobile" />
             </FormSelect>
           </FormGroup>
-          <FormGroup label="Language" fieldId="topbar-preview-language" style={{ margin: 0 }}>
-            <FormSelect
-              id="topbar-preview-language"
-              value={activePreviewLocale}
-              onChange={(_event, value) => editorActions.setPreviewLocaleTag(value)}
-              aria-label="Select preview language"
-            >
-              {previewLocaleOptions.map(tag => (
-                <FormSelectOption key={tag} value={tag} label={localeNativeName(tag)} />
-              ))}
-            </FormSelect>
-            {!isPreviewChromeLocalized && (
-              <Flex
-                alignItems={{ default: 'alignItemsCenter' }}
-                spaceItems={{ default: 'spaceItemsXs' }}
-                style={{ marginTop: 'var(--pf-t--global--spacer--xs)' }}
+          {enabledLocales.length > 0 && (
+            <FormGroup label="Language" fieldId="topbar-preview-language" style={{ margin: 0 }}>
+              <FormSelect
+                id="topbar-preview-language"
+                value={activePreviewLocale}
+                onChange={(_event, value) => editorActions.setPreviewLocaleTag(value)}
+                aria-label="Select preview language"
               >
-                <InfoCircleIcon style={{ color: 'var(--pf-v5-global--info-color--100)' }} />
-                <small style={{ color: 'var(--pf-t--global--text--color--subtle)' }}>
-                  Standard Keycloak text isn't pre-rendered for this language, showing English. Your own texts still translate.
-                </small>
-              </Flex>
-            )}
-          </FormGroup>
+                {previewLocaleOptions.map(tag => (
+                  <FormSelectOption key={tag} value={tag} label={localeNativeName(tag)} />
+                ))}
+              </FormSelect>
+              {!isPreviewChromeLocalized && (
+                <Flex
+                  alignItems={{ default: 'alignItemsCenter' }}
+                  spaceItems={{ default: 'spaceItemsXs' }}
+                  style={{ marginTop: 'var(--pf-t--global--spacer--xs)' }}
+                >
+                  <InfoCircleIcon style={{ color: 'var(--pf-v5-global--info-color--100)' }} />
+                  <small style={{ color: 'var(--pf-t--global--text--color--subtle)' }}>
+                    Standard Keycloak text isn't pre-rendered for this language, showing English. Your own texts still translate.
+                  </small>
+                </Flex>
+              )}
+            </FormGroup>
+          )}
           {shouldUseMobileLayout && (
             <>
               <Divider />
