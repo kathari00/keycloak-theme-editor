@@ -178,11 +178,17 @@ function buildModeQuickSettings(params: {
 
 /**
  * Reads a translation bundle back into editable overrides. Keys the bundle does
- * not carry stay undefined, which round-trips as "not translated".
+ * not carry stay undefined, which round-trips as "not translated". `excludeKeys`
+ * strips keys that already have a canonical home elsewhere (see
+ * `BASE_QUICK_START_MESSAGE_KEYS`) - needed when reading the base English
+ * bundle, which carries those keys as first-class properties.
  */
-export function parseLocalizedContentOverrides(messagesText: string): LocalizedContentOverrides {
+export function parseLocalizedContentOverrides(messagesText: string, excludeKeys?: readonly string[]): LocalizedContentOverrides {
   const overrides: LocalizedContentOverrides = {}
   for (const [key, rawValue] of Object.entries(parseMessageProperties(messagesText))) {
+    if (excludeKeys?.includes(key)) {
+      continue
+    }
     const value = rawValue.trim()
     if (value) {
       overrides[key] = value

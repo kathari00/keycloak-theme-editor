@@ -1,3 +1,4 @@
+import type { QuickStartExtrasUpdate } from '../../actions/css-variable-reader'
 import type { LocalizedContentOverrides } from '../../stores/types'
 import {
   Button,
@@ -25,6 +26,7 @@ import { usePreviewRuntime } from '../../../preview/hooks/use-preview-context'
 import { annotatePreviewMessageKeys, applyPreviewMessageValue, findPreviewMessageElement, getCatalogMessage } from '../../../preview/lib/preview-message-catalog'
 import { getVariantMessageUsagePages } from '../../../preview/load-generated'
 import { editorActions } from '../../actions'
+import { BASE_QUICK_START_MESSAGE_KEYS } from '../../stores/types'
 
 interface LanguagesPanelProps {
   enabledLocales: string[]
@@ -61,15 +63,21 @@ export function LanguagesPanel({
   const { activeVariantId, selectedNodeId, iframeRef, previewReady, setActivePage } = usePreviewRuntime()
 
   const availableLocales = SELECTABLE_LOCALES.filter(locale => !enabledLocales.includes(locale.tag))
-  const activeLocale = enabledLocales.includes(editingLocale) ? editingLocale : enabledLocales[0] ?? ''
-  const activeOverrides = activeLocale ? quickStartContentByLocale[activeLocale] ?? {} : {}
+  const editableLocales = [DEFAULT_LOCALE_TAG, ...enabledLocales]
+  const activeLocale = editableLocales.includes(editingLocale) ? editingLocale : DEFAULT_LOCALE_TAG
+  const isEditingBaseLocale = activeLocale === DEFAULT_LOCALE_TAG
+  const activeOverrides = quickStartContentByLocale[activeLocale] ?? {}
+  // These three already have a canonical home in QuickSettings (Template
+  // content panel); editing them here while viewing English should edit that
+  // same value, not shadow it in quickStartContentByLocale[DEFAULT_LOCALE_TAG].
+  const baseFieldValues: Record<string, string> = { infoMessage, imprintLabel, dataProtectionLabel }
 
   useEffect(() => {
     let cancelled = false
     setSelectedMessage(null)
     const resolveSelectedMessage = async () => {
       const doc = iframeRef.current?.contentDocument
-      if (!doc || !selectedNodeId || !activeLocale) {
+      if (!doc || !selectedNodeId) {
         setSelectedMessage(null)
         return
       }
@@ -116,10 +124,16 @@ export function LanguagesPanel({
   }
 
   const updateSelectedOverride = (_event: React.FormEvent<HTMLInputElement>, value: string) => {
-    if (!activeLocale || !selectedMessage) {
+    if (!selectedMessage) {
       return
     }
-    editorActions.setLocalizedContent(activeLocale, { [selectedMessage.key]: value })
+    const isBaseField = (BASE_QUICK_START_MESSAGE_KEYS as readonly string[]).includes(selectedMessage.key)
+    if (isEditingBaseLocale && isBaseField) {
+      editorActions.setQuickStartExtras({ [selectedMessage.key]: value } as QuickStartExtrasUpdate)
+    }
+    else {
+      editorActions.setLocalizedContent(activeLocale, { [selectedMessage.key]: value })
+    }
     const doc = iframeRef.current?.contentDocument
     if (doc) {
       applyPreviewMessageValue(doc, selectedMessage.key, value.trim() || selectedMessage.defaultTranslation)
@@ -173,92 +187,85 @@ export function LanguagesPanel({
         </StackItem>
       )}
 
-      {enabledLocales.length === 0
+      <StackItem>
+        <FormGroup label="Translate" fieldId="quick-start-locale-editor" style={formGroupStyle}>
+          <FormSelect
+            id="quick-start-locale-editor"
+            value={activeLocale}
+            onChange={(_event, value) => {
+              setEditingLocale(value)
+              editorActions.setPreviewLocaleTag(value)
+            }}
+            aria-label="Language to translate"
+          >
+            {editableLocales.map(tag => (
+              <FormSelectOption key={tag} value={tag} label={localeNativeName(tag)} />
+            ))}
+          </FormSelect>
+        </FormGroup>
+      </StackItem>
+
+      <StackItem>
+        <small style={{ color: 'var(--pf-t--global--text--color--subtle)' }}>
+          {isEditingBaseLocale
+            ? 'Overrides Keycloak\'s default text for this element.'
+            : 'Anything left blank falls back to the English text.'}
+        </small>
+      </StackItem>
+
+      <StackItem>
+        <Title headingLevel="h4" size="md">Selected element</Title>
+      </StackItem>
+      {selectedMessage
         ? (
             <StackItem>
-              <small style={{ color: 'var(--pf-t--global--text--color--subtle)' }}>
-                The theme is exported in English only. Add a language to translate your own texts;
-                Keycloak already translates everything else.
-              </small>
+              <FormGroup
+                label={`Translate ${selectedMessage.key}`}
+                fieldId="selected-element-translation"
+                style={formGroupStyle}
+              >
+                <TextInput
+                  key={`${activeLocale}:${selectedMessage.key}`}
+                  id="selected-element-translation"
+                  value={
+                    isEditingBaseLocale && selectedMessage.key in baseFieldValues
+                      ? baseFieldValues[selectedMessage.key]
+                      : activeOverrides[selectedMessage.key] ?? ''
+                  }
+                  onChange={updateSelectedOverride}
+                  placeholder={selectedMessage.defaultTranslation}
+                  aria-label="Selected element translation"
+                />
+                <ExpandableSection
+                  toggleText={`Used on ${selectedMessage.pageIds.length} ${selectedMessage.pageIds.length === 1 ? 'page' : 'pages'}`}
+                  isIndented
+                >
+                  <Flex
+                    gap={{ default: 'gapXs' }}
+                    style={{ maxHeight: '12rem', overflowY: 'auto' }}
+                  >
+                    {selectedMessage.pageIds.map(pageId => (
+                      <Button
+                        key={pageId}
+                        variant="link"
+                        isInline
+                        onClick={() => setActivePage(pageId)}
+                        style={{ fontSize: 'var(--pf-t--global--font--size--body--sm)' }}
+                      >
+                        {pageId.replace(/\.html$/, '').replace(/-/g, ' ')}
+                      </Button>
+                    ))}
+                  </Flex>
+                </ExpandableSection>
+              </FormGroup>
             </StackItem>
           )
         : (
-            <>
-              <StackItem>
-                <FormGroup label="Translate" fieldId="quick-start-locale-editor" style={formGroupStyle}>
-                  <FormSelect
-                    id="quick-start-locale-editor"
-                    value={activeLocale}
-                    onChange={(_event, value) => {
-                      setEditingLocale(value)
-                      editorActions.setPreviewLocaleTag(value)
-                    }}
-                    aria-label="Language to translate"
-                  >
-                    {enabledLocales.map(tag => (
-                      <FormSelectOption key={tag} value={tag} label={localeNativeName(tag)} />
-                    ))}
-                  </FormSelect>
-                </FormGroup>
-              </StackItem>
-
-              <StackItem>
-                <small style={{ color: 'var(--pf-t--global--text--color--subtle)' }}>
-                  Anything left blank falls back to the English text.
-                </small>
-              </StackItem>
-
-              <StackItem>
-                <Title headingLevel="h4" size="md">Selected element</Title>
-              </StackItem>
-              {selectedMessage
-                ? (
-                    <StackItem>
-                      <FormGroup
-                        label={`Translate ${selectedMessage.key}`}
-                        fieldId="selected-element-translation"
-                        style={formGroupStyle}
-                      >
-                        <TextInput
-                          key={`${activeLocale}:${selectedMessage.key}`}
-                          id="selected-element-translation"
-                          value={activeOverrides[selectedMessage.key] ?? ''}
-                          onChange={updateSelectedOverride}
-                          placeholder={selectedMessage.defaultTranslation}
-                          aria-label="Selected element translation"
-                        />
-                        <ExpandableSection
-                          toggleText={`Used on ${selectedMessage.pageIds.length} ${selectedMessage.pageIds.length === 1 ? 'page' : 'pages'}`}
-                          isIndented
-                        >
-                          <Flex
-                            gap={{ default: 'gapXs' }}
-                            style={{ maxHeight: '12rem', overflowY: 'auto' }}
-                          >
-                            {selectedMessage.pageIds.map(pageId => (
-                              <Button
-                                key={pageId}
-                                variant="link"
-                                isInline
-                                onClick={() => setActivePage(pageId)}
-                                style={{ fontSize: 'var(--pf-t--global--font--size--body--sm)' }}
-                              >
-                                {pageId.replace(/\.html$/, '').replace(/-/g, ' ')}
-                              </Button>
-                            ))}
-                          </Flex>
-                        </ExpandableSection>
-                      </FormGroup>
-                    </StackItem>
-                  )
-                : (
-                    <StackItem>
-                      <small style={{ color: 'var(--pf-t--global--text--color--subtle)' }}>
-                        Select a translated label, button, input or message in the preview to edit its Keycloak message.
-                      </small>
-                    </StackItem>
-                  )}
-            </>
+            <StackItem>
+              <small style={{ color: 'var(--pf-t--global--text--color--subtle)' }}>
+                Select a label, button, input or message in the preview to edit its Keycloak text.
+              </small>
+            </StackItem>
           )}
     </Stack>
   )

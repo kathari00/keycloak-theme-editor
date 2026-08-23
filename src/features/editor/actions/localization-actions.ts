@@ -61,7 +61,7 @@ export const localizationActions = {
     update: LocalizedContentOverrides,
     options?: { recordHistory?: boolean },
   ) => {
-    if (!isCuratedLocale(localeTag) || localeTag === DEFAULT_LOCALE_TAG) {
+    if (localeTag !== DEFAULT_LOCALE_TAG && !isCuratedLocale(localeTag)) {
       return
     }
 

@@ -7,6 +7,7 @@ import {
   DEFAULT_DATA_PROTECTION_LABEL,
   DEFAULT_IMPRINT_LABEL,
 } from '../editor/stores/preset-store'
+import { DEFAULT_LOCALE_TAG } from '../i18n/locale-catalog'
 import {
   THEME_MESSAGES_EN_PATH,
   THEME_PROPERTIES_PATH,
@@ -201,7 +202,7 @@ async function buildLocaleMessageFiles(params: {
   return Object.fromEntries(files)
 }
 
-async function fetchOptionalThemeText(path: string): Promise<string> {
+export async function fetchOptionalThemeText(path: string): Promise<string> {
   try {
     const response = await fetch(path)
     return response.ok ? await response.text() : ''
@@ -246,7 +247,7 @@ export async function prepareThemeExportFiles(
     ? await messagesResponse.text()
     : ''
 
-  const messagesContent = buildOverriddenMessages({
+  const messagesContentWithoutEnglishOverrides = buildOverriddenMessages({
     baseMessagesContent,
     infoMessage,
     imprintUrl: exportImprintUrl,
@@ -254,6 +255,10 @@ export async function prepareThemeExportFiles(
     imprintLabel,
     dataProtectionLabel,
   })
+  const englishOverrides = themeDocument.quickStartContentByLocale[DEFAULT_LOCALE_TAG]
+  const messagesContent = englishOverrides
+    ? buildLocaleOverrideMessages({ baseMessagesContent: messagesContentWithoutEnglishOverrides, overrides: englishOverrides })
+    : messagesContentWithoutEnglishOverrides
 
   const localeMessages = await buildLocaleMessageFiles({
     themeId: resolvedThemeId,

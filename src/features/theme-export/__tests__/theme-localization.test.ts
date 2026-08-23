@@ -220,6 +220,32 @@ describe('prepareThemeExportFiles localization', () => {
     expect(files.localeMessages?.de).toContain('doLogIn=Anmelden')
     expect(files.localeMessages?.de).toContain('infoMessage=Willkommen')
   })
+
+  it('includes an English override for a key beyond the three content fields', async () => {
+    stubThemeFetch()
+
+    const files = await prepareThemeExportFiles({
+      themeDocument: makeThemeDocument({
+        quickStartContentByLocale: { en: { doRegister: 'Create account' } },
+      }),
+      themeName: 'mytheme',
+    })
+
+    expect(files.messagesContent).toContain('doRegister=Create account')
+  })
+
+  it('omits a blank English override instead of writing an empty key', async () => {
+    stubThemeFetch()
+
+    const files = await prepareThemeExportFiles({
+      themeDocument: makeThemeDocument({
+        quickStartContentByLocale: { en: { doRegister: '   ' } },
+      }),
+      themeName: 'mytheme',
+    })
+
+    expect(files.messagesContent).not.toContain('doRegister')
+  })
 })
 
 describe('locale round-trip through a JAR', () => {
@@ -263,6 +289,44 @@ describe('locale round-trip through a JAR', () => {
 
     expect(result.enabledLocales).toEqual(['fr'])
     expect(result.quickStartContentByLocale).toEqual({})
+  })
+
+  it('restores an English override for a key beyond the three content fields', async () => {
+    stubThemeFetch()
+
+    const result = await exportThenImport(makeThemeDocument({
+      quickStartContentByLocale: { en: { doRegister: 'Create account' } },
+    }))
+
+    expect(result.quickStartContentByLocale?.en).toEqual({ doRegister: 'Create account' })
+  })
+
+  it('never represents the three canonical content fields as an English override, even though the exported bundle carries them as real properties', async () => {
+    stubThemeFetch()
+
+    const result = await exportThenImport(makeThemeDocument())
+
+    expect(result.quickStartContentByLocale?.en).toBeUndefined()
+  })
+
+  it('treats a key matching the preset\'s own inherited value as untouched, not a user override', async () => {
+    // stubThemeFetch's base messages_en.properties always ships doLogIn=Sign in,
+    // inherited from the preset - the user never touched it.
+    stubThemeFetch()
+
+    const result = await exportThenImport(makeThemeDocument())
+
+    expect(result.quickStartContentByLocale?.en?.doLogIn).toBeUndefined()
+  })
+
+  it('treats a changed value for an inherited key as a genuine user override', async () => {
+    stubThemeFetch()
+
+    const result = await exportThenImport(makeThemeDocument({
+      quickStartContentByLocale: { en: { doLogIn: 'Log in now' } },
+    }))
+
+    expect(result.quickStartContentByLocale?.en).toEqual({ doLogIn: 'Log in now' })
   })
 })
 

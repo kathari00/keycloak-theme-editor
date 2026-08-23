@@ -1,8 +1,9 @@
 import type { UploadedAsset } from '../assets/types'
-import type { QuickStartContentByLocale } from '../editor/stores/types'
+import type { LocalizedContentOverrides, QuickStartContentByLocale } from '../editor/stores/types'
 import type { JarImportResult, ThemeEditorMetadata } from './types'
 import { processUploadedFile } from '../assets/upload-service'
 import { sanitizeThemeCssSourceForEditor } from '../editor/lib/css-source-sanitizer'
+import { BASE_QUICK_START_MESSAGE_KEYS } from '../editor/stores/types'
 import {
   DEFAULT_LOCALE_TAG,
   isCuratedLocale,
@@ -15,9 +16,11 @@ import {
   THEME_PROPERTIES_PATH,
   THEME_QUICK_START_CSS_PATH,
   THEME_RESOURCES_PATH,
+  themeLoginPath,
 } from '../keycloak-theme/paths'
-import { readMessageProperty } from '../preview/lib/message-properties'
+import { parseMessageProperties, readMessageProperty } from '../preview/lib/message-properties'
 import { getFilename, hasExplicitQuickStartBackgroundColor, parseAppliedAssetsFromCss } from './css-export-utils'
+import { fetchOptionalThemeText } from './prepare-theme-export-files'
 import { parseLocalizedContentOverrides, parseQuickSettingsFromImportedTheme } from './quick-settings-import'
 
 export const THEME_JAR_IMPORTED_EVENT = 'themeJarImported'
@@ -117,13 +120,50 @@ async function importAssetByRule(
 }
 
 /**
+ * Unlike other locales - a preset rarely ships a base bundle for them, so
+ * everything in an imported per-locale file is safely a user override -
+ * English always has a real, non-empty base bundle. Telling a genuine user
+ * override apart from the preset's own inherited content (e.g. `modern-card`
+ * ships a blank `noAccount=` key today, but nothing guarantees every preset's
+ * extra keys stay blank forever) needs a diff against that base, not just an
+ * exclude-list. `sourceThemeId` missing or its base file unfetchable
+ * (foreign/custom theme) falls back to the known-keys exclusion only, which
+ * is safe but coarser.
+ */
+async function parseEnglishContentOverrides(
+  messagesPropertiesText: string,
+  sourceThemeId: string | undefined,
+): Promise<LocalizedContentOverrides> {
+  const pristineBase = sourceThemeId
+    ? await fetchOptionalThemeText(themeLoginPath(sourceThemeId, THEME_MESSAGES_EN_PATH))
+    : ''
+  const pristineValues = parseMessageProperties(pristineBase)
+
+  const overrides: LocalizedContentOverrides = {}
+  for (const [key, rawValue] of Object.entries(parseMessageProperties(messagesPropertiesText))) {
+    if ((BASE_QUICK_START_MESSAGE_KEYS as readonly string[]).includes(key)) {
+      continue
+    }
+    const value = rawValue.trim()
+    if (!value || value === pristineValues[key]?.trim()) {
+      continue
+    }
+    overrides[key] = value
+  }
+
+  return overrides
+}
+
+/**
  * A locale counts as enabled when the theme declares it in `locales=` or ships a
  * bundle for it, so themes written by hand outside the editor still round-trip.
  */
-function parseImportedLocalization(params: {
+async function parseImportedLocalization(params: {
   themeProps: string
   localeMessages: Record<string, string>
-}): { enabledLocales: string[], quickStartContentByLocale: QuickStartContentByLocale } {
+  messagesPropertiesText: string
+  sourceThemeId: string | undefined
+}): Promise<{ enabledLocales: string[], quickStartContentByLocale: QuickStartContentByLocale }> {
   const declared = (readMessageProperty(params.themeProps, 'locales') || '')
     .split(',')
     .map(tag => tag.trim())
@@ -137,6 +177,11 @@ function parseImportedLocalization(params: {
     if (Object.keys(overrides).length > 0) {
       quickStartContentByLocale[localeTag] = overrides
     }
+  }
+
+  const englishOverrides = await parseEnglishContentOverrides(params.messagesPropertiesText, params.sourceThemeId)
+  if (Object.keys(englishOverrides).length > 0) {
+    quickStartContentByLocale[DEFAULT_LOCALE_TAG] = englishOverrides
   }
 
   return { enabledLocales, quickStartContentByLocale }
@@ -233,9 +278,11 @@ export async function importJarFile(file: File): Promise<JarImportResult> {
 
   const editorMetadata = parseStandaloneEditorMetadata(editorMetadataJsonText)
   const sourceThemeId = editorMetadata?.sourceThemeId
-  const { enabledLocales, quickStartContentByLocale } = parseImportedLocalization({
+  const { enabledLocales, quickStartContentByLocale } = await parseImportedLocalization({
     themeProps,
     localeMessages: importedLocaleMessages,
+    messagesPropertiesText: messagesProperties,
+    sourceThemeId,
   })
   const declaredStylePaths = (readMessageProperty(themeProps, 'styles') || '')
     .split(WHITESPACE_RE)
