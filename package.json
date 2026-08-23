@@ -46,7 +46,9 @@
     "test:run": "vitest run",
     "test:e2e": "playwright test",
     "sync:keycloak": "npx --no-install tsx tools/sync-keycloak.ts",
-    "generate:preview": "npx --no-install tsx tools/generate-preview.ts"
+    "generate:preview": "npx --no-install tsx tools/generate-preview.ts",
+    "vendor:check": "npx --no-install tsx tools/apply-vendor-adaptations.ts --check",
+    "vendor:apply": "npx --no-install tsx tools/apply-vendor-adaptations.ts"
   },
   "dependencies": {
     "@codemirror/autocomplete": "6.20.3",

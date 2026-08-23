@@ -1,0 +1,146 @@
+diff --git a/a/template.ftl b/b/template.ftl
+index e1355d0..89ce185 100644
+--- a/a/template.ftl
++++ b/b/template.ftl
+@@ -13,5 +13,5 @@
+       </div>
+       <div class="${properties.kcInputGroupItemClass}">
+-        <button id="reset-login" class="${properties.kcFormPasswordVisibilityButtonClass} kc-login-tooltip" type="button" 
++        <button id="reset-login" class="${properties.kcFormPasswordVisibilityButtonClass} kc-login-tooltip" type="button"
+               aria-label="${msg('restartLoginTooltip')}" onclick="location.href='${url.loginRestartFlowUrl}'">
+             <i class="fa-sync-alt fas" aria-hidden="true"></i>
+@@ -38,5 +38,5 @@
+         </#list>
+     </#if>
+-    <title>${title!}</title>
++    <title>${msg("loginTitle",(realm.displayName!''))}</title>
+     <link rel="icon" href="${url.resourcesPath}/img/favicon.ico" />
+     <#if properties.stylesCommon?has_content>
+@@ -59,6 +59,6 @@
+     <#if darkMode>
+       <script type="module" async blocking="render">
+-          <#outputformat "JavaScript">
+-          const DARK_MODE_CLASS = ${properties.kcDarkModeClass?c};
++          const DARK_MODE_CLASS = "${properties.kcDarkModeClass!'kcDarkModeClass pf-v5-theme-dark'}";
++          const darkModeClasses = DARK_MODE_CLASS.split(/\s+/).filter(Boolean);
+           const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+ 
+@@ -70,10 +70,9 @@
+ 
+             if (isEnabled) {
+-              classList.add(DARK_MODE_CLASS);
++              classList.add(...darkModeClasses);
+             } else {
+-              classList.remove(DARK_MODE_CLASS);
++              classList.remove(...darkModeClasses);
+             }
+           }
+-          </#outputformat>
+       </script>
+     </#if>
+@@ -91,5 +90,5 @@
+     <script type="module">
+         <#outputformat "JavaScript">
+-        import { startSessionPolling } from ${(url.resourcesPath + "/js/authChecker.js")?c};
++        import { startSessionPolling } from "${url.resourcesPath}/js/authChecker.js";
+ 
+         startSessionPolling(
+@@ -124,5 +123,5 @@
+         <script type="module">
+              <#outputformat "JavaScript">
+-            import { checkAuthSession } from ${(url.resourcesPath + "/js/authChecker.js")?c};
++            import { checkAuthSession } from "${url.resourcesPath}/js/authChecker.js";
+ 
+             checkAuthSession(
+@@ -141,9 +140,24 @@
+ <div class="${properties.kcLogin!}">
+   <div class="${properties.kcLoginContainer!}">
+-    <header id="kc-header" class="pf-v5-c-login__header">
+-      <div id="kc-header-wrapper"
+-              class="pf-v5-c-brand">${kcSanitize(msg("loginTitleHtml",(realm.displayNameHtml!'')))?no_esc}</div>
+-    </header>
++        <header id="kc-header" class="pf-v5-c-login__header">
++        <#assign clientName = ''>
++        <#if client??>
++          <#assign clientName = client.name!''>
++          <#if !clientName?has_content>
++            <#assign clientName = client.clientId!''>
++          </#if>
++        </#if>
++        <#if !clientName?has_content>
++          <#assign clientName = realm.displayNameHtml!''>
++        </#if>
++        <div id="kc-header-wrapper" class="pf-v5-c-brand">
++          <span id="kc-realm-name" data-kc-state="realm-name">${kcSanitize(msg("loginTitleHtml",(realm.displayNameHtml!'')))?no_esc}</span>
++          <#if clientName?has_content>
++            <span id="kc-client-name" data-kc-state="client-name" data-kc-client="name">${kcSanitize(clientName)?no_esc}</span>
++          </#if>
++        </div>
++</header>
+     <main class="${properties.kcLoginMain!}">
++
+       <div class="${properties.kcLoginMainHeader!}">
+         <h1 class="${properties.kcLoginMainTitle!}" id="kc-page-title"><#nested "header"></h1>
+@@ -221,17 +235,25 @@
+         <#-- App-initiated actions should not see warning messages about the need to complete the action -->
+         <#-- during login.                                                                               -->
+-        <#if displayMessage && message?has_content && (message.type != 'warning' || !isAppInitiatedAction??)>
+-            <div class="${properties.kcAlertClass!} pf-m-${(message.type = 'error')?then('danger', message.type)}">
+-                <div class="${properties.kcAlertIconClass!}">
+-                    <#if message.type = 'success'><span class="${properties.kcFeedbackSuccessIcon!}"></span></#if>
+-                    <#if message.type = 'warning'><span class="${properties.kcFeedbackWarningIcon!}"></span></#if>
+-                    <#if message.type = 'error'><span class="${properties.kcFeedbackErrorIcon!}"></span></#if>
+-                    <#if message.type = 'info'><span class="${properties.kcFeedbackInfoIcon!}"></span></#if>
+-                </div>
+-                <span class="${properties.kcAlertTitleClass!} kc-feedback-text">${message.summary}</span>
+-            </div>
+-        </#if>
++                                <#if displayMessage && message?has_content && (message.type != 'warning' || !isAppInitiatedAction??)>
++                    <div data-kc-class="kcAlertClass" data-kc-state="message-container" class="${properties.kcAlertClass!} pf-m-${(message.type = 'error')?then('danger', message.type)}">
++                        <div class="${properties.kcAlertIconClass!}">
++                            <#if message.type = 'success'><span class="${properties.kcFeedbackSuccessIcon!}"></span></#if>
++                            <#if message.type = 'warning'><span class="${properties.kcFeedbackWarningIcon!}"></span></#if>
++                            <#if message.type = 'error'><span class="${properties.kcFeedbackErrorIcon!}"></span></#if>
++                            <#if message.type = 'info'><span class="${properties.kcFeedbackInfoIcon!}"></span></#if>
++                        </div>
++                        <span class="${properties.kcAlertTitleClass!} kc-feedback-text">${message.summary}</span>
++                    </div>
++                </#if>
++                <#assign _infoMsg = msg("infoMessage")>
++                <#assign _hasInfo = _infoMsg?has_content && !(displayMessage && message?has_content)>
++                    <div id="kc-info-message" data-kc-class="kcAlertClass" data-kc-state="info-message" data-kc-i18n-key="infoMessage" class="${properties.kcAlertClass!} pf-m-info"<#if !_hasInfo> style="display:none" aria-hidden="true"</#if>>
++                        <div class="${properties.kcAlertIconClass!}">
++                            <span class="${properties.kcFeedbackInfoIcon!}"></span>
++                        </div>
++                        <span class="${properties.kcAlertTitleClass!} kc-feedback-text"><#if _hasInfo>${_infoMsg}</#if></span>
++                    </div>
+ 
+-        <#nested "form">
++                <#nested "form">
+ 
+         <#if auth?has_content && auth.showTryAnotherWayLink()>
+@@ -245,5 +267,5 @@
+         </#if>
+ 
+-          <div class="${properties.kcLoginMainFooter!}">
++          <#assign footerContent>
+               <#nested "socialProviders">
+ 
+@@ -255,10 +277,13 @@
+                   </div>
+               </#if>
+-          </div>
++          </#assign>
++          <#if footerContent?markup_string?trim?has_content>
++            <div class="${properties.kcLoginMainFooter!}">
++              ${footerContent?no_esc}
++            </div>
++          </#if>
+       </div>
+ 
+-        <div class="${properties.kcLoginMainFooter!}">
+-            <@loginFooter.content/>
+-        </div>
++      <@loginFooter.content/>
+     </main>
+   </div>

@@ -1,0 +1,41 @@
+name: vendor-drift-check
+
+# The normal pipeline (lint/test/build/e2e) never touches this: `vendor:check`
+# needs a fresh sync of pristine upstream Keycloak content, which is network
+# work and gitignored, so it isn't part of `npm run test:run`. Without this
+# workflow, a regression to the theme-adaptation rules would only surface up
+# to a week later in the scheduled keycloak-update.yml run - this closes that
+# gap by running the same check immediately whenever a PR touches the files
+# most likely to break it.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tools/theme-adaptations/**'
+      - tools/sync-keycloak.ts
+      - tools/sync-keycloak-config.json
+      - tools/upstream-locale-bundles.ts
+      - tools/apply-vendor-adaptations.ts
+      - 'public/keycloak-dev-resources/themes/base/**'
+      - 'public/keycloak-dev-resources/themes/v2/**'
+
+jobs:
+  vendor-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - run: npm ci
+      - run: npm run sync:keycloak
+      - run: npm run vendor:check

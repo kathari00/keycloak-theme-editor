@@ -1,0 +1,88 @@
+name: keycloak-update
+
+# Renovate/Dependabot can't track this: the Keycloak tag isn't an npm/maven/
+# github-actions dependency, it's a pinned upstream version consumed by our
+# own sync + adaptation tooling (see tools/theme-adaptations/). This job is
+# the same idea applied to that: check for a newer release, try to safely
+# regenerate everything derived from it, and only open a PR if the result
+# actually builds and passes. A failure here means a human needs to look -
+# most likely a stored patch in tools/theme-adaptations/patches/ no longer
+# applies because upstream restructured a template it touches.
+
+on:
+  schedule:
+    - cron: '0 6 * * 1' # Monday 06:00 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check-and-update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - run: npm ci
+
+      - name: Check for a newer Keycloak release
+        id: release
+        run: npx --no-install tsx tools/check-keycloak-release.ts
+
+      - name: Sync pristine upstream content
+        if: steps.release.outputs.changed == 'true'
+        run: npm run sync:keycloak
+
+      - name: Regenerate the vendor-adapted theme files
+        if: steps.release.outputs.changed == 'true'
+        run: npm run vendor:apply
+
+      - name: Regenerate preview pages (all curated languages)
+        if: steps.release.outputs.changed == 'true'
+        run: npm run generate:preview -- --locales=all
+
+      - run: npm run lint
+        if: steps.release.outputs.changed == 'true'
+
+      - run: npm run test:run
+        if: steps.release.outputs.changed == 'true'
+
+      - run: npm run build
+        if: steps.release.outputs.changed == 'true'
+
+      - run: npx playwright install --with-deps chromium
+        if: steps.release.outputs.changed == 'true'
+        timeout-minutes: 10
+
+      - run: npm run test:e2e
+        if: steps.release.outputs.changed == 'true'
+
+      - name: Open pull request
+        if: steps.release.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: 'chore: update Keycloak to ${{ steps.release.outputs.tag }}'
+          title: 'Update Keycloak ${{ steps.release.outputs.previous-tag }} -> ${{ steps.release.outputs.tag }}'
+          body: |
+            Automated update, everything below already passed in this run before the PR was opened:
+
+            - `sync:keycloak` against the new release
+            - `vendor:apply` (regenerates `base`/`v2` under `keycloak-dev-resources` from the codified adaptation - see `tools/theme-adaptations/`)
+            - `generate:preview` for every curated language (`src/features/i18n/locale-catalog.ts`)
+            - lint, unit tests, build, e2e
+
+            If this PR exists, the adaptation reproduced cleanly against the new release. If it *couldn't* run (this workflow failed instead of opening a PR), a stored patch under `tools/theme-adaptations/patches/` likely no longer applies - see the failed step for exactly which file and line.
+          branch: chore/keycloak-update
+          labels: dependencies
+          delete-branch: true

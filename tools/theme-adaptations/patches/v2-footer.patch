@@ -1,0 +1,21 @@
+diff --git a/a/footer.ftl b/b/footer.ftl
+index 0a440a3..9764c3c 100644
+--- a/a/footer.ftl
++++ b/b/footer.ftl
+@@ -1,3 +1,15 @@
+ <#macro content>
+-<#-- The footer at the bottom of the "login-box". You can override this file in your custom theme to declare a custom login footer element -->
++    <#assign hasLegalLinks = msg("imprintUrl")?has_content || msg("dataProtectionUrl")?has_content>
++    <div class="${properties.kcLoginMainFooter!} kc-legal-footer" data-kc-state="legal-footer"<#if !hasLegalLinks> hidden</#if>>
++        <#if hasLegalLinks>
++            <div class="kc-footer-legal-links" data-kc-state="footer-legal-links">
++                <#if msg("imprintUrl")?has_content>
++                    <a data-kc-state="imprint-link" href="${msg("imprintUrl")}" class="${properties.kcLoginMainFooterBandItem!}" target="_blank" rel="noopener noreferrer">${msg("imprintLabel")}</a>
++                </#if>
++                <#if msg("dataProtectionUrl")?has_content>
++                    <a data-kc-state="data-protection-link" href="${msg("dataProtectionUrl")}" class="${properties.kcLoginMainFooterBandItem!}" target="_blank" rel="noopener noreferrer">${msg("dataProtectionLabel")}</a>
++                </#if>
++            </div>
++        </#if>
++    </div>
+ </#macro>
