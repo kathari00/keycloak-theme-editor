@@ -24,7 +24,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
@@ -70,7 +70,7 @@ jobs:
 
       - name: Open pull request
         if: steps.release.outputs.changed == 'true'
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           commit-message: 'chore: update Keycloak to ${{ steps.release.outputs.tag }}'
           title: 'Update Keycloak ${{ steps.release.outputs.previous-tag }} -> ${{ steps.release.outputs.tag }}'
