@@ -27,6 +27,8 @@ function pickImportedContentSettings(settings: Partial<QuickSettings> | undefine
     infoMessage: settings?.infoMessage,
     imprintUrl: settings?.imprintUrl,
     dataProtectionUrl: settings?.dataProtectionUrl,
+    imprintLabel: settings?.imprintLabel,
+    dataProtectionLabel: settings?.dataProtectionLabel,
   })
 }
 

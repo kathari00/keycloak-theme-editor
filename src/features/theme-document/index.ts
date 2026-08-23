@@ -1,4 +1,8 @@
-export { themeDocumentToExportQuickSettingsByMode } from './export-projection'
+export {
+  themeDocumentToExportLocaleMessages,
+  themeDocumentToExportLocales,
+  themeDocumentToExportQuickSettingsByMode,
+} from './export-projection'
 export { computePreviewCss, EMPTY_PREVIEW_CSS, themeDocumentToPreviewCss } from './preview-projection'
 export { createQuickSettings, createThemeDocument } from './theme-document'
 export type {

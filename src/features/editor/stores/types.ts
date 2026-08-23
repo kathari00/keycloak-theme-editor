@@ -33,9 +33,26 @@ export interface QuickStartContentSettings {
   infoMessage: string
   imprintUrl: string
   dataProtectionUrl: string
+  imprintLabel: string
+  dataProtectionLabel: string
 }
 
 export interface QuickSettings extends QuickSettingsStyle, QuickStartContentSettings {}
+
+/**
+ * Per-locale overrides for the theme's own message keys. Omitted or blank
+ * fields are left out of the exported bundle so Keycloak falls back to English.
+ */
+export interface LocalizedContentOverrides {
+  infoMessage?: string
+  imprintLabel?: string
+  dataProtectionLabel?: string
+  /** Any Keycloak message key selected directly in the preview. */
+  [messageKey: string]: string | undefined
+}
+
+/** Keyed by curated locale tag; the base language is not stored here. */
+export type QuickStartContentByLocale = Partial<Record<string, LocalizedContentOverrides>>
 
 export type QuickSettingsStylesByMode = Partial<Record<QuickSettingsMode, QuickSettingsStyle>>
 
@@ -58,6 +75,11 @@ export interface PresetState {
   infoMessage: QuickStartContentSettings['infoMessage']
   imprintUrl: QuickStartContentSettings['imprintUrl']
   dataProtectionUrl: QuickStartContentSettings['dataProtectionUrl']
+  imprintLabel: QuickStartContentSettings['imprintLabel']
+  dataProtectionLabel: QuickStartContentSettings['dataProtectionLabel']
+  /** Curated locale tags the exported theme declares, excluding the base language. */
+  enabledLocales: string[]
+  quickStartContentByLocale: QuickStartContentByLocale
 }
 
 export interface ThemeState {
@@ -79,6 +101,8 @@ export interface CoreState {
   selectedNodeId: string | null
   previewReady: boolean
   deviceId: 'desktop' | 'tablet' | 'mobile'
+  /** Language the preview renders in; only affects the preview, not the export. */
+  previewLocaleTag: string
 }
 
 export interface HistoryState {

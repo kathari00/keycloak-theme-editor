@@ -6,6 +6,7 @@ export default antfu({
   react: true,
   ignores: [
     'public/**',
+    'src/features/preview/generated/**',
   ],
   rules: {
     'e18e/prefer-array-at': 'off',

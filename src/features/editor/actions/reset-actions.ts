@@ -1,3 +1,4 @@
+import { DEFAULT_LOCALE_TAG } from '../../i18n/locale-catalog'
 import { getThemeCssStructuredCached } from '../../presets/queries'
 import { buildQuickSettingsStorageKey, DEFAULT_THEME_ID } from '../lib/quick-settings'
 import {
@@ -77,6 +78,7 @@ export const resetActions = {
       selectedNodeId: null,
       previewReady: previewDocumentWillReload ? false : state.previewReady,
       deviceId: 'desktop',
+      previewLocaleTag: DEFAULT_LOCALE_TAG,
     }))
 
     historyStore.setState(() => ({

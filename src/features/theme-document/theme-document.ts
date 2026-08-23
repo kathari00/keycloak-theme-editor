@@ -25,6 +25,8 @@ export function createThemeDocument(input: CreateThemeDocumentInput): ThemeDocum
     quickStartCss: input.quickStartCss,
     quickSettings: input.quickSettings,
     quickSettingsStylesByMode: input.quickSettingsStylesByMode ?? {},
+    enabledLocales: input.enabledLocales ?? [],
+    quickStartContentByLocale: input.quickStartContentByLocale ?? {},
     assets: {
       uploadedAssets: input.uploadedAssets,
       appliedAssets: input.appliedAssets,

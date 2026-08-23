@@ -1,5 +1,5 @@
 import type { AppliedAssets, UploadedAsset } from '../assets/types'
-import type { QuickSettings } from '../editor/stores/types'
+import type { QuickSettings, QuickStartContentByLocale } from '../editor/stores/types'
 
 export interface ThemeEditorMetadata {
   sourceThemeId?: string
@@ -23,6 +23,8 @@ export interface AssembleThemeFilesParams {
   stylesCss: string
   stylesCssFiles?: Record<string, string>
   messagesContent: string
+  /** Extra message bundles keyed by locale tag, e.g. `de` -> file contents. */
+  localeMessages?: Record<string, string>
   payload: ThemeExportPayload
   customFtlFiles?: Record<string, string>
   editorMetadata: ThemeEditorMetadata
@@ -46,6 +48,8 @@ export interface JarImportResult {
   themeName: string
   sourceThemeId?: string
   quickSettingsByMode?: ImportedQuickSettingsByMode
+  enabledLocales?: string[]
+  quickStartContentByLocale?: QuickStartContentByLocale
   uploadedAssets: UploadedAsset[]
   appliedAssets: AppliedAssets
 }

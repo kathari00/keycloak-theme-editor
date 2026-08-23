@@ -40,6 +40,7 @@ export function useThemeJarImportHandler(params: {
         })
         editorActions.applyThemeContentDefaults(themeConfig, targetThemeId)
         editorActions.applyImportedQuickSettingsForPreset(detail.quickSettingsByMode)
+        editorActions.applyImportedLocalization(detail.enabledLocales, detail.quickStartContentByLocale)
         const importedAssets = detail.uploadedAssets || []
         const importedCategories = new Set(importedAssets.map(a => `${a.category}:${a.name}`))
         const preservedDefaults = assetStore.getState().uploadedAssets.filter(

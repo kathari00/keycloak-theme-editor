@@ -6,6 +6,8 @@ export interface QuickStartTemplateContentOptions {
   infoMessage: string
   imprintUrl: string
   dataProtectionUrl: string
+  imprintLabel?: string
+  dataProtectionLabel?: string
   noAccountMessage?: string
   doRegisterLabel?: string
 }
@@ -27,14 +29,15 @@ export function applyQuickStartTemplateContent(doc: Document, options: QuickStar
   if (messageNode) {
     const textNode = messageNode.querySelector<HTMLElement>('[data-kc-state="info-message-text"]') ?? messageNode
     textNode.textContent = message
-    messageNode.removeAttribute('data-kc-i18n-key')
+    textNode.setAttribute('data-kc-i18n-key', 'infoMessage')
+    textNode.setAttribute('data-kc-i18n-attribute', 'text')
     messageNode.style.display = message ? '' : 'none'
     messageNode.setAttribute('aria-hidden', message ? 'false' : 'true')
   }
 
   const legalNodes = [
-    ['imprint-link', 'imprintUrl', 'Imprint'],
-    ['data-protection-link', 'dataProtectionUrl', 'Data Protection'],
+    ['imprint-link', 'imprintUrl', 'imprintLabel', 'Imprint'],
+    ['data-protection-link', 'dataProtectionUrl', 'dataProtectionLabel', 'Data Protection'],
   ] as const
 
   const footerContainer = doc.querySelector<HTMLElement>('[data-kc-state="legal-footer"]')
@@ -45,14 +48,18 @@ export function applyQuickStartTemplateContent(doc: Document, options: QuickStar
     footerContainer.appendChild(linksContainer)
   }
 
-  for (const [id, hrefKey, fallback] of legalNodes) {
+  for (const [id, hrefKey, labelKey, fallback] of legalNodes) {
     const href = options[hrefKey]
     const link = doc.querySelector<HTMLAnchorElement>(`a[data-kc-state="${id}"]`)
     if (!link)
       continue
     const normalizedHref = normalizeExternalLegalLinkUrl(href)
     link.id = `kc-${id}`
-    ensureText(link, fallback)
+    // Set rather than fill in: the label is editable and translatable, so it
+    // has to follow the current value instead of sticking at the first one.
+    link.textContent = (options[labelKey] || '').trim() || fallback
+    link.setAttribute('data-kc-i18n-key', labelKey)
+    link.setAttribute('data-kc-i18n-attribute', 'text')
     link.href = normalizedHref || '#'
     link.target = '_blank'
     link.rel = 'noopener noreferrer'

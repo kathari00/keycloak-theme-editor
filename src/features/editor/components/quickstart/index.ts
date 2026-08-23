@@ -1,5 +1,6 @@
 export { AssetsPanel } from './AssetsPanel'
 export { ColorPicker } from './ColorPicker'
 export { ColorSettingsPanel } from './ColorSettingsPanel'
+export { LanguagesPanel } from './LanguagesPanel'
 export { TemplateContentPanel } from './TemplateContentPanel'
 export { useQuickStartSettings } from './useQuickStartSettings'

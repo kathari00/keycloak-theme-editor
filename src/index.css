@@ -237,7 +237,3 @@ p {
     justify-content: space-between;
     width: 100%;
 }
-
-.mobile-editor-menu-toggle .pf-v6-c-menu-toggle__controls {
-    display: none;
-}

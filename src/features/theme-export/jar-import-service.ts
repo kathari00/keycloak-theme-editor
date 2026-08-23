@@ -1,7 +1,13 @@
 import type { UploadedAsset } from '../assets/types'
+import type { QuickStartContentByLocale } from '../editor/stores/types'
 import type { JarImportResult, ThemeEditorMetadata } from './types'
 import { processUploadedFile } from '../assets/upload-service'
 import { sanitizeThemeCssSourceForEditor } from '../editor/lib/css-source-sanitizer'
+import {
+  DEFAULT_LOCALE_TAG,
+  isCuratedLocale,
+  localeTagForPropertiesSuffix,
+} from '../i18n/locale-catalog'
 import {
   THEME_FAVICON_RESOURCE_PATH,
   THEME_MESSAGES_DEFAULT_PATH,
@@ -12,13 +18,18 @@ import {
 } from '../keycloak-theme/paths'
 import { readMessageProperty } from '../preview/lib/message-properties'
 import { getFilename, hasExplicitQuickStartBackgroundColor, parseAppliedAssetsFromCss } from './css-export-utils'
-import { parseQuickSettingsFromImportedTheme } from './quick-settings-import'
+import { parseLocalizedContentOverrides, parseQuickSettingsFromImportedTheme } from './quick-settings-import'
 
 export const THEME_JAR_IMPORTED_EVENT = 'themeJarImported'
 
 const WHITESPACE_RE = /\s+/
 const LOGIN_PATH_MARKER = '/login/'
 const CUSTOM_USER_STYLES_CSS_PATH = 'css/custom-user-styles.css'
+const LOCALE_MESSAGES_RE = /\/login\/messages\/messages_([A-Z_]+)\.properties$/i
+
+function getLocaleMessagesSuffix(filename: string): string | null {
+  return filename.match(LOCALE_MESSAGES_RE)?.[1] ?? null
+}
 
 function themeArchiveLoginMarker(loginRelativePath: string): string {
   return `${LOGIN_PATH_MARKER}${loginRelativePath}`
@@ -105,6 +116,32 @@ async function importAssetByRule(
   importedAssets.push(asset)
 }
 
+/**
+ * A locale counts as enabled when the theme declares it in `locales=` or ships a
+ * bundle for it, so themes written by hand outside the editor still round-trip.
+ */
+function parseImportedLocalization(params: {
+  themeProps: string
+  localeMessages: Record<string, string>
+}): { enabledLocales: string[], quickStartContentByLocale: QuickStartContentByLocale } {
+  const declared = (readMessageProperty(params.themeProps, 'locales') || '')
+    .split(',')
+    .map(tag => tag.trim())
+    .filter(tag => isCuratedLocale(tag) && tag !== DEFAULT_LOCALE_TAG)
+
+  const enabledLocales = [...new Set([...declared, ...Object.keys(params.localeMessages)])]
+
+  const quickStartContentByLocale: QuickStartContentByLocale = {}
+  for (const [localeTag, messagesText] of Object.entries(params.localeMessages)) {
+    const overrides = parseLocalizedContentOverrides(messagesText)
+    if (Object.keys(overrides).length > 0) {
+      quickStartContentByLocale[localeTag] = overrides
+    }
+  }
+
+  return { enabledLocales, quickStartContentByLocale }
+}
+
 /** Try to extract editor metadata from standalone keycloak-theme-editor.json */
 function parseStandaloneEditorMetadata(json: string): ThemeEditorMetadata | null {
   if (!json)
@@ -134,6 +171,7 @@ export async function importJarFile(file: File): Promise<JarImportResult> {
   let editorMetadataJsonText = ''
   const importedAssets: UploadedAsset[] = []
   const importedCssFiles: Record<string, string> = {}
+  const importedLocaleMessages: Record<string, string> = {}
 
   for (const [filename, data] of Object.entries(entries)) {
     if (filename.endsWith('/') || data.length === 0) {
@@ -177,6 +215,16 @@ export async function importJarFile(file: File): Promise<JarImportResult> {
       continue
     }
 
+    const localeSuffix = getLocaleMessagesSuffix(filename)
+    if (localeSuffix) {
+      const localeTag = localeTagForPropertiesSuffix(localeSuffix)
+      // Locales outside the curated set can't be surfaced in the editor, so drop them.
+      if (isCuratedLocale(localeTag) && localeTag !== DEFAULT_LOCALE_TAG) {
+        importedLocaleMessages[localeTag] = readEntryText(data)
+      }
+      continue
+    }
+
     const assetRule = ASSET_IMPORT_RULES.find(rule => filename.includes(rule.path))
     if (assetRule) {
       await importAssetByRule(filename, data, assetRule, importedAssets)
@@ -185,6 +233,10 @@ export async function importJarFile(file: File): Promise<JarImportResult> {
 
   const editorMetadata = parseStandaloneEditorMetadata(editorMetadataJsonText)
   const sourceThemeId = editorMetadata?.sourceThemeId
+  const { enabledLocales, quickStartContentByLocale } = parseImportedLocalization({
+    themeProps,
+    localeMessages: importedLocaleMessages,
+  })
   const declaredStylePaths = (readMessageProperty(themeProps, 'styles') || '')
     .split(WHITESPACE_RE)
     .filter(Boolean)
@@ -243,6 +295,8 @@ export async function importJarFile(file: File): Promise<JarImportResult> {
     themeName,
     sourceThemeId,
     quickSettingsByMode,
+    enabledLocales,
+    quickStartContentByLocale,
     uploadedAssets: importedAssets,
     appliedAssets,
   }

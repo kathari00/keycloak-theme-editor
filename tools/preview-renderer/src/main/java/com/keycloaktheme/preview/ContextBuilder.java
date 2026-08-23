@@ -20,7 +20,7 @@ public final class ContextBuilder {
   public ContextOverrides readContextOverrides(Path path) throws IOException {
     Map<String, Map<String, Object>> emptyPages = new LinkedHashMap<String, Map<String, Object>>();
     if (path == null || !Files.exists(path)) {
-      return new ContextOverrides(emptyPages);
+      return new ContextOverrides(emptyPages, defaultLocales());
     }
 
     String json = readUtf8(path);
@@ -41,14 +41,65 @@ public final class ContextBuilder {
       pages.put(key.trim(), asMap(entry.getValue()));
     }
 
-    return new ContextOverrides(pages);
+    return new ContextOverrides(pages, readLocales(raw.get("locales")));
+  }
+
+  /**
+   * Reads the locales to render. The editor owns the tag-to-bundle mapping and
+   * the per-locale FreeMarker context, so this only unpacks what it was given.
+   */
+  private List<LocaleSpec> readLocales(Object rawLocales) {
+    if (!(rawLocales instanceof List)) {
+      return defaultLocales();
+    }
+
+    List<LocaleSpec> locales = new ArrayList<LocaleSpec>();
+    for (Object item : (List<?>) rawLocales) {
+      if (!(item instanceof Map)) {
+        continue;
+      }
+      Map<String, Object> entry = asMap(item);
+      Object tag = entry.get("tag");
+      if (tag == null || tag.toString().trim().isEmpty()) {
+        continue;
+      }
+      Object suffix = entry.get("suffix");
+      String resolvedSuffix = suffix == null || suffix.toString().trim().isEmpty()
+          ? tag.toString().trim()
+          : suffix.toString().trim();
+      locales.add(new LocaleSpec(tag.toString().trim(), resolvedSuffix, asMap(entry.get("context"))));
+    }
+
+    return locales.isEmpty() ? defaultLocales() : locales;
+  }
+
+  private List<LocaleSpec> defaultLocales() {
+    List<LocaleSpec> locales = new ArrayList<LocaleSpec>();
+    locales.add(new LocaleSpec(
+        VariantLoader.BASE_LOCALE_SUFFIX,
+        VariantLoader.BASE_LOCALE_SUFFIX,
+        new LinkedHashMap<String, Object>()
+    ));
+    return locales;
   }
 
   public Map<String, Object> buildPageContextOverride(ContextOverrides overrides, String pageKey) {
+    return buildPageContextOverride(overrides, pageKey, null);
+  }
+
+  public Map<String, Object> buildPageContextOverride(
+      ContextOverrides overrides,
+      String pageKey,
+      Map<String, Object> localeContext
+  ) {
     Map<String, Object> merged = new LinkedHashMap<String, Object>();
     Map<String, Object> pageOverride = overrides.getPages().get(pageKey);
     if (pageOverride != null && !pageOverride.isEmpty()) {
       deepMergeMap(merged, pageOverride);
+    }
+    // The active language wins over the page mock, which only carries defaults.
+    if (localeContext != null && !localeContext.isEmpty()) {
+      deepMergeMap(merged, localeContext);
     }
     return merged;
   }
@@ -124,15 +175,46 @@ public final class ContextBuilder {
     return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
   }
 
+  /** One preview language: how to name its output, which bundle to read, and what to put in the context. */
+  public static final class LocaleSpec {
+    private final String tag;
+    private final String suffix;
+    private final Map<String, Object> context;
+
+    public LocaleSpec(String tag, String suffix, Map<String, Object> context) {
+      this.tag = tag;
+      this.suffix = suffix;
+      this.context = context;
+    }
+
+    public String getTag() {
+      return tag;
+    }
+
+    public String getSuffix() {
+      return suffix;
+    }
+
+    public Map<String, Object> getContext() {
+      return context;
+    }
+  }
+
   public static final class ContextOverrides {
     private final Map<String, Map<String, Object>> pages;
+    private final List<LocaleSpec> locales;
 
-    public ContextOverrides(Map<String, Map<String, Object>> pages) {
+    public ContextOverrides(Map<String, Map<String, Object>> pages, List<LocaleSpec> locales) {
       this.pages = pages;
+      this.locales = locales;
     }
 
     public Map<String, Map<String, Object>> getPages() {
       return pages;
+    }
+
+    public List<LocaleSpec> getLocales() {
+      return locales;
     }
   }
 }

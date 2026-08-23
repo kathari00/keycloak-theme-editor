@@ -1,14 +1,16 @@
+import type { ThemeDocument } from '../../theme-document'
 import { Bullseye, Spinner } from '@patternfly/react-core'
 import { useEffect, useMemo, useState } from 'react'
-import { useLoadingIndicatorVisibility } from '../../../app/LoadingScreen'
 import { useDarkModeState, usePreviewState } from '../../editor/hooks/use-editor'
 import { getThemePreviewStylesPath } from '../../presets/theme-paths'
 import { themeDocumentToPreviewCss, useThemeDocument } from '../../theme-document'
 import patternflyV5PreviewStylesheetUrl from '../assets/patternfly-v5-preview.css?url'
 import { usePreviewRuntime } from '../hooks/use-preview-context'
+import { usePreviewLocalePages } from '../hooks/usePreviewLocalePages'
 import { usePreviewMessages } from '../hooks/usePreviewMessages'
 import { syncPreviewDarkModeClasses } from '../lib/dark-mode-classes'
 import { getEventElement } from '../lib/event-target-utils'
+import { applyPreviewMessageOverrides } from '../lib/preview-message-catalog'
 import { applyQuickStartTemplateContent } from '../lib/quickstart-template-content'
 import { sanitizePreviewHtml } from '../lib/sanitize-preview-html'
 import { createElementSelector } from '../lib/selector-utils'
@@ -101,6 +103,20 @@ function hashUrl(url: string): string {
   return (hash >>> 0).toString(36)
 }
 
+function preparePreviewSrcDoc(pageHtml: string, themeStylesPath: string): { html: string, version: string } {
+  const doc = new DOMParser().parseFromString(sanitizePreviewHtml(pageHtml), 'text/html')
+  const version = hashUrl(`${themeStylesPath}\0${pageHtml}`)
+
+  // These resources must be present while srcDoc is parsed. The iframe load
+  // event then waits for them instead of briefly painting the bare document
+  // before PreviewShell injects them.
+  ensureBaseHref(doc, 'preview-theme-base', new URL(themeStylesPath, window.location.href).toString())
+  ensureStylesheetLink(doc, 'preview-patternfly-v5', new URL(patternflyV5PreviewStylesheetUrl, window.location.href).toString())
+  doc.documentElement.dataset.previewDocumentVersion = version
+
+  return { html: `<!doctype html>${doc.documentElement.outerHTML}`, version }
+}
+
 function applyPreviewStyles(params: PreviewStyleParams): void {
   const {
     doc,
@@ -143,6 +159,22 @@ function syncPreviewDocumentStyles(params: PreviewStyleParams): void {
   applyPreviewStyles(params)
 }
 
+/**
+ * The text the preview should show for the language being previewed. A blank
+ * translation means "not translated yet", so it falls back to the base value -
+ * the same rule the exported bundles follow.
+ */
+function resolveLocalizedContent(themeDocument: ThemeDocument, localeTag: string) {
+  const { quickSettings } = themeDocument
+  const overrides = themeDocument.quickStartContentByLocale[localeTag] ?? {}
+
+  return {
+    infoMessage: overrides.infoMessage?.trim() || quickSettings.infoMessage,
+    imprintLabel: overrides.imprintLabel?.trim() || quickSettings.imprintLabel,
+    dataProtectionLabel: overrides.dataProtectionLabel?.trim() || quickSettings.dataProtectionLabel,
+  }
+}
+
 function isLegalInfoLink(anchor: HTMLAnchorElement): boolean {
   return anchor.matches('[data-kc-state="imprint-link"], [data-kc-state="data-protection-link"], #kc-imprint-link, #kc-data-protection-link')
 }
@@ -151,10 +183,12 @@ export function PreviewShell({ onHorizontalSwipe }: PreviewShellProps = {}) {
   const { activeVariantId, activePageId, activeStateId, selectedNodeId, previewReady, iframeRef, setPreviewReady, selectNode } = usePreviewRuntime()
   const { themeDocument, resolvedThemeId, resolvedTheme, isPresetTheme } = useThemeDocument()
   const { isDarkMode } = useDarkModeState()
-  const { deviceId } = usePreviewState()
+  const { deviceId, previewLocaleTag } = usePreviewState()
   const [frameLoadVersion, setFrameLoadVersion] = useState(0)
+  const [loadedDocumentVersion, setLoadedDocumentVersion] = useState<string | null>(null)
+  const activeLocaleTag = usePreviewLocalePages(previewLocaleTag)
 
-  const variantPages = getVariantPages(activeVariantId)
+  const variantPages = getVariantPages(activeVariantId, activeLocaleTag)
   const fallbackPageId = variantPages['login.html']
     ? 'login.html'
     : Object.keys(variantPages).find(pageId => pageId.endsWith('.html') && pageId !== 'cli_splash.html') || 'login.html'
@@ -163,11 +197,19 @@ export function PreviewShell({ onHorizontalSwipe }: PreviewShellProps = {}) {
     variantId: activeVariantId,
     pageId: effectivePageId,
     stateId: activeStateId,
+    localeTag: activeLocaleTag,
   }) || variantPages[effectivePageId] || '<!doctype html><html><body></body></html>'
   const themeStylesPath = getThemePreviewStylesPath(resolvedThemeId)
-  const messageOverrides = usePreviewMessages({ reloadVersion: frameLoadVersion })
+  const messageOverrides = usePreviewMessages({
+    reloadVersion: frameLoadVersion,
+    localeTag: activeLocaleTag,
+  })
   const editorCss = themeDocumentToPreviewCss(themeDocument)
   const quickSettings = themeDocument.quickSettings
+  const localizedContent = useMemo(
+    () => resolveLocalizedContent(themeDocument, activeLocaleTag),
+    [themeDocument, activeLocaleTag],
+  )
 
   const editorStyleParams = useMemo(() => ({
     quickStartBaseCss: themeDocument.isPresetTheme ? themeDocument.quickStartCss : '',
@@ -178,12 +220,20 @@ export function PreviewShell({ onHorizontalSwipe }: PreviewShellProps = {}) {
     appliedAssetsCss: editorCss.appliedAssetsCss,
   }), [themeDocument.isPresetTheme, themeDocument.quickStartCss, editorCss.googleFontUrls, editorCss.quickStartCss, editorCss.uploadedFontsCss, editorCss.uploadedImagesCss, editorCss.appliedAssetsCss])
 
-  const srcDoc = sanitizePreviewHtml(pageHtml)
+  const preparedSrcDoc = useMemo(
+    () => preparePreviewSrcDoc(pageHtml, themeStylesPath),
+    [pageHtml, themeStylesPath],
+  )
+  const srcDoc = preparedSrcDoc.html
+  const srcDocVersion = preparedSrcDoc.version
 
   useEffect(() => {
     setPreviewReady(false)
   }, [srcDoc, setPreviewReady])
-  const showLoadingIndicator = useLoadingIndicatorVisibility(!previewReady)
+  // Page changes are already local iframe loads. Do not apply the app-start
+  // indicator's one-second delay and two-second minimum visibility here.
+  const isCurrentDocumentReady = previewReady && loadedDocumentVersion === srcDocVersion
+  const showLoadingIndicator = !isCurrentDocumentReady
 
   const onFrameLoad = () => {
     const doc = iframeRef.current?.contentDocument
@@ -199,6 +249,11 @@ export function PreviewShell({ onHorizontalSwipe }: PreviewShellProps = {}) {
       isDarkMode,
     })
 
+    // Ignore a late load event from a document that has already been replaced.
+    if (doc.documentElement.dataset.previewDocumentVersion !== srcDocVersion)
+      return
+
+    setLoadedDocumentVersion(srcDocVersion)
     setPreviewReady(true)
     setFrameLoadVersion(version => version + 1)
   }
@@ -220,14 +275,28 @@ export function PreviewShell({ onHorizontalSwipe }: PreviewShellProps = {}) {
       applyQuickStartTemplateContent(doc, {
         showClientName: quickSettings.showClientName,
         showRealmName: quickSettings.showRealmName,
-        infoMessage: quickSettings.infoMessage,
+        infoMessage: localizedContent.infoMessage,
         imprintUrl: quickSettings.imprintUrl,
         dataProtectionUrl: quickSettings.dataProtectionUrl,
+        imprintLabel: localizedContent.imprintLabel,
+        dataProtectionLabel: localizedContent.dataProtectionLabel,
         noAccountMessage: messageOverrides.noAccount,
         doRegisterLabel: messageOverrides.doRegister,
       })
     }
-  }, [editorStyleParams, frameLoadVersion, iframeRef, isDarkMode, isPresetTheme, messageOverrides.doRegister, messageOverrides.noAccount, quickSettings.dataProtectionUrl, quickSettings.imprintUrl, quickSettings.infoMessage, quickSettings.showClientName, quickSettings.showRealmName, resolvedTheme?.darkModeClasses, themeDocument.stylesCss, themeStylesPath])
+  }, [editorStyleParams, frameLoadVersion, iframeRef, isDarkMode, isPresetTheme, localizedContent.dataProtectionLabel, localizedContent.imprintLabel, localizedContent.infoMessage, messageOverrides.doRegister, messageOverrides.noAccount, quickSettings.dataProtectionUrl, quickSettings.imprintUrl, quickSettings.showClientName, quickSettings.showRealmName, resolvedTheme?.darkModeClasses, themeDocument.stylesCss, themeStylesPath])
+
+  useEffect(() => {
+    const doc = iframeRef.current?.contentDocument
+    if (!doc)
+      return
+
+    void applyPreviewMessageOverrides(
+      doc,
+      activeLocaleTag,
+      themeDocument.quickStartContentByLocale[activeLocaleTag] ?? {},
+    )
+  }, [activeLocaleTag, frameLoadVersion, iframeRef, themeDocument.quickStartContentByLocale])
 
   useEffect(() => {
     const doc = iframeRef.current?.contentDocument
@@ -244,6 +313,10 @@ export function PreviewShell({ onHorizontalSwipe }: PreviewShellProps = {}) {
           window.open(href, '_blank', 'noopener,noreferrer')
         event.preventDefault()
       }
+      // In an editor, selecting a label must not dispatch the browser's
+      // follow-up click to its associated input and replace the selection.
+      if (target?.closest('label'))
+        event.preventDefault()
       const hit = target?.closest('body *') as Element | null
       selectNode(hit ? createElementSelector(hit) : null)
     }
@@ -328,7 +401,7 @@ export function PreviewShell({ onHorizontalSwipe }: PreviewShellProps = {}) {
             minHeight: 0,
             border: 0,
             background: 'transparent',
-            visibility: previewReady ? 'visible' : 'hidden',
+            visibility: isCurrentDocumentReady ? 'visible' : 'hidden',
           }}
           sandbox="allow-forms allow-same-origin"
         />

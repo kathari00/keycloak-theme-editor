@@ -17,8 +17,16 @@ export async function openApp(page: Page) {
 }
 
 export async function openTopbarMenuItem(page: Page, name: string) {
+  const directlyVisibleButton = page.getByRole('button', { name, exact: true })
+  if (await directlyVisibleButton.count() > 0 && await directlyVisibleButton.first().isVisible()) {
+    await directlyVisibleButton.first().click()
+    return
+  }
+
   await page.getByRole('button', { name: 'Open editor menu' }).click()
-  await page.getByRole('menuitem', { name }).click()
+  const options = page.getByRole('dialog', { name: 'Editor options' })
+  await expect(options).toBeVisible()
+  await options.getByRole('button', { name, exact: true }).click()
 }
 
 export async function openExportDialog(page: Page) {

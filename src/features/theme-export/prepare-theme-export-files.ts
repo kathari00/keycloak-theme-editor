@@ -1,12 +1,26 @@
+import type { LocalizedContentOverrides } from '../editor/stores/types'
 import type { ThemeDocument } from '../theme-document'
 import type { DirectoryWriteParams, EditorCssContext, ThemeEditorMetadata } from './types'
 import { isQuickStartCssFile } from '../editor/lib/css-files'
 import { sanitizeThemeCssSourceForEditor } from '../editor/lib/css-source-sanitizer'
-import { THEME_MESSAGES_EN_PATH, THEME_PROPERTIES_PATH, themeLoginPath } from '../keycloak-theme/paths'
+import {
+  DEFAULT_DATA_PROTECTION_LABEL,
+  DEFAULT_IMPRINT_LABEL,
+} from '../editor/stores/preset-store'
+import {
+  THEME_MESSAGES_EN_PATH,
+  THEME_PROPERTIES_PATH,
+  themeLoginPath,
+  themeMessagesLocalePath,
+} from '../keycloak-theme/paths'
 import { getThemeCssStructuredCached } from '../presets/queries'
 import { getThemeQuickStartCssPath } from '../presets/theme-paths'
 import { normalizeExternalLegalLinkUrl } from '../preview/lib/legal-link-url'
-import { themeDocumentToExportQuickSettingsByMode } from '../theme-document'
+import {
+  themeDocumentToExportLocaleMessages,
+  themeDocumentToExportLocales,
+  themeDocumentToExportQuickSettingsByMode,
+} from '../theme-document'
 import {
   assembleExportPayload,
   buildModeAwareQuickStartCssParts,
@@ -62,49 +76,42 @@ function escapeJavaPropertiesValue(value: string): string {
     .replace(/\n/g, '\\n')
 }
 
-function withInfoMessage(messagesContent: string, infoMessage: string): string {
-  const normalized = infoMessage.trim()
-  if (!normalized) {
-    return messagesContent
+/** Upsert a `key=value` line, replacing an existing entry in place. */
+export function upsertPropertiesLine(content: string, key: string, value: string): string {
+  const escaped = escapeJavaPropertiesValue(value.trim())
+  const propertyLine = `${key}=${escaped}`
+  const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  // Match a single logical line: whitespace before the key must not span newlines.
+  const propertyPattern = new RegExp(`^[^\\S\\r\\n]*${escapedKey}[^\\S\\r\\n]*=.*$`, 'm')
+
+  if (propertyPattern.test(content)) {
+    return content.replace(propertyPattern, propertyLine)
   }
 
-  const escaped = escapeJavaPropertiesValue(normalized)
-  const infoLine = `infoMessage=${escaped}`
-  if (/^\s*infoMessage\s*=.*$/m.test(messagesContent)) {
-    return messagesContent.replace(/^\s*infoMessage\s*=.*$/m, infoLine)
-  }
-
-  const suffix = messagesContent.endsWith('\n') ? '' : '\n'
-  return `${messagesContent}${suffix}${infoLine}\n`
-}
-
-function withMessageProperty(messagesContent: string, key: 'imprintUrl' | 'dataProtectionUrl', value: string): string {
-  return withMessageLine(messagesContent, key, value)
-}
-
-function withLegalLinkMessages(messagesContent: string, imprintUrl: string, dataProtectionUrl: string): string {
-  const withImprint = withMessageProperty(messagesContent, 'imprintUrl', imprintUrl)
-  return withMessageProperty(withImprint, 'dataProtectionUrl', dataProtectionUrl)
-}
-
-function withLegalLinkLabels(messagesContent: string): string {
-  let result = messagesContent
-  result = withMessageLine(result, 'imprintLabel', 'Imprint')
-  result = withMessageLine(result, 'dataProtectionLabel', 'Data Protection')
-  return result
+  const suffix = !content || content.endsWith('\n') ? '' : '\n'
+  return `${content}${suffix}${propertyLine}\n`
 }
 
 function withMessageLine(messagesContent: string, key: string, value: string): string {
-  const escaped = escapeJavaPropertiesValue(value.trim())
-  const propertyLine = `${key}=${escaped}`
-  const propertyPattern = new RegExp(`^\\s*${key}\\s*=.*$`, 'm')
+  return upsertPropertiesLine(messagesContent, key, value)
+}
 
-  if (propertyPattern.test(messagesContent)) {
-    return messagesContent.replace(propertyPattern, propertyLine)
-  }
+/** Writes the key only when the value is non-blank, so blank stays "not translated". */
+function withOptionalMessageLine(messagesContent: string, key: string, value: string | undefined): string {
+  const normalized = (value ?? '').trim()
+  return normalized ? withMessageLine(messagesContent, key, normalized) : messagesContent
+}
 
-  const suffix = messagesContent.endsWith('\n') ? '' : '\n'
-  return `${messagesContent}${suffix}${propertyLine}\n`
+function withLegalLinkMessages(messagesContent: string, imprintUrl: string, dataProtectionUrl: string): string {
+  const withImprint = withMessageLine(messagesContent, 'imprintUrl', imprintUrl)
+  return withMessageLine(withImprint, 'dataProtectionUrl', dataProtectionUrl)
+}
+
+function withLegalLinkLabels(messagesContent: string, imprintLabel: string, dataProtectionLabel: string): string {
+  let result = messagesContent
+  result = withMessageLine(result, 'imprintLabel', imprintLabel.trim() || DEFAULT_IMPRINT_LABEL)
+  result = withMessageLine(result, 'dataProtectionLabel', dataProtectionLabel.trim() || DEFAULT_DATA_PROTECTION_LABEL)
+  return result
 }
 
 export function buildOverriddenMessages(params: {
@@ -112,10 +119,43 @@ export function buildOverriddenMessages(params: {
   infoMessage: string
   imprintUrl: string
   dataProtectionUrl: string
+  imprintLabel?: string
+  dataProtectionLabel?: string
 }): string {
-  const withInfo = withInfoMessage(params.baseMessagesContent, params.infoMessage)
+  const withInfo = withOptionalMessageLine(params.baseMessagesContent, 'infoMessage', params.infoMessage)
   const withLegalLinks = withLegalLinkMessages(withInfo, params.imprintUrl, params.dataProtectionUrl)
-  return withLegalLinkLabels(withLegalLinks)
+  return withLegalLinkLabels(
+    withLegalLinks,
+    params.imprintLabel ?? DEFAULT_IMPRINT_LABEL,
+    params.dataProtectionLabel ?? DEFAULT_DATA_PROTECTION_LABEL,
+  )
+}
+
+/**
+ * A translation bundle carrying only the keys this theme actually translates.
+ * Everything the user left blank is omitted so Keycloak falls back to English.
+ */
+export function buildLocaleOverrideMessages(params: {
+  baseMessagesContent: string
+  overrides: LocalizedContentOverrides
+}): string {
+  let result = params.baseMessagesContent
+  for (const [messageKey, value] of Object.entries(params.overrides)) {
+    result = withOptionalMessageLine(result, messageKey, value)
+  }
+  return result
+}
+
+/**
+ * Declares the theme's supported languages. Keycloak resolves `locales=` through
+ * the parent chain, so writing it narrows the theme to exactly this list - only
+ * do so once the user has opted into managing languages.
+ */
+export function withDeclaredLocales(properties: string, locales: string[]): string {
+  if (locales.length <= 1) {
+    return properties
+  }
+  return upsertPropertiesLine(properties, 'locales', locales.join(','))
 }
 
 async function extractEditorCssContext(themeDocument: ThemeDocument, quickStartSharedCss: string): Promise<EditorCssContext> {
@@ -132,16 +172,59 @@ async function extractEditorCssContext(themeDocument: ThemeDocument, quickStartS
   }
 }
 
+/**
+ * One bundle per enabled locale, layered onto whatever the source theme already
+ * ships for that locale. Missing source bundles are expected: standard Keycloak
+ * text is inherited from the parent theme, so an override-only file is enough.
+ */
+async function buildLocaleMessageFiles(params: {
+  themeId: string
+  isPresetTheme: boolean
+  localeOverrides: Record<string, LocalizedContentOverrides>
+}): Promise<Record<string, string>> {
+  const entries = Object.entries(params.localeOverrides)
+  if (entries.length === 0) {
+    return {}
+  }
+
+  const files = await Promise.all(entries.map(async ([tag, overrides]) => {
+    const baseMessagesContent = params.isPresetTheme
+      ? await fetchOptionalThemeText(themeLoginPath(params.themeId, themeMessagesLocalePath(tag)))
+      : ''
+    return [tag, buildLocaleOverrideMessages({ baseMessagesContent, overrides })] as const
+  }))
+
+  return Object.fromEntries(files)
+}
+
+async function fetchOptionalThemeText(path: string): Promise<string> {
+  try {
+    const response = await fetch(path)
+    return response.ok ? await response.text() : ''
+  }
+  catch {
+    return ''
+  }
+}
+
 export async function prepareThemeExportFiles(
   params: PrepareThemeExportFilesParams,
 ): Promise<DirectoryWriteParams> {
   const { themeDocument, themeName } = params
   const resolvedThemeId = themeDocument.themeId
   const { isPresetTheme } = themeDocument
-  const { infoMessage, imprintUrl, dataProtectionUrl } = themeDocument.quickSettings
+  const {
+    infoMessage,
+    imprintUrl,
+    dataProtectionUrl,
+    imprintLabel,
+    dataProtectionLabel,
+  } = themeDocument.quickSettings
   const exportImprintUrl = normalizeExternalLegalLinkUrl(imprintUrl)
   const exportDataProtectionUrl = normalizeExternalLegalLinkUrl(dataProtectionUrl)
   const themeQuickStartCssPath = getThemeQuickStartCssPath(resolvedThemeId)
+  const exportLocales = themeDocumentToExportLocales(themeDocument)
+  const localeOverrides = themeDocumentToExportLocaleMessages(themeDocument)
 
   const [templateFtl, footerFtl, themeQuickStartCssResponse, propertiesResponse, messagesResponse] = await Promise.all([
     isPresetTheme ? fetchTemplateFtl(resolvedThemeId) : Promise.resolve(''),
@@ -154,7 +237,7 @@ export async function prepareThemeExportFiles(
     throw new Error(`Failed to load theme.properties for "${resolvedThemeId}" (${propertiesResponse.status})`)
   }
 
-  const properties = await propertiesResponse.text()
+  const properties = withDeclaredLocales(await propertiesResponse.text(), exportLocales)
   const baseMessagesContent = messagesResponse?.ok
     ? await messagesResponse.text()
     : ''
@@ -164,6 +247,14 @@ export async function prepareThemeExportFiles(
     infoMessage,
     imprintUrl: exportImprintUrl,
     dataProtectionUrl: exportDataProtectionUrl,
+    imprintLabel,
+    dataProtectionLabel,
+  })
+
+  const localeMessages = await buildLocaleMessageFiles({
+    themeId: resolvedThemeId,
+    isPresetTheme,
+    localeOverrides,
   })
 
   const editorMetadata: ThemeEditorMetadata = {
@@ -189,6 +280,7 @@ export async function prepareThemeExportFiles(
       stylesCss: sanitizeThemeCssSourceForEditor(localStylesCss),
       stylesCssFiles: Object.keys(localFiles).length > 1 ? localFiles : undefined,
       messagesContent,
+      localeMessages,
       payload: assembleExportPayload({
         sourceCss: sanitizeThemeCssSourceForEditor(localStylesCss),
         appliedAssets: {},
@@ -237,6 +329,7 @@ export async function prepareThemeExportFiles(
     stylesCss: combinedStylesCss,
     stylesCssFiles: exportStylesCssFiles,
     messagesContent,
+    localeMessages,
     payload,
     editorMetadata,
   }

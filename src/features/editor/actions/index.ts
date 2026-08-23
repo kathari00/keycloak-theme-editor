@@ -2,6 +2,7 @@ import { assetActions } from './asset-actions'
 import { coreActions } from './core-actions'
 import { historyActions } from './history-actions'
 import { importActions } from './import-actions'
+import { localizationActions } from './localization-actions'
 import { quickStartExtrasActions } from './quick-start-extras-actions'
 import { resetActions } from './reset-actions'
 import { themeActions } from './theme-actions'
@@ -14,6 +15,7 @@ export const presetActions = {
   ...quickStartExtrasActions,
   ...themeSelectionActions,
   ...importActions,
+  ...localizationActions,
 }
 
 /**

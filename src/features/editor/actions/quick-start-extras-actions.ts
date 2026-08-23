@@ -36,6 +36,8 @@ function pickQuickStartExtrasContentUpdate(update: QuickStartExtrasUpdate): Part
     infoMessage: update.infoMessage,
     imprintUrl: update.imprintUrl,
     dataProtectionUrl: update.dataProtectionUrl,
+    imprintLabel: update.imprintLabel,
+    dataProtectionLabel: update.dataProtectionLabel,
   })
 }
 

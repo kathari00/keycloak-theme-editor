@@ -4,6 +4,14 @@ import { existsSync } from 'node:fs'
 import { copyFile, mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
+import { unzipSync } from 'fflate'
+import {
+  CURATED_LOCALES,
+  DEFAULT_LOCALE_TAG,
+  isCuratedLocale,
+  localeTagForPropertiesSuffix,
+} from '../src/features/i18n/locale-catalog'
+import { isLoginMessagesEntry, selectLocaleBundles } from './upstream-locale-bundles'
 
 interface SyncConfig {
   repo: string
@@ -142,7 +150,12 @@ async function countFiles(dir: string): Promise<number> {
   return count
 }
 
-async function syncTheme(theme: SyncConfig['themes'][number], config: SyncConfig, rootDir: string) {
+async function syncTheme(
+  theme: SyncConfig['themes'][number],
+  config: SyncConfig,
+  rootDir: string,
+  localeBundles: Map<string, Map<string, string>>,
+) {
   const targetThemeRoot = path.join(rootDir, config.targetDir, theme.id)
   const targetLoginRoot = path.join(targetThemeRoot, 'login')
   const targetMessagesRoot = path.join(targetThemeRoot, 'messages')
@@ -189,15 +202,125 @@ async function syncTheme(theme: SyncConfig['themes'][number], config: SyncConfig
   await writeFile(path.join(targetMessagesRoot, 'messages_en.properties'), messagesText, 'utf8')
   fileCount++
 
+  const syncedLocales = await writeLocaleBundles(localeBundles.get(theme.upstream), targetMessagesRoot)
+  fileCount += syncedLocales.length
+
   const parsed = parseThemeProperties(themePropertiesText)
   await writeFile(
     path.join(targetThemeRoot, 'theme-properties.json'),
-    `${JSON.stringify(parsed, null, 2)}\n`,
+    `${JSON.stringify({ ...parsed, syncedLocales }, null, 2)}\n`,
     'utf8',
   )
   fileCount++
 
   return fileCount
+}
+
+/** Downloads a Keycloak artifact once and reuses it on later runs. */
+async function ensureCachedJar(config: SyncConfig, rootDir: string, artifact: string): Promise<string> {
+  const cacheDir = path.join(rootDir, 'node_modules', '.cache', 'sync-keycloak')
+  await mkdir(cacheDir, { recursive: true })
+
+  const jarFileName = `${artifact}-${config.tag}.jar`
+  const cachedJarPath = path.join(cacheDir, jarFileName)
+
+  if (existsSync(cachedJarPath)) {
+    writeInfo(`Using cached ${artifact} (${jarFileName})`)
+    return cachedJarPath
+  }
+
+  const jarUrl = `https://repo1.maven.org/maven2/org/keycloak/${artifact}/${config.tag}/${jarFileName}`
+  writeInfo(`Downloading ${artifact}...`)
+  const jarBuffer = await fetchBuffer(jarUrl)
+  await writeFile(cachedJarPath, jarBuffer)
+  writeInfo(`  ${(jarBuffer.length / 1024 / 1024).toFixed(1)} MB`)
+  return cachedJarPath
+}
+
+/**
+ * Translations ship in the released `keycloak-themes` jar, not in the repo's
+ * `resources/` tree - upstream keeps the community bundles in a separate
+ * source root that only gets merged at package time. Reading the jar therefore
+ * matches what a real Keycloak server resolves, and reuses a download the
+ * common-resources step already needs.
+ *
+ * Returns `theme/<upstream>/login/messages/messages_<suffix>.properties`
+ * contents, keyed by upstream theme id and then by bundle suffix.
+ */
+async function loadUpstreamLocaleBundles(
+  config: SyncConfig,
+  rootDir: string,
+): Promise<Map<string, Map<string, string>>> {
+  const jarPath = await ensureCachedJar(config, rootDir, 'keycloak-themes')
+  const jarBytes = new Uint8Array(await readFile(jarPath))
+  const entries = unzipSync(jarBytes, { filter: file => isLoginMessagesEntry(file.name) })
+
+  return selectLocaleBundles(entries, config.themes.map(theme => theme.upstream))
+}
+
+/**
+ * Writes the bundles this theme itself ships. Bundles it does not override are
+ * deliberately left out: the renderer merges the parent chain, so duplicating
+ * the base translations into every theme would only create drift.
+ */
+async function writeLocaleBundles(
+  bundles: Map<string, string> | undefined,
+  targetMessagesRoot: string,
+): Promise<string[]> {
+  if (!bundles) {
+    return []
+  }
+
+  const written: string[] = []
+  for (const [suffix, content] of bundles) {
+    const tag = localeTagForPropertiesSuffix(suffix)
+    if (!isCuratedLocale(tag)) {
+      writeInfo(`  note: skipping messages_${suffix}.properties (locale '${tag}' is not in the editor's catalog)`)
+      continue
+    }
+    await writeFile(path.join(targetMessagesRoot, `messages_${suffix}.properties`), content, 'utf8')
+    written.push(tag)
+  }
+  return written.sort()
+}
+
+/**
+ * Commits the base login bundles used by the browser to identify which
+ * Keycloak message key produced a selected preview element. This is separate
+ * from theme overrides and may therefore include the complete English bundle.
+ */
+async function syncPreviewMessageCatalog(config: SyncConfig, rootDir: string): Promise<void> {
+  const sourceDir = path.join(rootDir, config.targetDir, 'base', 'messages')
+  const targetDir = path.join(rootDir, 'public', 'keycloak-dev-resources', 'i18n')
+  await rm(targetDir, { recursive: true, force: true })
+  await mkdir(targetDir, { recursive: true })
+
+  for (const locale of CURATED_LOCALES) {
+    const filename = `messages_${locale.messagesSuffix}.properties`
+    const sourcePath = path.join(sourceDir, filename)
+    if (!existsSync(sourcePath)) {
+      writeError(`Warning: cannot publish preview message catalog entry ${filename}; source is missing.`)
+      continue
+    }
+    await copyFile(sourcePath, path.join(targetDir, filename))
+  }
+}
+
+function warnAboutCatalogDrift(baseBundles: Map<string, string> | undefined): void {
+  const shipped = new Set(
+    [...(baseBundles?.keys() ?? [])].map(suffix => localeTagForPropertiesSuffix(suffix)),
+  )
+  const missing = CURATED_LOCALES
+    .filter(locale => locale.tag !== DEFAULT_LOCALE_TAG && !shipped.has(locale.tag))
+    .map(locale => locale.tag)
+
+  if (missing.length > 0) {
+    writeError(
+      `Warning: the editor's locale catalog lists ${missing.join(', ')}, but this Keycloak `
+      + `release ships no base translation for them. Update CURATED_LOCALES in `
+      + `src/features/i18n/locale-catalog.ts.`,
+    )
+  }
 }
 
 async function syncCommonResources(config: SyncConfig, rootDir: string) {
@@ -217,19 +340,7 @@ async function syncCommonResources(config: SyncConfig, rootDir: string) {
   ]
 
   for (const jar of jars) {
-    const jarFileName = `${jar.artifact}-${config.tag}.jar`
-    const cachedJarPath = path.join(cacheDir, jarFileName)
-
-    if (existsSync(cachedJarPath)) {
-      writeInfo(`Using cached ${jar.name} (${jarFileName})`)
-    }
-    else {
-      const jarUrl = `https://repo1.maven.org/maven2/org/keycloak/${jar.artifact}/${config.tag}/${jar.artifact}-${config.tag}.jar`
-      writeInfo(`Downloading ${jar.name}...`)
-      const jarBuffer = await fetchBuffer(jarUrl)
-      await writeFile(cachedJarPath, jarBuffer)
-      writeInfo(`  ${(jarBuffer.length / 1024 / 1024).toFixed(1)} MB`)
-    }
+    const cachedJarPath = await ensureCachedJar(config, rootDir, jar.artifact)
 
     const extractResult = spawnSync('jar', ['xf', cachedJarPath, 'theme/keycloak/common/resources'], {
       cwd: tmpExtractDir,
@@ -256,11 +367,15 @@ async function main() {
   await rm(path.join(rootDir, config.targetDir), { recursive: true, force: true })
   await mkdir(path.join(rootDir, config.targetDir), { recursive: true })
 
+  const localeBundles = await loadUpstreamLocaleBundles(config, rootDir)
+  warnAboutCatalogDrift(localeBundles.get('base'))
+
   let totalFiles = 0
   for (const theme of config.themes) {
-    const count = await syncTheme(theme, config, rootDir)
+    const count = await syncTheme(theme, config, rootDir, localeBundles)
     totalFiles += count
   }
+  await syncPreviewMessageCatalog(config, rootDir)
   writeInfo(`Synced ${totalFiles} files from ${config.repo}@${config.tag} to ${config.targetDir}`)
 
   const commonCount = await syncCommonResources(config, rootDir)

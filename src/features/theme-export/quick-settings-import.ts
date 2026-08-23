@@ -1,8 +1,13 @@
-import type { QuickSettings } from '../editor/stores/types'
+import type {
+  LocalizedContentOverrides,
+  QuickSettings,
+  QuickStartContentSettings,
+} from '../editor/stores/types'
 import type { ImportedQuickSettingsByMode } from './types'
 import { collectDeclarationsBySelector } from '../../lib/css-ast'
 import { CUSTOM_PRESET_ID } from '../editor/lib/quick-start-css'
-import { readMessageProperty } from '../preview/lib/message-properties'
+import { DEFAULT_DATA_PROTECTION_LABEL, DEFAULT_IMPRINT_LABEL } from '../editor/stores/preset-store'
+import { parseMessageProperties, readMessageProperty } from '../preview/lib/message-properties'
 
 type QuickSettingsMode = 'light' | 'dark'
 type QuickSettingsVars = Partial<Record<string, string>>
@@ -128,13 +133,12 @@ function mergeVarMaps(...maps: QuickSettingsVars[]): QuickSettingsVars {
   return merged
 }
 
-function buildSharedQuickStartContent(cssText: string, messagesText: string): Pick<
-  QuickSettings,
-  'showClientName' | 'showRealmName' | 'infoMessage' | 'imprintUrl' | 'dataProtectionUrl'
-> {
+function buildSharedQuickStartContent(cssText: string, messagesText: string): QuickStartContentSettings {
   const infoMessage = readMessageProperty(messagesText, 'infoMessage') || ''
   const imprintUrl = readMessageProperty(messagesText, 'imprintUrl') || ''
   const dataProtectionUrl = readMessageProperty(messagesText, 'dataProtectionUrl') || ''
+  const imprintLabel = readMessageProperty(messagesText, 'imprintLabel') || ''
+  const dataProtectionLabel = readMessageProperty(messagesText, 'dataProtectionLabel') || ''
 
   return {
     showClientName: !HIDE_CLIENT_RULE_PATTERN.test(cssText),
@@ -142,13 +146,15 @@ function buildSharedQuickStartContent(cssText: string, messagesText: string): Pi
     infoMessage,
     imprintUrl,
     dataProtectionUrl,
+    imprintLabel: imprintLabel || DEFAULT_IMPRINT_LABEL,
+    dataProtectionLabel: dataProtectionLabel || DEFAULT_DATA_PROTECTION_LABEL,
   }
 }
 
 function buildModeQuickSettings(params: {
   mode: QuickSettingsMode
   vars: QuickSettingsVars
-  sharedContent: Pick<QuickSettings, 'showClientName' | 'showRealmName' | 'infoMessage' | 'imprintUrl' | 'dataProtectionUrl'>
+  sharedContent: QuickStartContentSettings
 }): Partial<QuickSettings> {
   const { mode, vars, sharedContent } = params
   const bgColorValue = getModeColorValue(vars, 'bg-color', mode)
@@ -168,6 +174,22 @@ function buildModeQuickSettings(params: {
     colorPresetHeadingFontFamily: normalizeFontValue(vars['--quickstart-heading-font-family']),
     ...sharedContent,
   }
+}
+
+/**
+ * Reads a translation bundle back into editable overrides. Keys the bundle does
+ * not carry stay undefined, which round-trips as "not translated".
+ */
+export function parseLocalizedContentOverrides(messagesText: string): LocalizedContentOverrides {
+  const overrides: LocalizedContentOverrides = {}
+  for (const [key, rawValue] of Object.entries(parseMessageProperties(messagesText))) {
+    const value = rawValue.trim()
+    if (value) {
+      overrides[key] = value
+    }
+  }
+
+  return overrides
 }
 
 export function parseQuickSettingsFromImportedTheme(params: {

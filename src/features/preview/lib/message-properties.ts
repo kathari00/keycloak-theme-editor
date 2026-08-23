@@ -19,3 +19,23 @@ export function readMessageProperty(text: string, key: string): string | undefin
   }
   return decodeJavaPropertiesValue(match[1].trim())
 }
+
+export function parseMessageProperties(text: string): Record<string, string> {
+  const result: Record<string, string> = {}
+  for (const rawLine of text.split(/\r?\n/)) {
+    const line = rawLine.trim()
+    if (!line || line.startsWith('#') || line.startsWith('!')) {
+      continue
+    }
+    const separatorIndex = line.search(/[:=]/)
+    if (separatorIndex <= 0) {
+      continue
+    }
+    const key = line.slice(0, separatorIndex).trim()
+    const value = decodeJavaPropertiesValue(line.slice(separatorIndex + 1).trim())
+    if (key) {
+      result[key] = value
+    }
+  }
+  return result
+}

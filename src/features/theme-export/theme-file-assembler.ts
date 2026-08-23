@@ -11,6 +11,7 @@ import {
   THEME_RESOURCES_PATH,
   THEME_STYLES_CSS_PATH,
   THEME_TEMPLATE_FTL_PATH,
+  themeMessagesLocalePath,
 } from '../keycloak-theme/paths'
 
 type AssetBucketKey = 'uploadedFonts' | 'uploadedBackgrounds' | 'uploadedLogos' | 'uploadedImages'
@@ -113,6 +114,10 @@ export async function assembleThemeFiles(
 
   addText(files, themeArchiveLoginPath(loginRoot, THEME_MESSAGES_DEFAULT_PATH), messagesContent)
   addText(files, themeArchiveLoginPath(loginRoot, THEME_MESSAGES_EN_PATH), messagesContent)
+
+  for (const [localeTag, localeContent] of Object.entries(params.localeMessages ?? {})) {
+    addText(files, themeArchiveLoginPath(loginRoot, themeMessagesLocalePath(localeTag)), localeContent)
+  }
 
   for (const [key, directory] of ASSET_BUCKETS) {
     for (const asset of dedupeAssetsByName(payload[key])) {

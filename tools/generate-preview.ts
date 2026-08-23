@@ -4,6 +4,14 @@ import os from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
 import { JSDOM } from 'jsdom'
+import {
+  CURATED_LOCALES,
+  DEFAULT_LOCALE_TAG,
+  isCuratedLocale,
+  isRtlLocale,
+  localeNativeName,
+  propertiesSuffixForLocale,
+} from '../src/features/i18n/locale-catalog'
 import kcBaseMocks from './kc-base-mocks.ts'
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -33,6 +41,51 @@ const SCRIPT_TAG_PATTERN = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi
 
 export interface ContextMocks {
   pages: Record<string, Record<string, unknown>>
+  locales: LocaleRenderSpec[]
+}
+
+/**
+ * One preview language for the Java renderer: `tag` names its output file,
+ * `suffix` picks the message bundle, and `context` is merged into every page's
+ * FreeMarker context.
+ */
+export interface LocaleRenderSpec {
+  tag: string
+  suffix: string
+  context: Record<string, unknown>
+}
+
+/**
+ * Keycloak hides the language switcher unless a realm offers more than one
+ * language, so the mock always advertises a second one. Otherwise an
+ * English-only render would give theme authors no switcher to style.
+ */
+const FALLBACK_SUPPORTED_LOCALE_TAG = 'de'
+
+export function buildLocaleRenderSpecs(localeTags: string[]): LocaleRenderSpec[] {
+  const tags = localeTags.filter(isCuratedLocale)
+  const uniqueTags = [...new Set([DEFAULT_LOCALE_TAG, ...tags])]
+  const advertisedTags = uniqueTags.length > 1
+    ? uniqueTags
+    : [...uniqueTags, FALLBACK_SUPPORTED_LOCALE_TAG]
+  const supported = advertisedTags.map(tag => ({
+    languageTag: tag,
+    label: localeNativeName(tag),
+    url: '#',
+  }))
+
+  return uniqueTags.map(tag => ({
+    tag,
+    suffix: propertiesSuffixForLocale(tag),
+    context: {
+      lang: tag,
+      locale: {
+        supported,
+        currentLanguageTag: tag,
+        rtl: isRtlLocale(tag),
+      },
+    },
+  }))
 }
 
 export interface UserMocks {
@@ -51,6 +104,12 @@ export interface GeneratePreviewOptions {
   userMocks?: UserMocks
   /** Path to user's Keycloak theme directory (contains login/ with custom .ftl files). */
   userThemeDir?: string
+  /**
+   * Languages to pre-render, as curated locale tags. English is always included
+   * and written to `pages.json`; each additional language gets its own
+   * `pages.<tag>.json` that the editor loads on demand.
+   */
+  locales?: string[]
   /** Suppress stdout logging. */
   quiet?: boolean
 }
@@ -95,7 +154,7 @@ const builtInStates: Record<string, Record<string, Record<string, unknown>>> = {
   },
 }
 
-export function resolveContextMocks(userMocks?: UserMocks): ContextMocks {
+export function resolveContextMocks(userMocks?: UserMocks, localeTags: string[] = []): ContextMocks {
   const baseMocks = cloneJson(kcBaseMocks) as Record<string, Record<string, unknown>>
   const pages: Record<string, Record<string, unknown>> = {}
   const loginBase = baseMocks['login.ftl']
@@ -128,7 +187,7 @@ export function resolveContextMocks(userMocks?: UserMocks): ContextMocks {
     }
   }
 
-  return { pages }
+  return { pages, locales: buildLocaleRenderSpecs(localeTags) }
 }
 
 // ---------------------------------------------------------------------------
@@ -294,7 +353,9 @@ function injectQuickStartPlaceholders(html: string): string {
   dataProtectionLink.rel = 'noopener noreferrer'
   dataProtectionLink.style.display = 'none'
 
-  return dom.serialize()
+  const serialized = dom.serialize()
+  dom.window.close()
+  return serialized
 }
 
 function normalizePasskeysConditionalPreviewHtml(params: {
@@ -315,7 +376,9 @@ function normalizePasskeysConditionalPreviewHtml(params: {
     passkeyButton?.removeAttribute('style')
   }
 
-  return dom.serialize()
+  const serialized = dom.serialize()
+  dom.window.close()
+  return serialized
 }
 
 function readJson(filePath: string): any {
@@ -364,12 +427,13 @@ function resolveExistingPath(packageRoot: string, candidates: string[]): string 
 
 function writeTempContextMocksFile(
   userMocks?: UserMocks,
-): { tempDir: string, filePath: string } {
+  localeTags: string[] = [],
+): { tempDir: string, filePath: string, locales: LocaleRenderSpec[] } {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'preview-context-mocks-'))
   const filePath = path.join(tempDir, 'kc-context-mocks.json')
-  const mocks = resolveContextMocks(userMocks)
+  const mocks = resolveContextMocks(userMocks, localeTags)
   fs.writeFileSync(filePath, `${JSON.stringify(mocks, null, 2)}\n`, 'utf8')
-  return { tempDir, filePath }
+  return { tempDir, filePath, locales: mocks.locales }
 }
 
 function runJar(params: {
@@ -399,8 +463,13 @@ function runJar(params: {
   })
 }
 
-function runMaven(pomPath: string, contextMocksPath: string) {
-  const execArgs = `--context-mocks=${toForwardSlashPath(contextMocksPath)}`
+function runMaven(pomPath: string, contextMocksPath: string, outputDir: string) {
+  // Must mirror runJar's --output: the caller reads the per-locale files back
+  // from this directory.
+  const execArgs = [
+    `--context-mocks=${toForwardSlashPath(contextMocksPath)}`,
+    `--output=${toForwardSlashPath(outputDir)}`,
+  ].join(' ')
 
   const mavenOpts = [
     process.env.MAVEN_OPTS || '',
@@ -507,7 +576,7 @@ function normalizeStatesForPage(params: {
   return normalizedStates
 }
 
-function normalizeVariants(raw: any): Record<string, Record<string, Record<string, string>>> {
+export function normalizeVariants(raw: any): Record<string, Record<string, Record<string, string>>> {
   const variants: Record<string, Record<string, Record<string, string>>> = {}
   for (const [variantId, pages] of Object.entries(raw.variants as Record<string, Record<string, unknown>>)) {
     const variantPages: Record<string, Record<string, string>> = {}
@@ -521,6 +590,31 @@ function normalizeVariants(raw: any): Record<string, Record<string, Record<strin
     variants[variantId] = variantPages
   }
   return variants
+}
+
+export function normalizePreviewArtifact(filePath: string): boolean {
+  const raw = readJson(filePath)
+  if (!raw?.variants || Object.keys(raw.variants).length === 0) {
+    return false
+  }
+  const normalized = {
+    generatedAt: raw.generatedAt,
+    keycloakTag: raw.keycloakTag,
+    variants: normalizeVariants(raw),
+  }
+  fs.writeFileSync(filePath, `${JSON.stringify(normalized, null, 2)}\n`, 'utf8')
+  return true
+}
+
+function normalizePreviewArtifactInWorker(packageRoot: string, filePath: string): boolean {
+  const tsxCliPath = path.join(packageRoot, 'node_modules', 'tsx', 'dist', 'cli.mjs')
+  const workerPath = path.join(packageRoot, 'tools', 'normalize-preview.ts')
+  const result = spawnSync(process.execPath, [tsxCliPath, workerPath, filePath], {
+    cwd: packageRoot,
+    stdio: 'inherit',
+    shell: false,
+  })
+  return result.status === 0
 }
 
 /**
@@ -541,9 +635,9 @@ export async function generatePreview(options: GeneratePreviewOptions): Promise<
 
   log(`Generating preview artifacts (Java ${javaVersion})...\n`)
 
-  let tempArtifacts: { tempDir: string, filePath: string }
+  let tempArtifacts: { tempDir: string, filePath: string, locales: LocaleRenderSpec[] }
   try {
-    tempArtifacts = writeTempContextMocksFile(options.userMocks)
+    tempArtifacts = writeTempContextMocksFile(options.userMocks, options.locales ?? [])
   }
   catch (error) {
     const message = error instanceof Error ? error.message : String(error)
@@ -569,7 +663,7 @@ export async function generatePreview(options: GeneratePreviewOptions): Promise<
   }
   else {
     const pomPath = path.join(packageRoot, 'tools', 'preview-renderer', 'pom.xml')
-    result = runMaven(pomPath, filePath)
+    result = runMaven(pomPath, filePath, outputDir)
   }
 
   fs.rmSync(tempDir, { recursive: true, force: true })
@@ -578,19 +672,27 @@ export async function generatePreview(options: GeneratePreviewOptions): Promise<
     return { success: false, outputPath, error: `Java renderer exited with code ${result.status}` }
   }
 
-  const raw = readJson(outputPath)
-  if (!raw?.variants || Object.keys(raw.variants).length === 0) {
-    return { success: false, outputPath, error: `Generated artifact is missing variants: ${outputPath}` }
-  }
+  let pagesData: GeneratePreviewResult['pagesData']
+  const useNormalizationWorkers = tempArtifacts.locales.length > 10
+  for (const locale of tempArtifacts.locales) {
+    const localeOutputPath = locale.tag === DEFAULT_LOCALE_TAG
+      ? outputPath
+      : path.join(outputDir, `pages.${locale.tag}.json`)
 
-  const variants = normalizeVariants(raw)
-  const pagesData = {
-    generatedAt: raw.generatedAt,
-    keycloakTag: raw.keycloakTag,
-    variants,
-  }
+    const normalizedSuccessfully = useNormalizationWorkers
+      ? normalizePreviewArtifactInWorker(packageRoot, localeOutputPath)
+      : normalizePreviewArtifact(localeOutputPath)
+    if (!normalizedSuccessfully) {
+      return { success: false, outputPath, error: `Generated artifact is missing variants: ${localeOutputPath}` }
+    }
 
-  fs.writeFileSync(outputPath, `${JSON.stringify(pagesData, null, 2)}\n`, 'utf8')
+    if (locale.tag === DEFAULT_LOCALE_TAG) {
+      pagesData = readJson(localeOutputPath)
+    }
+    else {
+      log(`  ${locale.tag} -> ${path.basename(localeOutputPath)}\n`)
+    }
+  }
 
   log('Preview generation complete.\n')
   return { success: true, outputPath, pagesData }
@@ -600,8 +702,20 @@ export async function generatePreview(options: GeneratePreviewOptions): Promise<
 const isDirectRun = process.argv[1]?.replace(/\\/g, '/').endsWith('tools/generate-preview.ts')
   || process.argv[1]?.replace(/\\/g, '/').endsWith('tools/generate-preview')
 if (isDirectRun) {
+  // e.g. npm run generate:preview -- --locales=de,fr
+  // `--locales=all` regenerates every curated locale, so CI never has to
+  // enumerate them by hand and new catalog entries are picked up automatically.
+  const localesArg = process.argv.find(arg => arg.startsWith('--locales='))
+  const localesValue = localesArg?.slice('--locales='.length).trim()
+  const locales = localesValue === 'all'
+    ? CURATED_LOCALES.map(locale => locale.tag).filter(tag => tag !== DEFAULT_LOCALE_TAG)
+    : localesValue
+      ? localesValue.split(',').map(tag => tag.trim()).filter(Boolean)
+      : []
+
   generatePreview({
     packageRoot: process.cwd(),
+    locales,
   }).then((result) => {
     if (!result.success) {
       process.exitCode = 1

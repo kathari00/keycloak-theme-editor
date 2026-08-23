@@ -45,6 +45,7 @@ export function usePreviewState() {
     selectedNodeId: state.selectedNodeId,
     previewReady: state.previewReady,
     deviceId: state.deviceId,
+    previewLocaleTag: state.previewLocaleTag,
   }))
 }
 
@@ -101,6 +102,15 @@ export function useQuickStartContentState() {
     infoMessage: state.infoMessage,
     imprintUrl: state.imprintUrl,
     dataProtectionUrl: state.dataProtectionUrl,
+    imprintLabel: state.imprintLabel,
+    dataProtectionLabel: state.dataProtectionLabel,
+  }))
+}
+
+export function useLocalizationState() {
+  return usePresetStoreSlice(state => ({
+    enabledLocales: state.enabledLocales,
+    quickStartContentByLocale: state.quickStartContentByLocale,
   }))
 }
 

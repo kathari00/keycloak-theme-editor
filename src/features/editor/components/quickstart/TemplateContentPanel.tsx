@@ -20,13 +20,17 @@ interface TemplateContentPanelProps {
   infoMessage: string
   imprintUrl: string
   dataProtectionUrl: string
+  imprintLabel: string
+  dataProtectionLabel: string
 }
 
 const formGroupStyle = { marginBottom: 0 }
 
-function LocalizationHelp({ ariaLabel, tooltipContent }: { ariaLabel: string, tooltipContent: string }) {
+const TRANSLATION_HINT = 'Translate this in the Languages section below.'
+
+function LocalizationHelp({ ariaLabel }: { ariaLabel: string }) {
   return (
-    <Tooltip content={tooltipContent}>
+    <Tooltip content={TRANSLATION_HINT}>
       <Button
         type="button"
         variant="plain"
@@ -45,6 +49,8 @@ export function TemplateContentPanel({
   infoMessage,
   imprintUrl,
   dataProtectionUrl,
+  imprintLabel,
+  dataProtectionLabel,
 }: TemplateContentPanelProps) {
   const updateShowClientName = (_event: React.FormEvent<HTMLInputElement>, checked: boolean) => {
     editorActions.setQuickStartExtras({ showClientName: checked })
@@ -64,6 +70,14 @@ export function TemplateContentPanel({
 
   const updateDataProtectionUrl = (_event: React.FormEvent<HTMLInputElement>, value: string) => {
     editorActions.setQuickStartExtras({ dataProtectionUrl: value })
+  }
+
+  const updateImprintLabel = (_event: React.FormEvent<HTMLInputElement>, value: string) => {
+    editorActions.setQuickStartExtras({ imprintLabel: value })
+  }
+
+  const updateDataProtectionLabel = (_event: React.FormEvent<HTMLInputElement>, value: string) => {
+    editorActions.setQuickStartExtras({ dataProtectionLabel: value })
   }
 
   const imprintUrlValidated = !imprintUrl || isValidExternalLegalLinkUrl(imprintUrl) ? 'default' : 'error'
@@ -99,7 +113,7 @@ export function TemplateContentPanel({
       </Grid>
       <FormGroup
         label="Show info message"
-        labelHelp={<LocalizationHelp ariaLabel="Info message localization help" tooltipContent="To add translations use i18n key infoMessage" />}
+        labelHelp={<LocalizationHelp ariaLabel="Info message localization help" />}
         fieldId="quick-start-info-message"
         style={formGroupStyle}
       >
@@ -112,7 +126,6 @@ export function TemplateContentPanel({
       </FormGroup>
       <FormGroup
         label="Imprint URL"
-        labelHelp={<LocalizationHelp ariaLabel="Imprint URL localization help" tooltipContent="To add translations use i18n key imprintUrl" />}
         fieldId="quick-start-imprint"
         style={formGroupStyle}
       >
@@ -126,8 +139,20 @@ export function TemplateContentPanel({
         />
       </FormGroup>
       <FormGroup
+        label="Imprint link text"
+        labelHelp={<LocalizationHelp ariaLabel="Imprint link text localization help" />}
+        fieldId="quick-start-imprint-label"
+        style={formGroupStyle}
+      >
+        <TextInput
+          id="quick-start-imprint-label"
+          value={imprintLabel}
+          onChange={updateImprintLabel}
+          aria-label="Imprint link text"
+        />
+      </FormGroup>
+      <FormGroup
         label="Data protection URL"
-        labelHelp={<LocalizationHelp ariaLabel="Data protection URL localization help" tooltipContent="To add translations use i18n key dataProtectionUrl" />}
         fieldId="quick-start-data-protection"
         style={formGroupStyle}
       >
@@ -138,6 +163,19 @@ export function TemplateContentPanel({
           placeholder="https://..."
           aria-label="Data protection URL"
           validated={dataProtectionUrlValidated}
+        />
+      </FormGroup>
+      <FormGroup
+        label="Data protection link text"
+        labelHelp={<LocalizationHelp ariaLabel="Data protection link text localization help" />}
+        fieldId="quick-start-data-protection-label"
+        style={formGroupStyle}
+      >
+        <TextInput
+          id="quick-start-data-protection-label"
+          value={dataProtectionLabel}
+          onChange={updateDataProtectionLabel}
+          aria-label="Data protection link text"
         />
       </FormGroup>
     </Stack>

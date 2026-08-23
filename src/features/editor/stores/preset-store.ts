@@ -14,12 +14,17 @@ export const DEFAULT_QUICK_SETTINGS_STYLE: QuickSettingsStyle = {
   colorPresetHeadingFontFamily: 'custom',
 }
 
+export const DEFAULT_IMPRINT_LABEL = 'Imprint'
+export const DEFAULT_DATA_PROTECTION_LABEL = 'Data Protection'
+
 export const DEFAULT_QUICK_START_CONTENT = {
   showClientName: false,
   showRealmName: false,
   infoMessage: '',
   imprintUrl: '',
   dataProtectionUrl: '',
+  imprintLabel: DEFAULT_IMPRINT_LABEL,
+  dataProtectionLabel: DEFAULT_DATA_PROTECTION_LABEL,
 }
 
 export function createDefaultPresetState(): PresetState {
@@ -27,6 +32,8 @@ export function createDefaultPresetState(): PresetState {
     selectedThemeId: DEFAULT_THEME_ID,
     presetCss: '',
     quickSettingsStylesByThemeMode: {},
+    enabledLocales: [],
+    quickStartContentByLocale: {},
     ...DEFAULT_QUICK_SETTINGS_STYLE,
     ...DEFAULT_QUICK_START_CONTENT,
   }
@@ -54,5 +61,9 @@ export const presetStore = createPersistedEditorStore<PresetState>(createDefault
     infoMessage: state.infoMessage,
     imprintUrl: state.imprintUrl,
     dataProtectionUrl: state.dataProtectionUrl,
+    imprintLabel: state.imprintLabel,
+    dataProtectionLabel: state.dataProtectionLabel,
+    enabledLocales: state.enabledLocales,
+    quickStartContentByLocale: state.quickStartContentByLocale,
   }),
 })

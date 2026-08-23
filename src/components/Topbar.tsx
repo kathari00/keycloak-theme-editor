@@ -1,31 +1,31 @@
-import type { MenuToggleElement } from '@patternfly/react-core'
 import { mdiGithub } from '@mdi/js'
 import { Icon as MdiIcon } from '@mdi/react'
 import {
   Alert,
   Button,
-  Dropdown,
-  DropdownItem,
-  DropdownList,
+  Divider,
   Flex,
+  FormGroup,
   FormSelect,
   FormSelectOption,
-  MenuToggle,
   Modal,
   ModalBody,
   ModalFooter,
   ModalHeader,
   ModalVariant,
+  Popover,
   Title,
   Toolbar,
   ToolbarContent,
   ToolbarGroup,
   ToolbarItem,
 } from '@patternfly/react-core'
-import { BarsIcon, ChevronLeftIcon, ChevronRightIcon, MoonIcon, SunIcon } from '@patternfly/react-icons'
+import { BarsIcon, ChevronLeftIcon, ChevronRightIcon, HistoryIcon, InfoCircleIcon, MoonIcon, SunIcon } from '@patternfly/react-icons'
 import { useEffect, useRef, useState } from 'react'
 import { editorActions } from '../features/editor/actions'
-import { useDarkModeState, usePreviewState } from '../features/editor/hooks/use-editor'
+import { useDarkModeState, useLocalizationState, usePreviewState } from '../features/editor/hooks/use-editor'
+import { DEFAULT_LOCALE_TAG, localeNativeName } from '../features/i18n/locale-catalog'
+import { getAvailablePreviewLocaleTags } from '../features/preview/load-generated'
 import DownloadView from '../features/theme-export/components/DownloadView'
 import ThemeImportHelper from '../features/theme-export/components/ThemeImportHelper'
 import { cx } from '../lib/cx'
@@ -69,7 +69,16 @@ export default function Topbar({
   onToggleMobilePane,
 }: TopbarProps) {
   const { isDarkMode } = useDarkModeState()
-  const { deviceId } = usePreviewState()
+  const { deviceId, previewLocaleTag } = usePreviewState()
+  const { enabledLocales } = useLocalizationState()
+  // Every enabled locale remains previewable. Locales without a generated
+  // full-page bundle use the English Keycloak chrome while still applying the
+  // theme author's localized content overrides.
+  const previewLocaleOptions = [DEFAULT_LOCALE_TAG, ...enabledLocales]
+  const activePreviewLocale = previewLocaleOptions.includes(previewLocaleTag)
+    ? previewLocaleTag
+    : DEFAULT_LOCALE_TAG
+  const isPreviewChromeLocalized = getAvailablePreviewLocaleTags().includes(activePreviewLocale)
   const toolbarRef = useRef<HTMLDivElement | null>(null)
   const [isMobileLayout, setIsMobileLayout] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -111,7 +120,6 @@ export default function Topbar({
 
   const setPreviewDevice = (nextDeviceId: 'desktop' | 'tablet' | 'mobile') => {
     editorActions.setDeviceId(nextDeviceId)
-    setIsMobileMenuOpen(false)
   }
 
   const openDialogFromMobileMenu = (openDialog: () => void) => {
@@ -131,6 +139,98 @@ export default function Topbar({
 
   const logoSrc = isDarkMode ? '/logo-dark.svg' : '/logo-light.svg'
   const shouldUseMobileLayout = isMobileLayout || Boolean(onToggleMobilePane)
+  const editorMenu = (
+    <Popover
+      id="editor-options"
+      aria-label="Editor options"
+      headerContent="Editor options"
+      position="bottom-end"
+      maxWidth="20rem"
+      withFocusTrap
+      elementToFocus="#topbar-preview-device"
+      isVisible={isMobileMenuOpen}
+      shouldOpen={() => setIsMobileMenuOpen(true)}
+      shouldClose={() => setIsMobileMenuOpen(false)}
+      closeBtnAriaLabel="Close editor options"
+      bodyContent={(
+        <div style={{ display: 'grid', gap: 'var(--pf-t--global--spacer--md)', minWidth: '16rem' }}>
+          <FormGroup label="Device" fieldId="topbar-preview-device" style={{ margin: 0 }}>
+            <FormSelect
+              id="topbar-preview-device"
+              value={deviceId}
+              onChange={(_event, value) => setPreviewDevice(value as 'desktop' | 'tablet' | 'mobile')}
+              aria-label="Select preview device"
+            >
+              <FormSelectOption value="desktop" label="Desktop" />
+              <FormSelectOption value="tablet" label="Tablet" />
+              <FormSelectOption value="mobile" label="Mobile" />
+            </FormSelect>
+          </FormGroup>
+          <FormGroup label="Language" fieldId="topbar-preview-language" style={{ margin: 0 }}>
+            <FormSelect
+              id="topbar-preview-language"
+              value={activePreviewLocale}
+              onChange={(_event, value) => editorActions.setPreviewLocaleTag(value)}
+              aria-label="Select preview language"
+            >
+              {previewLocaleOptions.map(tag => (
+                <FormSelectOption key={tag} value={tag} label={localeNativeName(tag)} />
+              ))}
+            </FormSelect>
+            {!isPreviewChromeLocalized && (
+              <Flex
+                alignItems={{ default: 'alignItemsCenter' }}
+                spaceItems={{ default: 'spaceItemsXs' }}
+                style={{ marginTop: 'var(--pf-t--global--spacer--xs)' }}
+              >
+                <InfoCircleIcon style={{ color: 'var(--pf-v5-global--info-color--100)' }} />
+                <small style={{ color: 'var(--pf-t--global--text--color--subtle)' }}>
+                  Standard Keycloak text isn't pre-rendered for this language, showing English. Your own texts still translate.
+                </small>
+              </Flex>
+            )}
+          </FormGroup>
+          {shouldUseMobileLayout && (
+            <>
+              <Divider />
+              <div
+                role="group"
+                aria-labelledby="editor-options-actions"
+                style={{ display: 'grid', gap: 'var(--pf-t--global--spacer--sm)' }}
+              >
+                <strong id="editor-options-actions">Actions</strong>
+                <TopbarButtons mode="history" />
+                <Button variant="secondary" isBlock onClick={() => openDialogFromMobileMenu(() => setIsImportOpen(true))}>
+                  Import theme
+                </Button>
+                <Button variant="secondary" isBlock onClick={() => openDialogFromMobileMenu(() => setIsExportOpen(true))}>
+                  Export theme
+                </Button>
+              </div>
+            </>
+          )}
+          <Divider />
+          <Button
+            variant="danger"
+            isBlock
+            icon={<HistoryIcon />}
+            onClick={() => openDialogFromMobileMenu(() => setIsResetOpen(true))}
+          >
+            Reset everything
+          </Button>
+        </div>
+      )}
+    >
+      <Button
+        variant="secondary"
+        aria-label={isMobileMenuOpen ? 'Close editor menu' : 'Open editor menu'}
+        aria-expanded={isMobileMenuOpen}
+        aria-haspopup="dialog"
+        icon={<BarsIcon />}
+        style={TOPBAR_ICON_BUTTON_STYLE}
+      />
+    </Popover>
+  )
 
   return (
     <div ref={toolbarRef}>
@@ -174,50 +274,7 @@ export default function Topbar({
                   </ToolbarGroup>
                   <ToolbarGroup variant="action-group" style={{ marginInlineStart: 'auto', alignItems: 'center', flexWrap: 'nowrap' }}>
                     <ToolbarItem>
-                      <Dropdown
-                        onSelect={() => setIsMobileMenuOpen(false)}
-                        isOpen={isMobileMenuOpen}
-                        onOpenChange={(isOpen: boolean) => setIsMobileMenuOpen(isOpen)}
-                        toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                          <MenuToggle
-                            ref={toggleRef}
-                            className="mobile-editor-menu-toggle"
-                            variant="secondary"
-                            aria-label="Open editor menu"
-                            icon={<BarsIcon />}
-                            isExpanded={isMobileMenuOpen}
-                            onClick={() => setIsMobileMenuOpen(prev => !prev)}
-                            style={TOPBAR_ICON_BUTTON_STYLE}
-                          />
-                        )}
-                      >
-                        <DropdownList>
-                          <DropdownItem
-                            isDisabled={deviceId === 'desktop'}
-                            onClick={() => setPreviewDevice('desktop')}
-                          >
-                            Desktop
-                          </DropdownItem>
-                          <DropdownItem
-                            isDisabled={deviceId === 'tablet'}
-                            onClick={() => setPreviewDevice('tablet')}
-                          >
-                            Tablet
-                          </DropdownItem>
-                          <DropdownItem
-                            isDisabled={deviceId === 'mobile'}
-                            onClick={() => setPreviewDevice('mobile')}
-                          >
-                            Mobile
-                          </DropdownItem>
-                          <TopbarButtons
-                            mode="menu"
-                            onOpenImport={() => openDialogFromMobileMenu(() => setIsImportOpen(true))}
-                            onOpenExport={() => openDialogFromMobileMenu(() => setIsExportOpen(true))}
-                            onOpenReset={() => openDialogFromMobileMenu(() => setIsResetOpen(true))}
-                          />
-                        </DropdownList>
-                      </Dropdown>
+                      {editorMenu}
                     </ToolbarItem>
                     <ToolbarItem>
                       <Button
@@ -265,16 +322,6 @@ export default function Topbar({
                           </Flex>
                         </Title>
                         <GitHubRepositoryLink />
-                        <FormSelect
-                          value={deviceId}
-                          onChange={(_event, value) => editorActions.setDeviceId(value as 'desktop' | 'tablet' | 'mobile')}
-                          aria-label="Select preview device"
-                          style={{ width: '7rem', minWidth: '7rem' }}
-                        >
-                          <FormSelectOption value="desktop" label="Desktop" />
-                          <FormSelectOption value="tablet" label="Tablet" />
-                          <FormSelectOption value="mobile" label="Mobile" />
-                        </FormSelect>
                         <Button
                           variant="secondary"
                           onClick={editorActions.toggleDarkMode}
@@ -291,8 +338,10 @@ export default function Topbar({
                         mode="desktop"
                         onOpenImport={() => setIsImportOpen(true)}
                         onOpenExport={() => setIsExportOpen(true)}
-                        onOpenReset={() => setIsResetOpen(true)}
                       />
+                    </ToolbarItem>
+                    <ToolbarItem>
+                      {editorMenu}
                     </ToolbarItem>
                   </ToolbarGroup>
                 </>

@@ -3,6 +3,7 @@ import type { ThemeDocument } from './types'
 import { useMemo } from 'react'
 import {
   useCssFilesState,
+  useLocalizationState,
   usePresetState,
   useQuickSettingsStylesByThemeModeState,
   useQuickStartColorsState,
@@ -30,6 +31,7 @@ export function useThemeDocument(): ThemeDocumentContext {
   const { quickSettingsStylesByThemeMode } = useQuickSettingsStylesByThemeModeState()
   const colors = useQuickStartColorsState()
   const content = useQuickStartContentState()
+  const { enabledLocales, quickStartContentByLocale } = useLocalizationState()
   const themeConfig = useThemeConfig()
   const resolvedThemeId = resolveThemeIdFromConfig(themeConfig, selectedThemeId)
   const resolvedTheme = themeConfig.themes.find(theme => theme.id === resolvedThemeId)
@@ -47,13 +49,17 @@ export function useThemeDocument(): ThemeDocumentContext {
     quickStartCss: themeQuickStartDefaults,
     quickSettings,
     quickSettingsStylesByMode: quickSettingsStylesForTheme,
+    enabledLocales,
+    quickStartContentByLocale,
     uploadedAssets,
     appliedAssets,
   }), [
     appliedAssets,
+    enabledLocales,
     isPresetTheme,
     quickSettings,
     quickSettingsStylesForTheme,
+    quickStartContentByLocale,
     resolvedThemeId,
     stylesCss,
     stylesCssFiles,

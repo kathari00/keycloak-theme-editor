@@ -105,6 +105,18 @@ export default function DownloadView({ onExportComplete }: DownloadViewProps) {
 
       <DownloadStatusAlert themeNameError={themeNameError} statusMessage={statusMessage} />
 
+      {themeDocument.enabledLocales.length > 0 && (
+        <Alert isInline variant="info" title="Enable internationalization on your realm" style={{ marginBottom: '1rem' }}>
+          This theme includes translations for
+          {' '}
+          {themeDocument.enabledLocales.length}
+          {' '}
+          additional language
+          {themeDocument.enabledLocales.length === 1 ? '' : 's'}
+          , but the language switcher only appears for users if your Keycloak realm has Internationalization enabled with those languages selected (Realm settings → Localization).
+        </Alert>
+      )}
+
       <Grid hasGutter>
         {cliMode?.available && (
           <GridItem span={12}>

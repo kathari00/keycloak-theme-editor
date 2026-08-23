@@ -14,3 +14,5 @@ Keep specs grouped by workflow:
 Helpers should stay mechanical. Put navigation and browser quirks in `helpers/`, but keep product assertions in the spec files so tests remain readable.
 
 Avoid testing incidental markup. Prefer accessible controls for user actions, preview iframe CSS/content for visible behavior, and downloaded archive contents for export correctness.
+
+Some behavior only shows up against a real Keycloak server (realm-level internationalization settings, actual FreeMarker rendering) and can't be automated here - see `manual-qa-languages.md` for that checklist.

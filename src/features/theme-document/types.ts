@@ -3,6 +3,7 @@ import type {
   QuickSettings,
   QuickSettingsStyle,
   QuickSettingsStylesByMode,
+  QuickStartContentByLocale,
   QuickStartContentSettings,
 } from '../editor/stores/types'
 
@@ -20,6 +21,8 @@ export interface ThemeDocument {
   quickStartCss: string
   quickSettings: QuickSettings
   quickSettingsStylesByMode: QuickSettingsStylesByMode
+  enabledLocales: string[]
+  quickStartContentByLocale: QuickStartContentByLocale
   assets: ThemeDocumentAssets
 }
 
@@ -32,6 +35,8 @@ export interface CreateThemeDocumentInput {
   quickStartCss: string
   quickSettings: QuickSettings
   quickSettingsStylesByMode?: QuickSettingsStylesByMode
+  enabledLocales?: string[]
+  quickStartContentByLocale?: QuickStartContentByLocale
   uploadedAssets: UploadedAsset[]
   appliedAssets: AppliedAssets
 }
@@ -55,4 +60,6 @@ export type ThemeDocumentContentSettings = Pick<
   | 'infoMessage'
   | 'imprintUrl'
   | 'dataProtectionUrl'
+  | 'imprintLabel'
+  | 'dataProtectionLabel'
 >

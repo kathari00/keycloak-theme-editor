@@ -1,5 +1,6 @@
 import { buildGoogleFontOptions } from '../../../assets/google-fonts'
 import {
+  useLocalizationState,
   usePresetState,
   useQuickStartColorsState,
   useQuickStartContentState,
@@ -35,7 +36,10 @@ export function useQuickStartSettings() {
     infoMessage,
     imprintUrl,
     dataProtectionUrl,
+    imprintLabel,
+    dataProtectionLabel,
   } = useQuickStartContentState()
+  const { enabledLocales, quickStartContentByLocale } = useLocalizationState()
 
   const fontOptions: FontOption[] = (() => {
     const googleOptions = buildGoogleFontOptions().map(option => ({
@@ -85,6 +89,10 @@ export function useQuickStartSettings() {
     infoMessage,
     imprintUrl,
     dataProtectionUrl,
+    imprintLabel,
+    dataProtectionLabel,
+    enabledLocales,
+    quickStartContentByLocale,
     fontOptions,
   }
 }

@@ -3,6 +3,7 @@ import {
   mdiFileMultiple,
   mdiFileTree,
   mdiRocketLaunch,
+  mdiTranslate,
   mdiUpload,
 } from '@mdi/js'
 import { Icon as MdiIcon } from '@mdi/react'
@@ -15,6 +16,7 @@ import {
 } from '@patternfly/react-core'
 import { Activity, lazy, Suspense, useState } from 'react'
 import CustomAssetUploader from '../features/assets/components/CustomAssetUploader'
+import LanguagesEditorPanel from '../features/editor/components/LanguagesEditorPanel'
 import QuickStartPanel from '../features/editor/components/QuickStartPanel'
 import SelectionTree from '../features/editor/components/SelectionTree'
 import { useDarkModeState } from '../features/editor/hooks/use-editor'
@@ -22,7 +24,7 @@ import PageManager from '../features/preview/components/PageManager'
 import { cx } from '../lib/cx'
 
 const StylingPanel = lazy(() => import('../features/editor/components/StylingPanel'))
-type SidebarSectionKey = 'quick-start' | 'styling' | 'selection' | 'pages' | 'uploads'
+type SidebarSectionKey = 'quick-start' | 'styling' | 'languages' | 'selection' | 'pages' | 'uploads'
 
 const sidebarTabs: Array<{
   icon: string
@@ -31,6 +33,7 @@ const sidebarTabs: Array<{
 }> = [
   { id: 'quick-start', label: 'Quick start', icon: mdiRocketLaunch },
   { id: 'styling', label: 'Styling', icon: mdiCodeBraces },
+  { id: 'languages', label: 'Languages', icon: mdiTranslate },
   { id: 'selection', label: 'Selection tree', icon: mdiFileTree },
   { id: 'pages', label: 'Pages', icon: mdiFileMultiple },
   { id: 'uploads', label: 'Uploads', icon: mdiUpload },
@@ -80,6 +83,9 @@ export default function RightSidebar({
           <Suspense fallback={<div style={{ padding: 'var(--pf-t--global--spacer--md)', color: 'var(--pf-t--global--text--color--subtle)', fontSize: 'var(--pf-t--global--font--size--body--sm)' }}>Loading styling tools...</div>}>
             <StylingPanel />
           </Suspense>
+        </Activity>
+        <Activity mode={selectedTab === 'languages' ? 'visible' : 'hidden'} name="Languages">
+          <LanguagesEditorPanel />
         </Activity>
         <Activity mode={selectedTab === 'selection' ? 'visible' : 'hidden'} name="SelectionTree">
           <SelectionTree />

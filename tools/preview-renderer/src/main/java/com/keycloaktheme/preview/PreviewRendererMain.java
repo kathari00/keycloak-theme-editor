@@ -41,30 +41,37 @@ public final class PreviewRendererMain {
       throw new IllegalStateException("Input root not found: " + arguments.inputRoot);
     }
 
-    Map<String, Object> pagesOutput = new LinkedHashMap<String, Object>();
-
     ContextBuilder.ContextOverrides contextOverrides = contextBuilder.readContextOverrides(arguments.contextMocksPath);
+    List<VariantSpec> variants = getVariants();
 
-    for (VariantSpec variant : getVariants()) {
-      VariantLoader.VariantInputs inputs = variantLoader.loadVariantInputs(
-          variant.baseThemeDir,
-          arguments.inputRoot.resolve("base"),
-          variant.overlayDir,
-          variant.userOverlayDir
-      );
-      if (inputs == null) {
-        continue;
+    // One JVM start renders every requested language: booting the renderer costs
+    // far more than the extra render passes.
+    for (ContextBuilder.LocaleSpec locale : contextOverrides.getLocales()) {
+      Map<String, Object> pagesOutput = new LinkedHashMap<String, Object>();
+
+      for (VariantSpec variant : variants) {
+        VariantLoader.VariantInputs inputs = variantLoader.loadVariantInputs(
+            variant.baseThemeDir,
+            arguments.inputRoot.resolve("base"),
+            variant.overlayDir,
+            variant.userOverlayDir,
+            locale.getSuffix()
+        );
+        if (inputs == null) {
+          continue;
+        }
+
+        VariantRenderResult result = renderVariantPages(variant, inputs, contextOverrides, locale);
+        logSkippedTemplates(variant.id, result.skippedTemplates);
+
+        if (!result.variantPages.isEmpty()) {
+          pagesOutput.put(variant.id, result.variantPages);
+        }
       }
 
-      VariantRenderResult result = renderVariantPages(variant, inputs, contextOverrides);
-      logSkippedTemplates(variant.id, result.skippedTemplates);
-
-      if (!result.variantPages.isEmpty()) {
-        pagesOutput.put(variant.id, result.variantPages);
-      }
+      writeOutputs(pagesOutput, locale.getTag());
     }
 
-    writeOutputs(pagesOutput);
     System.out.println("Generated preview artifacts in " + arguments.outputRoot);
   }
 
@@ -201,7 +208,8 @@ public final class PreviewRendererMain {
   private VariantRenderResult renderVariantPages(
       VariantSpec variant,
       VariantLoader.VariantInputs inputs,
-      ContextBuilder.ContextOverrides contextOverrides
+      ContextBuilder.ContextOverrides contextOverrides,
+      ContextBuilder.LocaleSpec locale
   ) {
     Map<String, Map<String, String>> variantPages = new LinkedHashMap<String, Map<String, String>>();
     List<String> skippedTemplates = new ArrayList<String>();
@@ -210,7 +218,7 @@ public final class PreviewRendererMain {
       String pageId = pageTemplate.replace(".ftl", ".html");
 
       Map<String, String> pageStates = renderPageWithStates(
-          variant, inputs, contextOverrides, pageTemplate, pageId, skippedTemplates
+          variant, inputs, contextOverrides, locale, pageTemplate, pageId, skippedTemplates
       );
 
       if (pageStates != null && !pageStates.isEmpty()) {
@@ -225,15 +233,22 @@ public final class PreviewRendererMain {
       VariantSpec variant,
       VariantLoader.VariantInputs inputs,
       ContextBuilder.ContextOverrides contextOverrides,
+      ContextBuilder.LocaleSpec locale,
       String pageTemplate,
       String pageId,
       List<String> skippedTemplates
   ) {
-    Map<String, Object> defaultContext = contextBuilder.buildPageContextOverride(contextOverrides, pageTemplate);
+    Map<String, Object> localeContext = locale.getContext();
+    Map<String, Object> defaultContext = contextBuilder.buildPageContextOverride(
+        contextOverrides, pageTemplate, localeContext
+    );
     // If no page-specific mock exists, fall back to the login page context.
     // Most custom pages extend the login template and need url, realm, etc.
-    if (defaultContext.isEmpty() && !pageTemplate.equals("login.ftl")) {
-      defaultContext = contextBuilder.buildPageContextOverride(contextOverrides, "login.ftl");
+    // Tested against the mock rather than the merged result, which the locale
+    // context alone would already make non-empty.
+    Map<String, Object> pageMock = contextOverrides.getPages().get(pageTemplate);
+    if ((pageMock == null || pageMock.isEmpty()) && !pageTemplate.equals("login.ftl")) {
+      defaultContext = contextBuilder.buildPageContextOverride(contextOverrides, "login.ftl", localeContext);
     }
 
     String defaultHtml;
@@ -261,7 +276,9 @@ public final class PreviewRendererMain {
       }
       String stateId = pageKey.substring(stateKeyPrefix.length());
       try {
-        Map<String, Object> stateContext = contextBuilder.buildPageContextOverride(contextOverrides, pageKey);
+        Map<String, Object> stateContext = contextBuilder.buildPageContextOverride(
+            contextOverrides, pageKey, localeContext
+        );
         String stateHtml = pageRenderer.renderPage(
             pageTemplate, pageId, variant.id, variant.overlayDir, variant.userOverlayDir, inputs, stateContext
         );
@@ -304,9 +321,13 @@ public final class PreviewRendererMain {
     return firstLine;
   }
 
-  private void writeOutputs(Map<String, Object> pagesOutput) throws IOException {
+  /** The base language keeps the original `pages.json` name; others get a suffixed sibling. */
+  private void writeOutputs(Map<String, Object> pagesOutput, String localeTag) throws IOException {
     Files.createDirectories(arguments.outputRoot);
-    writeJson(arguments.outputRoot.resolve("pages.json"), buildPagesOutputEnvelope(pagesOutput));
+    String fileName = VariantLoader.BASE_LOCALE_SUFFIX.equals(localeTag)
+        ? "pages.json"
+        : "pages." + localeTag + ".json";
+    writeJson(arguments.outputRoot.resolve(fileName), buildPagesOutputEnvelope(pagesOutput));
   }
 
   private Map<String, Object> buildPagesOutputEnvelope(Map<String, Object> pageVariants) {

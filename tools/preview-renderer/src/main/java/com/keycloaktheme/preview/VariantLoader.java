@@ -19,6 +19,9 @@ public final class VariantLoader {
       Arrays.asList("template.ftl", "footer.ftl", "field.ftl", "passkeys.ftl", "cli_splash.ftl")
   );
 
+  /** Keycloak resolves any untranslated key against the English bundle. */
+  public static final String BASE_LOCALE_SUFFIX = "en";
+
   private final Path overrideRoot;
 
   public VariantLoader(Path overrideRoot) {
@@ -30,6 +33,16 @@ public final class VariantLoader {
       Path inheritedBaseThemeDir,
       Path overlayDir,
       Path userOverlayDir
+  ) throws IOException {
+    return loadVariantInputs(baseThemeDir, inheritedBaseThemeDir, overlayDir, userOverlayDir, BASE_LOCALE_SUFFIX);
+  }
+
+  public VariantInputs loadVariantInputs(
+      Path baseThemeDir,
+      Path inheritedBaseThemeDir,
+      Path overlayDir,
+      Path userOverlayDir,
+      String localeSuffix
   ) throws IOException {
     String baseThemeId = baseThemeDir.getFileName().toString();
     Path baseThemeLoginDir = baseThemeDir.resolve("login");
@@ -69,31 +82,15 @@ public final class VariantLoader {
       }
     }
 
-    // Merge inherited (e.g. base) messages first, then layer the more-specific
-    // theme's own messages on top -- mirrors real Keycloak's parent-bundle +
-    // child-override inheritance, and the theme.properties merging above.
-    Map<String, String> messages = new LinkedHashMap<String, String>();
-    if (hasInheritedMessagesPath) {
-      messages.putAll(parseJavaProperties(readUtf8(inheritedMessagesPath)));
-    }
-    if (hasMessagesPath) {
-      messages.putAll(parseJavaProperties(readUtf8(messagesPath)));
-    }
-    Path overrideMessagesPath = localOverrideLoginDir.resolve("messages").resolve("messages_en.properties");
-    if (Files.exists(overrideMessagesPath)) {
-      messages.putAll(parseJavaProperties(readUtf8(overrideMessagesPath)));
-    }
-    if (overlayDir != null) {
-      Path overlayMessagesPath = overlayDir.resolve("messages").resolve("messages_en.properties");
-      if (Files.exists(overlayMessagesPath)) {
-        messages.putAll(parseJavaProperties(readUtf8(overlayMessagesPath)));
-      }
-    }
-    if (userOverlayDir != null) {
-      Path userMessagesPath = userOverlayDir.resolve("messages").resolve("messages_en.properties");
-      if (Files.exists(userMessagesPath)) {
-        messages.putAll(parseJavaProperties(readUtf8(userMessagesPath)));
-      }
+    // Always start from the English bundle so keys the requested locale does not
+    // translate keep an English value, the way Keycloak's bundle fallback works.
+    Map<String, String> messages = mergeMessagesForLocale(
+        BASE_LOCALE_SUFFIX, baseThemeDir, inheritedBaseThemeDir, localOverrideLoginDir, overlayDir, userOverlayDir
+    );
+    if (!BASE_LOCALE_SUFFIX.equals(localeSuffix)) {
+      messages.putAll(mergeMessagesForLocale(
+          localeSuffix, baseThemeDir, inheritedBaseThemeDir, localOverrideLoginDir, overlayDir, userOverlayDir
+      ));
     }
 
     List<String> pageTemplates = listPageTemplates(
@@ -112,6 +109,41 @@ public final class VariantLoader {
         messages,
         pageTemplates
     );
+  }
+
+  /**
+   * Layers one locale's bundles the same way theme.properties is merged:
+   * inherited parent first, then this theme, then the local override, preset
+   * overlay and finally the user's own theme.
+   */
+  private Map<String, String> mergeMessagesForLocale(
+      String localeSuffix,
+      Path baseThemeDir,
+      Path inheritedBaseThemeDir,
+      Path localOverrideLoginDir,
+      Path overlayDir,
+      Path userOverlayDir
+  ) throws IOException {
+    String fileName = "messages_" + localeSuffix + ".properties";
+    Map<String, String> messages = new LinkedHashMap<String, String>();
+
+    putMessagesIfPresent(messages, inheritedBaseThemeDir.resolve("messages").resolve(fileName));
+    putMessagesIfPresent(messages, baseThemeDir.resolve("messages").resolve(fileName));
+    putMessagesIfPresent(messages, localOverrideLoginDir.resolve("messages").resolve(fileName));
+    if (overlayDir != null) {
+      putMessagesIfPresent(messages, overlayDir.resolve("messages").resolve(fileName));
+    }
+    if (userOverlayDir != null) {
+      putMessagesIfPresent(messages, userOverlayDir.resolve("messages").resolve(fileName));
+    }
+
+    return messages;
+  }
+
+  private void putMessagesIfPresent(Map<String, String> target, Path path) throws IOException {
+    if (Files.exists(path)) {
+      target.putAll(parseJavaProperties(readUtf8(path)));
+    }
   }
 
   private List<String> listPageTemplates(

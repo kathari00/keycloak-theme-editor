@@ -92,6 +92,8 @@ export default function QuickStartPanel() {
               infoMessage={settings.infoMessage}
               imprintUrl={settings.imprintUrl}
               dataProtectionUrl={settings.dataProtectionUrl}
+              imprintLabel={settings.imprintLabel}
+              dataProtectionLabel={settings.dataProtectionLabel}
             />
           </section>
         </StackItem>

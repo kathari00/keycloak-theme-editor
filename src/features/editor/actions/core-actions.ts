@@ -25,6 +25,10 @@ export const coreActions = {
     coreStore.setState({ deviceId })
   },
 
+  setPreviewLocaleTag: (previewLocaleTag: string) => {
+    coreStore.setState({ previewLocaleTag })
+  },
+
   toggleDarkMode: () => {
     const newMode = toggleDarkModeUtil()
     coreStore.setState({ isDarkMode: newMode })

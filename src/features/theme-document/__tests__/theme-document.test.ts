@@ -24,6 +24,8 @@ const contentSettings = {
   infoMessage: 'Contact support.',
   imprintUrl: 'https://example.com/imprint',
   dataProtectionUrl: 'https://example.com/privacy',
+  imprintLabel: 'Imprint',
+  dataProtectionLabel: 'Data Protection',
 }
 
 function makeDocument(overrides: Partial<Parameters<typeof createThemeDocument>[0]> = {}) {

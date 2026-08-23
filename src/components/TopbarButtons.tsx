@@ -4,7 +4,6 @@ import {
   Flex,
 } from '@patternfly/react-core'
 import {
-  HistoryIcon,
   RedoIcon,
   UndoIcon,
 } from '@patternfly/react-icons'
@@ -19,7 +18,6 @@ interface TopbarButtonsProps {
   mode?: 'desktop' | 'history' | 'menu'
   onOpenImport?: () => void
   onOpenExport?: () => void
-  onOpenReset?: () => void
 }
 
 const TopbarButtons = React.memo(({
@@ -27,7 +25,6 @@ const TopbarButtons = React.memo(({
   mode = 'desktop',
   onOpenImport,
   onOpenExport,
-  onOpenReset,
 }: TopbarButtonsProps) => {
   const { canUndo, canRedo } = useUndoRedoState()
 
@@ -45,9 +42,6 @@ const TopbarButtons = React.memo(({
         </DropdownItem>
         <DropdownItem onClick={onOpenExport}>
           Export theme
-        </DropdownItem>
-        <DropdownItem onClick={onOpenReset}>
-          Reset everything
         </DropdownItem>
       </>
     )
@@ -94,12 +88,6 @@ const TopbarButtons = React.memo(({
               Export theme
             </Button>
 
-            <Button
-              variant="secondary"
-              onClick={onOpenReset}
-              aria-label="Reset everything"
-              icon={<HistoryIcon />}
-            />
           </>
         )}
       </Flex>

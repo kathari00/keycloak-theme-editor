@@ -1,7 +1,7 @@
 import type { PropsWithChildren } from 'react'
 import type { PreviewRuntimeValue } from '../hooks/preview-context'
 import type { PreviewVariantId } from '../types'
-import { useRef } from 'react'
+import { useCallback, useMemo, useRef } from 'react'
 import { PreviewContext } from '../hooks/preview-context'
 import { previewRuntimeActions, usePreviewRuntimeState } from '../hooks/usePreviewEditorState'
 
@@ -22,30 +22,30 @@ export function PreviewProvider({
   } = usePreviewRuntimeState()
   const activeVariantId: PreviewVariantId = initialVariantId
 
-  const getDocument = () => iframeRef.current?.contentDocument ?? null
+  const getDocument = useCallback(() => iframeRef.current?.contentDocument ?? null, [])
 
-  const setActivePage = (pageId: string) => {
+  const setActivePage = useCallback((pageId: string) => {
     previewRuntimeActions.setActivePage(pageId)
     previewRuntimeActions.setActiveState('default')
     previewRuntimeActions.selectNode(null)
     previewRuntimeActions.setPreviewReady(false)
-  }
+  }, [])
 
-  const setActiveState = (stateId: string) => {
+  const setActiveState = useCallback((stateId: string) => {
     previewRuntimeActions.setActiveState(stateId)
     previewRuntimeActions.selectNode(null)
     previewRuntimeActions.setPreviewReady(false)
-  }
+  }, [])
 
-  const selectNode = (nodeId: string | null) => {
+  const selectNode = useCallback((nodeId: string | null) => {
     previewRuntimeActions.selectNode(nodeId)
-  }
+  }, [])
 
-  const setPreviewReady = (ready: boolean) => {
+  const setPreviewReady = useCallback((ready: boolean) => {
     previewRuntimeActions.setPreviewReady(ready)
-  }
+  }, [])
 
-  const value: PreviewRuntimeValue = {
+  const value: PreviewRuntimeValue = useMemo(() => ({
     activeVariantId,
     activePageId,
     activeStateId,
@@ -57,7 +57,7 @@ export function PreviewProvider({
     selectNode,
     iframeRef,
     setPreviewReady,
-  }
+  }), [activePageId, activeStateId, activeVariantId, getDocument, previewReady, selectNode, selectedNodeId, setActivePage, setActiveState, setPreviewReady])
 
   return (
     <PreviewContext value={value}>

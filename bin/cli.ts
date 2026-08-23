@@ -8,6 +8,7 @@ import process from 'node:process'
 import { watch } from 'chokidar'
 import { program } from 'commander'
 import { createJiti } from 'jiti'
+import { isCuratedLocale, propertiesSuffixForLocale } from '../src/features/i18n/locale-catalog'
 import { generatePreview, getJavaMajorVersion } from '../tools/generate-preview'
 
 const PACKAGE_ROOT = path.resolve(import.meta.dirname, '..')
@@ -342,6 +343,16 @@ function writeThemeFiles(
 
   fs.writeFileSync(path.join(messagesDir, 'messages.properties'), data.messagesContent, 'utf8')
   fs.writeFileSync(path.join(messagesDir, 'messages_en.properties'), data.messagesContent, 'utf8')
+
+  if (data.localeMessages && typeof data.localeMessages === 'object') {
+    for (const [localeTag, content] of Object.entries(data.localeMessages)) {
+      if (typeof content !== 'string' || !isCuratedLocale(localeTag)) {
+        continue
+      }
+      const filename = `messages_${propertiesSuffixForLocale(localeTag)}.properties`
+      fs.writeFileSync(path.join(messagesDir, filename), content, 'utf8')
+    }
+  }
 
   const payload = data.payload
   if (payload) {

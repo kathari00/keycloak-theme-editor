@@ -25,6 +25,8 @@ const contentSettings = {
   infoMessage: 'Line one\nLine two',
   imprintUrl: 'https://example.com/imprint',
   dataProtectionUrl: 'invalid-url',
+  imprintLabel: 'Imprint',
+  dataProtectionLabel: 'Data Protection',
 }
 
 const defaultBackgroundAsset = {

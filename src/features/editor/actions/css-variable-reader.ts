@@ -14,6 +14,8 @@ export type QuickStartExtrasState = Pick<
   | 'infoMessage'
   | 'imprintUrl'
   | 'dataProtectionUrl'
+  | 'imprintLabel'
+  | 'dataProtectionLabel'
 >
 
 export type QuickStartExtrasUpdate = Partial<QuickStartExtrasState>
@@ -107,6 +109,8 @@ export function getQuickStartExtrasState(state: PresetState): QuickStartExtrasSt
     infoMessage: state.infoMessage,
     imprintUrl: state.imprintUrl,
     dataProtectionUrl: state.dataProtectionUrl,
+    imprintLabel: state.imprintLabel,
+    dataProtectionLabel: state.dataProtectionLabel,
   }
 }
 

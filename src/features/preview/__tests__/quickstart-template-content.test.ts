@@ -42,7 +42,10 @@ describe('applyQuickStartTemplateContent', () => {
 
     expect(doc.getElementById('kc-realm-name')?.textContent).toBe('My Realm')
     expect(doc.getElementById('kc-info-message')?.textContent).toContain('Please contact support.')
+    expect(doc.querySelector('[data-kc-state="info-message-text"]')?.getAttribute('data-kc-i18n-key')).toBe('infoMessage')
     expect(doc.getElementById('kc-imprint-link')?.getAttribute('href')).toBe('https://example.com/imprint')
+    expect(doc.getElementById('kc-imprint-link')?.getAttribute('data-kc-i18n-key')).toBe('imprintLabel')
+    expect(doc.getElementById('kc-data-protection-link')?.getAttribute('data-kc-i18n-key')).toBe('dataProtectionLabel')
     expect(doc.getElementById('kc-data-protection-link')?.style.display).toBe('none')
     expect(doc.querySelector('#kc-registration a')?.textContent).toBe('Create account')
   })
