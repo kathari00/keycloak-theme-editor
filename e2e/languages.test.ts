@@ -68,7 +68,9 @@ test('keeps a translation when its language is removed and added back', async ({
   await page.getByLabel('Selected element translation').fill('Jetzt anmelden')
 
   await page.getByRole('button', { name: 'Remove de' }).click()
-  await expect(page.getByLabel('Selected element translation')).toBeHidden()
+  // English is always editable now - removing the last language falls back
+  // to it instead of hiding the Translate section.
+  await expect(page.getByLabel('Language to translate')).toHaveValue('en')
 
   await addLanguage(page, 'German - Deutsch (de)')
   await expect(page.getByLabel('Selected element translation')).toHaveValue('Jetzt anmelden')
@@ -87,7 +89,9 @@ test('resets localization and the active preview language', async ({ page }) => 
   await dialog.getByRole('button', { name: 'Reset everything' }).click()
 
   await expect(frame.locator('html')).toHaveAttribute('lang', 'en')
-  await expect(page.getByLabel('Language to translate')).toBeHidden()
+  // English is always editable, so the Translate section stays visible and
+  // falls back to it rather than hiding once no language is enabled.
+  await expect(page.getByLabel('Language to translate')).toHaveValue('en')
 })
 
 test('edits the selected Keycloak message for any enabled language', async ({ page }) => {
