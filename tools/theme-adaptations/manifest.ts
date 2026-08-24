@@ -1,13 +1,4 @@
-/**
- * Single source of truth for which theme ids under
- * `public/keycloak-dev-resources/themes/` are generated from upstream Keycloak
- * (safe to regenerate on a version bump, guarded by `vendor:check`) versus
- * fully our own, hand-authored presets that no sync process may ever touch.
- *
- * This is the boundary automation is allowed to cross. Anything not listed
- * under `vendorAdapted` gets no help from this tooling and no drift-check -
- * that's the point, it protects hand-authored work from being overwritten.
- */
+/** Which theme ids are vendor-derived (safe to regenerate, guarded by vendor:check) vs. hand-authored (never touched by sync). */
 export interface VendorAdaptedTheme {
   /** Theme id under `public/keycloak-dev-resources/themes/<id>`. */
   id: string

@@ -24,12 +24,7 @@ async function readUtf8(relativePath: string): Promise<string> {
   return (await readFile(relativePath, 'utf8')).replace(/\r\n/g, '\n')
 }
 
-/**
- * Whether a generated file ends with a trailing newline depends on how it was
- * built (theme.properties: no; patched .ftl files: mirrors pristine, usually
- * yes) - not a meaningful difference to flag as drift. Compare with exactly
- * one optional trailing newline stripped from both sides.
- */
+/** Strips one optional trailing newline from both sides first - not a meaningful drift signal. */
 function contentsMatch(a: string, b: string): boolean {
   const strip = (s: string) => s.replace(/\n$/, '')
   return strip(a) === strip(b)
@@ -98,9 +93,7 @@ async function applyAll(rootDir: string): Promise<PlannedFile[]> {
   const planned = await planAllFiles(rootDir)
   await Promise.all(planned.map(async (file) => {
     const targetPath = path.join(rootDir, DEV_RESOURCES_ROOT, file.relativePath)
-    // Exactly one trailing newline regardless of whether the adapted content
-    // already carries one (theme.properties never does; patched .ftl files
-    // usually do, mirroring pristine) - avoids writing a stray blank line.
+    // Normalize to exactly one trailing newline - avoids a stray blank line.
     await writeFile(targetPath, `${file.content.replace(/\n$/, '')}\n`, 'utf8')
   }))
   return planned

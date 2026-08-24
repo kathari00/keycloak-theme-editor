@@ -14,14 +14,7 @@ function parsePropertiesMap(text: string): Map<string, string> {
   return map
 }
 
-/**
- * `base/theme.properties` (see base-class-hook-keys.ts) is the master,
- * alphabetically-ordered hook vocabulary. Every other variant's committed
- * `theme.properties` turns out to be exactly that vocabulary filtered down to
- * whichever hooks the variant's own pristine source actually declares a value
- * for, in the same order - verified against the real 26.6.4 files rather than
- * assumed. That is what this function reproduces for `v2`.
- */
+/** v2's theme.properties is base's hook vocabulary filtered to whatever v2's pristine source declares - verified against real 26.6.4 files. */
 export function adaptV2ThemeProperties(pristineText: string): string {
   const pristine = parsePropertiesMap(pristineText)
   const header = [
@@ -49,13 +42,7 @@ export function adaptV2ThemeProperties(pristineText: string): string {
   return [...header, ...hookLines].join('\n')
 }
 
-/**
- * `v2`'s template.ftl/footer.ftl carry structural edits (split realm/client
- * name markup, an FTL-native info-message block, our imprint/data-protection
- * footer) that don't reduce to key-value rules, so they're stored as real
- * patches. Applying cleanly is itself the signal that upstream's template
- * shape hasn't moved out from under these edits.
- */
+/** Structural edits that don't reduce to key-value rules, so they're stored as real patches - a clean apply is the freshness signal. */
 export function adaptV2Template(pristineText: string, patchText: string): string {
   return applyUnifiedDiff(pristineText, patchText, 'v2/template.ftl')
 }
@@ -64,13 +51,7 @@ export function adaptV2Footer(pristineText: string, patchText: string): string {
   return applyUnifiedDiff(pristineText, patchText, 'v2/footer.ftl')
 }
 
-/**
- * `base`'s theme.properties is NOT derived from pristine upstream - real
- * Keycloak's base theme is `abstract=true` and declares no concrete class
- * hooks. This is our own authored hook vocabulary (see BASE_CLASS_HOOK_KEYS),
- * expanded through the same mechanical rule as v2 for consistency. A Keycloak
- * version bump does not change this file; only adding a new CSS hook does.
- */
+/** Not derived from upstream - real Keycloak's base theme is abstract with no hooks; this is our own authored vocabulary (BASE_CLASS_HOOK_KEYS). */
 export function buildBaseThemeProperties(): string {
   const header = [
     '# Base Keycloak theme',

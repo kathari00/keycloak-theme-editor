@@ -119,17 +119,7 @@ async function importAssetByRule(
   importedAssets.push(asset)
 }
 
-/**
- * Unlike other locales - a preset rarely ships a base bundle for them, so
- * everything in an imported per-locale file is safely a user override -
- * English always has a real, non-empty base bundle. Telling a genuine user
- * override apart from the preset's own inherited content (e.g. `modern-card`
- * ships a blank `noAccount=` key today, but nothing guarantees every preset's
- * extra keys stay blank forever) needs a diff against that base, not just an
- * exclude-list. `sourceThemeId` missing or its base file unfetchable
- * (foreign/custom theme) falls back to the known-keys exclusion only, which
- * is safe but coarser.
- */
+/** Diffs against the preset's own pristine base file so inherited content isn't mistaken for a user override. */
 async function parseEnglishContentOverrides(
   messagesPropertiesText: string,
   sourceThemeId: string | undefined,

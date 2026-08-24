@@ -71,9 +71,6 @@ export default function Topbar({
   const { isDarkMode } = useDarkModeState()
   const { deviceId, previewLocaleTag } = usePreviewState()
   const { enabledLocales } = useLocalizationState()
-  // Every enabled locale remains previewable. Locales without a generated
-  // full-page bundle use the English Keycloak chrome while still applying the
-  // theme author's localized content overrides.
   const previewLocaleOptions = [DEFAULT_LOCALE_TAG, ...enabledLocales]
   const activePreviewLocale = previewLocaleOptions.includes(previewLocaleTag)
     ? previewLocaleTag

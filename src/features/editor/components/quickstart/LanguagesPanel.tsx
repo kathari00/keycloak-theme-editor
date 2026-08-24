@@ -67,9 +67,6 @@ export function LanguagesPanel({
   const activeLocale = editableLocales.includes(editingLocale) ? editingLocale : DEFAULT_LOCALE_TAG
   const isEditingBaseLocale = activeLocale === DEFAULT_LOCALE_TAG
   const activeOverrides = quickStartContentByLocale[activeLocale] ?? {}
-  // These three already have a canonical home in QuickSettings (Template
-  // content panel); editing them here while viewing English should edit that
-  // same value, not shadow it in quickStartContentByLocale[DEFAULT_LOCALE_TAG].
   const baseFieldValues: Record<string, string> = { infoMessage, imprintLabel, dataProtectionLabel }
 
   useEffect(() => {

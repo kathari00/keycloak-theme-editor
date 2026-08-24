@@ -18,8 +18,6 @@ function applyLocalizationState(next: {
 }): void {
   presetStore.setState(next)
 
-  // Previewing a language that is no longer part of the theme would keep
-  // showing it with no way back to it in the switcher.
   const { previewLocaleTag } = coreStore.getState()
   if (previewLocaleTag !== DEFAULT_LOCALE_TAG && !next.enabledLocales.includes(previewLocaleTag)) {
     coreStore.setState({ previewLocaleTag: DEFAULT_LOCALE_TAG })
@@ -34,8 +32,6 @@ export const localizationActions = {
       return
     }
 
-    // Translations for a disabled locale are kept so re-enabling restores them;
-    // export filters by enabledLocales instead.
     const nextState = {
       enabledLocales,
       quickStartContentByLocale: previous.quickStartContentByLocale,

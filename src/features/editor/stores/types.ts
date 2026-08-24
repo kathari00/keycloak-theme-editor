@@ -39,11 +39,7 @@ export interface QuickStartContentSettings {
 
 export interface QuickSettings extends QuickSettingsStyle, QuickStartContentSettings {}
 
-/**
- * Per-locale overrides for the theme's own message keys, including the base
- * English locale (`DEFAULT_LOCALE_TAG`). Omitted or blank fields are left out
- * of the exported bundle so Keycloak falls back to its own default text.
- */
+/** Per-locale message overrides, including the base English locale; blank/omitted falls back to Keycloak's default. */
 export interface LocalizedContentOverrides {
   infoMessage?: string
   imprintLabel?: string
@@ -52,12 +48,6 @@ export interface LocalizedContentOverrides {
   [messageKey: string]: string | undefined
 }
 
-/**
- * The five content keys that already have a canonical home in `QuickSettings`
- * (edited via the Template content panel), kept out of
- * `QuickStartContentByLocale[DEFAULT_LOCALE_TAG]` so there's never two
- * sources of truth for the same base-language field.
- */
 export const BASE_QUICK_START_MESSAGE_KEYS = [
   'infoMessage',
   'imprintUrl',

@@ -44,22 +44,14 @@ export interface ContextMocks {
   locales: LocaleRenderSpec[]
 }
 
-/**
- * One preview language for the Java renderer: `tag` names its output file,
- * `suffix` picks the message bundle, and `context` is merged into every page's
- * FreeMarker context.
- */
+/** One preview language for the Java renderer. */
 export interface LocaleRenderSpec {
   tag: string
   suffix: string
   context: Record<string, unknown>
 }
 
-/**
- * Keycloak hides the language switcher unless a realm offers more than one
- * language, so the mock always advertises a second one. Otherwise an
- * English-only render would give theme authors no switcher to style.
- */
+// Keycloak hides the language switcher unless a realm offers 2+ languages.
 const FALLBACK_SUPPORTED_LOCALE_TAG = 'de'
 
 export function buildLocaleRenderSpecs(localeTags: string[]): LocaleRenderSpec[] {
@@ -104,11 +96,7 @@ export interface GeneratePreviewOptions {
   userMocks?: UserMocks
   /** Path to user's Keycloak theme directory (contains login/ with custom .ftl files). */
   userThemeDir?: string
-  /**
-   * Languages to pre-render, as curated locale tags. English is always included
-   * and written to `pages.json`; each additional language gets its own
-   * `pages.<tag>.json` that the editor loads on demand.
-   */
+  /** Curated locale tags to pre-render; English always writes to pages.json, others to pages.<tag>.json. */
   locales?: string[]
   /** Suppress stdout logging. */
   quiet?: boolean
@@ -159,7 +147,6 @@ export function resolveContextMocks(userMocks?: UserMocks, localeTags: string[] 
   const pages: Record<string, Record<string, unknown>> = {}
   const loginBase = baseMocks['login.ftl']
 
-  // Process all base mock pages
   for (const [pageId, baseMock] of Object.entries(baseMocks)) {
     const merged = deepMerge(baseMock, userMocks?.pages[pageId])
     pages[pageId] = cloneJson(merged)
@@ -173,7 +160,6 @@ export function resolveContextMocks(userMocks?: UserMocks, localeTags: string[] 
     }
   }
 
-  // Process user-only pages (custom .ftl pages not in base mocks)
   if (userMocks) {
     for (const [pageId, userOverride] of Object.entries(userMocks.pages)) {
       if (pages[pageId])
@@ -464,8 +450,7 @@ function runJar(params: {
 }
 
 function runMaven(pomPath: string, contextMocksPath: string, outputDir: string) {
-  // Must mirror runJar's --output: the caller reads the per-locale files back
-  // from this directory.
+  // Must mirror runJar's --output - the caller reads per-locale files back from here.
   const execArgs = [
     `--context-mocks=${toForwardSlashPath(contextMocksPath)}`,
     `--output=${toForwardSlashPath(outputDir)}`,
@@ -617,10 +602,7 @@ function normalizePreviewArtifactInWorker(packageRoot: string, filePath: string)
   return result.status === 0
 }
 
-/**
- * Generate preview pages by running the Java FreeMarker renderer.
- * Can be called programmatically from the CLI or via `npm run generate:preview`.
- */
+/** Generate preview pages by running the Java FreeMarker renderer. */
 export async function generatePreview(options: GeneratePreviewOptions): Promise<GeneratePreviewResult> {
   const packageRoot = options.packageRoot ?? process.cwd()
   const outputPath = options.outputPath ?? path.join(packageRoot, 'src', 'features', 'preview', 'generated', 'pages.json')
@@ -647,7 +629,6 @@ export async function generatePreview(options: GeneratePreviewOptions): Promise<
 
   const { tempDir, filePath } = tempArtifacts
 
-  // Ensure output directory exists
   const outputDir = path.dirname(outputPath)
   fs.mkdirSync(outputDir, { recursive: true })
 
@@ -702,9 +683,7 @@ export async function generatePreview(options: GeneratePreviewOptions): Promise<
 const isDirectRun = process.argv[1]?.replace(/\\/g, '/').endsWith('tools/generate-preview.ts')
   || process.argv[1]?.replace(/\\/g, '/').endsWith('tools/generate-preview')
 if (isDirectRun) {
-  // e.g. npm run generate:preview -- --locales=de,fr
-  // `--locales=all` regenerates every curated locale, so CI never has to
-  // enumerate them by hand and new catalog entries are picked up automatically.
+  // e.g. --locales=de,fr or --locales=all for every curated locale
   const localesArg = process.argv.find(arg => arg.startsWith('--locales='))
   const localesValue = localesArg?.slice('--locales='.length).trim()
   const locales = localesValue === 'all'

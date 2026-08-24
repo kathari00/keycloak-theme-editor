@@ -4,34 +4,12 @@ import fs from 'node:fs'
 import http from 'node:http'
 import path from 'node:path'
 import process from 'node:process'
-// Imported from the concrete module, not the `theme-document` barrel index:
-// that barrel also re-exports `useThemeDocument`, whose module graph reaches
-// React store hooks that touch `localStorage` as an import-time side effect.
 import { createThemeDocument } from '../src/features/theme-document/theme-document'
 import { buildJarBytes } from '../src/features/theme-export/jar-export-service'
 import { prepareThemeExportFiles } from '../src/features/theme-export/prepare-theme-export-files'
 
-/**
- * Produces a real, deployable theme `.jar` on disk without a browser, for the
- * real-Keycloak integration test (`e2e/keycloak-integration/`). Reuses the
- * exact export pipeline the editor's own "Download .jar" button uses -
- * `prepareThemeExportFiles` + `buildJarBytes` - so this fixture is byte-for-byte
- * what a real user's export produces, not a reimplementation.
- *
- * The export pipeline fetches preset source files via root-relative
- * `fetch('/keycloak-dev-resources/...')` calls, which assume a browser origin.
- * Rather than thread an injected loader through every call site across three
- * files, this script serves `public/` from a throwaway local HTTP server and
- * rewrites root-relative fetches to it - the production code runs completely
- * unmodified.
- */
-
 const FIXTURE_LOCALES = ['de', 'ar']
 
-// Mirrors preset-store.ts's DEFAULT_QUICK_SETTINGS_STYLE/DEFAULT_QUICK_START_CONTENT,
-// duplicated rather than imported: the store module touches `localStorage` as
-// a side effect of Zustand store creation at import time, which doesn't exist
-// in Node.
 const DEFAULT_QUICK_SETTINGS: QuickSettings = {
   colorPresetId: 'keycloak-default',
   colorPresetPrimaryColor: '#0066cc',
@@ -43,10 +21,7 @@ const DEFAULT_QUICK_SETTINGS: QuickSettings = {
   colorPresetHeadingFontFamily: 'custom',
   showClientName: false,
   showRealmName: false,
-  // Non-empty: the info-message box's visibility is baked into the theme's
-  // single static styles.css at export time (there's no per-locale CSS), so
-  // it's driven by this base value - a per-locale override in
-  // quickStartContentByLocale only changes the wording, never the visibility.
+  // Must be non-empty: the info-message box's CSS visibility is driven by this base value.
   infoMessage: 'Welcome! This is a test message.',
   imprintUrl: '',
   dataProtectionUrl: '',

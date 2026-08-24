@@ -17,10 +17,6 @@ import {
 import { getThemeCssStructuredCached } from '../presets/queries'
 import { getThemeQuickStartCssPath } from '../presets/theme-paths'
 import { normalizeExternalLegalLinkUrl } from '../preview/lib/legal-link-url'
-// Imported from the concrete module, not the `theme-document` barrel index:
-// that barrel also re-exports `useThemeDocument`, whose module graph reaches
-// React store hooks - pulling that in here would be needless coupling for a
-// module that's otherwise environment-agnostic (see tools/build-theme-fixture.ts).
 import {
   themeDocumentToExportLocaleMessages,
   themeDocumentToExportLocales,
@@ -43,9 +39,7 @@ export interface PrepareThemeExportFilesParams {
   themeName: string
 }
 
-/**
- * Build export CSS files from the editor's individual file map.
- */
+/** Build export CSS files from the editor's individual file map. */
 export function buildExportCssFiles(
   editorFiles: Record<string, string>,
   topLevelImportsCss: string,
@@ -136,10 +130,7 @@ export function buildOverriddenMessages(params: {
   )
 }
 
-/**
- * A translation bundle carrying only the keys this theme actually translates.
- * Everything the user left blank is omitted so Keycloak falls back to English.
- */
+/** Only the keys this theme actually translates; blank ones are omitted so Keycloak falls back to English. */
 export function buildLocaleOverrideMessages(params: {
   baseMessagesContent: string
   overrides: LocalizedContentOverrides
@@ -151,11 +142,7 @@ export function buildLocaleOverrideMessages(params: {
   return result
 }
 
-/**
- * Declares the theme's supported languages. Keycloak resolves `locales=` through
- * the parent chain, so writing it narrows the theme to exactly this list - only
- * do so once the user has opted into managing languages.
- */
+/** Writing `locales=` narrows the theme's list, so only do it once languages are actually enabled. */
 export function withDeclaredLocales(properties: string, locales: string[]): string {
   if (locales.length <= 1) {
     return properties
@@ -177,11 +164,7 @@ async function extractEditorCssContext(themeDocument: ThemeDocument, quickStartS
   }
 }
 
-/**
- * One bundle per enabled locale, layered onto whatever the source theme already
- * ships for that locale. Missing source bundles are expected: standard Keycloak
- * text is inherited from the parent theme, so an override-only file is enough.
- */
+/** One bundle per enabled locale; a missing source bundle is fine, inheritance covers the rest. */
 async function buildLocaleMessageFiles(params: {
   themeId: string
   isPresetTheme: boolean
