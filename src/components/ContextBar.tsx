@@ -54,6 +54,7 @@ export default function ContextBar({ className }: ContextBarProps) {
       inset={{ default: 'insetSm' }}
       style={{
         borderBottom: '1px solid var(--pf-t--global--border--color--subtle)',
+        paddingBlock: 'var(--pf-t--global--spacer--sm)',
       }}
     >
       <ToolbarContent style={{ rowGap: '0.5rem' }}>
