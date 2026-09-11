@@ -65,6 +65,10 @@ jobs:
         if: steps.release.outputs.changed == 'true'
         timeout-minutes: 10
 
+      - run: npm run test:keycloak-integration
+        if: steps.release.outputs.changed == 'true'
+        timeout-minutes: 10
+
       - run: npm run test:e2e
         if: steps.release.outputs.changed == 'true'
 
@@ -80,7 +84,7 @@ jobs:
             - `sync:keycloak` against the new release
             - `vendor:apply` (regenerates `base`/`v2` under `keycloak-dev-resources` from the codified adaptation - see `tools/theme-adaptations/`)
             - `generate:preview` for every curated language (`src/features/i18n/locale-catalog.ts`)
-            - lint, unit tests, build, e2e
+            - lint, unit tests, build, the real-Keycloak-container integration test, e2e
 
             If this PR exists, the adaptation reproduced cleanly against the new release. For failed updates (new CSS hooks, incompatible patches, or validation failures), see `tools/theme-adaptations/README.md` and the failed step's log.
           branch: chore/keycloak-update

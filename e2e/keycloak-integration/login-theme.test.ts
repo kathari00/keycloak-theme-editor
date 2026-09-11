@@ -9,8 +9,13 @@ import { GenericContainer, Wait } from 'testcontainers'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 
+// Tag tracks tools/sync-keycloak-config.json - the theme's exported templates are
+// adapted against that version, so testing against a different one is meaningless.
+// Override with KEYCLOAK_IMAGE for local debugging against another version.
+const syncConfig = JSON.parse(fs.readFileSync(path.join(dirname, '../../tools/sync-keycloak-config.json'), 'utf8')) as { tag: string }
+const KEYCLOAK_IMAGE = process.env.KEYCLOAK_IMAGE ?? `quay.io/keycloak/keycloak:${syncConfig.tag}`
+
 // Mirrors e2e/manual-qa-languages.md; keep both in sync.
-const KEYCLOAK_IMAGE = process.env.KEYCLOAK_IMAGE ?? 'quay.io/keycloak/keycloak:26.6.4'
 const REALM = 'theme-editor-test'
 const BOOTSTRAP_THEMES = ['bootstrap-base', 'bootstrap-custom', 'bootstrap-v2']
 const FRAMEWORK_THEMES = [...BOOTSTRAP_THEMES, 'carbon-split']
