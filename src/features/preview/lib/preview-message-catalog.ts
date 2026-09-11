@@ -148,12 +148,19 @@ export async function applyPreviewMessageOverrides(
 function writeElementMessage(element: HTMLElement, value: string): void {
   const attribute = element.dataset.kcI18nAttribute
   if (attribute === 'text') {
-    const textNode = [...element.childNodes].find(node => node.nodeType === node.TEXT_NODE)
+    // Skip whitespace-only text nodes (e.g. template indentation before an inline <input>) -
+    // the real text usually isn't the first child node once markup like a checkbox splits it off.
+    const textNode = [...element.childNodes].find(
+      node => node.nodeType === node.TEXT_NODE && (node.textContent ?? '').trim(),
+    )
     if (textNode) {
       textNode.textContent = value
     }
     else {
-      element.textContent = value
+      // No non-whitespace text node to reuse (e.g. a checkbox label with no text at all) -
+      // append rather than clobbering element.textContent, which would delete child markup
+      // like the checkbox <input> itself.
+      element.appendChild(element.ownerDocument.createTextNode(value))
     }
   }
   else if (attribute) {

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   annotatePreviewMessageKeys,
+  applyPreviewMessageOverrides,
   findPreviewMessageElement,
 } from '../lib/preview-message-catalog'
 
@@ -19,6 +20,7 @@ describe('preview message catalog', () => {
             'password-display-name=Password',
             'invalidUserMessage=Invalid username or password.',
             'accountTemporarilyDisabledMessage=Invalid username or password.',
+            'rememberMe=Remember me',
           ].join('\n')
       return new Response(text)
     }))
@@ -39,6 +41,17 @@ describe('preview message catalog', () => {
     await annotatePreviewMessageKeys(doc, 'tr')
 
     expect(findPreviewMessageElement(doc.getElementById('field'))).toBeNull()
+  })
+
+  it('overrides the real text node, not a leading whitespace-only one, when a checkbox splits a label', async () => {
+    // Mirrors Keycloak's real `<label>\n  <input type="checkbox"> ${msg("rememberMe")}\n</label>`
+    // markup, where the template's own indentation becomes a whitespace-only text node before
+    // the checkbox - the actual message text is a *later* text node, not the first child.
+    const doc = makeDoc('<label>\n  <input id="rememberMe" type="checkbox"> Remember me\n</label>')
+    await applyPreviewMessageOverrides(doc, 'en', {})
+
+    const label = doc.querySelector('label')!
+    expect(label.textContent?.replace(/\s+/g, ' ').trim()).toBe('Remember me')
   })
 
   it('recognizes an English fallback error in a localized preview', async () => {
