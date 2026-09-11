@@ -302,11 +302,22 @@ function writeThemeFiles(
   fs.mkdirSync(messagesDir, { recursive: true })
 
   fs.writeFileSync(path.join(loginDir, 'theme.properties'), data.properties, 'utf8')
+  if (typeof data.colorModeScript === 'string' && data.colorModeScript) {
+    const scriptsDir = path.join(loginDir, 'resources', 'js')
+    fs.mkdirSync(scriptsDir, { recursive: true })
+    fs.writeFileSync(path.join(scriptsDir, 'theme-color-mode.js'), data.colorModeScript, 'utf8')
+  }
   if (data.templateFtl) {
     fs.writeFileSync(path.join(loginDir, 'template.ftl'), data.templateFtl, 'utf8')
   }
   if (data.footerFtl) {
     fs.writeFileSync(path.join(loginDir, 'footer.ftl'), data.footerFtl, 'utf8')
+  }
+  for (const filename of ['template.ftl', 'footer.ftl']) {
+    const content = filename === 'template.ftl' ? data.templateFtl : data.footerFtl
+    if (data.replaceTemplateOverrides === true && !content && typeof data.customFtlFiles?.[filename] !== 'string') {
+      fs.rmSync(path.join(loginDir, filename), { force: true })
+    }
   }
   if (data.customFtlFiles && typeof data.customFtlFiles === 'object') {
     for (const [filename, content] of Object.entries(data.customFtlFiles)) {

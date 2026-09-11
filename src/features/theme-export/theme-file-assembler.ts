@@ -86,6 +86,9 @@ export async function assembleThemeFiles(
   addText(files, `${metaInfPrefix}keycloak-themes.json`, generateKeycloakThemesJson(themeName))
   addText(files, `${metaInfPrefix}keycloak-theme-editor.json`, generateEditorMetadataJson(editorMetadata))
   addText(files, themeArchiveLoginPath(loginRoot, THEME_PROPERTIES_PATH), properties)
+  if (params.colorModeScript) {
+    addText(files, themeArchiveLoginResourcePath(loginRoot, 'js/theme-color-mode.js'), params.colorModeScript)
+  }
 
   if (templateFtl) {
     addText(files, themeArchiveLoginPath(loginRoot, THEME_TEMPLATE_FTL_PATH), templateFtl)

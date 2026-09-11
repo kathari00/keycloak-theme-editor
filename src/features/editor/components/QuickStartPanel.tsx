@@ -2,6 +2,9 @@ import { Alert, FormGroup, FormSelect, FormSelectOption, Stack, StackItem } from
 import SidebarPanel from '../../../components/SidebarPanel'
 import { useThemeConfig } from '../../presets/queries'
 import { editorActions } from '../actions'
+import { useFrameworkIdByThemeState, useLayoutIdByThemeState } from '../hooks/use-editor'
+import { DEFAULT_BOOTSTRAP_VARIANT_ID, DEFAULT_FRAMEWORK_ID } from '../lib/framework-bindings/types'
+import { DEFAULT_LAYOUT_ID } from '../lib/layouts/types'
 import {
   AssetsPanel,
   ColorSettingsPanel,
@@ -18,8 +21,19 @@ const sectionPanelStyle = {
 export default function QuickStartPanel() {
   const themeConfig = useThemeConfig()
   const settings = useQuickStartSettings()
+  const { bootstrapVariantIdByTheme, frameworkIdByTheme } = useFrameworkIdByThemeState()
+  const { layoutIdByTheme } = useLayoutIdByThemeState()
   const selectedTheme = themeConfig.themes.find(theme => theme.id === settings.selectedThemeId)
   const isImported = selectedTheme?.type === 'imported'
+  const supportsFrameworkBinding = Boolean(selectedTheme?.supportsFrameworkBinding)
+  const frameworkId = supportsFrameworkBinding
+    ? (frameworkIdByTheme[settings.selectedThemeId] ?? DEFAULT_FRAMEWORK_ID)
+    : DEFAULT_FRAMEWORK_ID
+  const bootstrapVariantId = bootstrapVariantIdByTheme[settings.selectedThemeId] ?? DEFAULT_BOOTSTRAP_VARIANT_ID
+  const supportsLayoutSelection = Boolean(selectedTheme?.supportsLayoutSelection)
+  const layoutId = supportsLayoutSelection
+    ? (layoutIdByTheme[settings.selectedThemeId] ?? DEFAULT_LAYOUT_ID)
+    : DEFAULT_LAYOUT_ID
 
   const handleThemeChange = (_event: React.FormEvent<HTMLSelectElement>, value: string) => {
     if (themeConfig.themes.some(t => t.id === value))
@@ -70,7 +84,6 @@ export default function QuickStartPanel() {
         <StackItem>
           <section style={sectionPanelStyle}>
             <ColorSettingsPanel
-              themes={themeConfig.themes}
               selectedThemeId={settings.selectedThemeId}
               effectivePrimaryColor={settings.effectivePrimaryColor}
               effectiveSecondaryColor={settings.effectiveSecondaryColor}
@@ -80,6 +93,10 @@ export default function QuickStartPanel() {
               effectiveCardShadow={settings.effectiveCardShadow}
               effectiveHeadingFontFamily={settings.effectiveHeadingFontFamily}
               fontOptions={settings.fontOptions}
+              frameworkId={frameworkId}
+              bootstrapVariantId={bootstrapVariantId}
+              supportsLayoutSelection={supportsLayoutSelection}
+              layoutId={layoutId}
             />
           </section>
         </StackItem>

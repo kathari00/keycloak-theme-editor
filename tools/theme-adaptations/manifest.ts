@@ -14,7 +14,7 @@ export const VENDOR_ADAPTED_THEMES: readonly VendorAdaptedTheme[] = [
 ]
 
 /** Fully hand-authored presets. Never read by sync or vendor-adaptation tooling. */
-export const HAND_AUTHORED_THEMES: readonly string[] = ['modern-card', 'horizontal-card']
+export const HAND_AUTHORED_THEMES: readonly string[] = ['custom']
 
 const overlap = VENDOR_ADAPTED_THEMES.map(t => t.id).filter(id => HAND_AUTHORED_THEMES.includes(id))
 if (overlap.length > 0) {

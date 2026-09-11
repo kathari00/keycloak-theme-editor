@@ -1,0 +1,673 @@
+/*
+ * Bootstrap 5.3 token binding.
+ *
+ * Bootstrap's compiled CSS bakes literal color values onto *component-level* custom properties
+ * (e.g. `.btn-primary`'s `--bs-btn-bg`) rather than referencing the global `--bs-primary` variable,
+ * so overriding `--bs-primary` alone would not retint buttons. Colors are therefore re-pointed at
+ * the component level, following the same pattern PatternFly binding already uses in
+ * `themes/v2/login/resources/css/styles.css` (`--pf-v5-c-button--m-primary--BackgroundColor: var(--quickstart-primary-color)`).
+ */
+
+:root {
+  --bs-primary: var(--quickstart-primary-color);
+  --bs-secondary: var(--quickstart-secondary-color);
+  /* "inherit" here is the app's "use the framework's own default" sentinel for an unset quick-start
+     font choice - falling back to the literal CSS keyword `inherit` would make body inherit from
+     <html>, which Bootstrap never sets a font-family on, so the browser's serif default shows
+     through instead of Bootstrap's own sans-serif stack. */
+  --bs-body-font-family: var(--quickstart-font-family, var(--bs-font-sans-serif));
+  --bs-border-radius: var(--quickstart-border-radius, 0.375rem);
+  --bs-border-radius-lg: var(--quickstart-border-radius, 0.5rem);
+  --bs-box-shadow: var(--quickstart-card-shadow, 0 0.5rem 1rem rgba(0, 0, 0, 0.15));
+  --kte-card-padding: clamp(1.75rem, 5vw, 3rem);
+}
+
+.btn-primary,
+.kcButtonPrimaryClass {
+  --bs-btn-bg: var(--quickstart-primary-color);
+  --bs-btn-border-color: var(--quickstart-primary-color);
+  --bs-btn-hover-bg: var(--quickstart-primary-color);
+  --bs-btn-hover-border-color: var(--quickstart-primary-color);
+  --bs-btn-active-bg: var(--quickstart-primary-color);
+  --bs-btn-active-border-color: var(--quickstart-primary-color);
+  --bs-btn-disabled-bg: var(--quickstart-primary-color);
+  --bs-btn-disabled-border-color: var(--quickstart-primary-color);
+  background-color: var(--quickstart-primary-color);
+  border-color: var(--quickstart-primary-color);
+  color: #fff !important;
+  background: var(--quickstart-primary-color) !important;
+  border: var(--bs-btn-border-width, 1px) solid var(--quickstart-primary-color) !important;
+}
+
+.kcButtonClass:not(.kcButtonPrimaryClass) {
+  appearance: none;
+  color: var(--bs-body-color) !important;
+  background: transparent !important;
+  border: var(--bs-btn-border-width, 1px) solid var(--bs-border-color) !important;
+}
+
+/* Prevent native input/button painting from overriding Bootstrap's swatch colors. */
+.btn {
+  appearance: none;
+  color: var(--bs-btn-color) !important;
+  background: var(--bs-btn-bg) !important;
+  border: var(--bs-btn-border-width) solid var(--bs-btn-border-color) !important;
+}
+
+/* Keycloak does not consistently add its block-button hook to the login submit. Keep the main
+   sign-in action aligned with the full-width passkey and social-provider actions without widening
+   primary buttons on multi-action pages such as Continue / Cancel confirmation forms. */
+#kc-form-login #kc-login {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.btn:hover,
+.btn:focus {
+  color: var(--bs-btn-hover-color) !important;
+  background: var(--bs-btn-hover-bg) !important;
+  border-color: var(--bs-btn-hover-border-color) !important;
+}
+
+.btn:active {
+  color: var(--bs-btn-active-color) !important;
+  background: var(--bs-btn-active-bg) !important;
+  border-color: var(--bs-btn-active-border-color) !important;
+}
+
+.btn:disabled,
+.btn.disabled {
+  color: var(--bs-btn-disabled-color) !important;
+  background: var(--bs-btn-disabled-bg) !important;
+  border-color: var(--bs-btn-disabled-border-color) !important;
+}
+
+.btn-secondary {
+  --bs-btn-bg: var(--quickstart-secondary-color);
+  --bs-btn-border-color: var(--quickstart-secondary-color);
+  --bs-btn-hover-bg: var(--quickstart-secondary-color);
+  --bs-btn-hover-border-color: var(--quickstart-secondary-color);
+  --bs-btn-active-bg: var(--quickstart-secondary-color);
+  --bs-btn-active-border-color: var(--quickstart-secondary-color);
+}
+
+/* Neutral authentication actions use Bootswatch's semantic secondary text color rather than its
+   raw secondary palette swatch. Some variants intentionally set that raw swatch to the card color
+   (Lux uses white), which would make social and passkey actions disappear. */
+.btn-outline-secondary,
+.kcFormSocialAccountListButtonClass,
+.kcFormPasswordVisibilityButtonClass {
+  --kte-secondary-action-color: var(--bs-secondary-color, var(--bs-body-color));
+  --bs-btn-color: var(--kte-secondary-action-color);
+  --bs-btn-border-color: var(--kte-secondary-action-color);
+  --bs-btn-hover-color: var(--bs-body-color);
+  --bs-btn-hover-bg: color-mix(in srgb, var(--kte-secondary-action-color) 15%, transparent);
+  --bs-btn-hover-border-color: var(--kte-secondary-action-color);
+  --bs-btn-active-color: var(--bs-body-color);
+  --bs-btn-active-bg: color-mix(in srgb, var(--kte-secondary-action-color) 22%, transparent);
+  --bs-btn-active-border-color: var(--kte-secondary-action-color);
+  --bs-btn-disabled-color: var(--kte-secondary-action-color);
+  --bs-btn-disabled-border-color: var(--kte-secondary-action-color);
+  color: var(--kte-secondary-action-color) !important;
+  background: transparent !important;
+  border: 1px solid var(--kte-secondary-action-color) !important;
+}
+
+.btn-outline-secondary:hover,
+.btn-outline-secondary:focus {
+  color: var(--bs-body-color);
+  background-color: color-mix(in srgb, var(--kte-secondary-action-color) 15%, transparent);
+  border-color: var(--kte-secondary-action-color);
+}
+
+.btn-outline-secondary:active {
+  color: var(--bs-body-color);
+  background-color: color-mix(in srgb, var(--kte-secondary-action-color) 22%, transparent);
+  border-color: var(--kte-secondary-action-color);
+}
+
+.form-control,
+.form-select {
+  border-radius: var(--quickstart-border-radius, 0.375rem);
+}
+
+/* v2 applies its kcInputClass hook to a control wrapper. Let Bootstrap own that outer boundary and
+   make the native input fill it instead of rendering as a second, smaller box inside the field. */
+.kcInputClass.form-control:has(> input) {
+  padding: 0;
+}
+
+.kcInputClass.form-control > input {
+  width: 100%;
+  min-height: calc(1.5em + 0.75rem + 2px);
+  padding: 0.375rem 0.75rem;
+  box-sizing: border-box;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  outline: 0;
+}
+
+/* Bootswatch's dark root variables do not consistently repaint controls: several variants bake
+   light input surfaces directly into `.form-control`, while Materia leaves a low-contrast
+   transparent control. Normalize only the dark surface; accents and focus colors remain those of
+   the selected variant. */
+html.kcDarkModeClass .form-control,
+html.kcDarkModeClass .form-select {
+  color: var(--bs-body-color);
+  background-color: var(--bs-body-bg);
+  border: 1px solid color-mix(
+    in srgb,
+    var(--bs-body-color) 55%,
+    var(--bs-body-bg)
+  );
+}
+
+html.kcDarkModeClass .form-control::placeholder {
+  color: var(--bs-secondary-color);
+  opacity: 1;
+}
+
+html.kcDarkModeClass .form-control:focus,
+html.kcDarkModeClass .form-select:focus {
+  color: var(--bs-body-color);
+  background-color: var(--bs-body-bg);
+  border-color: var(--quickstart-primary-color);
+}
+
+/* Morph paints the input-group wrapper with a fixed light surface. That surface is exposed behind
+   the transparent password toggle in dark mode, even though both actual controls are dark. */
+html.kcDarkModeClass .kcInputGroup.input-group {
+  background-color: transparent;
+}
+
+html.kcDarkModeClass .btn-outline-secondary,
+html.kcDarkModeClass .kcFormSocialAccountListButtonClass,
+html.kcDarkModeClass .kcFormPasswordVisibilityButtonClass {
+  --bs-btn-color: var(--bs-body-color);
+  --bs-btn-border-color: color-mix(in srgb, var(--bs-body-color) 55%, var(--bs-body-bg));
+  --bs-btn-hover-color: var(--bs-body-color);
+  --bs-btn-hover-bg: color-mix(in srgb, var(--bs-body-color) 15%, transparent);
+  --bs-btn-hover-border-color: var(--bs-body-color);
+  --bs-btn-active-color: var(--bs-body-color);
+  --bs-btn-active-bg: color-mix(in srgb, var(--bs-body-color) 22%, transparent);
+  --bs-btn-active-border-color: var(--bs-body-color);
+  color: var(--bs-body-color) !important;
+  background: transparent !important;
+  border: 1px solid var(--bs-btn-border-color) !important;
+}
+
+.card {
+  box-shadow: var(--quickstart-card-shadow, none);
+}
+
+a {
+  color: var(--quickstart-primary-color);
+}
+
+h1, h2, h3, h4, h5, h6,
+#kc-header-wrapper,
+#kc-realm-name,
+#kc-client-name,
+.kcLoginMainTitle {
+  font-family: var(--quickstart-heading-font-family);
+}
+
+/*
+ * Page shell, modeled on Bootstrap's own official "sign-in" example
+ * (https://getbootstrap.com/docs/5.3/examples/sign-in/) — a plain centered card, not a
+ * reimplementation of the preset's own design. This exists because a framework binding replaces
+ * the preset's own `styles.css` (which normally supplies all page layout, not just "look"), so
+ * without it the login form would render as an unstyled stack rather than Bootstrap's familiar
+ * centered auth-card layout. Targets Keycloak's generic `kcLoginContainer`/`kcLoginMain` wrapper
+ * classes, present on both framework-binding-capable presets (base, custom).
+ */
+body,
+body#keycloak-bg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+/* Quick Start background color/image - mirrors the native preset's own page-background rule,
+   since Bootstrap's own body background token doesn't know about this app's quick-start state. */
+html:not(.pf-v5-theme-dark):not(.kcDarkModeClass) body,
+html:not(.pf-v5-theme-dark):not(.kcDarkModeClass) body#keycloak-bg {
+  background-color: var(--quickstart-bg-color);
+  background-image: var(--quickstart-bg-image);
+}
+
+html.pf-v5-theme-dark body,
+html.pf-v5-theme-dark body#keycloak-bg,
+html.kcDarkModeClass body,
+html.kcDarkModeClass body#keycloak-bg {
+  background-color: var(--quickstart-bg-color-dark);
+  background-image: var(--quickstart-bg-image);
+}
+
+.kcLoginContainer,
+.kcLoginClass:not(.kcLogin) {
+  width: 100%;
+  max-width: 600px;
+  padding: 1rem;
+}
+
+/* Keep the card responsive and content-driven. Generous, consistent inset spacing is what gives
+   the panel a stable visual weight without forcing short and long authentication pages into the
+   same dimensions or introducing an inner scrollbar. */
+.kcFormCardClass {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  max-height: none;
+  padding: var(--kte-card-padding) !important;
+  overflow: visible;
+}
+
+.kcLoginClass:not(.kcLogin) > #kc-header {
+  margin-bottom: 0.75rem;
+  text-align: center;
+}
+
+#kc-header-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.kcLoginMain {
+  padding: var(--kte-card-padding) !important;
+  background-color: var(--bs-body-bg);
+  border-radius: var(--quickstart-border-radius, 0.375rem);
+  box-shadow: var(--quickstart-card-shadow, 0 0.5rem 1rem rgba(0, 0, 0, 0.15));
+}
+
+.kcLoginMainHeader {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.kcFormCardClass > .kcFormHeaderClass {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.kcFormCardClass > .kcFormHeaderClass > #kc-page-title {
+  order: 1;
+}
+
+.kcFormCardClass > .kcFormHeaderClass > #kc-header {
+  order: 2;
+}
+
+/* In the normal card layout, language selection is a compact utility beside the page title.
+   Keycloak's presets expose it through three different DOM shapes, so cover each one here; the
+   horizontal layout stylesheet later relocates these same elements below its wider panel. */
+.kcFormHeaderClass:has(> .kcLocaleMainClass),
+.kcLoginMainHeader:has(> .kcLoginMainHeaderUtilities) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.75rem;
+  text-align: left;
+}
+
+.kcFormHeaderClass > .kcLocaleMainClass,
+.kcLoginMainHeader > .kcLoginMainHeaderUtilities {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.kcFormHeaderClass > #kc-page-title,
+.kcLoginMainHeader > #kc-page-title {
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
+}
+
+/* Custom's current generated snapshots still contain the selector in the footer. Visually place
+   that fallback beside the heading until those snapshots are regenerated. */
+.kcFormCardClass:has(.kc-footer-language) {
+  position: relative;
+}
+
+.kcFormCardClass:has(.kc-footer-language) .kcLoginMainHeader {
+  padding-right: 10rem;
+  text-align: left;
+}
+
+.kcFormCardClass .kc-footer-language {
+  position: absolute;
+  top: var(--kte-card-padding);
+  right: var(--kte-card-padding);
+  z-index: 20;
+}
+
+.kcLoginMainHeaderUtilities > .kcInputClass {
+  display: block;
+  width: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.kcLoginMainHeaderUtilities .kcFormControlUtilClass {
+  display: none;
+}
+
+#login-select-toggle {
+  min-width: 8rem;
+  padding: 0.375rem 2.25rem 0.375rem 0.75rem;
+  border: 1px solid var(--bs-border-color, #dee2e6);
+  border-radius: var(--bs-border-radius, 0.375rem);
+  background-color: var(--bs-body-bg, #fff);
+  color: var(--bs-body-color, #212529);
+}
+
+input[type='radio'][name='selectedCredentialId'] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+label.kcLoginOTPListClass {
+  display: block;
+  margin-bottom: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius);
+  cursor: pointer;
+}
+
+input[type='radio'][name='selectedCredentialId']:checked + label.kcLoginOTPListClass {
+  color: var(--quickstart-primary-color);
+  border-color: var(--quickstart-primary-color);
+  background-color: color-mix(in srgb, var(--quickstart-primary-color) 10%, transparent);
+}
+
+input[type='radio'][name='selectedCredentialId']:focus-visible + label.kcLoginOTPListClass {
+  outline: 0;
+  box-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--quickstart-primary-color) 25%, transparent);
+}
+
+/* Some source themes globally turn lists into unindented flex columns. Restore Bootstrap's plain
+   content-list rhythm without touching menus, validation, social, or authenticator controls. */
+#kc-content :is(ul, ol):not(.kcLocaleListClass, .kcInputErrorMessageClass, .kcFormSocialAccountListClass, .kcSelectAuthListClass) {
+  display: block;
+  margin: 0 0 1rem;
+  padding-inline-start: 2rem;
+  list-style-position: outside;
+}
+
+#kc-content ul:not(.kcLocaleListClass, .kcInputErrorMessageClass, .kcFormSocialAccountListClass, .kcSelectAuthListClass) {
+  list-style-type: disc;
+}
+
+#kc-content ul:not(.kcLocaleListClass, .kcInputErrorMessageClass, .kcFormSocialAccountListClass, .kcSelectAuthListClass) > li::marker {
+  content: '\2022  ';
+  font-size: 1.15em;
+}
+
+#kc-content :is(ul, ol):not(.kcLocaleListClass, .kcInputErrorMessageClass, .kcFormSocialAccountListClass, .kcSelectAuthListClass) > li + li {
+  margin-top: 0.25rem;
+}
+
+#printRecoveryCodes,
+#downloadRecoveryCodes,
+#copyRecoveryCodes {
+  appearance: none;
+  padding: 0.375rem 0.5rem;
+  border: 0;
+  border-radius: var(--bs-border-radius);
+  background: transparent;
+  color: var(--quickstart-primary-color);
+  text-decoration: underline;
+}
+
+#printRecoveryCodes:hover,
+#downloadRecoveryCodes:hover,
+#copyRecoveryCodes:hover {
+  background-color: color-mix(in srgb, var(--quickstart-primary-color) 10%, transparent);
+}
+
+.kcAlertClass.kcError {
+  --bs-alert-color: var(--bs-danger-text-emphasis);
+  --bs-alert-bg: var(--bs-danger-bg-subtle);
+  --bs-alert-border-color: var(--bs-danger-border-subtle);
+}
+
+.kcAlertClass.kcWarning {
+  --bs-alert-color: var(--bs-warning-text-emphasis);
+  --bs-alert-bg: var(--bs-warning-bg-subtle);
+  --bs-alert-border-color: var(--bs-warning-border-subtle);
+}
+
+.kcAlertClass.kcSuccess {
+  --bs-alert-color: var(--bs-success-text-emphasis);
+  --bs-alert-bg: var(--bs-success-bg-subtle);
+  --bs-alert-border-color: var(--bs-success-border-subtle);
+}
+
+/* The configurable info message is a separate Keycloak placeholder. Some page templates append
+   it after the form, and older snapshots do not carry Bootstrap's alert classes. Target the stable
+   id so it remains a proper, theme-aware alert and always leads the page content. */
+#kc-content-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+#kc-info-message[data-kc-state='info-message'] {
+  order: -1;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  width: 100%;
+  margin: 0 0 1rem;
+  padding: var(--bs-alert-padding-y, 0.75rem) var(--bs-alert-padding-x, 1rem);
+  box-sizing: border-box;
+  color: var(--bs-info-text-emphasis, #055160);
+  background-color: var(--bs-info-bg-subtle, #cff4fc);
+  border: 1px solid var(--bs-info-border-subtle, #9eeaf9);
+  border-radius: var(--bs-alert-border-radius, var(--bs-border-radius, 0.375rem));
+}
+
+#kc-info-message[data-kc-state='info-message'] .kcAlertIconClass {
+  flex: 0 0 auto;
+  color: currentColor;
+  line-height: 1.5;
+}
+
+#kc-info-message[data-kc-state='info-message'] .kcAlertTitleClass,
+#kc-info-message[data-kc-state='info-message'] .kc-feedback-text {
+  min-width: 0;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  line-height: 1.5;
+}
+
+/*
+ * Keycloak's real login.ftl renders the "remember me" checkbox with a literal, pre-Bootstrap-5
+ * `.checkbox` wrapper class — it's not driven by a `kc*Class` theme.properties hook at all, so
+ * the class-overlay mechanism (which only rewrites elements carrying one of those hooks) can't
+ * reach it. Style the legacy structure directly instead.
+ */
+.checkbox {
+  margin: 0.5rem 0 1rem;
+}
+
+.checkbox label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: normal;
+  cursor: pointer;
+}
+
+.checkbox input[type='checkbox'] {
+  width: 1em;
+  height: 1em;
+  margin: 0;
+  accent-color: var(--quickstart-primary-color);
+}
+
+/* Bootstrap ships no icon font. Use a monochrome mask rather than an emoji fallback, which varies
+   by operating system and can render as a colored, misaligned pictograph inside the control. */
+.kcFormPasswordVisibilityButtonClass {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.75rem;
+}
+
+.kcFormPasswordVisibilityIconShow,
+.kcFormPasswordVisibilityIconHide {
+  display: block;
+  width: 1.125rem;
+  height: 1.125rem;
+  color: currentColor;
+}
+
+.kcFormPasswordVisibilityIconShow::before,
+.kcFormPasswordVisibilityIconHide::before {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 100%;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.kcFormPasswordVisibilityIconShow::before {
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E");
+}
+
+.kcFormPasswordVisibilityIconHide::before {
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 3l18 18M10.6 5.2A10.8 10.8 0 0 1 12 5c6.5 0 10 7 10 7a15 15 0 0 1-2.1 3.1M6.6 6.6C3.6 8.5 2 12 2 12s3.5 7 10 7c1.8 0 3.3-.5 4.6-1.2M9.9 9.9a3 3 0 0 0 4.2 4.2'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 3l18 18M10.6 5.2A10.8 10.8 0 0 1 12 5c6.5 0 10 7 10 7a15 15 0 0 1-2.1 3.1M6.6 6.6C3.6 8.5 2 12 2 12s3.5 7 10 7c1.8 0 3.3-.5 4.6-1.2M9.9 9.9a3 3 0 0 0 4.2 4.2'/%3E%3C/svg%3E");
+}
+
+/* PatternFly normally sizes provider artwork in its own stylesheet. When Bootstrap replaces that
+   stylesheet, keep logos at icon scale so they cannot inflate buttons or the panel itself. */
+.kcFormSocialAccountListButtonClass img,
+.kcFormSocialAccountListButtonClass svg {
+  flex: 0 0 auto;
+  width: 1.25rem;
+  height: 1.25rem;
+  object-fit: contain;
+}
+
+/* Presets disagree on whether registration belongs before or after social providers. Treat it as
+   the final account-creation affordance everywhere and give the prompt/link one deliberate row. */
+#kc-info:has(#kc-registration) {
+  order: 10;
+  width: 100%;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--bs-border-color, #dee2e6);
+  text-align: center;
+}
+
+#kc-registration > span {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+#kc-registration a {
+  font-weight: 600;
+}
+
+/*
+ * The locale (language) dropdown's collapsed-by-default state is normally handled by the preset's
+ * own suppressed `styles.css` — Keycloak's client-side script only toggles `aria-expanded` on the
+ * trigger button, it doesn't move the list in/out of the DOM, so without that CSS the language
+ * list renders permanently open. Hide it by default and reveal it only when actually expanded.
+ */
+.kcLocaleDropDownClass {
+  position: relative;
+}
+
+.kcLocaleDropDownClass > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 8rem;
+  justify-content: space-between;
+  position: relative;
+  padding: 0.375rem 2.25rem 0.375rem 0.75rem;
+  border: 1px solid var(--bs-border-color, #dee2e6);
+  border-radius: var(--bs-border-radius, 0.375rem);
+  background-color: var(--bs-body-bg, #fff);
+  color: var(--bs-body-color, #212529);
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.kcLocaleDropDownClass > button::before {
+  content: attr(aria-label);
+  text-transform: capitalize;
+}
+
+.kcLocaleDropDownClass > button::after {
+  content: '';
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: translateY(-70%) rotate(45deg);
+}
+
+.kcLocaleListClass {
+  display: none;
+  position: absolute;
+  z-index: 10;
+  min-width: 8rem;
+  margin: 0.25rem 0 0;
+  padding: 0.25rem 0;
+  list-style: none;
+  background-color: var(--bs-body-bg);
+  border: 1px solid var(--bs-border-color, #dee2e6);
+  border-radius: var(--quickstart-border-radius, 0.375rem);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  max-height: min(20rem, 50vh);
+  overflow-y: auto;
+}
+
+.kcLocaleDropDownClass > button[aria-expanded='true'] + .kcLocaleListClass {
+  display: block;
+}
+
+.kcLocaleItemClass {
+  display: block;
+  padding: 0.375rem 1rem;
+  color: var(--bs-body-color);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.kcLocaleItemClass:hover,
+.kcLocaleItemClass:focus {
+  color: var(--bs-body-color);
+  background-color: var(--bs-tertiary-bg);
+}
+
+.kcLocaleDropDownClass > button:focus-visible {
+  outline: 0;
+  box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+}

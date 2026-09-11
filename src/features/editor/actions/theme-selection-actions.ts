@@ -204,14 +204,15 @@ export const themeSelectionActions = {
     syncDefaultAssetsForTheme(themeConfig, currentThemeId)
   },
 
-  applyThemeSelection: async (value: string) => {
+  /** Resolves `true` once applied, `false` if a later call superseded this one first. */
+  applyThemeSelection: async (value: string): Promise<boolean> => {
     applyThemeSelectionAbortController?.abort()
     const controller = new AbortController()
     applyThemeSelectionAbortController = controller
 
     const themeConfig = await getThemeConfigCached()
     if (controller.signal.aborted) {
-      return
+      return false
     }
 
     const themeId = resolveThemeIdFromConfig(themeConfig, value)
@@ -221,7 +222,7 @@ export const themeSelectionActions = {
 
     const { quickStartDefaults, stylesCss, stylesCssFiles } = await getThemeCssStructuredCached(themeId)
     if (controller.signal.aborted) {
-      return
+      return false
     }
 
     themeSelectionActions.applyThemeCssData({
@@ -237,5 +238,6 @@ export const themeSelectionActions = {
     }))
 
     syncDefaultAssetsForTheme(themeConfig, themeId)
+    return true
   },
 }

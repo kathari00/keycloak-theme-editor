@@ -1,7 +1,12 @@
+import type { FrameworkBinding } from '../../editor/lib/framework-bindings/types'
+import type { LayoutId } from '../../editor/lib/layouts/types'
 import type { ThemeDocument } from '../../theme-document'
 import { Bullseye, Spinner } from '@patternfly/react-core'
 import { useEffect, useMemo, useState } from 'react'
 import { useDarkModeState, usePreviewState } from '../../editor/hooks/use-editor'
+import { frameworkCustomCssPath } from '../../editor/lib/css-files'
+import { useFrameworkBinding } from '../../editor/lib/framework-bindings/use-framework-binding'
+import { getCachedLayoutBinding, useLayoutBindingsReady } from '../../editor/lib/layouts/registry'
 import { getThemePreviewStylesPath } from '../../presets/theme-paths'
 import { themeDocumentToPreviewCss, useThemeDocument } from '../../theme-document'
 import patternflyV5PreviewStylesheetUrl from '../assets/patternfly-v5-preview.css?url'
@@ -10,6 +15,7 @@ import { usePreviewLocalePages } from '../hooks/usePreviewLocalePages'
 import { usePreviewMessages } from '../hooks/usePreviewMessages'
 import { syncPreviewDarkModeClasses } from '../lib/dark-mode-classes'
 import { getEventElement } from '../lib/event-target-utils'
+import { applyFrameworkClassOverlay, setThemeDesignStylesheetDisabled } from '../lib/framework-class-overlay'
 import { applyPreviewMessageOverrides } from '../lib/preview-message-catalog'
 import { applyQuickStartTemplateContent } from '../lib/quickstart-template-content'
 import { sanitizePreviewHtml } from '../lib/sanitize-preview-html'
@@ -21,6 +27,7 @@ interface PreviewStyleParams {
   doc: Document
   themeStylesPath: string
   stylesCss: string
+  frameworkOverridesCss: string
   quickStartBaseCss: string
   googleFontUrls: string[]
   quickStartOverridesCss: string
@@ -29,6 +36,8 @@ interface PreviewStyleParams {
   appliedAssetsCss: string
   darkModeClasses?: readonly string[]
   isDarkMode: boolean
+  frameworkBinding: FrameworkBinding
+  layoutId: LayoutId
 }
 
 interface PreviewShellProps {
@@ -122,13 +131,18 @@ function applyPreviewStyles(params: PreviewStyleParams): void {
     doc,
     quickStartBaseCss,
     stylesCss,
+    frameworkOverridesCss,
     quickStartOverridesCss,
     uploadedFontsCss,
     uploadedImagesCss,
     appliedAssetsCss,
     darkModeClasses,
     isDarkMode,
+    frameworkBinding,
+    layoutId,
   } = params
+
+  const layoutBinding = getCachedLayoutBinding(layoutId)
 
   const styles = [
     ['preview-quick-start-base', quickStartBaseCss],
@@ -137,6 +151,10 @@ function applyPreviewStyles(params: PreviewStyleParams): void {
     ['preview-uploaded-fonts', uploadedFontsCss],
     ['preview-uploaded-images', uploadedImagesCss],
     ['preview-applied-assets', appliedAssetsCss],
+    ['preview-framework-css', frameworkBinding.frameworkCss],
+    ['preview-framework-binding', frameworkBinding.bindingCss],
+    ['preview-layout-css', layoutBinding.css],
+    ['preview-framework-overrides', frameworkOverridesCss],
     ['preview-selection-outline', '[data-preview-selected="true"] { outline: 2px solid #0b57d0 !important; outline-offset: 2px !important; }'],
   ] as const
 
@@ -144,6 +162,8 @@ function applyPreviewStyles(params: PreviewStyleParams): void {
     ensureStyle(doc, id, css)
   }
 
+  applyFrameworkClassOverlay(doc, frameworkBinding)
+  setThemeDesignStylesheetDisabled(doc, frameworkBinding.id !== 'native')
   syncPreviewDarkModeClasses(doc, darkModeClasses, isDarkMode)
 }
 
@@ -180,10 +200,12 @@ function isLegalInfoLink(anchor: HTMLAnchorElement): boolean {
 }
 
 export function PreviewShell({ onHorizontalSwipe }: PreviewShellProps = {}) {
+  useLayoutBindingsReady()
   const { activeVariantId, activePageId, activeStateId, selectedNodeId, previewReady, iframeRef, setPreviewReady, selectNode } = usePreviewRuntime()
   const { themeDocument, resolvedThemeId, resolvedTheme, isPresetTheme } = useThemeDocument()
   const { isDarkMode } = useDarkModeState()
   const { deviceId, previewLocaleTag } = usePreviewState()
+  const frameworkBinding = useFrameworkBinding(themeDocument.frameworkId, themeDocument.bootstrapVariantId)
   const [frameLoadVersion, setFrameLoadVersion] = useState(0)
   const [loadedDocumentVersion, setLoadedDocumentVersion] = useState<string | null>(null)
   const activeLocaleTag = usePreviewLocalePages(previewLocaleTag)
@@ -210,6 +232,13 @@ export function PreviewShell({ onHorizontalSwipe }: PreviewShellProps = {}) {
     () => resolveLocalizedContent(themeDocument, activeLocaleTag),
     [themeDocument, activeLocaleTag],
   )
+  // A framework binding replaces the preset's own hand-authored design with the framework's
+  // own look rather than layering under it, so skip the theme's own stylesheet once active.
+  const effectiveStylesCss = themeDocument.frameworkId === 'native' ? themeDocument.stylesCss : ''
+  const customCssPath = frameworkCustomCssPath(themeDocument.frameworkId)
+  const frameworkOverridesCss = customCssPath
+    ? themeDocument.stylesCssFiles[customCssPath] ?? ''
+    : ''
 
   const editorStyleParams = useMemo(() => ({
     quickStartBaseCss: themeDocument.isPresetTheme ? themeDocument.quickStartCss : '',
@@ -218,7 +247,10 @@ export function PreviewShell({ onHorizontalSwipe }: PreviewShellProps = {}) {
     uploadedFontsCss: editorCss.uploadedFontsCss,
     uploadedImagesCss: editorCss.uploadedImagesCss,
     appliedAssetsCss: editorCss.appliedAssetsCss,
-  }), [themeDocument.isPresetTheme, themeDocument.quickStartCss, editorCss.googleFontUrls, editorCss.quickStartCss, editorCss.uploadedFontsCss, editorCss.uploadedImagesCss, editorCss.appliedAssetsCss])
+    frameworkBinding,
+    frameworkOverridesCss,
+    layoutId: themeDocument.layoutId,
+  }), [themeDocument.isPresetTheme, themeDocument.quickStartCss, frameworkBinding, frameworkOverridesCss, themeDocument.layoutId, editorCss.googleFontUrls, editorCss.quickStartCss, editorCss.uploadedFontsCss, editorCss.uploadedImagesCss, editorCss.appliedAssetsCss])
 
   const preparedSrcDoc = useMemo(
     () => preparePreviewSrcDoc(pageHtml, themeStylesPath),
@@ -243,7 +275,7 @@ export function PreviewShell({ onHorizontalSwipe }: PreviewShellProps = {}) {
     syncPreviewDocumentStyles({
       doc,
       themeStylesPath,
-      stylesCss: themeDocument.stylesCss,
+      stylesCss: effectiveStylesCss,
       ...editorStyleParams,
       darkModeClasses: resolvedTheme?.darkModeClasses,
       isDarkMode,
@@ -266,7 +298,7 @@ export function PreviewShell({ onHorizontalSwipe }: PreviewShellProps = {}) {
     syncPreviewDocumentStyles({
       doc,
       themeStylesPath,
-      stylesCss: themeDocument.stylesCss,
+      stylesCss: effectiveStylesCss,
       ...editorStyleParams,
       darkModeClasses: resolvedTheme?.darkModeClasses,
       isDarkMode,
@@ -284,7 +316,7 @@ export function PreviewShell({ onHorizontalSwipe }: PreviewShellProps = {}) {
         doRegisterLabel: messageOverrides.doRegister,
       })
     }
-  }, [editorStyleParams, frameLoadVersion, iframeRef, isDarkMode, isPresetTheme, localizedContent.dataProtectionLabel, localizedContent.imprintLabel, localizedContent.infoMessage, messageOverrides.doRegister, messageOverrides.noAccount, quickSettings.dataProtectionUrl, quickSettings.imprintUrl, quickSettings.showClientName, quickSettings.showRealmName, resolvedTheme?.darkModeClasses, themeDocument.stylesCss, themeStylesPath])
+  }, [editorStyleParams, effectiveStylesCss, frameLoadVersion, iframeRef, isDarkMode, isPresetTheme, localizedContent.dataProtectionLabel, localizedContent.imprintLabel, localizedContent.infoMessage, messageOverrides.doRegister, messageOverrides.noAccount, quickSettings.dataProtectionUrl, quickSettings.imprintUrl, quickSettings.showClientName, quickSettings.showRealmName, resolvedTheme?.darkModeClasses, themeStylesPath])
 
   useEffect(() => {
     const doc = iframeRef.current?.contentDocument
@@ -306,6 +338,15 @@ export function PreviewShell({ onHorizontalSwipe }: PreviewShellProps = {}) {
     let touchStart: { x: number, y: number } | null = null
     const onClick = (event: MouseEvent) => {
       const target = getEventElement(event.target)
+      const localeTrigger = target?.closest<HTMLButtonElement>('#kc-current-locale-link[aria-expanded]')
+      const expandedLocaleTrigger = doc.querySelector<HTMLButtonElement>('#kc-current-locale-link[aria-expanded="true"]')
+      if (localeTrigger) {
+        localeTrigger.setAttribute('aria-expanded', String(localeTrigger.getAttribute('aria-expanded') !== 'true'))
+        event.preventDefault()
+      }
+      else if (expandedLocaleTrigger && !target?.closest('.kcLocaleDropDownClass')) {
+        expandedLocaleTrigger.setAttribute('aria-expanded', 'false')
+      }
       const anchor = target?.closest('a[href]') as HTMLAnchorElement | null
       if (anchor) {
         const href = anchor.getAttribute('href')?.trim() || ''
@@ -319,6 +360,17 @@ export function PreviewShell({ onHorizontalSwipe }: PreviewShellProps = {}) {
         event.preventDefault()
       const hit = target?.closest('body *') as Element | null
       selectNode(hit ? createElementSelector(hit) : null)
+    }
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape')
+        return
+      const localeTrigger = doc.querySelector<HTMLButtonElement>('#kc-current-locale-link[aria-expanded="true"]')
+      if (!localeTrigger)
+        return
+      localeTrigger.setAttribute('aria-expanded', 'false')
+      localeTrigger.focus()
+      event.preventDefault()
     }
 
     const onSubmit = (event: Event) => event.preventDefault()
@@ -342,6 +394,7 @@ export function PreviewShell({ onHorizontalSwipe }: PreviewShellProps = {}) {
     }
 
     doc.addEventListener('click', onClick, true)
+    doc.addEventListener('keydown', onKeyDown, true)
     doc.addEventListener('submit', onSubmit, true)
     if (onHorizontalSwipe) {
       doc.addEventListener('touchstart', onTouchStart, { passive: true })
@@ -351,6 +404,7 @@ export function PreviewShell({ onHorizontalSwipe }: PreviewShellProps = {}) {
 
     return () => {
       doc.removeEventListener('click', onClick, true)
+      doc.removeEventListener('keydown', onKeyDown, true)
       doc.removeEventListener('submit', onSubmit, true)
       if (onHorizontalSwipe) {
         doc.removeEventListener('touchstart', onTouchStart)

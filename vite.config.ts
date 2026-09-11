@@ -31,6 +31,14 @@ export default defineConfig({
 
           if (!normalizedId.includes('node_modules'))
             return
+          // `?raw` framework styles are lazy imports. Let Rollup keep each variant in its own
+          // chunk instead of folding all Bootswatch CSS into the eagerly shared vendor chunk.
+          if (
+            normalizedId.includes('/node_modules/bootswatch/dist/')
+            || normalizedId.includes('/node_modules/bootstrap/dist/css/')
+          ) {
+            return
+          }
           if (
             normalizedId.includes('/node_modules/react/')
             || normalizedId.includes('/node_modules/react-dom/')

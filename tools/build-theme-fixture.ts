@@ -4,9 +4,9 @@ import fs from 'node:fs'
 import http from 'node:http'
 import path from 'node:path'
 import process from 'node:process'
+import { createServer } from 'vite'
 import { createThemeDocument } from '../src/features/theme-document/theme-document'
 import { buildJarBytes } from '../src/features/theme-export/jar-export-service'
-import { prepareThemeExportFiles } from '../src/features/theme-export/prepare-theme-export-files'
 
 const FIXTURE_LOCALES = ['de', 'ar']
 
@@ -75,7 +75,7 @@ function installRootRelativeFetchShim(origin: string): () => void {
 
 function buildFixtureThemeDocument() {
   return createThemeDocument({
-    themeId: 'modern-card',
+    themeId: 'custom',
     isPresetTheme: true,
     stylesCss: '',
     quickStartCss: '',
@@ -109,17 +109,48 @@ async function main() {
 
   const { origin, close } = await serveDirectory(publicDir)
   const restoreFetch = installRootRelativeFetchShim(origin)
+  // Use Vite's raw CSS loader, just like the editor, for Bootstrap/Bootswatch exports.
+  const vite = await createServer({ configFile: false, server: { middlewareMode: true }, appType: 'custom' })
 
   try {
+    const { prepareThemeExportFiles } = await vite.ssrLoadModule('/src/features/theme-export/prepare-theme-export-files.ts')
     const themeDocument = buildFixtureThemeDocument()
-    const exportFiles = await prepareThemeExportFiles({ themeDocument, themeName: 'modern-card' })
+    const exportFiles = await prepareThemeExportFiles({ themeDocument, themeName: 'custom' })
     const jarBytes = await buildJarBytes(exportFiles)
 
     fs.mkdirSync(path.dirname(outPath), { recursive: true })
     fs.writeFileSync(outPath, jarBytes)
     process.stdout.write(`Wrote theme fixture: ${outPath} (${jarBytes.byteLength} bytes)\n`)
+    const carbonDocument = createThemeDocument({
+      ...themeDocument,
+      themeId: 'base',
+      frameworkId: 'carbon',
+      layoutId: 'split',
+      stylesCssFiles: {},
+      uploadedAssets: [],
+      appliedAssets: {},
+    })
+    const carbonFiles = await prepareThemeExportFiles({ themeDocument: carbonDocument, themeName: 'carbon-split' })
+    fs.writeFileSync(path.join(path.dirname(outPath), 'carbon-split.jar'), await buildJarBytes(carbonFiles))
+    for (const themeId of ['base', 'custom', 'v2']) {
+      const bootstrapDocument = createThemeDocument({
+        ...themeDocument,
+        themeId,
+        frameworkId: 'bootstrap',
+        bootstrapVariantId: 'flatly',
+        stylesCssFiles: {
+          'css/bootstrap-custom.css': '.btn-primary { --bs-btn-bg: #123456; --bs-btn-hover-bg: #234567; }',
+        },
+        uploadedAssets: [],
+        appliedAssets: {},
+      })
+      const themeName = `bootstrap-${themeId}`
+      const files = await prepareThemeExportFiles({ themeDocument: bootstrapDocument, themeName })
+      fs.writeFileSync(path.join(path.dirname(outPath), `${themeName}.jar`), await buildJarBytes(files))
+    }
   }
   finally {
+    await vite.close()
     restoreFetch()
     await close()
   }

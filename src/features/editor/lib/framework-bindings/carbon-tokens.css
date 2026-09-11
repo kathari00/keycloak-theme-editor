@@ -1,0 +1,303 @@
+/* Carbon's native HTML bridge. Component CSS and White/Gray 100 tokens come from
+   @carbon/styles; selectors here adapt Keycloak's FreeMarker structure without a JS runtime. */
+:root, html.kcDarkModeClass {
+  --cds-button-primary: var(--quickstart-primary-color, #0f62fe);
+  --cds-button-primary-hover: color-mix(in srgb, var(--cds-button-primary) 88%, #000);
+  --cds-button-primary-active: color-mix(in srgb, var(--cds-button-primary) 72%, #000);
+  --cds-button-tertiary: var(--quickstart-secondary-color, #393939);
+  --cds-button-tertiary-hover: color-mix(in srgb, var(--cds-button-tertiary) 88%, #000);
+  --cds-button-tertiary-active: color-mix(in srgb, var(--cds-button-tertiary) 72%, #000);
+  --cds-link-primary: var(--quickstart-primary-color, #0f62fe);
+  --kte-surface: var(--cds-background);
+  --kte-text: var(--cds-text-primary);
+  --kte-border: var(--cds-border-subtle-01);
+  --kte-radius: var(--quickstart-border-radius, 0);
+}
+html.kcDarkModeClass {
+  --cds-link-primary: color-mix(in srgb, var(--quickstart-primary-color, #0f62fe) 65%, #fff);
+}
+
+html { background: var(--cds-layer-01); }
+body, body#keycloak-bg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: safe center;
+  min-height: 100vh;
+  margin: 0;
+  padding-block: 2rem;
+  color: var(--cds-text-primary);
+  background-color: var(--quickstart-bg-color, transparent);
+  background-image: var(--quickstart-bg-image, none);
+  background-size: cover;
+  background-position: center;
+  font-family: var(--quickstart-font-family, "IBM Plex Sans", sans-serif);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+h1, h2, h3, #kc-header-wrapper {
+  font-family: var(--quickstart-heading-font-family, "IBM Plex Sans", sans-serif);
+  font-weight: 400;
+}
+h1 { font-size: 1.75rem; line-height: 1.3; }
+h2 { font-size: 1.25rem; line-height: 1.4; margin-block: 1rem; }
+p { margin-block-end: 1rem; }
+a { color: var(--cds-link-primary); text-decoration: none; }
+a:hover { text-decoration: underline; }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 2px solid var(--cds-focus);
+  outline-offset: 2px;
+}
+
+.kcLoginClass {
+  width: min(100%, 36rem);
+  padding: 1rem;
+}
+.kcFormCardClass {
+  width: 100%;
+  padding: clamp(1.5rem, 4vw, 3rem);
+  background: var(--cds-background);
+  border: 1px solid var(--cds-border-subtle-01);
+  border-radius: var(--quickstart-border-radius, 0);
+  box-shadow: var(--quickstart-card-shadow, none);
+}
+#kc-header { margin-block-end: 1rem; }
+#kc-header-wrapper { display: flex; flex-direction: column; gap: 0.25rem; }
+#kc-realm-name { font-weight: 600; }
+#kc-client-name { color: var(--cds-text-secondary); }
+.kcFormHeaderClass { margin-block-end: 2rem; }
+.kcFormHeaderClass:has(.kcLocaleMainClass) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+#kc-page-title { order: -1; flex: 1 1 12rem; }
+#kc-content, #kc-content-wrapper { min-width: 0; }
+#kc-content-wrapper { display: flex; flex-direction: column; }
+
+.kcFormGroupClass { margin-block-end: 1.5rem; align-items: stretch; }
+.kcLabelClass, .kcFormLabelClass { display: block; margin-block-end: 0.5rem; }
+.kcLabelWrapperClass { display: flex; align-items: baseline; gap: 0.25rem; margin-block-end: 0.5rem; }
+.kcLabelWrapperClass .kcLabelClass { margin-block-end: 0; }
+.kcInputClass { font-family: inherit; border-radius: var(--quickstart-border-radius, 0); }
+/* Some flows render a native select/textarea with the shared input hook. */
+select.kcInputClass, textarea.kcInputClass { appearance: auto; padding: 0.75rem 1rem; }
+textarea.kcInputClass { height: auto; min-height: 6rem; }
+.kcInputGroup { display: flex; align-items: stretch; width: 100%; }
+.kcInputGroup > .kcInputClass, .kcInputGroupItemClass.kcFill { flex: 1; min-width: 0; }
+.kcInputGroup .kcInputClass { border-start-end-radius: 0; border-end-end-radius: 0; }
+.kcInputGroup .kcFormPasswordVisibilityButtonClass {
+  min-width: 3rem;
+  min-height: 2.5rem;
+  padding: 0.5rem;
+  justify-content: center;
+  color: var(--cds-icon-primary);
+  background: var(--cds-field-01);
+  border-bottom: 1px solid var(--cds-border-strong-01);
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
+}
+.kcInputClass[aria-invalid='true'] { outline: 2px solid var(--cds-support-error); outline-offset: -2px; }
+.kcInputErrorMessageClass {
+  display: block;
+  max-height: none;
+  overflow: visible;
+  color: var(--cds-text-error);
+  font-size: 0.75rem;
+  margin-block-start: 0.25rem;
+}
+.kcInputHelperTextClass, .kcFormHelperTextClass { color: var(--cds-text-secondary); font-size: 0.75rem; }
+.kcInputRequiredClass { color: var(--cds-text-error); }
+input[type='checkbox'], input[type='radio'] { accent-color: var(--cds-button-primary); margin-inline-end: 0.5rem; }
+.kcFormSettingClass { display: flex; flex-direction: row; flex-wrap: wrap; gap: 0.75rem; justify-content: space-between; }
+.kcCheckboxClass label { display: flex; align-items: center; }
+
+.cds--btn { font-family: inherit; border-radius: var(--quickstart-border-radius, 0); }
+.kcButtonBlockClass, #kc-login { width: 100%; max-width: none; }
+#kc-form-buttons, .kcFormActionGroupClass { display: flex; flex-wrap: wrap; gap: 1rem; margin-block-start: 1.5rem; }
+#kc-form-buttons > input { flex: 1; }
+.kcFormSocialAccountSectionClass { margin-block-start: 2rem; }
+.kcFormSocialAccountListClass { display: grid; gap: 0.75rem; list-style: none; padding: 0; }
+.kcFormSocialAccountListGridClass { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.kcFormSocialAccountListButtonClass {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: none;
+  padding: 0.75rem 1rem;
+  color: var(--cds-text-primary);
+  border-color: var(--cds-border-strong-01);
+}
+.kcFormSocialAccountListButtonClass svg { width: 1.25rem; height: 1.25rem; flex-shrink: 0; }
+.kcFormSocialAccountListButtonClass:hover { background: var(--cds-layer-hover-01); color: var(--cds-text-primary); }
+#kc-info { margin-block-start: 2rem; padding-block-start: 1rem; border-top: 1px solid var(--cds-border-subtle-01); }
+#kc-registration > span { display: inline-flex; flex-wrap: wrap; gap: 0.375rem; }
+.kc-footer-legal-links { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; margin-block-start: 1rem; }
+
+/* Not every alert on every page routes through the kcAlertClass hook - the "delete account" and
+   "recovery codes" warnings hardcode Bootstrap-3 (.alert) or PatternFly-4 (.pf-c-alert) markup
+   directly. Style every convention Keycloak actually ships so each one gets a themed box. */
+.kcAlertClass, .alert, .pf-v5-c-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  padding: 1rem;
+  margin-block-end: 1.5rem;
+  background: var(--cds-layer-01);
+  border-inline-start: 3px solid var(--cds-support-info);
+  color: var(--cds-text-primary);
+}
+.pf-c-alert {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 0.625rem;
+  row-gap: 0.25rem;
+  padding: 1rem;
+  margin-block-end: 1.5rem;
+  background: var(--cds-layer-01);
+  border-inline-start: 3px solid var(--cds-support-info);
+  color: var(--cds-text-primary);
+}
+.pf-c-alert__icon { grid-row: 1; align-self: start; }
+.pf-c-alert__title { grid-column: 2; margin: 0; font-weight: 600; }
+.pf-c-alert__description { grid-column: 2; }
+.pf-c-alert__description p:last-child { margin-block-end: 0; }
+
+.kcAlertClass.kcError, .kcAlertClass.alert-error, .kcAlertClass.pf-m-danger,
+.alert-danger, .pf-m-danger { border-color: var(--cds-support-error); }
+.kcAlertClass.kcSuccess, .kcAlertClass.alert-success, .kcAlertClass.pf-m-success,
+.alert-success, .pf-m-success { border-color: var(--cds-support-success); }
+.kcAlertClass.kcWarning, .kcAlertClass.alert-warning, .kcAlertClass.pf-m-warning,
+.alert-warning, .pf-m-warning { border-color: var(--cds-support-warning); }
+
+.kcAlertIconClass, .alert > .pficon { flex: 0 0 auto; color: currentColor; line-height: 1.5; }
+.kcAlertTitleClass { min-width: 0; margin: 0; color: inherit; font: inherit; font-weight: 600; line-height: 1.5; }
+/* The configurable info message is a separate Keycloak placeholder that some source themes
+   (e.g. the base theme) render without the kcAlertClass hook at all. Target the stable id
+   too so it stays a proper, themed alert box and always leads the page content. */
+#kc-info-message[data-kc-state='info-message'] {
+  order: -1;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  width: 100%;
+  margin: 0 0 1rem;
+  padding: 1rem;
+  box-sizing: border-box;
+  background: var(--cds-layer-01);
+  border-inline-start: 3px solid var(--cds-support-info);
+  color: var(--cds-text-primary);
+}
+#kc-info-message[data-kc-state='info-message'] .kcAlertIconClass {
+  flex: 0 0 auto;
+  color: currentColor;
+  line-height: 1.5;
+}
+#kc-info-message[data-kc-state='info-message'] .kcAlertTitleClass,
+#kc-info-message[data-kc-state='info-message'] .kc-feedback-text {
+  min-width: 0;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  line-height: 1.5;
+}
+.kcPanelClass, .kcLoginOTPListClass, .kcSelectAuthListItemClass {
+  display: block;
+  padding: 1rem;
+  margin-block-end: 0.75rem;
+  border: 1px solid var(--cds-border-subtle-01);
+  background: var(--cds-layer-01);
+  color: var(--cds-text-primary);
+}
+.kcSelectAuthListClass { list-style: none; padding: 0; }
+.kcSelectAuthListItemClass:hover { background: var(--cds-layer-hover-01); }
+input:checked + .kcLoginOTPListClass { outline: 2px solid var(--cds-focus); }
+input:focus-visible + .kcLoginOTPListClass { outline: 2px solid var(--cds-focus); outline-offset: 2px; }
+#kc-content ol, #kc-content ul:not(.kcFormSocialAccountListClass, .kcSelectAuthListClass, .kcInputErrorMessageClass) {
+  padding-inline-start: 1.5rem;
+  margin-block: 1rem;
+  list-style: revert;
+}
+#kc-content img { max-width: 100%; height: auto; }
+#kc-content pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+#printRecoveryCodes, #downloadRecoveryCodes, #copyRecoveryCodes {
+  font: inherit;
+  padding: 0.5rem;
+  background: transparent;
+  border: 0;
+  color: var(--cds-link-primary);
+  cursor: pointer;
+}
+
+/* Keep Keycloak's accessible locale menu and its existing focus/click behavior. */
+.kcLocaleDropDownClass { position: relative; }
+.kcLocaleDropDownClass > button {
+  padding: 0.5rem 0.75rem;
+  border: 0;
+  border-bottom: 1px solid var(--cds-border-strong-01);
+  color: var(--cds-text-primary);
+  background: var(--cds-field-01);
+  font: inherit;
+  cursor: pointer;
+}
+.kcLocaleListClass {
+  display: none;
+  position: absolute;
+  inset-inline-end: 0;
+  z-index: 30;
+  min-width: 10rem;
+  max-height: 20rem;
+  overflow: auto;
+  padding: 0;
+  list-style: none;
+  background: var(--cds-layer-01);
+  border: 1px solid var(--cds-border-subtle-01);
+  box-shadow: 0 2px 6px #0003;
+}
+.kcLocaleDropDownClass > button::before { content: attr(aria-label); }
+.kcLocaleDropDownClass > button[aria-expanded='true'] + .kcLocaleListClass { display: block; }
+.kcLocaleListClass a { display: block; padding: 0.75rem 1rem; color: var(--cds-text-primary); }
+.kcLocaleListClass a:hover { background: var(--cds-layer-hover-01); }
+@media (max-width: 480px) {
+  .kcFormSocialAccountListGridClass { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Native Keycloak icon hooks use inline masks rather than a remote icon font. */
+.kcFormPasswordVisibilityIconShow,
+.kcFormPasswordVisibilityIconHide {
+  display: block;
+  width: 1.125rem;
+  height: 1.125rem;
+  color: currentColor;
+}
+
+.kcFormPasswordVisibilityIconShow::before,
+.kcFormPasswordVisibilityIconHide::before {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 100%;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.kcFormPasswordVisibilityIconShow::before {
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E");
+}
+
+.kcFormPasswordVisibilityIconHide::before {
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 3l18 18M10.6 5.2A10.8 10.8 0 0 1 12 5c6.5 0 10 7 10 7a15 15 0 0 1-2.1 3.1M6.6 6.6C3.6 8.5 2 12 2 12s3.5 7 10 7c1.8 0 3.3-.5 4.6-1.2M9.9 9.9a3 3 0 0 0 4.2 4.2'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 3l18 18M10.6 5.2A10.8 10.8 0 0 1 12 5c6.5 0 10 7 10 7a15 15 0 0 1-2.1 3.1M6.6 6.6C3.6 8.5 2 12 2 12s3.5 7 10 7c1.8 0 3.3-.5 4.6-1.2M9.9 9.9a3 3 0 0 0 4.2 4.2'/%3E%3C/svg%3E");
+}

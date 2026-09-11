@@ -1,6 +1,19 @@
 import { THEME_QUICK_START_CSS_PATH, THEME_STYLES_CSS_PATH } from '../../keycloak-theme/paths'
 
 export const QUICK_START_CSS_PATH = THEME_QUICK_START_CSS_PATH
+export const BOOTSTRAP_CUSTOM_CSS_PATH = 'css/bootstrap-custom.css'
+export const CARBON_CUSTOM_CSS_PATH = 'css/carbon-custom.css'
+
+export function frameworkCustomCssPath(frameworkId: string): string | undefined {
+  if (frameworkId === 'bootstrap')
+    return BOOTSTRAP_CUSTOM_CSS_PATH
+  if (frameworkId === 'carbon')
+    return CARBON_CUSTOM_CSS_PATH
+}
+
+export function isFrameworkCustomCssFile(path: string): boolean {
+  return path === BOOTSTRAP_CUSTOM_CSS_PATH || path === CARBON_CUSTOM_CSS_PATH
+}
 
 /** Check if a file path is the editor-managed quick-start.css. */
 export function isQuickStartCssFile(filePath: string): boolean {
@@ -10,7 +23,7 @@ export function isQuickStartCssFile(filePath: string): boolean {
 /** Combine user CSS file contents (excluding quick-start.css) into a single string for preview. */
 export function combineCssFiles(files: Record<string, string>): string {
   return Object.entries(files)
-    .filter(([path]) => !isQuickStartCssFile(path))
+    .filter(([path]) => !isQuickStartCssFile(path) && !isFrameworkCustomCssFile(path))
     .map(([, css]) => css)
     .filter(Boolean)
     .join('\n\n')

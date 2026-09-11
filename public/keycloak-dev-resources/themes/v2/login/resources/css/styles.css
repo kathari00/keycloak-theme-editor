@@ -153,9 +153,9 @@ hr {
   color: var(--quickstart-text-primary-dark);
 }
 
-.kc-horizontal-card-subtitle,
-.kc-horizontal-card-client-name,
-.kc-horizontal-card-realm-name {
+.subtitle,
+#kc-client-name,
+#kc-realm-name {
   color: var(--quickstart-secondary-color);
 }
 

@@ -111,7 +111,7 @@ describe('importActions.applyImportedQuickSettingsForPreset', () => {
   })
 
   it('stores imported light and dark style fields by selected theme', () => {
-    presetStore.setState(s => ({ ...s, selectedThemeId: 'modern-card' }))
+    presetStore.setState(s => ({ ...s, selectedThemeId: 'custom' }))
     importActions.applyImportedQuickSettingsForPreset({
       light: {
         colorPresetId: 'custom',
@@ -135,7 +135,7 @@ describe('importActions.applyImportedQuickSettingsForPreset', () => {
       },
     })
 
-    const storedStyles = presetStore.getState().quickSettingsStylesByThemeMode[getThemeStorageKey('modern-card')]
+    const storedStyles = presetStore.getState().quickSettingsStylesByThemeMode[getThemeStorageKey('custom')]
     expect(storedStyles?.light?.colorPresetPrimaryColor).toBe('#123456')
     expect(storedStyles?.light?.colorPresetBgColor).toBe('#f0f4f9')
     expect(storedStyles?.light?.colorPresetBorderRadius).toBe('pill')

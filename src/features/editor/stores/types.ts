@@ -1,4 +1,6 @@
 import type { AppliedAssets, KeycloakPage, UploadedAsset } from '../../assets/types'
+import type { BootstrapVariantId, FrameworkId } from '../lib/framework-bindings/types'
+import type { LayoutId } from '../lib/layouts/types'
 import type { QuickSettingsMode } from '../lib/quick-settings'
 
 export interface AssetState {
@@ -67,6 +69,12 @@ export interface PresetState {
   selectedThemeId: string
   presetCss: string
   quickSettingsStylesByThemeMode: QuickSettingsStylesByThemeMode
+  /** Active framework-binding engine per theme (keyed like `quickSettingsStylesByThemeMode`). Absent entries default to 'native'. */
+  frameworkIdByTheme: Record<string, FrameworkId>
+  /** Selected Bootstrap/Bootswatch variant per theme. */
+  bootstrapVariantIdByTheme: Record<string, BootstrapVariantId>
+  /** Active layout per theme (keyed like `frameworkIdByTheme`). Absent entries default to 'card'. */
+  layoutIdByTheme: Record<string, LayoutId>
   colorPresetId: QuickSettingsStyle['colorPresetId']
   colorPresetPrimaryColor: QuickSettingsStyle['colorPresetPrimaryColor']
   colorPresetSecondaryColor: QuickSettingsStyle['colorPresetSecondaryColor']

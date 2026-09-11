@@ -27,6 +27,9 @@ export function createThemeDocument(input: CreateThemeDocumentInput): ThemeDocum
     quickSettingsStylesByMode: input.quickSettingsStylesByMode ?? {},
     enabledLocales: input.enabledLocales ?? [],
     quickStartContentByLocale: input.quickStartContentByLocale ?? {},
+    frameworkId: input.frameworkId ?? 'native',
+    bootstrapVariantId: input.bootstrapVariantId ?? 'default',
+    layoutId: input.layoutId ?? 'card',
     assets: {
       uploadedAssets: input.uploadedAssets,
       appliedAssets: input.appliedAssets,

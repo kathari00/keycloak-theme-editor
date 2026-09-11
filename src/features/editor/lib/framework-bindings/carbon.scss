@@ -1,0 +1,19 @@
+// Compiled by npm run generate:carbon. Keep the login bundle limited to native HTML components.
+@use '@carbon/styles/scss/config' with ($css--font-face: false);
+@use '@carbon/styles/scss/reset';
+@use '@carbon/styles/scss/type';
+@use '@carbon/styles/scss/layout';
+@use '@carbon/styles/scss/layer';
+@use '@carbon/styles/scss/themes';
+@use '@carbon/styles/scss/theme';
+@use '@carbon/styles/scss/components/button';
+@use '@carbon/styles/scss/components/text-input';
+@use '@carbon/styles/scss/components/form';
+
+:root {
+  @include theme.theme(themes.$white);
+}
+
+html.kcDarkModeClass {
+  @include theme.theme(themes.$g100);
+}

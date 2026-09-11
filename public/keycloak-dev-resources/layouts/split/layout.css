@@ -1,0 +1,253 @@
+/* Split screen: h1 heading, page title and native form on the left, image and branding on the right.
+   Flatten only structural wrappers; the original controls, labels and tab order stay intact. */
+:root {
+  --kte-split-surface: var(--kte-surface, var(--bs-body-bg, var(--quickstart-card-bg-color, #fff)));
+  --kte-split-text: var(--kte-text, var(--bs-body-color, var(--quickstart-text-primary-light, #151515)));
+  --kte-split-inset: clamp(1.5rem, 5vw, 5rem);
+}
+html.kcDarkModeClass {
+  --kte-split-surface: var(--kte-surface, var(--bs-body-bg, var(--quickstart-card-bg-color-dark, #161616)));
+  --kte-split-text: var(--kte-text, var(--bs-body-color, var(--quickstart-text-primary-dark, #f4f4f4)));
+}
+body, body#keycloak-bg {
+  display: block;
+  position: relative;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+.kcLogin {
+  display: contents;
+}
+.kcLoginClass:not(.kcLogin), .kcLoginContainer {
+  box-sizing: border-box;
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: 1fr auto auto auto 1fr;
+  grid-template-areas: none;
+  gap: 0;
+  width: 100%;
+  max-width: none;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  background: var(--kte-split-surface);
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.kcLoginClass:not(.kcLogin)::before, .kcLoginContainer::before {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline: 50% 0;
+  z-index: -1;
+  background-color: color-mix(in srgb, var(--quickstart-primary-color, #0f62fe) 45%, #161616);
+  background-image: var(--quickstart-bg-image, none);
+  background-position: center;
+  background-size: cover;
+}
+.kcLoginClass > .kcFormCardClass, .kcLoginContainer > .kcFormCardClass {
+  display: contents;
+}
+.kcFormCardClass > .kcFormHeaderClass {
+  grid-area: auto;
+  grid-column: 1;
+  grid-row: 3;
+  justify-self: center;
+  display: flex;
+  flex-direction: column;
+  position: static;
+  box-sizing: border-box;
+  width: calc(100% - 2 * var(--kte-split-inset));
+  max-width: 30rem;
+  min-width: 0;
+  padding: 0;
+  margin: 0 0 1.5rem;
+  border: 0;
+  color: var(--kte-split-text);
+  text-align: start;
+}
+.kcFormHeaderClass #kc-page-title {
+  order: -1;
+  flex: none;
+  width: auto;
+  margin: 0;
+  color: var(--kte-split-text);
+  font-size: clamp(1.75rem, 2vw, 2.25rem);
+  line-height: 1.2;
+  text-align: start;
+  overflow-wrap: anywhere;
+}
+/* Custom nests branding and title together. Expose both to the outer grid so the h1 heading
+   and the page title stack directly above the form, both on the form side. */
+.kcFormCardClass > .kcFormHeaderClass:has(> #kc-header) {
+  display: contents;
+}
+.kcFormHeaderClass:has(> #kc-header) > #kc-page-title {
+  grid-column: 1;
+  grid-row: 3;
+  justify-self: center;
+  width: calc(100% - 2 * var(--kte-split-inset));
+  max-width: 30rem;
+  margin: 0 0 1.5rem;
+}
+.kcLoginClass > #kc-header, .kcLoginContainer > #kc-header,
+.kcFormHeaderClass > #kc-header {
+  grid-area: auto;
+  grid-column: 1;
+  grid-row: 2;
+  justify-self: center;
+  min-width: 0;
+  width: calc(100% - 2 * var(--kte-split-inset));
+  max-width: 30rem;
+  padding: 0;
+  margin: var(--kte-split-inset) 0 0.5rem;
+  text-align: start;
+}
+#kc-header-wrapper, #kc-header-wrapper::before {
+  max-width: 100%;
+  margin-inline: 0;
+  text-align: start;
+}
+#kc-header-wrapper #kc-realm-name {
+  color: var(--kte-split-text);
+  font-size: clamp(1.5rem, 1.8vw, 2rem);
+  font-weight: 600;
+  line-height: 1.2;
+}
+#kc-header-wrapper #kc-client-name {
+  color: var(--kte-split-text);
+  font-size: 1rem;
+  line-height: 1.5;
+  opacity: 0.8;
+}
+.kcFormCardClass > #kc-content {
+  grid-area: auto;
+  grid-column: 1;
+  grid-row: 4;
+  display: flex;
+  align-items: safe center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 0;
+  height: auto;
+  padding: 0 var(--kte-split-inset) var(--kte-split-inset);
+  background: var(--kte-split-surface);
+  color: var(--kte-split-text);
+}
+#kc-content-wrapper {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 30rem;
+  min-width: 0;
+  min-height: 0;
+  height: auto;
+}
+/* Locale controls stay in the branding panel, outside the form's reading order. */
+.kcFormCardClass .kcLocaleMainClass,
+.kcFormCardClass .kcLoginMainHeaderUtilities,
+.kcFormCardClass .kc-footer-language {
+  position: absolute;
+  top: 1.5rem;
+  inset-inline-start: calc(50% + var(--kte-split-inset));
+  inset-inline-end: auto;
+  width: auto;
+  z-index: 20;
+}
+.kcLocaleDropDownClass { position: relative; }
+.kcLocaleDropDownClass > button, #login-select-toggle {
+  min-width: 8rem;
+  min-height: 2.5rem;
+  padding: 0.5rem 0.75rem;
+  font: inherit;
+  color: var(--kte-split-text);
+  background: var(--kte-split-surface);
+  border: 1px solid var(--kte-border, #8d8d8d);
+  border-radius: var(--quickstart-border-radius, 0);
+}
+.kcLocaleDropDownClass > button::before { content: attr(aria-label); }
+.kcLocaleListClass {
+  display: none;
+  position: absolute;
+  z-index: 30;
+  min-width: 10rem;
+  max-height: 50vh;
+  overflow: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--kte-split-surface);
+}
+.kcLocaleDropDownClass > button[aria-expanded='true'] + .kcLocaleListClass { display: block; }
+.kcLocaleListClass a { display: block; padding: 0.5rem 1rem; color: var(--kte-split-text); }
+.kcLoginMainHeaderUtilities > .kcInputClass {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.kcLoginMainHeaderUtilities > .kcInputClass::before,
+.kcLoginMainHeaderUtilities > .kcInputClass::after,
+.kcLoginMainHeaderUtilities .kcFormControlUtilClass { display: none; }
+.kcFormCardClass .kc-footer-legal-links {
+  position: static;
+  width: auto;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+  margin-block-start: 1.5rem;
+}
+body > .kc-footer-legal-links {
+  position: absolute;
+  inset-inline-start: calc(50% + var(--kte-split-inset));
+  inset-inline-end: auto;
+  bottom: 1.5rem;
+  max-width: calc(50% - 2 * var(--kte-split-inset));
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 0;
+}
+body > .kc-footer-legal-links a { color: #fff; }
+
+@media (max-width: 900px) {
+  .kcLoginClass:not(.kcLogin), .kcLoginContainer {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 0 auto auto auto;
+  }
+  .kcLoginClass:not(.kcLogin)::before, .kcLoginContainer::before { display: none; }
+  .kcFormCardClass > .kcFormHeaderClass,
+  .kcFormHeaderClass:has(> #kc-header) > #kc-page-title,
+  .kcFormCardClass > #kc-content,
+  .kcLoginClass > #kc-header, .kcLoginContainer > #kc-header,
+  .kcFormHeaderClass > #kc-header {
+    grid-column: 1;
+  }
+  .kcLoginClass > #kc-header, .kcLoginContainer > #kc-header,
+  .kcFormHeaderClass > #kc-header {
+    margin-top: 6rem;
+  }
+  .kcFormCardClass > .kcFormHeaderClass,
+  .kcFormHeaderClass:has(> #kc-header) > #kc-page-title {
+    margin-top: 0;
+  }
+  .kcFormCardClass .kcLocaleMainClass,
+  .kcFormCardClass .kcLoginMainHeaderUtilities,
+  .kcFormCardClass .kc-footer-language {
+    inset-inline-start: var(--kte-split-inset);
+    inset-inline-end: auto;
+  }
+  body > .kc-footer-legal-links {
+    position: static;
+    max-width: none;
+    padding: 1rem var(--kte-split-inset);
+    background: var(--kte-split-surface);
+    justify-content: center;
+  }
+  body > .kc-footer-legal-links a { color: var(--kte-split-text); }
+}

@@ -30,12 +30,12 @@ vi.mock('../../presets/queries', async (importOriginal) => {
             },
           ],
         },
-        { id: 'modern-card', defaultAssets: [], contentDefaults: { showRealmName: true } },
-        { id: 'horizontal-card', defaultAssets: [] },
+        { id: 'custom', defaultAssets: [], contentDefaults: { showRealmName: true } },
+        { id: 'theme-b', defaultAssets: [] },
       ],
     })),
     getThemeCssStructuredCached: vi.fn(async (themeId: string) => {
-      if (themeId === 'horizontal-card') {
+      if (themeId === 'theme-b') {
         return {
           quickStartDefaults: `
 :root {
@@ -140,17 +140,17 @@ describe('preset background sync on preset selection', () => {
   })
 
   it('disables default background when selecting a non-v2 theme', async () => {
-    await presetActions.applyThemeSelection('horizontal-card')
+    await presetActions.applyThemeSelection('theme-b')
 
-    expect(presetStore.getState().selectedThemeId).toBe('horizontal-card')
+    expect(presetStore.getState().selectedThemeId).toBe('theme-b')
     expect(assetStore.getState().appliedAssets.background).toBeUndefined()
     expect(assetStore.getState().appliedAssets.logo).toBeUndefined()
   })
 
-  it('loads horizontal-card dark defaults from quick-start.css', async () => {
+  it('loads theme-b dark defaults from quick-start.css', async () => {
     coreStore.setState(state => ({ ...state, isDarkMode: true }))
 
-    await presetActions.applyThemeSelection('horizontal-card')
+    await presetActions.applyThemeSelection('theme-b')
 
     expect(presetStore.getState().colorPresetPrimaryColor).toBe('#a8c7fa')
     expect(assetStore.getState().appliedAssets.background).toBeUndefined()
@@ -167,7 +167,7 @@ describe('preset background sync on preset selection', () => {
       showRealmName: false,
     }))
 
-    await presetActions.applyThemeSelection('horizontal-card')
+    await presetActions.applyThemeSelection('theme-b')
 
     expect(presetStore.getState().colorPresetFontFamily).toBe('custom')
     expect(presetStore.getState().colorPresetCardShadow).toBe('none')
@@ -176,10 +176,10 @@ describe('preset background sync on preset selection', () => {
     expect(presetStore.getState().showRealmName).toBe(false)
   })
 
-  it('applies modern-card content defaults while content settings are untouched', async () => {
-    await presetActions.applyThemeSelection('modern-card')
+  it('applies custom content defaults while content settings are untouched', async () => {
+    await presetActions.applyThemeSelection('custom')
 
-    expect(presetStore.getState().selectedThemeId).toBe('modern-card')
+    expect(presetStore.getState().selectedThemeId).toBe('custom')
     expect(presetStore.getState().showRealmName).toBe(true)
   })
 
@@ -189,7 +189,7 @@ describe('preset background sync on preset selection', () => {
       infoMessage: 'custom-info',
     }))
 
-    await presetActions.applyThemeSelection('modern-card')
+    await presetActions.applyThemeSelection('custom')
 
     expect(presetStore.getState().showRealmName).toBe(true)
     expect(presetStore.getState().infoMessage).toBe('custom-info')
@@ -244,7 +244,7 @@ describe('preset background sync on preset selection', () => {
   it('does not overwrite global realm visibility when switching back to v2', async () => {
     presetStore.setState(state => ({
       ...state,
-      selectedThemeId: 'horizontal-card',
+      selectedThemeId: 'theme-b',
       showRealmName: true,
     }))
 
@@ -277,7 +277,7 @@ describe('preset background sync on preset selection', () => {
       },
     }))
 
-    await presetActions.applyThemeSelection('horizontal-card')
+    await presetActions.applyThemeSelection('theme-b')
 
     expect(assetStore.getState().appliedAssets.logo).toBeUndefined()
 
@@ -315,7 +315,7 @@ describe('preset background sync on preset selection', () => {
   })
 
   it('clears persisted default background when current theme base is non-v2', async () => {
-    presetStore.setState(state => ({ ...state, selectedThemeId: 'modern-card' }))
+    presetStore.setState(state => ({ ...state, selectedThemeId: 'custom' }))
 
     await presetActions.syncBackgroundForCurrentTheme()
 

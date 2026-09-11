@@ -26,6 +26,7 @@ Need custom FreeMarker templates? Check the [docs](https://docs.keycloak-theme-e
 ## Features
 
 - **Design:** Apply presets, tweak colors, fonts, radius, and shadows, or edit CSS directly
+- **Styles and layouts:** Choose native Keycloak, Bootstrap, or Carbon styling with Card, Horizontal, or Split layouts
 - **Assets:** Upload fonts, backgrounds, logos, favicon, and images
 - **Preview:** Browse Keycloak pages across desktop, tablet, and mobile viewports with dark mode
 - **Export:** Download as a deployable `.jar` or quick-export to a folder
@@ -34,3 +35,7 @@ Need custom FreeMarker templates? Check the [docs](https://docs.keycloak-theme-e
 ## Documentation
 
 Full documentation is available at [docs.keycloak-theme-editor.org](https://docs.keycloak-theme-editor.org).
+
+Carbon uses the official `@carbon/styles` tokens and native HTML styles on Keycloak's FreeMarker markup. White and Gray 100 surfaces follow light/dark mode; IBM Plex Sans fonts are bundled into exports. Customize it through Quick start or `carbon-custom.css` in Styling.
+
+For development, `npm run generate:carbon` rebuilds the checked-in Carbon CSS from `carbon.scss` after updating `@carbon/styles`. The generated stylesheet includes the font license and embedded fonts, so themes do not need a font CDN or a React runtime.

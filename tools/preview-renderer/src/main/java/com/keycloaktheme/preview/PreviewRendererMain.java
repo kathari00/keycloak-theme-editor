@@ -81,8 +81,7 @@ public final class PreviewRendererMain {
     List<VariantSpec> variants = new ArrayList<VariantSpec>(Arrays.asList(
         new VariantSpec("base", resolveBaseThemeDir("base", availableThemeDirs), null, null),
         new VariantSpec("v2", resolveBaseThemeDir("v2", availableThemeDirs), null, null),
-        new VariantSpec("modern-card", resolveBaseThemeDir("base", availableThemeDirs), arguments.presetRoot.resolve("modern-card").resolve("login"), null),
-        new VariantSpec("horizontal-card", resolveBaseThemeDir("base", availableThemeDirs), arguments.presetRoot.resolve("horizontal-card").resolve("login"), null)
+        new VariantSpec("custom", resolveBaseThemeDir("base", availableThemeDirs), arguments.presetRoot.resolve("custom").resolve("login"), null)
     ));
 
     for (Path userThemeDir : arguments.userThemeDirs) {

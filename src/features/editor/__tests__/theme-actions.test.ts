@@ -2,6 +2,7 @@ import type { KeycloakPage } from '../../assets/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { themeActions } from '../actions/theme-actions'
 import { themeSelectionActions } from '../actions/theme-selection-actions'
+import { BOOTSTRAP_CUSTOM_CSS_PATH } from '../lib/css-files'
 import { coreStore } from '../stores/core-store'
 import { presetStore } from '../stores/preset-store'
 import { themeStore } from '../stores/theme-store'
@@ -71,6 +72,14 @@ describe('themeActions', () => {
     ]
     themeActions.setPages(pages)
     expect(themeStore.getState().pages).toEqual(pages)
+  })
+
+  it('persists Bootstrap overrides separately from the native preset CSS', () => {
+    themeStore.setState({ stylesCss: '.native {}', stylesCssFiles: { 'css/styles.css': '.native {}' } })
+    themeActions.setActiveFileCss('.btn-primary { --bs-btn-bg: red; }', BOOTSTRAP_CUSTOM_CSS_PATH)
+    themeActions.setActiveFileCss('.btn-primary { --bs-btn-bg: blue; }', BOOTSTRAP_CUSTOM_CSS_PATH)
+    expect(themeStore.getState().stylesCss).toBe('.native {}')
+    expect(themeStore.getState().stylesCssFilesByTheme.v2[BOOTSTRAP_CUSTOM_CSS_PATH]).toContain('--bs-btn-bg: blue')
   })
 
   describe('setActiveFileCss (regular file)', () => {

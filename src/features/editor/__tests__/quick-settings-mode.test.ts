@@ -11,7 +11,7 @@ import { historyStore } from '../stores/history-store'
 import { createDefaultPresetState, presetStore } from '../stores/preset-store'
 import { themeStore } from '../stores/theme-store'
 
-const HORIZONTAL_CARD_THEME_CSS = `
+const CUSTOM_THEME_CSS = `
 :root {
   --quickstart-primary-color-light: #0b57d0;
   --quickstart-primary-color-dark: #a8c7fa;
@@ -154,12 +154,12 @@ describe('quick settings mode separation', () => {
   it('loads dark mode settings from the theme quick-start css', () => {
     presetStore.setState(state => ({
       ...state,
-      selectedThemeId: 'horizontal-card',
-      presetCss: HORIZONTAL_CARD_THEME_CSS,
+      selectedThemeId: 'custom',
+      presetCss: CUSTOM_THEME_CSS,
     }))
     themeStore.setState(state => ({
       ...state,
-      themeQuickStartDefaults: HORIZONTAL_CARD_THEME_CSS,
+      themeQuickStartDefaults: CUSTOM_THEME_CSS,
     }))
 
     coreActions.toggleDarkMode()
@@ -199,20 +199,20 @@ describe('quick settings mode separation', () => {
   it('preserves dark quick-start css edits made while light mode is active', () => {
     presetStore.setState(state => ({
       ...state,
-      selectedThemeId: 'horizontal-card',
+      selectedThemeId: 'custom',
     }))
 
     themeStore.setState(state => ({
       ...state,
-      themeQuickStartDefaults: HORIZONTAL_CARD_THEME_CSS,
+      themeQuickStartDefaults: CUSTOM_THEME_CSS,
       stylesCssFiles: {
-        [QUICK_START_CSS_PATH]: HORIZONTAL_CARD_THEME_CSS,
+        [QUICK_START_CSS_PATH]: CUSTOM_THEME_CSS,
       },
       activeCssFilePath: QUICK_START_CSS_PATH,
     }))
 
     themeActions.setActiveFileCss(
-      HORIZONTAL_CARD_THEME_CSS.replace(
+      CUSTOM_THEME_CSS.replace(
         '--quickstart-primary-color-dark: #a8c7fa;',
         '--quickstart-primary-color-dark: #222222;',
       ),

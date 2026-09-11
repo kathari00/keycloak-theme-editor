@@ -19,6 +19,9 @@ export interface AssembleThemeFilesParams {
   properties: string
   templateFtl: string
   footerFtl: string | null
+  /** Preset exports own these overrides; missing templates must inherit from the parent. */
+  replaceTemplateOverrides?: boolean
+  colorModeScript?: string
   quickStartCss: string
   stylesCss: string
   stylesCssFiles?: Record<string, string>

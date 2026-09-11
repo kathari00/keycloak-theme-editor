@@ -1,5 +1,5 @@
 diff --git a/a/template.ftl b/b/template.ftl
-index e1355d0..89ce185 100644
+index e1355d0..4e81c49 100644
 --- a/a/template.ftl
 +++ b/b/template.ftl
 @@ -13,5 +13,5 @@
@@ -52,13 +52,15 @@ index e1355d0..89ce185 100644
 +            import { checkAuthSession } from "${url.resourcesPath}/js/authChecker.js";
  
              checkAuthSession(
-@@ -141,9 +140,24 @@
+@@ -141,10 +140,29 @@
  <div class="${properties.kcLogin!}">
    <div class="${properties.kcLoginContainer!}">
 -    <header id="kc-header" class="pf-v5-c-login__header">
 -      <div id="kc-header-wrapper"
 -              class="pf-v5-c-brand">${kcSanitize(msg("loginTitleHtml",(realm.displayNameHtml!'')))?no_esc}</div>
 -    </header>
+-    <main class="${properties.kcLoginMain!}">
+-      <div class="${properties.kcLoginMainHeader!}">
 +        <header id="kc-header" class="pf-v5-c-login__header">
 +        <#assign clientName = ''>
 +        <#if client??>
@@ -77,11 +79,24 @@ index e1355d0..89ce185 100644
 +          </#if>
 +        </div>
 +</header>
-     <main class="${properties.kcLoginMain!}">
++    <main class="${properties.kcLoginMain!} ${properties.kcFormCardClass!}">
 +
-       <div class="${properties.kcLoginMainHeader!}">
++      <#-- kcFormHeaderClass isn't in pristine v2's own theme.properties (nothing here customized it
++           before), so tools/theme-adaptations' declarative transform never emits it - hardcode the
++           literal hook name since it always resolves to this bare token anyway (see base's own
++           kcFormHeaderClass=kcFormHeaderClass). -->
++      <div class="${properties.kcLoginMainHeader!} kcFormHeaderClass">
          <h1 class="${properties.kcLoginMainTitle!}" id="kc-page-title"><#nested "header"></h1>
-@@ -221,17 +235,25 @@
+         <#if realm.internationalizationEnabled  && locale.supported?size gt 1>
+@@ -187,5 +205,6 @@
+         </#if>
+       </div>
+-      <div class="${properties.kcLoginMainBody!}">
++      <div class="${properties.kcLoginMainBody!}" id="kc-content">
++      <div id="kc-content-wrapper">
+         <#if !(auth?has_content && auth.showUsername() && !auth.showResetCredentials())>
+             <#if displayRequiredFields>
+@@ -221,17 +240,25 @@
          <#-- App-initiated actions should not see warning messages about the need to complete the action -->
          <#-- during login.                                                                               -->
 -        <#if displayMessage && message?has_content && (message.type != 'warning' || !isAppInitiatedAction??)>
@@ -119,28 +134,30 @@ index e1355d0..89ce185 100644
 +                <#nested "form">
  
          <#if auth?has_content && auth.showTryAnotherWayLink()>
-@@ -245,5 +267,5 @@
+@@ -245,5 +272,5 @@
          </#if>
  
 -          <div class="${properties.kcLoginMainFooter!}">
 +          <#assign footerContent>
                <#nested "socialProviders">
  
-@@ -255,10 +277,13 @@
+@@ -255,10 +282,14 @@
                    </div>
                </#if>
 -          </div>
+-      </div>
 +          </#assign>
 +          <#if footerContent?markup_string?trim?has_content>
 +            <div class="${properties.kcLoginMainFooter!}">
 +              ${footerContent?no_esc}
 +            </div>
 +          </#if>
-       </div>
  
 -        <div class="${properties.kcLoginMainFooter!}">
 -            <@loginFooter.content/>
 -        </div>
 +      <@loginFooter.content/>
++      </div>
++      </div>
      </main>
    </div>

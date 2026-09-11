@@ -56,7 +56,7 @@ describe('resolveStateHtml', () => {
 
   it('does not override page html for the default state', () => {
     const scenarioHtml = resolveStateHtml({
-      variantId: 'modern-card',
+      variantId: 'custom',
       pageId: 'login.html',
       stateId: 'default',
     })

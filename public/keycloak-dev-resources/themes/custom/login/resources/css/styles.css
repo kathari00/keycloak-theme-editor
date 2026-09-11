@@ -24,6 +24,11 @@ label.kcLoginOTPListClass {
   padding: 2rem 2rem;
   box-shadow: var(--quickstart-card-shadow);
   border: none;
+  /* Was on the now-unused .kcLoginContainer wrapper - moved here so Horizontal layout's own
+     wider max-width (set on this same element via .kcFormCardClass) can override it. */
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
 }
 
 html.pf-v5-theme-dark .kcLoginMain,
@@ -346,10 +351,10 @@ a.kcButtonClass {
   display: block;
   width: 100%;
   box-sizing: border-box;
-  padding: 0.875rem 1.5rem;
-  min-height: 52.5px;
-  font-size: 15px;
-  font-weight: 600;
+  padding: 0.75rem 1rem;
+  min-height: 44px;
+  font-size: 14px;
+  font-weight: 500;
   border-radius: var(--quickstart-border-radius);
   cursor: pointer;
   transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
@@ -476,8 +481,6 @@ a.kcButtonPrimaryClass:focus-visible:focus-visible {
 
 .kcLoginContainer {
   width: 100%;
-  max-width: 500px;
-  margin: 0 auto;
 }
 
 html.pf-v5-theme-dark #kc-realm-name,
@@ -842,10 +845,10 @@ a.kcButtonDefaultClass,
   border: 1px solid var(--quickstart-primary-color);
   color: var(--quickstart-primary-color);
   text-decoration: none;
-  padding: 0.875rem 1.5rem;
-  min-height: 52.5px;
-  font-weight: 600;
-  font-size: 15px;
+  padding: 0.75rem 1rem;
+  min-height: 44px;
+  font-weight: 500;
+  font-size: 14px;
   margin: 0;
   display: block;
   width: 100%;
@@ -1930,9 +1933,9 @@ div#kc-social-providers > h2:nth-of-type(1) {
   }
 }
 
-.kc-horizontal-card-subtitle,
-.kc-horizontal-card-client-name,
-.kc-horizontal-card-realm-name {
+.subtitle,
+#kc-client-name,
+#kc-realm-name {
   color: var(--quickstart-secondary-color);
 }
 
@@ -2177,7 +2180,6 @@ html body .pf-v5-c-login {
 /* Hide client name */
 #kc-client-name,
 .kc-client-name,
-.kc-horizontal-card-client-name,
 [data-kc-client="name"] {
   display: none !important;
 }

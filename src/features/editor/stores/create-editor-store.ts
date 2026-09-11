@@ -10,6 +10,8 @@ export interface EditorStore<T extends object> extends StoreApi<T> {
 export interface PersistedEditorStoreOptions<T extends object> {
   name: string
   partialize?: (state: T) => Partial<T>
+  version?: number
+  migrate?: (persistedState: unknown, version: number) => Partial<T>
 }
 
 function withStateGetter<T extends object>(store: StoreApi<T>): EditorStore<T> {
@@ -56,6 +58,8 @@ export function createPersistedEditorStore<T extends object>(
           name: options.name,
           storage: createJSONStorage(() => localStorage),
           partialize: options.partialize,
+          version: options.version,
+          migrate: options.migrate,
         },
       ),
     ) as unknown as StoreApi<T>,

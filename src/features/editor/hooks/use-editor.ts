@@ -95,6 +95,19 @@ export function useQuickSettingsStylesByThemeModeState() {
   }))
 }
 
+export function useFrameworkIdByThemeState() {
+  return usePresetStoreSlice(state => ({
+    frameworkIdByTheme: state.frameworkIdByTheme,
+    bootstrapVariantIdByTheme: state.bootstrapVariantIdByTheme,
+  }))
+}
+
+export function useLayoutIdByThemeState() {
+  return usePresetStoreSlice(state => ({
+    layoutIdByTheme: state.layoutIdByTheme,
+  }))
+}
+
 export function useQuickStartContentState() {
   return usePresetStoreSlice(state => ({
     showClientName: state.showClientName,

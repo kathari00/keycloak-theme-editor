@@ -124,6 +124,25 @@ export async function writeToDirectory(
     await writable.write(data as ArrayBufferView<ArrayBuffer>)
     await closeWritableStream(writable)
   }
+
+  // A previous export may have supplied these overrides for a different parent.
+  // Leaving them behind prevents Keycloak from inheriting the new parent's templates.
+  // Custom projects retain ownership of templates that the editor does not export.
+  if (!params.replaceTemplateOverrides)
+    return
+  const themeDir = await dirHandle.getDirectoryHandle(themeName)
+  const loginDir = await themeDir.getDirectoryHandle('login')
+  for (const filename of ['template.ftl', 'footer.ftl']) {
+    if (`${themeName}/login/${filename}` in files)
+      continue
+    try {
+      await loginDir.removeEntry(filename)
+    }
+    catch (error) {
+      if (!(error instanceof DOMException && error.name === 'NotFoundError'))
+        throw error
+    }
+  }
 }
 
 async function closeWritableStream(writable: FileSystemWritableFileStream): Promise<void> {

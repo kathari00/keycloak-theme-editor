@@ -145,11 +145,11 @@
 </head>
 
 <body id="keycloak-bg" class="${properties.kcBodyClass!}<#if kteColorMode == 'dark'> ${properties.kcDarkModeClass!'kcDarkModeClass pf-v5-theme-dark'}</#if>" data-page-id="login-${pageId}">
-<div class="${properties.kcLogin!}">
+<div class="${properties.kcLogin!} ${properties.kcLoginClass!}">
   <div class="${properties.kcLoginContainer!}">
-    <main class="${properties.kcLoginMain!}">
+    <main class="${properties.kcLoginMain!} ${properties.kcFormCardClass!}">
 
-      <div class="${properties.kcLoginMainHeader!}">
+      <div class="${properties.kcLoginMainHeader!} ${properties.kcFormHeaderClass!}">
             <header id="kc-header" class="${properties.kcHeaderClass!}">
         <#assign clientName = ''>
         <#if client??>
@@ -170,7 +170,8 @@
 </header>
         <h2 class="${properties.kcLoginMainTitle!}" id="kc-page-title"><#nested "header"></h2>
       </div>
-      <div class="${properties.kcLoginMainBody!}">
+      <div class="${properties.kcLoginMainBody!}" id="kc-content">
+      <div id="kc-content-wrapper">
         <#if !(auth?has_content && auth.showUsername() && !auth.showResetCredentials())>
             <#if displayRequiredFields>
                 <div class="${properties.kcContentWrapperClass!}">
@@ -279,6 +280,7 @@
               </div>
             </div>
           </#if>
+      </div>
       </div>
     </main>
   </div>

@@ -1,8 +1,10 @@
 import type { LocalizedContentOverrides } from '../editor/stores/types'
 import type { ThemeDocument } from '../theme-document'
 import type { DirectoryWriteParams, EditorCssContext, ThemeEditorMetadata } from './types'
-import { isQuickStartCssFile } from '../editor/lib/css-files'
+import { frameworkCustomCssPath, isFrameworkCustomCssFile, isQuickStartCssFile } from '../editor/lib/css-files'
 import { sanitizeThemeCssSourceForEditor } from '../editor/lib/css-source-sanitizer'
+import { buildFrameworkThemeProperties, NATIVE_BINDING } from '../editor/lib/framework-bindings/types'
+import { getLayoutBinding } from '../editor/lib/layouts/registry'
 import {
   DEFAULT_DATA_PROTECTION_LABEL,
   DEFAULT_IMPRINT_LABEL,
@@ -45,7 +47,7 @@ export function buildExportCssFiles(
   topLevelImportsCss: string,
   payloadCssWithoutImports: string,
 ): Record<string, string> {
-  const paths = Object.keys(editorFiles).filter(path => !isQuickStartCssFile(path))
+  const paths = Object.keys(editorFiles).filter(path => !isQuickStartCssFile(path) && !isFrameworkCustomCssFile(path))
   if (paths.length === 0) {
     return {}
   }
@@ -151,6 +153,16 @@ export function withDeclaredLocales(properties: string, locales: string[]): stri
 }
 
 async function extractEditorCssContext(themeDocument: ThemeDocument, quickStartSharedCss: string): Promise<EditorCssContext> {
+  // A framework binding is meant to replace the preset's own hand-authored design (which can run
+  // into the thousands of lines for `custom`) with the framework's actual look, not layer under
+  // it — so skip the theme's own stylesheet entirely once a framework is active.
+  if (themeDocument.frameworkId !== 'native') {
+    return {
+      presetCss: '',
+      colorPresetCss: quickStartSharedCss,
+    }
+  }
+
   let presetCss = sanitizeThemeCssSourceForEditor(themeDocument.stylesCss)
 
   if (themeDocument.themeId && !presetCss.trim()) {
@@ -290,7 +302,14 @@ export async function prepareThemeExportFiles(
     imprintUrl: exportImprintUrl,
     dataProtectionUrl: exportDataProtectionUrl,
   })
-  const quickStartCssParts = buildModeAwareQuickStartCssParts(exportQuickSettingsByMode)
+  if (themeDocument.frameworkId !== 'native') {
+    for (const modeSettings of Object.values(exportQuickSettingsByMode)) {
+      if (!modeSettings.colorPresetFontFamily || modeSettings.colorPresetFontFamily === 'custom') {
+        modeSettings.colorPresetFontFamily = themeDocument.frameworkId === 'carbon' ? '"IBM Plex Sans", sans-serif' : 'var(--bs-font-sans-serif)'
+      }
+    }
+  }
+  const quickStartCssParts = buildModeAwareQuickStartCssParts(exportQuickSettingsByMode, Boolean(themeDocument.assets.appliedAssets.logo))
   const editorCss = await extractEditorCssContext(themeDocument, quickStartCssParts.sharedCss)
   const payload = assembleExportPayload({
     sourceCss: editorCss.presetCss,
@@ -300,21 +319,71 @@ export async function prepareThemeExportFiles(
     assetResolutionCss: quickStartCssParts.variablesCss,
   })
   const payloadCssParts = extractCssImports(payload.generatedCss)
-  const topLevelImportsCss = mergeCssImports(payloadCssParts.imports)
+
+  // Dynamic import: `registry.ts` pulls in `bootstrap.ts`'s Vite-only `?raw` CSS imports, which
+  // `tsx` (used by `tools/build-theme-fixture.ts`, a caller of this pipeline) can't load. Skipping
+  // the import entirely for the 'native' case keeps that Node-executed path working.
+  // Neither load depends on the other's result, so run them concurrently.
+  const [frameworkBinding, layoutBinding] = await Promise.all([
+    themeDocument.frameworkId === 'native'
+      ? Promise.resolve(NATIVE_BINDING)
+      : import('../editor/lib/framework-bindings/registry').then(({ loadFrameworkBinding }) =>
+          loadFrameworkBinding(themeDocument.frameworkId, themeDocument.bootstrapVariantId),
+        ),
+    // Additive, not "replace not layer" like the framework binding above - layout is structural
+    // (grid/flex placement), not a full design swap, so it layers on top of whichever style is active.
+    getLayoutBinding(themeDocument.layoutId),
+  ])
+  const frameworkExportCss = themeDocument.frameworkId !== 'native'
+    ? [frameworkBinding.frameworkCss, frameworkBinding.bindingCss].filter(Boolean).join('\n\n')
+    : ''
+  const frameworkCssParts = extractCssImports(frameworkExportCss)
+  const topLevelImportsCss = mergeCssImports([...payloadCssParts.imports, ...frameworkCssParts.imports])
+  const cssWithoutImportsForExport = [payloadCssParts.cssWithoutImports, frameworkCssParts.cssWithoutImports, layoutBinding.css].filter(Boolean).join('\n\n')
+  let exportProperties = themeDocument.frameworkId !== 'native'
+    ? buildFrameworkThemeProperties(properties, frameworkBinding)
+    : properties
+  // Keycloak's base template has no browser color-scheme listener. Keep inheriting its
+  // markup and load the missing behavior through its supported scripts property.
+  const colorModeScript = resolvedThemeId === 'base'
+    ? `(() => {
+  const media = window.matchMedia('(prefers-color-scheme: dark)');
+  const sync = () => {
+    document.documentElement.classList.toggle('kcDarkModeClass', media.matches);
+    document.documentElement.style.colorScheme = media.matches ? 'dark' : 'light';
+  };
+  sync();
+  media.addEventListener('change', sync);
+})();`
+    : undefined
+  if (colorModeScript) {
+    const scripts = exportProperties.match(/^scripts\s*=(.*)$/m)?.[1]?.trim().split(/\s+/).filter(Boolean) ?? []
+    exportProperties = upsertPropertiesLine(exportProperties, 'scripts', [...new Set([...scripts, 'js/theme-color-mode.js'])].join(' '))
+  }
 
   const combinedStylesCss = [
     topLevelImportsCss,
-    payloadCssParts.cssWithoutImports,
+    cssWithoutImportsForExport,
   ].filter(Boolean).join('\n\n')
 
   const hasMultipleFiles = Object.keys(themeDocument.stylesCssFiles).length > 1
-  const exportStylesCssFiles = hasMultipleFiles
-    ? buildExportCssFiles(themeDocument.stylesCssFiles, topLevelImportsCss, payloadCssParts.cssWithoutImports)
+  let exportStylesCssFiles = hasMultipleFiles
+    ? buildExportCssFiles(themeDocument.stylesCssFiles, topLevelImportsCss, cssWithoutImportsForExport)
     : undefined
+  const customCssPath = frameworkCustomCssPath(themeDocument.frameworkId)
+  if (customCssPath) {
+    exportStylesCssFiles = {
+      'css/styles.css': combinedStylesCss,
+      [customCssPath]: sanitizeThemeCssSourceForEditor(themeDocument.stylesCssFiles[customCssPath] ?? ''),
+    }
+    exportProperties = upsertPropertiesLine(exportProperties, 'styles', `css/quick-start.css css/styles.css ${customCssPath}`)
+  }
 
   return {
     themeName,
-    properties,
+    properties: exportProperties,
+    replaceTemplateOverrides: true,
+    colorModeScript,
     templateFtl: stripDataKcStateAttributes(templateFtl),
     footerFtl: footerFtl ? stripDataKcStateAttributes(footerFtl) : footerFtl,
     quickStartCss: [sourceThemeQuickStartCss, quickStartCssParts.variablesCss].filter(Boolean).join('\n\n'),

@@ -78,6 +78,7 @@ export function computePreviewCss(input: PreviewCssInput): PreviewCssOutput {
     infoMessage,
     imprintUrl,
     dataProtectionUrl,
+    hasLogo: Boolean(appliedAssets.logo),
   })
 
   const googleFontUrls = [

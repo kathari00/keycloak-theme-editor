@@ -1,10 +1,9 @@
 import type { QuickSettingsMode } from '../lib/quick-settings'
-import type { QuickSettings, QuickSettingsStyle, QuickSettingsStylesByMode } from '../stores/types'
-import { getThemeStorageKey } from '../lib/quick-settings'
+import type { QuickSettings, QuickSettingsStyle } from '../stores/types'
 import { presetStore } from '../stores/preset-store'
 import { withoutUndefinedValues } from './css-variable-reader'
 import { getCurrentQuickSettingsMode } from './preset-state'
-import { getQuickSettingsStyleFromPresetState } from './quick-settings-style-state'
+import { applyQuickSettingsStyleUpdate } from './quick-settings-style-state'
 
 interface ImportedQuickSettingsByMode {
   light?: Partial<QuickSettings>
@@ -49,28 +48,6 @@ function hasValues(value: Record<string, unknown>): boolean {
   return Object.keys(value).length > 0
 }
 
-function buildImportedStylesByMode(
-  quickSettingsByMode: ImportedQuickSettingsByMode,
-  existingStyles: QuickSettingsStylesByMode,
-  fallbackStyle: QuickSettingsStyle,
-): QuickSettingsStylesByMode {
-  const nextStyles: QuickSettingsStylesByMode = {}
-
-  for (const mode of QUICK_SETTINGS_MODES) {
-    const styleUpdate = pickImportedStyleSettings(quickSettingsByMode[mode])
-    if (!hasValues(styleUpdate)) {
-      continue
-    }
-
-    nextStyles[mode] = {
-      ...(existingStyles[mode] ?? fallbackStyle),
-      ...styleUpdate,
-    }
-  }
-
-  return nextStyles
-}
-
 export const importActions = {
   applyImportedQuickSettingsForPreset: (quickSettingsByMode?: ImportedQuickSettingsByMode) => {
     if (!quickSettingsByMode) {
@@ -90,25 +67,18 @@ export const importActions = {
       return
     }
 
-    presetStore.setState((state) => {
-      const themeKey = getThemeStorageKey(state.selectedThemeId)
-      const existingStyles = state.quickSettingsStylesByThemeMode[themeKey] ?? {}
-      const currentStyle = getQuickSettingsStyleFromPresetState(state)
-      const importedStylesByMode = buildImportedStylesByMode(quickSettingsByMode, existingStyles, currentStyle)
-      const nextThemeStyles = hasValues(importedStylesByMode)
-        ? { ...existingStyles, ...importedStylesByMode }
-        : existingStyles
+    if (hasValues(nextContent)) {
+      presetStore.setState(nextContent)
+    }
 
-      return {
-        ...nextContent,
-        ...nextActiveStyle,
-        quickSettingsStylesByThemeMode: hasValues(importedStylesByMode)
-          ? {
-              ...state.quickSettingsStylesByThemeMode,
-              [themeKey]: nextThemeStyles,
-            }
-          : state.quickSettingsStylesByThemeMode,
+    // Delegate per-mode style merging to the single shared mutator (quick-settings-style-state.ts)
+    // instead of hand-rolling a second "flat mirrors nested[theme][mode]" implementation here —
+    // that duplication was the source of past color-loss/stale-default bugs.
+    for (const mode of QUICK_SETTINGS_MODES) {
+      const modeStyleUpdate = pickImportedStyleSettings(quickSettingsByMode[mode])
+      if (hasValues(modeStyleUpdate)) {
+        applyQuickSettingsStyleUpdate(modeStyleUpdate, { mode })
       }
-    })
+    }
   },
 }

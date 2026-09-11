@@ -34,8 +34,34 @@ export function createDefaultPresetState(): PresetState {
     quickSettingsStylesByThemeMode: {},
     enabledLocales: [],
     quickStartContentByLocale: {},
+    frameworkIdByTheme: {},
+    bootstrapVariantIdByTheme: {},
+    layoutIdByTheme: {},
     ...DEFAULT_QUICK_SETTINGS_STYLE,
     ...DEFAULT_QUICK_START_CONTENT,
+  }
+}
+
+const PRESET_STORE_VERSION = 1
+
+/** `modern-card`/`horizontal-card` were split into the `custom` style plus a separate layout pick. */
+export function migratePresetState(persistedState: unknown): Partial<PresetState> {
+  if (!persistedState || typeof persistedState !== 'object') {
+    return persistedState as Partial<PresetState>
+  }
+
+  const state = persistedState as Partial<PresetState>
+  if (state.selectedThemeId !== 'modern-card' && state.selectedThemeId !== 'horizontal-card') {
+    return state
+  }
+
+  const wasHorizontalCard = state.selectedThemeId === 'horizontal-card'
+  return {
+    ...state,
+    selectedThemeId: 'custom',
+    layoutIdByTheme: wasHorizontalCard
+      ? { ...state.layoutIdByTheme, custom: 'horizontal' }
+      : state.layoutIdByTheme,
   }
 }
 
@@ -44,10 +70,15 @@ export function createDefaultPresetState(): PresetState {
  */
 export const presetStore = createPersistedEditorStore<PresetState>(createDefaultPresetState(), {
   name: PRESET_STORE_STORAGE_KEY,
+  version: PRESET_STORE_VERSION,
+  migrate: persistedState => migratePresetState(persistedState),
   partialize: state => ({
     selectedThemeId: state.selectedThemeId,
     presetCss: state.presetCss,
     quickSettingsStylesByThemeMode: state.quickSettingsStylesByThemeMode,
+    frameworkIdByTheme: state.frameworkIdByTheme,
+    bootstrapVariantIdByTheme: state.bootstrapVariantIdByTheme,
+    layoutIdByTheme: state.layoutIdByTheme,
     colorPresetId: state.colorPresetId,
     colorPresetPrimaryColor: state.colorPresetPrimaryColor,
     colorPresetSecondaryColor: state.colorPresetSecondaryColor,

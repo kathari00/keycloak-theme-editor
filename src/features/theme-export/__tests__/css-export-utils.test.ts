@@ -1,7 +1,16 @@
 import type { AppliedAssets, UploadedAsset } from '../../assets/types'
 import { describe, expect, it } from 'vitest'
 import { buildQuickStartCss } from '../../editor/lib/quick-start-css'
-import { assembleExportPayload, buildModeAwareQuickStartCssParts, getEffectiveAppliedAssets, hasExplicitQuickStartBackgroundColor, parseAppliedAssetsFromCss } from '../css-export-utils'
+import { assembleExportPayload, buildModeAwareQuickStartCssParts, extractCssImports, getEffectiveAppliedAssets, hasExplicitQuickStartBackgroundColor, parseAppliedAssetsFromCss } from '../css-export-utils'
+
+describe('extractCssImports', () => {
+  it('extracts minified font imports without swallowing the following framework rules', () => {
+    const css = '@charset "UTF-8";/*! Bootswatch */@import url("https://fonts.googleapis.com/css2?family=Lato&display=swap");:root{--bs-primary:blue}.btn{color:red}'
+    const result = extractCssImports(css)
+    expect(result.imports).toEqual(['@import url("https://fonts.googleapis.com/css2?family=Lato&display=swap");'])
+    expect(result.cssWithoutImports).toBe('/*! Bootswatch */:root{--bs-primary:blue}.btn{color:red}')
+  })
+})
 
 function makeAsset(overrides: Partial<UploadedAsset>): UploadedAsset {
   return {

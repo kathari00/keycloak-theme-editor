@@ -27,11 +27,11 @@ function getActiveQuickSettingsMode(): QuickSettingsMode {
   return coreStore.getState().isDarkMode ? 'dark' : 'light'
 }
 
-function getActiveThemeKey(themeId?: string): string {
+export function getActiveThemeKey(themeId?: string): string {
   return getThemeStorageKey(themeId ?? presetStore.getState().selectedThemeId)
 }
 
-export function getQuickSettingsStyleFromPresetState(state: PresetState): QuickSettingsStyle {
+function getQuickSettingsStyleFromPresetState(state: PresetState): QuickSettingsStyle {
   return {
     colorPresetId: state.colorPresetId,
     colorPresetPrimaryColor: state.colorPresetPrimaryColor,
@@ -83,7 +83,7 @@ export function applyQuickSettingsStyleUpdate(
   }
 
   const themeKey = getActiveThemeKey(options.themeId)
-  const activeMode = options.mode ?? getActiveQuickSettingsMode()
+  const targetMode = options.mode ?? getActiveQuickSettingsMode()
   const sharedUpdate = options.sharedKeys ? pickStyleUpdate(update, options.sharedKeys) : {}
 
   presetStore.setState((state) => {
@@ -94,7 +94,7 @@ export function applyQuickSettingsStyleUpdate(
     for (const mode of QUICK_SETTINGS_MODES) {
       const modeUpdate = options.updateAllModes
         ? update
-        : mode === activeMode
+        : mode === targetMode
           ? update
           : sharedUpdate
 
@@ -102,15 +102,22 @@ export function applyQuickSettingsStyleUpdate(
         continue
       }
 
-      const baseStyle = nextThemeStyles[mode] ?? themeStyles[activeMode] ?? currentStyle
+      const baseStyle = nextThemeStyles[mode] ?? themeStyles[targetMode] ?? currentStyle
       nextThemeStyles[mode] = {
         ...baseStyle,
         ...modeUpdate,
       }
     }
 
+    // The flat fields mirror the *currently displayed* mode, which may differ from `targetMode`
+    // (e.g. applying imported settings for a mode the UI isn't showing right now) — always
+    // re-derive the mirror from the nested map instead of blindly spreading `update`, so it can
+    // never end up showing one mode's values while a different mode is actually on screen.
+    const displayedMode = getActiveQuickSettingsMode()
+    const displayedStyle = nextThemeStyles[displayedMode] ?? currentStyle
+
     return {
-      ...update,
+      ...displayedStyle,
       quickSettingsStylesByThemeMode: {
         ...state.quickSettingsStylesByThemeMode,
         [themeKey]: nextThemeStyles,

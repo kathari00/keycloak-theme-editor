@@ -4,7 +4,9 @@
       "id": "base",
       "name": "Keycloak Base",
       "description": "Classic Keycloak base look",
-      "defaultAssets": []
+      "defaultAssets": [],
+      "supportsFrameworkBinding": true,
+      "supportsLayoutSelection": true
     },
     {
       "id": "v2",
@@ -21,22 +23,19 @@
           "name": "keycloak-logo-text.svg",
           "path": "img/logos/keycloak-logo-text.svg"
         }
-      ]
+      ],
+      "supportsLayoutSelection": true
     },
     {
-      "id": "modern-card",
-      "name": "Modern Card",
-      "description": "Modern card design with primary color background and soft shadows",
+      "id": "custom",
+      "name": "Custom",
+      "description": "Custom card design with primary color background and soft shadows",
       "defaultAssets": [],
       "contentDefaults": {
         "showRealmName": true
-      }
-    },
-    {
-      "id": "horizontal-card",
-      "name": "Horizontal Card",
-      "description": "Minimal dark horizontal card inspired by modern sign-in screens",
-      "defaultAssets": []
+      },
+      "supportsFrameworkBinding": true,
+      "supportsLayoutSelection": true
     }
   ]
 }

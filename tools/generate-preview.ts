@@ -224,7 +224,6 @@ function ensureFooterLinkContainer(doc: Document): Element {
     return linkParent
   }
 
-  const horizontalFooterRow = doc.querySelector<HTMLElement>('.kc-horizontal-card-footer-row')
   const modernFooterRow = doc.querySelector<HTMLElement>('.kc-footer-row')
   const socialProviders = doc.querySelector<HTMLElement>('#kc-social-providers')
   const infoSection = doc.querySelector<HTMLElement>('#kc-info')
@@ -232,11 +231,6 @@ function ensureFooterLinkContainer(doc: Document): Element {
   const newWrapper = doc.createElement('div')
   newWrapper.className = 'kc-footer-legal-links'
   newWrapper.setAttribute('data-kc-state', 'footer-legal-links')
-
-  if (horizontalFooterRow?.isConnected) {
-    horizontalFooterRow.appendChild(newWrapper)
-    return newWrapper
-  }
 
   if (modernFooterRow?.isConnected) {
     modernFooterRow.prepend(newWrapper)
@@ -299,6 +293,10 @@ function injectQuickStartPlaceholders(html: string): string {
     tagName: 'div',
     fallbackText: '',
   })
+  // A synthesized placeholder would otherwise be appended below the page form.
+  if (infoMessage.parentElement === contentWrapper && contentWrapper.firstElementChild !== infoMessage) {
+    contentWrapper.prepend(infoMessage)
+  }
   const infoMessageText = document.querySelector('[data-kc-state="info-message-text"]') as HTMLElement | null
     ?? infoMessage.querySelector('.kc-feedback-text') as HTMLElement | null
   if (infoMessageText) {

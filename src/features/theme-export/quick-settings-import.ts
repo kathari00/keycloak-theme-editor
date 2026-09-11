@@ -6,6 +6,7 @@ import type {
 import type { ImportedQuickSettingsByMode } from './types'
 import { collectDeclarationsBySelector } from '../../lib/css-ast'
 import { CUSTOM_PRESET_ID } from '../editor/lib/quick-start-css'
+import { classifyModeBySelector, extractQuickStartCssForMode, mapQuickStartBorderRadius, mapQuickStartCardShadow } from '../editor/lib/quick-start-css-parser'
 import { DEFAULT_DATA_PROTECTION_LABEL, DEFAULT_IMPRINT_LABEL } from '../editor/stores/preset-store'
 import { parseMessageProperties, readMessageProperty } from '../preview/lib/message-properties'
 
@@ -45,50 +46,6 @@ function normalizeFontValue(value: string | undefined): string {
     return CUSTOM_PRESET_ID
   }
   return normalized
-}
-
-function mapBorderRadiusValue(value: string | undefined): QuickSettings['colorPresetBorderRadius'] {
-  const normalized = normalizeCssValue(value).toLowerCase()
-  if (normalized === '0' || normalized === '0px') {
-    return 'sharp'
-  }
-  if (normalized === '24px') {
-    return 'pill'
-  }
-  return 'rounded'
-}
-
-function mapCardShadowValue(value: string | undefined): QuickSettings['colorPresetCardShadow'] {
-  const normalized = normalizeCssValue(value).toLowerCase()
-  if (!normalized) {
-    return 'subtle'
-  }
-  if (normalized === 'none') {
-    return 'none'
-  }
-  if (normalized.includes('0 8px 32px')) {
-    return 'strong'
-  }
-  return 'subtle'
-}
-
-function classifyModeBySelector(selectorText: string): QuickSettingsMode | 'shared' {
-  const selector = selectorText.toLowerCase()
-  if (selector.includes(':not(.pf-v5-theme-dark)') || selector.includes(':not(.kcdarkmodeclass)')) {
-    return 'light'
-  }
-  if (
-    selector.includes('html.pf-v5-theme-dark')
-    || selector.includes('body.pf-v5-theme-dark')
-    || selector.includes('html.kcdarkmodeclass')
-    || selector.includes('body.kcdarkmodeclass')
-  ) {
-    return 'dark'
-  }
-  if (selector.includes(':root')) {
-    return 'shared'
-  }
-  return 'shared'
 }
 
 function collectQuickStartVariablesByMode(cssText: string): {
@@ -154,10 +111,12 @@ function buildSharedQuickStartContent(cssText: string, messagesText: string): Qu
 function buildModeQuickSettings(params: {
   mode: QuickSettingsMode
   vars: QuickSettingsVars
+  cssForVars: string
   sharedContent: QuickStartContentSettings
 }): Partial<QuickSettings> {
-  const { mode, vars, sharedContent } = params
+  const { mode, vars, cssForVars, sharedContent } = params
   const bgColorValue = getModeColorValue(vars, 'bg-color', mode)
+  const cssForMode = extractQuickStartCssForMode(cssForVars, mode)
 
   return {
     colorPresetId: CUSTOM_PRESET_ID,
@@ -165,11 +124,13 @@ function buildModeQuickSettings(params: {
     colorPresetSecondaryColor: getModeColorValue(vars, 'secondary-color', mode) || '#c0c0c0',
     colorPresetFontFamily: normalizeFontValue(vars['--quickstart-font-family']),
     colorPresetBgColor: COLOR_HEX_PATTERN.test(bgColorValue) ? bgColorValue : '',
-    colorPresetBorderRadius: mapBorderRadiusValue(
-      vars['--quickstart-border-radius'] || vars['--quickstart-control-border-radius-default'],
+    colorPresetBorderRadius: mapQuickStartBorderRadius(
+      cssForMode,
+      vars['--quickstart-border-radius'] || vars['--quickstart-control-border-radius-default'] || '',
     ),
-    colorPresetCardShadow: mapCardShadowValue(
-      vars['--quickstart-card-shadow'] || vars['--quickstart-card-shadow-default'],
+    colorPresetCardShadow: mapQuickStartCardShadow(
+      cssForMode,
+      vars['--quickstart-card-shadow'] || vars['--quickstart-card-shadow-default'] || '',
     ),
     colorPresetHeadingFontFamily: normalizeFontValue(vars['--quickstart-heading-font-family']),
     ...sharedContent,
@@ -215,7 +176,7 @@ export function parseQuickSettingsFromImportedTheme(params: {
   const darkVars = mergeVarMaps(shared, light, dark)
 
   return {
-    light: buildModeQuickSettings({ mode: 'light', vars: lightVars, sharedContent }),
-    dark: buildModeQuickSettings({ mode: 'dark', vars: darkVars, sharedContent }),
+    light: buildModeQuickSettings({ mode: 'light', vars: lightVars, cssForVars, sharedContent }),
+    dark: buildModeQuickSettings({ mode: 'dark', vars: darkVars, cssForVars, sharedContent }),
   }
 }

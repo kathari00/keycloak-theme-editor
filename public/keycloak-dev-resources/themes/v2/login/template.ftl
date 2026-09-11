@@ -157,9 +157,13 @@
           </#if>
         </div>
 </header>
-    <main class="${properties.kcLoginMain!}">
+    <main class="${properties.kcLoginMain!} ${properties.kcFormCardClass!}">
 
-      <div class="${properties.kcLoginMainHeader!}">
+      <#-- kcFormHeaderClass isn't in pristine v2's own theme.properties (nothing here customized it
+           before), so tools/theme-adaptations' declarative transform never emits it - hardcode the
+           literal hook name since it always resolves to this bare token anyway (see base's own
+           kcFormHeaderClass=kcFormHeaderClass). -->
+      <div class="${properties.kcLoginMainHeader!} kcFormHeaderClass">
         <h1 class="${properties.kcLoginMainTitle!}" id="kc-page-title"><#nested "header"></h1>
         <#if realm.internationalizationEnabled  && locale.supported?size gt 1>
         <div class="${properties.kcLoginMainHeaderUtilities!}">
@@ -200,7 +204,8 @@
         </div>
         </#if>
       </div>
-      <div class="${properties.kcLoginMainBody!}">
+      <div class="${properties.kcLoginMainBody!}" id="kc-content">
+      <div id="kc-content-wrapper">
         <#if !(auth?has_content && auth.showUsername() && !auth.showResetCredentials())>
             <#if displayRequiredFields>
                 <div class="${properties.kcContentWrapperClass!}">
@@ -282,9 +287,10 @@
               ${footerContent?no_esc}
             </div>
           </#if>
-      </div>
 
       <@loginFooter.content/>
+      </div>
+      </div>
     </main>
   </div>
 </div>

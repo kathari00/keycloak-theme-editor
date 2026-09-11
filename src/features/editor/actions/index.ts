@@ -1,7 +1,9 @@
 import { assetActions } from './asset-actions'
 import { coreActions } from './core-actions'
+import { frameworkBindingActions } from './framework-binding-actions'
 import { historyActions } from './history-actions'
 import { importActions } from './import-actions'
+import { layoutSelectionActions } from './layout-selection-actions'
 import { localizationActions } from './localization-actions'
 import { quickStartExtrasActions } from './quick-start-extras-actions'
 import { resetActions } from './reset-actions'
@@ -16,6 +18,8 @@ export const presetActions = {
   ...themeSelectionActions,
   ...importActions,
   ...localizationActions,
+  ...frameworkBindingActions,
+  ...layoutSelectionActions,
 }
 
 /**

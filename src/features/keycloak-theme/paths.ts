@@ -2,6 +2,7 @@ import { propertiesSuffixForLocale } from '../i18n/locale-catalog'
 
 export const KEYCLOAK_THEMES_ROOT_PATH = '/keycloak-dev-resources/themes'
 export const KEYCLOAK_THEMES_CONFIG_PATH = `${KEYCLOAK_THEMES_ROOT_PATH}/themes.json`
+export const KEYCLOAK_LAYOUTS_ROOT_PATH = '/keycloak-dev-resources/layouts'
 
 export const THEME_MESSAGES_EN_PATH = 'messages/messages_en.properties'
 export const THEME_MESSAGES_DEFAULT_PATH = 'messages/messages.properties'
@@ -27,4 +28,8 @@ export function themeLoginPath(themeId: string, loginRelativePath: string): stri
 
 export function themeLoginResourcePath(themeId: string, resourceRelativePath: string): string {
   return themeLoginPath(themeId, `${THEME_RESOURCES_PATH}/${resourceRelativePath}`)
+}
+
+export function layoutCssPath(layoutId: string): string {
+  return `${KEYCLOAK_LAYOUTS_ROOT_PATH}/${layoutId}/layout.css`
 }

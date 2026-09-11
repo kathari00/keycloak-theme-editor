@@ -19,9 +19,9 @@ describe('loadThemes', () => {
         return new Response(JSON.stringify({
           themes: [
             {
-              id: 'modern-card',
-              name: 'Modern Card',
-              description: 'Modern',
+              id: 'custom',
+              name: 'Custom',
+              description: 'Custom',
               defaultAssets: [],
             },
           ],
@@ -31,7 +31,7 @@ describe('loadThemes', () => {
         })
       }
 
-      if (url.endsWith('/keycloak-dev-resources/themes/modern-card/login/theme.properties')) {
+      if (url.endsWith('/keycloak-dev-resources/themes/custom/login/theme.properties')) {
         return new Response('kcDarkModeClass=kcDarkModeClass pf-v5-theme-dark\nstyles=css/styles.css', {
           status: 200,
           headers: { 'content-type': 'text/plain' },

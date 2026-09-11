@@ -1,5 +1,6 @@
 import type { AssembleThemeFilesParams } from '../types'
 import { describe, expect, it } from 'vitest'
+import { writeToDirectory } from '../jar-export-service'
 import { assembleThemeFiles } from '../theme-file-assembler'
 
 const decoder = new TextDecoder()
@@ -56,5 +57,39 @@ describe('assembleThemeFiles folder layout', () => {
     const editorJson = JSON.parse(decoder.decode(files['myfolder/META-INF/keycloak-theme-editor.json']))
 
     expect(editorJson).toEqual({ sourceThemeId: 'keycloak/login' })
+  })
+})
+
+describe('writeToDirectory', () => {
+  it('removes obsolete template overrides when re-exporting with a different parent', async () => {
+    const files = new Map<string, unknown>()
+    const directory = (prefix: string): FileSystemDirectoryHandle => ({
+      getDirectoryHandle: async (name: string) => directory(`${prefix}${name}/`),
+      getFileHandle: async (name: string) => ({
+        createWritable: async () => ({
+          write: async (data: unknown) => { files.set(`${prefix}${name}`, data) },
+          close: async () => {},
+        }),
+      }),
+      removeEntry: async (name: string) => {
+        if (!files.delete(`${prefix}${name}`))
+          throw new DOMException('Missing file', 'NotFoundError')
+      },
+    }) as unknown as FileSystemDirectoryHandle
+    const root = directory('')
+
+    await writeToDirectory(root, makeParams({ footerFtl: '<#macro content></#macro>' }))
+    files.set('test-theme/login/my-custom-page.ftl', 'User content')
+    // Custom projects keep templates outside the editor's ownership.
+    await writeToDirectory(root, makeParams({ templateFtl: '', footerFtl: null }))
+    expect(files.has('test-theme/login/template.ftl')).toBe(true)
+    expect(files.has('test-theme/login/footer.ftl')).toBe(true)
+    await writeToDirectory(root, makeParams({ properties: 'parent=base', templateFtl: '', footerFtl: null, replaceTemplateOverrides: true }))
+    // A second export also succeeds when the inherited files are already absent.
+    await writeToDirectory(root, makeParams({ properties: 'parent=base', templateFtl: '', footerFtl: null, replaceTemplateOverrides: true }))
+
+    expect(files.has('test-theme/login/template.ftl')).toBe(false)
+    expect(files.has('test-theme/login/footer.ftl')).toBe(false)
+    expect(files.get('test-theme/login/my-custom-page.ftl')).toBe('User content')
   })
 })

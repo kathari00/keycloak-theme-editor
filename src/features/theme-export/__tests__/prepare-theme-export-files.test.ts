@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createQuickSettings, createThemeDocument } from '../../theme-document'
+import { fetchFooterFtl, fetchTemplateFtl } from '../css-export-utils'
 import { fetchDefaultAssetBlobs } from '../default-asset-blobs'
 import {
   buildExportCssFiles,
@@ -67,7 +68,7 @@ html.kcDarkModeClass {
 
 function makeThemeDocumentWithModeStyles() {
   return createThemeDocument({
-    themeId: 'modern-card',
+    themeId: 'custom',
     isPresetTheme: true,
     stylesCss: '.custom { color: red; }',
     stylesCssFiles: {
@@ -128,6 +129,25 @@ describe('buildExportCssFiles', () => {
   })
 })
 
+describe('bootstrap export', () => {
+  it.each(['custom', 'Georgia, serif'])('exports the font selection %s without inheriting the preset font', async (fontFamily) => {
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url.endsWith('/theme.properties'))
+        return response('parent=base\nstyles=css/quick-start.css css/styles.css')
+      return response('', { status: 404 })
+    }))
+    const themeDocument = makeThemeDocument()
+    themeDocument.themeId = 'custom'
+    themeDocument.frameworkId = 'bootstrap'
+    themeDocument.bootstrapVariantId = 'flatly'
+    themeDocument.quickStartCss = ':root { --quickstart-font-family: Inter, sans-serif; }'
+    themeDocument.quickSettings.colorPresetFontFamily = fontFamily
+    const files = await prepareThemeExportFiles({ themeDocument, themeName: 'font-test' })
+    expect(files.quickStartCss).toContain(`--quickstart-font-family: ${fontFamily === 'custom' ? 'var(--bs-font-sans-serif)' : fontFamily};`)
+  })
+})
+
 describe('buildOverriddenMessages', () => {
   it('overrides legal links and escapes multiline info messages', () => {
     const messages = buildOverriddenMessages({
@@ -146,6 +166,15 @@ describe('buildOverriddenMessages', () => {
 })
 
 describe('prepareThemeExportFiles', () => {
+  it('does not export the static app fallback as an inherited FreeMarker template', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => response('<!doctype html><html><body>Editor</body></html>', {
+      headers: { 'Content-Type': 'text/html' },
+    })))
+
+    await expect(fetchTemplateFtl('base')).resolves.toBe('')
+    await expect(fetchFooterFtl('base')).resolves.toBeNull()
+  })
+
   it('prepares preset theme files from a theme document', async () => {
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input)

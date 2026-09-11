@@ -1,6 +1,8 @@
 import type { AppliedAssets, UploadedAsset } from '../assets/types'
+import type { QuickStartCssOptions } from '../editor/lib/quick-start-css'
 import type { QuickSettings } from '../editor/stores/types'
 import type { EditorCssContext, ImportedQuickSettingsByMode, ThemeExportPayload } from './types'
+import { parse } from 'css-tree'
 import { collectDeclarationsBySelector } from '../../lib/css-ast'
 import {
   generateExportAppliedCSS,
@@ -15,11 +17,10 @@ import {
   toGoogleFontId,
 } from '../assets/google-fonts'
 import {
-  BORDER_RADIUS_OPTIONS,
   buildQuickStartNonVariableCss,
-  CARD_SHADOW_OPTIONS,
-  COLOR_REGEX,
-  CUSTOM_PRESET_ID,
+  buildQuickStartVariableMap,
+  buildScopedQuickStartVariablesCss,
+
 } from '../editor/lib/quick-start-css'
 import {
   THEME_FOOTER_FTL_PATH,
@@ -101,13 +102,18 @@ function getGoogleFontsCss(cssText: string, applied: AppliedAssets): string {
   return buildGoogleFontsImportCSS(Array.from(families))
 }
 
-/** Fetch the correct template.ftl for a theme */
+function isStaticAppShell(content: string): boolean {
+  return /^\s*<!doctype html(?:\s|>)/i.test(content) && !content.includes('<#')
+}
+
+/** Fetch a local template.ftl when present; otherwise let Keycloak inherit it from the parent. */
 export async function fetchTemplateFtl(themeId: string): Promise<string> {
   const response = await fetch(themeLoginPath(themeId, THEME_TEMPLATE_FTL_PATH))
   if (!response.ok) {
-    throw new Error(`Failed to load template.ftl for "${themeId}" (${response.status})`)
+    return ''
   }
-  return await response.text()
+  const content = await response.text()
+  return isStaticAppShell(content) ? '' : content
 }
 
 /** Fetch the optional footer.ftl for a theme */
@@ -116,7 +122,8 @@ export async function fetchFooterFtl(themeId: string): Promise<string | null> {
   if (!response.ok) {
     return null
   }
-  return await response.text()
+  const content = await response.text()
+  return isStaticAppShell(content) ? null : content
 }
 
 /** Fetch custom FTL files (excluding template.ftl and footer.ftl) from a theme's login folder. */
@@ -314,19 +321,22 @@ export function extractCssImports(cssText: string): { imports: string[], cssWith
   }
 
   const imports: string[] = []
-  const cssLines: string[] = []
-
-  cssText.split(/\r?\n/).forEach((line) => {
-    const trimmedLine = line.trim()
-    const isImportLine = trimmedLine.toLowerCase().startsWith('@import ') && trimmedLine.endsWith(';')
-    if (isImportLine) {
-      imports.push(trimmedLine)
-      return
-    }
-    cssLines.push(line)
-  })
-
-  const cssWithoutImports = cssLines.join('\n').trim()
+  const remaining: string[] = []
+  let offset = 0
+  const ast = parse(cssText, { positions: true, parseValue: false })
+  if (ast.type === 'StyleSheet') {
+    ast.children.forEach((node) => {
+      if (node.type !== 'Atrule' || !node.loc || !['import', 'charset'].includes(node.name.toLowerCase()))
+        return
+      const { start, end } = node.loc
+      if (node.name.toLowerCase() === 'import')
+        imports.push(cssText.slice(start.offset, end.offset).trim())
+      remaining.push(cssText.slice(offset, start.offset))
+      offset = end.offset
+    })
+  }
+  remaining.push(cssText.slice(offset))
+  const cssWithoutImports = remaining.join('').trim()
   return {
     imports,
     cssWithoutImports,
@@ -342,55 +352,8 @@ export function mergeCssImports(imports: string[]): string {
   return uniqueImports.join('\n')
 }
 
-function buildQuickStartVariableMap(settings: QuickSettings): Record<string, string> {
-  const variables: Record<string, string> = {
-    '--quickstart-primary-color': settings.colorPresetPrimaryColor,
-    '--quickstart-secondary-color': settings.colorPresetSecondaryColor,
-  }
-
-  if (settings.colorPresetFontFamily && settings.colorPresetFontFamily !== CUSTOM_PRESET_ID) {
-    variables['--quickstart-font-family'] = settings.colorPresetFontFamily
-  }
-
-  if (settings.colorPresetHeadingFontFamily && settings.colorPresetHeadingFontFamily !== CUSTOM_PRESET_ID) {
-    variables['--quickstart-heading-font-family'] = settings.colorPresetHeadingFontFamily
-  }
-
-  variables['--quickstart-gradient-bg-default']
-    = `linear-gradient(135deg, ${settings.colorPresetPrimaryColor} 0%, ${settings.colorPresetSecondaryColor} 100%)`
-
-  if (settings.colorPresetBgColor && COLOR_REGEX.test(settings.colorPresetBgColor)) {
-    variables['--quickstart-bg-color'] = settings.colorPresetBgColor
-    variables['--quickstart-bg-image'] = 'none'
-    variables['--quickstart-bg-logo-url'] = 'none'
-    variables['--keycloak-bg-logo-url'] = 'none'
-  }
-
-  const borderRadius = BORDER_RADIUS_OPTIONS.find(option => option.value === settings.colorPresetBorderRadius)?.px
-  if (borderRadius) {
-    variables['--quickstart-border-radius'] = borderRadius
-  }
-
-  const cardShadow = CARD_SHADOW_OPTIONS.find(option => option.value === settings.colorPresetCardShadow)?.css
-  if (cardShadow) {
-    variables['--quickstart-card-shadow'] = cardShadow
-  }
-
-  return variables
-}
-
-function buildScopedQuickStartVariablesCss(selectors: string, settings: QuickSettings): string {
-  const variableEntries = Object.entries(buildQuickStartVariableMap(settings))
-  if (variableEntries.length === 0) {
-    return ''
-  }
-
-  const lines = variableEntries.map(([name, value]) => `  ${name}: ${value};`)
-  return `${selectors} {\n${lines.join('\n')}\n}`
-}
-
-function buildQuickStartNonVariableCssForSettings(settings: QuickSettings): string {
-  return buildQuickStartNonVariableCss({
+function toQuickStartCssOptions(settings: QuickSettings, hasLogo: boolean): QuickStartCssOptions {
+  return {
     primaryColor: settings.colorPresetPrimaryColor,
     secondaryColor: settings.colorPresetSecondaryColor,
     fontFamily: settings.colorPresetFontFamily,
@@ -403,10 +366,18 @@ function buildQuickStartNonVariableCssForSettings(settings: QuickSettings): stri
     infoMessage: settings.infoMessage,
     imprintUrl: settings.imprintUrl,
     dataProtectionUrl: settings.dataProtectionUrl,
-  })
+    hasLogo,
+  }
 }
 
-export function buildModeAwareQuickStartCssParts(settingsByMode: ImportedQuickSettingsByMode | undefined): {
+function buildQuickStartNonVariableCssForSettings(settings: QuickSettings, hasLogo: boolean): string {
+  return buildQuickStartNonVariableCss(toQuickStartCssOptions(settings, hasLogo))
+}
+
+export function buildModeAwareQuickStartCssParts(
+  settingsByMode: ImportedQuickSettingsByMode | undefined,
+  hasLogo = false,
+): {
   sharedCss: string
   variablesCss: string
 } {
@@ -415,21 +386,21 @@ export function buildModeAwareQuickStartCssParts(settingsByMode: ImportedQuickSe
     return { sharedCss: '', variablesCss: '' }
   }
 
-  const lightCss = buildQuickStartNonVariableCssForSettings(light)
+  const lightCss = buildQuickStartNonVariableCssForSettings(light, hasLogo)
   const lightCssParts = extractCssImports(lightCss)
   const sharedQuickStartCss = lightCssParts.cssWithoutImports.trim()
-  const lightVariablesCss = buildScopedQuickStartVariablesCss(QUICK_START_LIGHT_VARIABLE_SCOPE, light)
+  const lightVariablesCss = buildScopedQuickStartVariablesCss(QUICK_START_LIGHT_VARIABLE_SCOPE, buildQuickStartVariableMap(toQuickStartCssOptions(light, hasLogo)))
 
   const dark = settingsByMode?.dark as QuickSettings | undefined
   const darkImports = dark
-    ? extractCssImports(buildQuickStartNonVariableCssForSettings(dark)).imports
+    ? extractCssImports(buildQuickStartNonVariableCssForSettings(dark, hasLogo)).imports
     : []
   const quickStartImportsCss = mergeCssImports([
     ...lightCssParts.imports,
     ...darkImports,
   ])
   const darkVariablesCss = dark
-    ? buildScopedQuickStartVariablesCss(QUICK_START_DARK_VARIABLE_SCOPE, dark)
+    ? buildScopedQuickStartVariablesCss(QUICK_START_DARK_VARIABLE_SCOPE, buildQuickStartVariableMap(toQuickStartCssOptions(dark, hasLogo)))
     : ''
 
   return {

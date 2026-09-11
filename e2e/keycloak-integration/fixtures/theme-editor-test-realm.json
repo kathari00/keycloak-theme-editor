@@ -4,5 +4,5 @@
   "internationalizationEnabled": true,
   "supportedLocales": ["en", "de", "ar"],
   "defaultLocale": "en",
-  "loginTheme": "modern-card"
+  "loginTheme": "custom"
 }

@@ -51,7 +51,7 @@ describe('sanitizeThemeCssSourceForEditor', () => {
 /* @kte:visibility-end */
 .keep-me { color: red; }
 /* @kte:visibility-start:hide-subtitle */
-.kc-horizontal-card-subtitle { display: none !important; }
+.subtitle { display: none !important; }
 /* @kte:visibility-end */
 `.trim()
 

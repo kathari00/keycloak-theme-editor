@@ -1,15 +1,18 @@
 import { Flex, Stack, StackItem } from '@patternfly/react-core'
 import CodeMirror from '@uiw/react-codemirror'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import SidebarPanel from '../../../components/SidebarPanel'
 import { getAssetDataUrl, getUploadedImageCssVarName } from '../../assets/font-css-generator'
 import { usePreviewContext } from '../../preview/hooks/use-preview-context'
 import { escapeCssIdentifier } from '../../preview/lib/selector-utils'
+import { useThemeDocument } from '../../theme-document/use-theme-document'
 import { editorActions } from '../actions'
 import { useCssFilesState, useDarkModeState, useHistoryRevisionState, useUploadedAssetsState } from '../hooks/use-editor'
 import { useStyleWorkspace } from '../hooks/use-style-workspace'
 import { createCssEditorExtensions } from '../lib/codemirror-config'
-import { cssFileDisplayName, QUICK_START_CSS_PATH } from '../lib/css-files'
+import { cssFileDisplayName, frameworkCustomCssPath, isFrameworkCustomCssFile, QUICK_START_CSS_PATH } from '../lib/css-files'
+import { getFrameworkCssCompletions } from '../lib/framework-bindings/css-completions'
+import { useFrameworkBinding } from '../lib/framework-bindings/use-framework-binding'
 
 interface CssEditorImageAsset {
   name: string
@@ -96,7 +99,15 @@ function buildPageScopedUniqueSelector(doc: Document | null, selectedNodeId: str
 export default function StylingPanel() {
   const { isDarkMode } = useDarkModeState()
   const { revision } = useHistoryRevisionState()
-  const { stylesCssFiles, activeCssFilePath } = useCssFilesState()
+  const { stylesCssFiles, activeCssFilePath: selectedFilePath } = useCssFilesState()
+  const { themeDocument } = useThemeDocument()
+  const customCssPath = frameworkCustomCssPath(themeDocument.frameworkId)
+  const frameworkBinding = useFrameworkBinding(themeDocument.frameworkId, themeDocument.bootstrapVariantId)
+  const frameworkCompletions = useMemo(() => getFrameworkCssCompletions(frameworkBinding), [frameworkBinding])
+  const filePaths = customCssPath
+    ? [customCssPath, QUICK_START_CSS_PATH]
+    : Object.keys(stylesCssFiles).filter(path => !isFrameworkCustomCssFile(path))
+  const activeCssFilePath = filePaths.includes(selectedFilePath) ? selectedFilePath : filePaths[0] ?? ''
   const { uploadedAssets } = useUploadedAssetsState()
   const {
     getDocument,
@@ -105,10 +116,9 @@ export default function StylingPanel() {
   } = usePreviewContext()
 
   const [showAllStylesByFile, setShowAllStylesByFile] = useState<Record<string, boolean>>({ [QUICK_START_CSS_PATH]: true })
-  const showAllStyles = showAllStylesByFile[activeCssFilePath] ?? false
+  const showAllStyles = showAllStylesByFile[activeCssFilePath] ?? isFrameworkCustomCssFile(activeCssFilePath)
   const setShowAllStyles = (value: boolean) => setShowAllStylesByFile(prev => ({ ...prev, [activeCssFilePath]: value }))
 
-  const filePaths = Object.keys(stylesCssFiles)
   const hasFileTabs = filePaths.length > 0
   const activeFileCss = stylesCssFiles[activeCssFilePath] ?? ''
 
@@ -144,6 +154,8 @@ export default function StylingPanel() {
       undo: editorActions.undo,
       redo: editorActions.redo,
     },
+    undefined,
+    frameworkCompletions,
   )
 
   const {
@@ -156,7 +168,7 @@ export default function StylingPanel() {
     hasActiveSelection: Boolean(selectedElement),
     showAllStyles,
     addUndoRedoAction: editorActions.addUndoRedoAction,
-    setStylesCss: editorActions.setActiveFileCss,
+    setStylesCss: css => editorActions.setActiveFileCss(css, activeCssFilePath),
   })
 
   const labelTextColor = isDarkMode ? '#f3f4f6' : '#111827'

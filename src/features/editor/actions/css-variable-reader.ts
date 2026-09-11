@@ -1,7 +1,14 @@
 import type { QuickSettingsMode } from '../lib/quick-settings'
 import type { PresetState, QuickSettingsStyle } from '../stores/types'
-import { findFirstDeclarationValue } from '../../../lib/css-ast'
 import { CUSTOM_PRESET_ID } from '../lib/quick-start-css'
+import {
+  extractQuickStartCssForMode,
+  mapQuickStartBorderRadius,
+  mapQuickStartCardShadow,
+  normalizeEditableQuickStartValue,
+  readQuickStartColorVariable,
+  readQuickStartVariable,
+} from '../lib/quick-start-css-parser'
 
 export type QuickStartExtrasState = Pick<
   PresetState,
@@ -20,59 +27,6 @@ export type QuickStartExtrasState = Pick<
 
 export type QuickStartExtrasUpdate = Partial<QuickStartExtrasState>
 
-export function readQuickStartVariable(cssText: string, variableName: string): string {
-  return findFirstDeclarationValue(cssText, variableName)
-}
-
-function normalizeEditableQuickStartValue(value: string): string {
-  const normalized = value.trim()
-  return normalized.startsWith('var(') ? '' : normalized
-}
-
-function readQuickStartColorVariable(
-  cssText: string,
-  suffix: 'primary-color' | 'secondary-color' | 'bg-color',
-  mode: QuickSettingsMode,
-): string {
-  const candidates = mode === 'dark'
-    ? [`--quickstart-${suffix}-dark`, `--quickstart-${suffix}-light`]
-    : [`--quickstart-${suffix}-light`, `--quickstart-${suffix}-dark`]
-
-  for (const candidate of candidates) {
-    const value = normalizeEditableQuickStartValue(readQuickStartVariable(cssText, candidate))
-    if (value) {
-      return value
-    }
-  }
-
-  return ''
-}
-
-export function mapQuickStartBorderRadius(value: string): PresetState['colorPresetBorderRadius'] {
-  const normalized = value.trim().toLowerCase()
-  if (normalized === '0' || normalized === '0px') {
-    return 'sharp'
-  }
-  if (normalized === '24px') {
-    return 'pill'
-  }
-  return 'rounded'
-}
-
-export function mapQuickStartCardShadow(value: string): PresetState['colorPresetCardShadow'] {
-  const normalized = value.trim().toLowerCase().replace(/\s+/g, ' ')
-  if (!normalized) {
-    return 'subtle'
-  }
-  if (normalized === 'none') {
-    return 'none'
-  }
-  if (normalized.includes('0 8px 32px')) {
-    return 'strong'
-  }
-  return 'subtle'
-}
-
 export function buildThemeQuickStartDefaults(themeCss: string, mode: QuickSettingsMode = 'light'): {
   colorPresetId: QuickSettingsStyle['colorPresetId']
   colorPresetPrimaryColor: QuickSettingsStyle['colorPresetPrimaryColor']
@@ -86,14 +40,17 @@ export function buildThemeQuickStartDefaults(themeCss: string, mode: QuickSettin
   const bgColor = readQuickStartColorVariable(themeCss, 'bg-color', mode)
   const borderRadiusValue = readQuickStartVariable(themeCss, '--quickstart-border-radius')
   const cardShadowValue = readQuickStartVariable(themeCss, '--quickstart-card-shadow')
+  // Scope the marker lookup to this mode's own rule blocks, so a dark-mode @kte: marker can't
+  // be picked up while reading light-mode defaults (or vice versa) from the combined CSS.
+  const cssForMode = extractQuickStartCssForMode(themeCss, mode)
   return {
     colorPresetId: CUSTOM_PRESET_ID,
     colorPresetPrimaryColor: readQuickStartColorVariable(themeCss, 'primary-color', mode),
     colorPresetSecondaryColor: readQuickStartColorVariable(themeCss, 'secondary-color', mode),
     colorPresetFontFamily: normalizeEditableQuickStartValue(readQuickStartVariable(themeCss, '--quickstart-font-family')) || CUSTOM_PRESET_ID,
     colorPresetBgColor: bgColor,
-    colorPresetBorderRadius: mapQuickStartBorderRadius(borderRadiusValue),
-    colorPresetCardShadow: mapQuickStartCardShadow(cardShadowValue),
+    colorPresetBorderRadius: mapQuickStartBorderRadius(cssForMode, borderRadiusValue),
+    colorPresetCardShadow: mapQuickStartCardShadow(cssForMode, cardShadowValue),
     colorPresetHeadingFontFamily: normalizeEditableQuickStartValue(readQuickStartVariable(themeCss, '--quickstart-heading-font-family')) || CUSTOM_PRESET_ID,
   }
 }

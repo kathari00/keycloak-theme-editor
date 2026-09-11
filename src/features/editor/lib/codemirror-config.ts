@@ -1,6 +1,7 @@
 import type { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete'
 import type { EditorState, Extension } from '@codemirror/state'
 import type { KeyBinding } from '@codemirror/view'
+import type { FrameworkCssCompletions } from './framework-bindings/css-completions'
 import type { CssEditorVariable } from './quickstart-variable-registry'
 import { autocompletion } from '@codemirror/autocomplete'
 import { css } from '@codemirror/lang-css'
@@ -179,7 +180,7 @@ function getWordOrCursor(context: CompletionContext, pattern: RegExp): Completio
   return word ?? { from: context.pos, to: context.pos }
 }
 
-function buildSelectorCompletions(availableIdentifiers: string[], uniqueSelector: string | null) {
+function buildSelectorCompletions(availableIdentifiers: string[], uniqueSelector: string | null, frameworkIdentifiers: string[] = []) {
   const uniqueSelectorOptions: Completion[] = uniqueSelector && uniqueSelector.trim()
     ? [{
         label: uniqueSelector.trim(),
@@ -190,13 +191,13 @@ function buildSelectorCompletions(availableIdentifiers: string[], uniqueSelector
       }]
     : []
 
-  const identifierOptions: Completion[] = availableIdentifiers.map((identifier) => {
+  const identifierOptions: Completion[] = [...new Set([...availableIdentifiers, ...frameworkIdentifiers])].map((identifier) => {
     const isId = identifier.startsWith('#')
     const isClass = identifier.startsWith('.')
     return {
       label: identifier,
       type: isId ? 'property' : isClass ? 'class' : 'type',
-      detail: isId ? 'Available id' : isClass ? 'Available class' : 'Element type',
+      detail: frameworkIdentifiers.includes(identifier) ? 'Bootstrap class' : isId ? 'Available id' : isClass ? 'Available class' : 'Element type',
       boost: 220,
     }
   })
@@ -234,7 +235,7 @@ function buildSelectorCompletions(availableIdentifiers: string[], uniqueSelector
 }
 
 // Custom CSS property autocomplete
-function cssPropertyCompletions(context: CompletionContext): CompletionResult | null {
+function cssPropertyCompletions(context: CompletionContext, frameworkVariables: CssEditorVariable[] = []): CompletionResult | null {
   if (getCssAutocompleteScope(context) !== 'property')
     return null
 
@@ -244,7 +245,7 @@ function cssPropertyCompletions(context: CompletionContext): CompletionResult | 
 
   return {
     from: word.from,
-    options: cssProperties,
+    options: [...cssProperties, ...frameworkVariables.map(variable => ({ label: variable.name, type: 'property', detail: variable.detail }))],
     validFor: /^[\w-]*$/,
   }
 }
@@ -576,6 +577,7 @@ export function createCssEditorExtensions(
   uniqueSelector: string | null = null,
   customHistory?: CssEditorCustomHistory,
   colorValues: Map<string, string> = new Map(),
+  frameworkCompletions?: FrameworkCssCompletions,
 ): Extension[] {
   const customHistoryKeymap: KeyBinding[] = []
   if (customHistory?.undo) {
@@ -611,10 +613,10 @@ export function createCssEditorExtensions(
     autocompletion({
       activateOnTyping: true,
       override: [
-        buildSelectorCompletions(availableIdentifiers, uniqueSelector),
-        cssPropertyCompletions,
+        buildSelectorCompletions(availableIdentifiers, uniqueSelector, frameworkCompletions?.identifiers),
+        context => cssPropertyCompletions(context, frameworkCompletions?.variables),
         cssValueCompletions,
-        buildCssVariableCompletions(CSS_EDITOR_CSS_VARS),
+        buildCssVariableCompletions([...CSS_EDITOR_CSS_VARS, ...frameworkCompletions?.variables ?? []]),
         buildColorVariableCompletions(
           CSS_EDITOR_CSS_VARS.filter(v => v.isColor),
           colorValues,

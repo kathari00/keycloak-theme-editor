@@ -64,10 +64,12 @@ public final class VariantLoader {
     Map<String, String> themeProperties = parseJavaProperties(readUtf8(themePropertiesPath));
     Path overrideThemePropertiesPath = localOverrideLoginDir.resolve("theme.properties");
     if (Files.exists(overrideThemePropertiesPath)) {
-      Map<String, String> overrideThemeProperties = parseJavaProperties(readUtf8(overrideThemePropertiesPath));
-      for (Map.Entry<String, String> entry : overrideThemeProperties.entrySet()) {
-        themeProperties.putIfAbsent(entry.getKey(), entry.getValue());
-      }
+      // Unlike a user's own overlay (which only wants to add a couple of keys on top of a
+      // theme it mostly inherits), base/v2's own committed theme.properties is the complete,
+      // already-derived hook vocabulary from adapt-vendor-theme.ts (see
+      // tools/theme-adaptations/README.md) - it must win over pristine upstream's raw values,
+      // matching putAll below, not defer to them via putIfAbsent.
+      themeProperties.putAll(parseJavaProperties(readUtf8(overrideThemePropertiesPath)));
     }
     if (overlayDir != null) {
       Path overlayThemePropertiesPath = overlayDir.resolve("theme.properties");

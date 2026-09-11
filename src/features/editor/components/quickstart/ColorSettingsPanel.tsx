@@ -1,4 +1,6 @@
-import type { EditorTheme } from '../../../presets/types'
+import type { BootstrapVariantId, FrameworkId } from '../../lib/framework-bindings/types'
+import type { LayoutId } from '../../lib/layouts/types'
+import type { StyleOptionId } from '../../lib/style-options'
 import type { QuickSettingsStyle } from '../../stores/types'
 import type { FontOption } from './useQuickStartSettings'
 import {
@@ -13,12 +15,16 @@ import {
   Tooltip,
 } from '@patternfly/react-core'
 import { InfoCircleIcon } from '@patternfly/react-icons'
+import { useRef } from 'react'
 import { editorActions } from '../../actions'
+import { BOOTSTRAP_VARIANTS, loadBootstrapVariantDefaultColors } from '../../lib/framework-bindings/registry'
+import { LAYOUT_OPTIONS } from '../../lib/layouts/registry'
 import {
   BORDER_RADIUS_OPTIONS,
   CARD_SHADOW_OPTIONS,
   CUSTOM_PRESET_ID,
 } from '../../lib/quick-start-css'
+import { deriveStyleOptionId, STYLE_OPTIONS, styleOptionFrameworkId, styleOptionThemeId } from '../../lib/style-options'
 import { ColorPicker } from './ColorPicker'
 
 const QUICK_START_PRESETS = [
@@ -69,7 +75,6 @@ function resolveEffectivePresetId(params: {
 }
 
 interface ColorSettingsPanelProps {
-  themes: EditorTheme[]
   selectedThemeId: string
   effectivePrimaryColor: string
   effectiveSecondaryColor: string
@@ -79,12 +84,15 @@ interface ColorSettingsPanelProps {
   effectiveCardShadow: QuickSettingsStyle['colorPresetCardShadow']
   effectiveHeadingFontFamily: string
   fontOptions: FontOption[]
+  frameworkId: FrameworkId
+  bootstrapVariantId: BootstrapVariantId
+  supportsLayoutSelection: boolean
+  layoutId: LayoutId
 }
 
 const formGroupStyle = { marginBottom: 0 }
 
 export function ColorSettingsPanel({
-  themes,
   selectedThemeId,
   effectivePrimaryColor,
   effectiveSecondaryColor,
@@ -94,7 +102,12 @@ export function ColorSettingsPanel({
   effectiveCardShadow,
   effectiveHeadingFontFamily,
   fontOptions,
+  frameworkId,
+  bootstrapVariantId,
+  supportsLayoutSelection,
+  layoutId,
 }: ColorSettingsPanelProps) {
+  const styleOptionId = deriveStyleOptionId(selectedThemeId, frameworkId)
   const effectivePresetId = resolveEffectivePresetId({
     primaryColor: effectivePrimaryColor,
     secondaryColor: effectiveSecondaryColor,
@@ -102,12 +115,42 @@ export function ColorSettingsPanel({
     headingFontFamily: effectiveHeadingFontFamily,
   })
 
-  const handleDesignPresetChange = (_event: React.FormEvent<HTMLSelectElement>, value: string) => {
-    const selectedTheme = themes.find(theme => theme.id === value)
-    if (!selectedTheme) {
+  // Guards against a slower, superseded color/theme request overwriting a later one's result.
+  const latestColorRequestIdRef = useRef(0)
+
+  const applyBootstrapDefaultColors = async (variantId: BootstrapVariantId, requestId: number) => {
+    const colors = await loadBootstrapVariantDefaultColors(variantId)
+    if (latestColorRequestIdRef.current !== requestId) {
       return
     }
-    void editorActions.applyThemeSelection(value)
+    editorActions.setQuickStartStyle(
+      colors.primaryColor,
+      colors.secondaryColor,
+      effectiveFontFamily,
+      { recordHistory: false },
+    )
+  }
+
+  const handleStyleChange = (_event: React.FormEvent<HTMLSelectElement>, value: string) => {
+    const nextStyleOptionId = value as StyleOptionId
+    const themeId = styleOptionThemeId(nextStyleOptionId)
+    const requestId = ++latestColorRequestIdRef.current
+    editorActions.setFrameworkIdForTheme(styleOptionFrameworkId(nextStyleOptionId), themeId)
+    void (async () => {
+      const applied = await editorActions.applyThemeSelection(themeId)
+      if (!applied || latestColorRequestIdRef.current !== requestId) {
+        return
+      }
+      if (nextStyleOptionId === 'bootstrap')
+        await applyBootstrapDefaultColors(bootstrapVariantId, requestId)
+      if (nextStyleOptionId === 'carbon') {
+        editorActions.setQuickStartStyle('#0f62fe', '#393939', '"IBM Plex Sans", sans-serif', {
+          headingFontFamily: '"IBM Plex Sans", sans-serif',
+          recordHistory: false,
+        })
+        editorActions.setQuickStartExtras({ colorPresetBorderRadius: 'sharp', colorPresetCardShadow: 'none' })
+      }
+    })()
   }
 
   const handlePresetChange = (_event: React.FormEvent<HTMLSelectElement>, value: string) => {
@@ -121,6 +164,13 @@ export function ColorSettingsPanel({
       preset.fontFamily,
       { headingFontFamily: preset.fontFamily },
     )
+  }
+
+  const handleBootstrapVariantChange = (_event: React.FormEvent<HTMLSelectElement>, value: string) => {
+    const variantId = value as BootstrapVariantId
+    const requestId = ++latestColorRequestIdRef.current
+    editorActions.setBootstrapVariantIdForTheme(variantId, selectedThemeId)
+    void applyBootstrapDefaultColors(variantId, requestId)
   }
 
   const updatePrimaryColor = (value: string) => {
@@ -151,6 +201,10 @@ export function ColorSettingsPanel({
     editorActions.setQuickStartExtras({ colorPresetHeadingFontFamily: value })
   }
 
+  const handleLayoutChange = (_event: React.FormEvent<HTMLSelectElement>, value: string) => {
+    editorActions.setLayoutIdForTheme(value as LayoutId, selectedThemeId)
+  }
+
   return (
     <Stack hasGutter>
       <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
@@ -161,22 +215,52 @@ export function ColorSettingsPanel({
           <InfoCircleIcon style={{ color: 'var(--pf-v5-global--info-color--100)', cursor: 'help' }} />
         </Tooltip>
       </Flex>
-      <FormGroup label="Theme" fieldId="design-preset" style={formGroupStyle}>
+      <FormGroup label="Style" fieldId="design-preset" style={formGroupStyle}>
         <FormSelect
           id="design-preset"
-          value={selectedThemeId}
-          onChange={handleDesignPresetChange}
-          aria-label="Select a theme"
+          value={styleOptionId}
+          onChange={handleStyleChange}
+          aria-label="Select a style"
         >
-          {themes.map(theme => (
+          {STYLE_OPTIONS.map(option => (
             <FormSelectOption
-              key={theme.id}
-              value={theme.id}
-              label={theme.name}
+              key={option.id}
+              value={option.id}
+              label={option.label}
             />
           ))}
         </FormSelect>
       </FormGroup>
+
+      {frameworkId === 'bootstrap' && (
+        <FormGroup label="Bootstrap variant" fieldId="bootstrap-variant" style={formGroupStyle}>
+          <FormSelect
+            id="bootstrap-variant"
+            value={bootstrapVariantId}
+            onChange={handleBootstrapVariantChange}
+            aria-label="Select a Bootstrap variant"
+          >
+            {BOOTSTRAP_VARIANTS.map(option => (
+              <FormSelectOption key={option.id} value={option.id} label={option.label} />
+            ))}
+          </FormSelect>
+        </FormGroup>
+      )}
+
+      {supportsLayoutSelection && (
+        <FormGroup label="Layout" fieldId="quick-start-layout" style={formGroupStyle}>
+          <FormSelect
+            id="quick-start-layout"
+            value={layoutId}
+            onChange={handleLayoutChange}
+            aria-label="Select a layout"
+          >
+            {LAYOUT_OPTIONS.map(option => (
+              <FormSelectOption key={option.id} value={option.id} label={option.label} />
+            ))}
+          </FormSelect>
+        </FormGroup>
+      )}
 
       <FormGroup label="Preset" fieldId="quick-start-preset" style={formGroupStyle}>
         <FormSelect

@@ -1,8 +1,10 @@
 import type { QuickSettingsStyle } from '../stores/types'
+import type { QuickStartMarkerKey } from './quick-start-css-parser'
 import {
   buildGoogleFontsImportCSS,
   normalizeGoogleFontFamily,
 } from '../../assets/google-fonts'
+import { buildQuickStartMarkerComment } from './quick-start-css-parser'
 import { QUICK_START_GENERATED_ROOT_VARIABLE_NAMES } from './quickstart-variable-registry'
 
 export const CUSTOM_PRESET_ID = 'custom'
@@ -42,6 +44,8 @@ export interface QuickStartCssOptions {
   infoMessage?: string
   imprintUrl?: string
   dataProtectionUrl?: string
+  /** A logo renders into #kc-header-wrapper (see below) - it must survive the header collapse. */
+  hasLogo?: boolean
 }
 
 interface QuickStartVisibilityState {
@@ -70,7 +74,10 @@ function extractPrimaryFontFamily(fontFamily: string): string | null {
   return first.replace(/^['"]|['"]$/g, '')
 }
 
-export function buildQuickStartRootCss(variableValues: Partial<Record<string, string>>): string {
+export function buildQuickStartRootCss(
+  variableValues: Partial<Record<string, string>>,
+  markers: Partial<Record<string, string>> = {},
+): string {
   const rootLines: string[] = []
   const darkLines: string[] = []
 
@@ -78,6 +85,12 @@ export function buildQuickStartRootCss(variableValues: Partial<Record<string, st
     const variableValue = variableValues[variableName]
     if (!variableValue) {
       return
+    }
+
+    const marker = markers[variableName]
+    if (marker) {
+      const markerKey = variableName.replace('--quickstart-', '') as QuickStartMarkerKey
+      rootLines.push(`  ${buildQuickStartMarkerComment(markerKey, marker)}`)
     }
 
     if (AUTO_SWITCH_COLOR_VARIABLE_NAMES.has(variableName)) {
@@ -117,7 +130,19 @@ export interface QuickStartCssParts {
   rulesCss: string
 }
 
-export function buildQuickStartCssParts(options: QuickStartCssOptions): QuickStartCssParts {
+export interface QuickStartVariableMapResult {
+  variables: Record<string, string>
+  /** Marker values (keyed by CSS variable name) for enum-valued tokens, for exact round-tripping. */
+  markers: Partial<Record<string, string>>
+}
+
+/**
+ * Single source of truth for quickstart option values -> `--quickstart-*` CSS custom properties.
+ * Shared by the preview path (via `buildQuickStartCssParts`/`buildQuickStartRootCss`, which filters
+ * to the registered root variable names) and the export path (via `buildScopedQuickStartVariablesCss`,
+ * which emits every entry unfiltered into an explicit selector scope).
+ */
+export function buildQuickStartVariableMap(options: QuickStartCssOptions): QuickStartVariableMapResult {
   const {
     primaryColor,
     secondaryColor,
@@ -126,7 +151,73 @@ export function buildQuickStartCssParts(options: QuickStartCssOptions): QuickSta
     borderRadius = 'rounded',
     cardShadow = 'subtle',
     headingFontFamily = '',
+  } = options
+
+  const radiusEntry
+    = BORDER_RADIUS_OPTIONS.find(option => option.value === borderRadius)
+      || BORDER_RADIUS_OPTIONS.find(option => option.value === 'rounded')
+  const shadowEntry
+    = CARD_SHADOW_OPTIONS.find(option => option.value === cardShadow)
+      || CARD_SHADOW_OPTIONS.find(option => option.value === 'subtle')
+
+  const variables: Record<string, string> = {
+    '--quickstart-primary-color': primaryColor,
+    '--quickstart-secondary-color': secondaryColor,
+  }
+  const markers: Partial<Record<string, string>> = {}
+
+  if (fontFamily && fontFamily !== CUSTOM_PRESET_ID) {
+    variables['--quickstart-font-family'] = fontFamily
+  }
+
+  if (headingFontFamily && headingFontFamily !== CUSTOM_PRESET_ID) {
+    variables['--quickstart-heading-font-family'] = headingFontFamily
+  }
+
+  variables['--quickstart-gradient-bg-default']
+    = `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`
+
+  if (bgColor && COLOR_REGEX.test(bgColor)) {
+    variables['--quickstart-bg-color'] = bgColor
+    variables['--quickstart-bg-image'] = 'none'
+    variables['--quickstart-bg-logo-url'] = 'none'
+    variables['--keycloak-bg-logo-url'] = 'none'
+  }
+
+  if (radiusEntry) {
+    variables['--quickstart-border-radius'] = radiusEntry.px
+    markers['--quickstart-border-radius'] = radiusEntry.value
+  }
+
+  if (shadowEntry) {
+    variables['--quickstart-card-shadow'] = shadowEntry.css
+    markers['--quickstart-card-shadow'] = shadowEntry.value
+  }
+
+  return { variables, markers }
+}
+
+/** Render a variable map as an explicit CSS selector block — used by export's mode-aware scoping. */
+export function buildScopedQuickStartVariablesCss(selectors: string, result: QuickStartVariableMapResult): string {
+  const variableEntries = Object.entries(result.variables)
+  if (variableEntries.length === 0) {
+    return ''
+  }
+
+  const lines = variableEntries.flatMap(([name, value]) => {
+    const marker = result.markers[name]
+    const markerLine = marker ? [`  ${buildQuickStartMarkerComment(name.replace('--quickstart-', '') as QuickStartMarkerKey, marker)}`] : []
+    return [...markerLine, `  ${name}: ${value};`]
+  })
+  return `${selectors} {\n${lines.join('\n')}\n}`
+}
+
+export function buildQuickStartCssParts(options: QuickStartCssOptions): QuickStartCssParts {
+  const {
+    fontFamily = '',
+    headingFontFamily = '',
     showRealmName,
+    hasLogo = false,
   } = options
 
   const {
@@ -153,42 +244,8 @@ export function buildQuickStartCssParts(options: QuickStartCssOptions): QuickSta
   })
 
   const googleFontsImport = buildGoogleFontsImportCSS(Array.from(googleFontFamilies))
-  const radiusEntry
-    = BORDER_RADIUS_OPTIONS.find(option => option.value === borderRadius)
-      || BORDER_RADIUS_OPTIONS.find(option => option.value === 'rounded')
-  const shadowEntry
-    = CARD_SHADOW_OPTIONS.find(option => option.value === cardShadow)
-      || CARD_SHADOW_OPTIONS.find(option => option.value === 'subtle')
-
-  const quickStartRootVariableValues: Partial<Record<string, string>> = {
-    '--quickstart-primary-color': primaryColor,
-    '--quickstart-secondary-color': secondaryColor,
-  }
-
-  if (fontFamily && fontFamily !== CUSTOM_PRESET_ID) {
-    quickStartRootVariableValues['--quickstart-font-family'] = fontFamily
-  }
-
-  if (headingFontFamily && headingFontFamily !== CUSTOM_PRESET_ID) {
-    quickStartRootVariableValues['--quickstart-heading-font-family'] = headingFontFamily
-  }
-
-  if (bgColor && COLOR_REGEX.test(bgColor)) {
-    quickStartRootVariableValues['--quickstart-bg-color'] = bgColor
-    quickStartRootVariableValues['--quickstart-bg-image'] = 'none'
-    quickStartRootVariableValues['--quickstart-bg-logo-url'] = 'none'
-    quickStartRootVariableValues['--keycloak-bg-logo-url'] = 'none'
-  }
-
-  if (radiusEntry) {
-    quickStartRootVariableValues['--quickstart-border-radius'] = radiusEntry.px
-  }
-
-  if (shadowEntry) {
-    quickStartRootVariableValues['--quickstart-card-shadow'] = shadowEntry.css
-  }
-
-  const rootVariablesCss = buildQuickStartRootCss(quickStartRootVariableValues)
+  const { variables: quickStartRootVariableValues, markers: quickStartRootVariableMarkers } = buildQuickStartVariableMap(options)
+  const rootVariablesCss = buildQuickStartRootCss(quickStartRootVariableValues, quickStartRootVariableMarkers)
 
   const rulesCss = `${
     !effectiveShowRealmName
@@ -196,8 +253,7 @@ export function buildQuickStartCssParts(options: QuickStartCssOptions): QuickSta
 /* @kte:visibility-start:hide-realm-name */
 /* Hide realm name */
 #kc-realm-name,
-.kc-realm-name,
-.kc-horizontal-card-realm-name {
+.kc-realm-name {
   display: none !important;
 }
 /* @kte:visibility-end */
@@ -205,8 +261,7 @@ export function buildQuickStartCssParts(options: QuickStartCssOptions): QuickSta
       : `
 /* Show realm name — override theme defaults that may hide it */
 #kc-realm-name,
-.kc-realm-name,
-.kc-horizontal-card-realm-name {
+.kc-realm-name {
   display: block !important;
 }
 `
@@ -217,7 +272,6 @@ export function buildQuickStartCssParts(options: QuickStartCssOptions): QuickSta
 /* Hide client name */
 #kc-client-name,
 .kc-client-name,
-.kc-horizontal-card-client-name,
 [data-kc-client="name"] {
   display: none !important;
 }
@@ -227,7 +281,6 @@ export function buildQuickStartCssParts(options: QuickStartCssOptions): QuickSta
 /* Show client name — override theme defaults that may hide it */
 #kc-client-name,
 .kc-client-name,
-.kc-horizontal-card-client-name,
 [data-kc-client="name"] {
   display: block !important;
 }
@@ -237,8 +290,20 @@ export function buildQuickStartCssParts(options: QuickStartCssOptions): QuickSta
       ? `
 /* @kte:visibility-start:hide-subtitle */
 /* Hide subtitle row when both client and realm are disabled */
-.kc-horizontal-card-subtitle {
+.subtitle {
   display: none !important;
+}
+${
+  hasLogo
+    ? ''
+    : `/* v2's #kc-header-wrapper (PatternFly's .pf-v5-c-brand, sized for a logo image) keeps its own
+   height/spacing even once both name spans inside it are display:none - collapse the wrapper
+   (and its parent) too, or it renders as an empty styled box. A logo needs the wrapper to stay,
+   since it renders into #kc-header-wrapper::before. */
+#kc-header-wrapper,
+#kc-header {
+  display: none !important;
+}`
 }
 /* @kte:visibility-end */
 `

@@ -1,0 +1,435 @@
+/* Horizontal layout: two-column split card, extracted from the former horizontal-card preset.
+   Structural properties only - visual chrome (background/border/radius/shadow) stays with
+   whichever style is selected, targeting the same .kcFormCardClass selector; the cascade
+   resolves cleanly since the two sheets set disjoint property sets. */
+
+/* v2's outer container becomes the split card instead of PatternFly's branding/main grid. */
+.kcLoginContainer {
+  box-sizing: border-box;
+  width: min(1040px, calc(100vw - 2rem));
+  max-width: 1040px;
+  min-height: 320px;
+  padding: clamp(24px, 4vw, 48px);
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) minmax(320px, 1.15fr);
+  grid-template-rows: auto 1fr;
+  grid-template-areas: none;
+  column-gap: clamp(20px, 4vw, 72px);
+  align-items: stretch;
+  background-color: var(--kte-surface, var(--bs-body-bg, #fff));
+  border: var(--bs-card-border-width, var(--bs-border-width, 1px)) solid var(--kte-border, var(--bs-card-border-color, var(--bs-border-color-translucent, #dee2e6)));
+  border-radius: var(--bs-card-border-radius, var(--quickstart-border-radius, var(--bs-border-radius, 0.375rem)));
+  box-shadow: var(--quickstart-card-shadow, var(--bs-box-shadow));
+  position: relative;
+  margin-bottom: 3.5rem;
+}
+
+/* The outer grid now supplies the card padding and chrome. Reset PatternFly's nested
+   body padding and put its blue accent on the whole panel, not just the title column. */
+.kcLogin > .kcLoginContainer {
+  align-self: center;
+  background-color: var(--pf-v5-c-login__main--BackgroundColor, var(--pf-v5-global--BackgroundColor--100, #fff));
+  color: var(--pf-v5-global--Color--100, #151515);
+  border-top: 4px solid var(--quickstart-primary-color, var(--keycloak-card-top-color));
+  row-gap: 1rem;
+}
+
+.kcLoginContainer > .kcFormCardClass > .kcFormHeaderClass {
+  border-top: 0;
+}
+
+.kcLoginContainer > .kcFormCardClass > #kc-content {
+  padding: 0;
+  min-width: 0;
+  height: auto;
+}
+
+.kcLoginContainer #kc-content-wrapper {
+  height: auto;
+  min-height: 0;
+}
+
+.kcLoginContainer > #kc-header {
+  padding: 0;
+  min-width: 0;
+}
+
+.kcLoginContainer #kc-header-wrapper,
+.kcLoginContainer .kc-logo-text,
+.kcLoginContainer #kc-header-wrapper::before {
+  margin-inline: 0;
+  max-width: 100%;
+  text-align: start;
+}
+
+/* PatternFly draws form-control borders with pseudo-elements even on the locale wrapper. */
+.kcLoginContainer .kcLoginMainHeaderUtilities > .kcInputClass::before,
+.kcLoginContainer .kcLoginMainHeaderUtilities > .kcInputClass::after {
+  display: none;
+}
+
+.kcLoginContainer .kc-footer-legal-links:has(a:not([style*='display: none'])) {
+  flex-direction: row;
+  flex-wrap: wrap;
+  width: auto;
+  margin: 0;
+}
+
+.kcFormCardClass {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1040px;
+  min-height: 320px;
+  padding: clamp(24px, 4vw, 48px);
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) minmax(320px, 1.15fr);
+  column-gap: clamp(20px, 4vw, 72px);
+  align-items: stretch;
+}
+
+/* Base keeps realm/client branding outside .kcFormCardClass. Its outer wrapper therefore becomes
+   the actual card/grid, while the inner card contributes its header and content as grid items. */
+.kcLoginClass:not(.kcLogin) {
+  box-sizing: border-box;
+  width: min(1040px, calc(100vw - 2rem));
+  max-width: 1040px;
+  min-height: 320px;
+  padding: clamp(24px, 4vw, 48px);
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) minmax(320px, 1.15fr);
+  grid-template-rows: auto 1fr;
+  column-gap: clamp(20px, 4vw, 72px);
+  align-items: stretch;
+  background-color: var(--kte-surface, var(--bs-body-bg, #fff));
+  border: var(--bs-card-border-width, var(--bs-border-width, 1px)) solid var(--kte-border, var(--bs-card-border-color, var(--bs-border-color-translucent, #dee2e6)));
+  border-radius: var(--bs-card-border-radius, var(--quickstart-border-radius, var(--bs-border-radius)));
+  box-shadow: var(--quickstart-card-shadow, var(--bs-box-shadow));
+  position: relative;
+  margin-bottom: 3.5rem;
+}
+
+/* Horizontal keeps language selection below the panel on the left. Card layout places it beside
+   the title; these stronger layout rules deliberately move every preset's DOM shape back out. */
+body,
+body#keycloak-bg {
+  flex-direction: column;
+}
+
+.kcLoginClass:not(.kcLogin) .kcLocaleMainClass {
+  position: absolute;
+  top: calc(100% + 0.75rem);
+  right: auto;
+  left: calc(-1 * clamp(24px, 4vw, 48px));
+  z-index: 20;
+  grid-column: 1;
+  justify-self: start;
+}
+
+.kcLoginClass:not(.kcLogin) .kcLocaleDropDownClass > button {
+  min-width: 10rem;
+  justify-content: space-between;
+  padding: 0.375rem 2.25rem 0.375rem 0.75rem;
+  border: var(--bs-border-width, 1px) solid var(--kte-border, var(--bs-border-color, #dee2e6));
+  border-radius: var(--bs-border-radius, 0.375rem);
+  background-color: var(--kte-surface, var(--bs-body-bg, #fff));
+  color: var(--kte-text, var(--bs-body-color, #212529));
+  text-align: left;
+  position: relative;
+}
+
+.kcLoginClass:not(.kcLogin) .kcLocaleDropDownClass > button::after {
+  content: '';
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: translateY(-70%) rotate(45deg);
+}
+
+/* Custom already emits a native select in its footer; anchor it immediately below the card. */
+.kcFormCardClass,
+.kcFormCardClass:has(.kc-footer-language) {
+  position: static;
+}
+
+.kcFormCardClass .kcFormHeaderClass,
+.kcFormCardClass .kcLoginMainHeader {
+  position: static;
+}
+
+.kcFormCardClass .kc-footer-language {
+  position: absolute;
+  top: calc(100% + 0.75rem);
+  right: auto;
+  left: calc(-1 * clamp(24px, 4vw, 48px));
+  z-index: 20;
+  grid-column: 1;
+  justify-self: start;
+}
+
+/* v2 renders its locale select as a header utility, so move that utility below as well. */
+.kcFormCardClass .kcLoginMainHeaderUtilities {
+  position: absolute;
+  top: calc(100% + 0.75rem);
+  right: auto;
+  left: calc(-1 * clamp(24px, 4vw, 48px));
+  z-index: 20;
+  grid-column: 1;
+  justify-self: start;
+}
+
+.kcFormCardClass .kcLoginMainHeaderUtilities > .kcInputClass {
+  display: block;
+  width: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.kcFormCardClass .kcLoginMainHeaderUtilities .kcFormControlUtilClass {
+  display: none;
+}
+
+/* Keep legal links on the opposite side of the same under-panel utility row. The generated Base
+   wrapper is a body sibling, while Custom/v2 render it inside their main footer. */
+.kcFormCardClass .kc-footer-legal-links:has(a:not([style*='display: none'])) {
+  position: absolute;
+  top: calc(100% + 0.75rem);
+  right: 0;
+  z-index: 20;
+  grid-column: 2;
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1.5rem;
+  white-space: nowrap;
+}
+
+body > .kc-footer-legal-links:has(a:not([style*='display: none'])) {
+  box-sizing: border-box;
+  width: min(1040px, calc(100vw - 2rem));
+  margin-top: -2.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1.5rem;
+  white-space: nowrap;
+}
+
+.kc-footer-legal-links a {
+  font-size: 0.875rem;
+}
+
+#login-select-toggle {
+  min-width: 10rem;
+  padding: 0.375rem 2.25rem 0.375rem 0.75rem;
+  border: var(--bs-border-width, 1px) solid var(--kte-border, var(--bs-border-color, #dee2e6));
+  border-radius: var(--bs-border-radius, 0.375rem);
+  background-color: var(--kte-surface, var(--bs-body-bg, #fff));
+  color: var(--kte-text, var(--bs-body-color, #212529));
+}
+
+.kcLoginClass:not(.kcLogin) > .kcFormCardClass {
+  display: contents;
+}
+
+/* v2 also keeps its branding header outside the main card. Make its outer login container the
+   grid/card so that header can occupy the left column instead of floating above the panel. */
+.kcLoginContainer > .kcFormCardClass {
+  display: contents;
+}
+
+.kcLoginClass:not(.kcLogin) > .kcFormCardClass > .kcFormHeaderClass {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.kcLoginContainer > .kcFormCardClass > .kcFormHeaderClass {
+  grid-area: auto;
+  grid-column: 1;
+  grid-row: 1;
+}
+
+/* Registration inputs already carry their own asterisks. Keeping the separate "required fields"
+   legend in the branding rail interrupts the title -> realm -> client hierarchy and adds no new
+   information in this layout. */
+.kcLoginClass:not(.kcLogin) .kcFormHeaderClass .kcLabelWrapperClass.subtitle {
+  display: none;
+}
+
+.kcLoginClass:not(.kcLogin) > #kc-header {
+  grid-column: 1;
+  grid-row: 2;
+  margin: 0;
+  text-align: left;
+  align-self: start;
+}
+
+.kcLoginContainer > #kc-header {
+  grid-area: auto;
+  grid-column: 1;
+  grid-row: 2;
+  margin: 0;
+  text-align: left;
+  align-self: start;
+}
+
+.kcLoginClass:not(.kcLogin) > .kcFormCardClass > #kc-content {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+
+.kcLoginContainer > .kcFormCardClass > #kc-content {
+  grid-area: auto;
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+
+@media (max-width: 900px) {
+  .kcFormCardClass {
+    grid-template-columns: 1fr;
+    row-gap: 1.25rem;
+  }
+}
+
+.kcFormHeaderClass {
+  grid-column: 1;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  /* Keep the title and branding together at the top even when the form column is taller. */
+  gap: 20px;
+}
+
+.kcFormHeaderClass .kcContentWrapperClass {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-start;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.kcFormHeaderClass #kc-page-title {
+  overflow-wrap: anywhere;
+}
+
+/* Custom places the name header before its page title in source order. Reorder those two flex
+   children so all presets share the same title -> realm -> client hierarchy. */
+.kcFormCardClass > .kcFormHeaderClass > #kc-page-title {
+  order: 1;
+}
+
+.kcFormCardClass > .kcFormHeaderClass > #kc-header {
+  order: 2;
+}
+
+/* Realm and client identify where the user is signing in, so they should read as supporting
+   branding rather than tiny metadata. Keep both clearly subordinate to the page title. */
+#kc-header-wrapper #kc-realm-name,
+#kc-header-wrapper #kc-client-name {
+  font-size: 1.125rem;
+  line-height: 1.4;
+}
+
+#kc-header-wrapper #kc-realm-name {
+  font-weight: 600;
+}
+
+#kc-content {
+  grid-column: 2;
+  display: flex;
+  align-self: stretch;
+  height: 100%;
+  padding-top: calc(40px + 0.9rem);
+  box-sizing: border-box;
+  min-height: 0;
+}
+
+#kc-content-wrapper {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Content-side headings are subordinate to the page title in the branding rail. Bootstrap's
+   default h2 is almost as large as h1, which creates two competing headlines on consent pages. */
+#kc-content h2 {
+  font-size: 1.5rem;
+  line-height: 1.25;
+}
+
+@media (min-width: 901px) {
+  /* Presets attach width rules to different wrappers. Keep horizontal width stable while allowing
+     its height to follow page content; fixed card sizing belongs to the normal card layout. */
+  :is(.kcLoginClass:not(.kcLogin), .kcLoginContainer, .kcFormCardClass) {
+    inline-size: min(1040px, calc(100vw - 2rem)) !important;
+    max-inline-size: 1040px !important;
+    block-size: auto;
+    min-block-size: 320px;
+    max-block-size: none;
+    overflow: visible;
+  }
+}
+
+@media (max-width: 900px) {
+  .kcFormHeaderClass, #kc-content {
+    grid-column: 1;
+  }
+
+  #kc-content {
+    padding-top: 0;
+  }
+
+  .kcLoginClass:not(.kcLogin) {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    row-gap: 0.75rem;
+  }
+
+  .kcLoginContainer {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+    row-gap: 0.75rem;
+  }
+
+  .kcLoginClass:not(.kcLogin) > .kcFormCardClass > .kcFormHeaderClass {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .kcLoginContainer > .kcFormCardClass > .kcFormHeaderClass {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .kcLoginClass:not(.kcLogin) > #kc-header {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .kcLoginContainer > #kc-header {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .kcLoginClass:not(.kcLogin) > .kcFormCardClass > #kc-content {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  .kcLoginContainer > .kcFormCardClass > #kc-content {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+}

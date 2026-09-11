@@ -15,10 +15,10 @@ export const themeActions = {
   },
 
   /** Update the CSS content of the currently active file tab. */
-  setActiveFileCss: (css: string) => {
+  setActiveFileCss: (css: string, requestedFilePath?: string) => {
     const activeThemeKey = getActiveThemeStorageKey()
     const { activeCssFilePath } = themeStore.getState()
-    const filePath = activeCssFilePath || firstFilePath(themeStore.getState().stylesCssFiles)
+    const filePath = requestedFilePath || activeCssFilePath || firstFilePath(themeStore.getState().stylesCssFiles)
     const isQuickStart = isQuickStartCssFile(filePath)
 
     themeStore.setState((state) => {
@@ -37,7 +37,7 @@ export const themeActions = {
       }
 
       const nextCombined = combineCssFiles(nextFiles)
-      if (state.stylesCss === nextCombined) {
+      if (state.stylesCssFiles[filePath] === css) {
         return state
       }
       return {
