@@ -313,11 +313,13 @@ public final class PreviewRendererMain {
       return error.getClass().getSimpleName();
     }
 
-    String firstLine = message.split("\\R")[0].trim();
-    if (firstLine.length() > 180) {
-      return firstLine.substring(0, 177) + "...";
+    // FreeMarker puts the missing expression on the second line.
+    String[] lines = message.split("\\R", 3);
+    String summary = lines[0].trim();
+    if (lines.length > 1 && !lines[1].trim().isEmpty()) {
+      summary += " " + lines[1].trim();
     }
-    return firstLine;
+    return summary;
   }
 
   /** The base language keeps the original `pages.json` name; others get a suffixed sibling. */

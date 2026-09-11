@@ -113,6 +113,7 @@ const common = {
   },
   scripts: [],
   isAppInitiatedAction: false,
+  authenticatorAttachment: '',
   properties: {},
 }
 
@@ -278,6 +279,7 @@ const kcBaseMocks = {
     attestationConveyancePreference: 'direct',
     authenticatorAttachment: 'platform',
     requireResidentKey: 'required',
+    residentKey: 'required',
     userVerificationRequirement: 'preferred',
     createTimeout: 60000,
     excludeCredentialIds: 'cred-1,cred-2',

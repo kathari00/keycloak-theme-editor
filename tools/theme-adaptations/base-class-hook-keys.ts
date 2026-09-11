@@ -145,6 +145,7 @@ export const BASE_CLASS_HOOK_KEYS: readonly string[] = [
   'kcSelectAuthListItemFillClass',
   'kcSelectAuthListItemHeadingClass',
   'kcSelectAuthListItemIconClass',
+  'kcSelectAuthListItemSubtitleClass',
   'kcSelectAuthListItemWrapperClass',
   'kcSignUpClass',
   'kcWebAuthnDefaultIcon',
