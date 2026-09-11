@@ -6,8 +6,8 @@ name: keycloak-update
 # the same idea applied to that: check for a newer release, try to safely
 # regenerate everything derived from it, and only open a PR if the result
 # actually builds and passes. A failure here means a human needs to look -
-# most likely a stored patch in tools/theme-adaptations/patches/ no longer
-# applies because upstream restructured a template it touches.
+# for example a new CSS hook needs adding to base-class-hook-keys.ts, or a
+# stored patch no longer applies after upstream restructured a template.
 
 on:
   schedule:
@@ -82,7 +82,26 @@ jobs:
             - `generate:preview` for every curated language (`src/features/i18n/locale-catalog.ts`)
             - lint, unit tests, build, e2e
 
-            If this PR exists, the adaptation reproduced cleanly against the new release. If it *couldn't* run (this workflow failed instead of opening a PR), a stored patch under `tools/theme-adaptations/patches/` likely no longer applies - see the failed step for exactly which file and line.
+            If this PR exists, the adaptation reproduced cleanly against the new release. For failed updates (new CSS hooks, incompatible patches, or validation failures), see `tools/theme-adaptations/README.md` and the failed step's log.
           branch: chore/keycloak-update
           labels: dependencies
           delete-branch: true
+
+      - name: Explain blocked update
+        if: failure()
+        env:
+          PREVIOUS_TAG: ${{ steps.release.outputs.previous-tag }}
+          TARGET_TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" <<EOF
+          ## Keycloak update blocked
+
+          Attempted update: ${PREVIOUS_TAG:-unknown} -> ${TARGET_TAG:-unknown}.
+          The update did not finish. Inspect the first failed step in this run.
+
+          - Unknown CSS hook: extend tools/theme-adaptations/base-class-hook-keys.ts.
+          - Template patch conflict: rebase tools/theme-adaptations/patches/ against the new upstream template, preserving upstream changes.
+          - Preview or test failure: fix the compatibility issue before merging the update.
+
+          Runbook: tools/theme-adaptations/README.md. Re-running unchanged adaptation rules will not resolve a compatibility failure.
+          EOF

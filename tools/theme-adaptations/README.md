@@ -31,12 +31,29 @@ npm run vendor:check    # dry run: does regenerating match what's committed?
 npm run vendor:apply    # writes the regenerated files
 ```
 
-`vendor:check` is what the scheduled `.github/workflows/keycloak-update.yml`
-runs after bumping the pinned tag, and what CI runs on any PR touching this
-directory or the vendor-adapted theme files (see that workflow / pipeline
-job for the exact trigger paths).
+The scheduled `.github/workflows/keycloak-update.yml` runs `vendor:apply`
+after bumping the pinned tag, then regenerates previews and runs validation
+before opening an update PR. `vendor:check` runs on PRs touching the adaptation
+or vendor files and verifies that committed output matches the pinned release.
 
 ## When it breaks
+
+A failed update does not advance the committed version or open an update PR.
+Compatibility failures will therefore recur each week until the adaptation is
+fixed. Read the first failed step; fixing one blocker can reveal another.
+
+To complete a blocked update locally:
+
+1. Start from a clean checkout, or back up local theme and generated-preview edits.
+2. Run `npx --no-install tsx tools/check-keycloak-release.ts` to update the pin.
+3. Run `npm run sync:keycloak`, then `npm run vendor:apply`.
+4. Resolve unknown hooks and patch conflicts as described below. Preserve both
+   the editor's adaptations and the new upstream behavior when rebasing patches.
+5. Run `npm run vendor:check`, `npm run generate:preview -- --locales=all`,
+   `npm run lint`, `npm run test:run`, `npm run build`, and `npm run test:e2e`.
+6. Review and commit the pin, adaptation rules, regenerated themes, message
+   catalogs, and previews together. Merge through a PR; the main pipeline also
+   validates the export against a real Keycloak container.
 
 ### `theme.properties`: "declares hook key(s) not in BASE_CLASS_HOOK_KEYS"
 
