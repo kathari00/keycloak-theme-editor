@@ -1,3 +1,4 @@
+import process from 'node:process'
 import { defineConfig } from '@playwright/test'
 
 /**
@@ -11,6 +12,7 @@ import { defineConfig } from '@playwright/test'
 export default defineConfig({
   testDir: '.',
   timeout: 60_000,
+  retries: process.env.CI ? 2 : 0,
   projects: [
     { name: 'chromium', use: { browserName: 'chromium' } },
   ],
