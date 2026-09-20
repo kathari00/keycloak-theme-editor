@@ -3,6 +3,8 @@ import type { FrameworkBinding } from './types'
 import { parse, walk } from 'css-tree'
 
 export interface FrameworkCssCompletions {
+  /** The framework's display name, shown against each suggestion it contributes. */
+  label: string
   identifiers: string[]
   variables: CssEditorVariable[]
 }
@@ -10,7 +12,7 @@ export interface FrameworkCssCompletions {
 /** Read the selected framework's actual vocabulary, including Bootswatch additions. */
 export function getFrameworkCssCompletions(binding: FrameworkBinding): FrameworkCssCompletions {
   if (binding.id === 'native')
-    return { identifiers: [], variables: [] }
+    return { label: binding.label, identifiers: [], variables: [] }
 
   const identifiers = new Set<string>()
   const variables = new Set<string>()
@@ -21,6 +23,7 @@ export function getFrameworkCssCompletions(binding: FrameworkBinding): Framework
       variables.add(node.property)
   })
   return {
+    label: binding.label,
     identifiers: [...identifiers].sort(),
     variables: [...variables].sort().map(name => ({ name, detail: `${binding.label} variable` })),
   }

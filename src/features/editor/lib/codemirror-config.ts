@@ -180,7 +180,8 @@ function getWordOrCursor(context: CompletionContext, pattern: RegExp): Completio
   return word ?? { from: context.pos, to: context.pos }
 }
 
-function buildSelectorCompletions(availableIdentifiers: string[], uniqueSelector: string | null, frameworkIdentifiers: string[] = []) {
+function buildSelectorCompletions(availableIdentifiers: string[], uniqueSelector: string | null, frameworkIdentifiers: string[] = [], frameworkLabel = '') {
+  const frameworkIdentifierSet = new Set(frameworkIdentifiers)
   const uniqueSelectorOptions: Completion[] = uniqueSelector && uniqueSelector.trim()
     ? [{
         label: uniqueSelector.trim(),
@@ -197,7 +198,7 @@ function buildSelectorCompletions(availableIdentifiers: string[], uniqueSelector
     return {
       label: identifier,
       type: isId ? 'property' : isClass ? 'class' : 'type',
-      detail: frameworkIdentifiers.includes(identifier) ? 'Bootstrap class' : isId ? 'Available id' : isClass ? 'Available class' : 'Element type',
+      detail: frameworkIdentifierSet.has(identifier) ? `${frameworkLabel} class` : isId ? 'Available id' : isClass ? 'Available class' : 'Element type',
       boost: 220,
     }
   })
@@ -613,7 +614,7 @@ export function createCssEditorExtensions(
     autocompletion({
       activateOnTyping: true,
       override: [
-        buildSelectorCompletions(availableIdentifiers, uniqueSelector, frameworkCompletions?.identifiers),
+        buildSelectorCompletions(availableIdentifiers, uniqueSelector, frameworkCompletions?.identifiers, frameworkCompletions?.label),
         context => cssPropertyCompletions(context, frameworkCompletions?.variables),
         cssValueCompletions,
         buildCssVariableCompletions([...CSS_EDITOR_CSS_VARS, ...frameworkCompletions?.variables ?? []]),

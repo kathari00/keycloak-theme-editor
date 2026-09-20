@@ -38,7 +38,16 @@ test('Bulma maps native controls and follows Keycloak dark mode', async ({ page 
 test('Bulma custom CSS and framework identity survive JAR export/import', async ({ page }) => {
   await page.getByRole('tab', { name: 'Styling', exact: true }).click()
   await page.getByRole('tab', { name: 'bulma-custom.css', exact: true }).click()
-  await page.locator('.cm-content[contenteditable="true"]:visible').fill('.button.is-primary { background-color: #123456; }')
+
+  const editor = page.locator('.cm-content[contenteditable="true"]:visible')
+  await editor.click()
+  await page.keyboard.press('Control+Space')
+  const suggestions = page.locator('.cm-tooltip-autocomplete li')
+  await expect(suggestions.filter({ hasText: '.box' }).first()).toContainText('Bulma class')
+  await expect(suggestions.filter({ hasText: 'Bootstrap' })).toHaveCount(0)
+  await page.keyboard.press('Escape')
+
+  await editor.fill('.button.is-primary { background-color: #123456; }')
   await page.getByRole('tab', { name: 'Quick start', exact: true }).click()
   const frame = await getPreviewFrame(page)
   await expect(frame.locator('#kc-login')).toHaveCSS('background-color', 'rgb(18, 52, 86)')
