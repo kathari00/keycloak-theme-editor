@@ -1,2 +1,11 @@
-/* Card layout: today's implicit default (centered, single column) needs no override -
-   every theme already renders this way via its own base flow, so this file is empty. */
+/* Card layout: the centered single column is every theme's own base flow, so the only thing this
+   file owns is the header rail. Themes disagree about it - base, Bulma and Carbon leave the realm
+   and client names at `text-align: start`, custom centers them - and the rail is centered in the
+   horizontal and split layouts, so center it here too rather than leaving it per-theme. */
+#kc-header,
+#kc-header-wrapper,
+#kc-realm-name,
+#kc-client-name,
+.kcFormHeaderClass #kc-page-title {
+  text-align: center;
+}

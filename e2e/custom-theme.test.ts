@@ -58,37 +58,43 @@ test('the custom theme ranks realm, client and page title as three distinct head
 })
 
 for (const layout of ['card', 'horizontal', 'split'] as const) {
-  test(`realm and client stay centred on one axis in the ${layout} layout`, async ({ page }) => {
-    await page.setViewportSize({ width: 1400, height: 1000 })
-    await prepareAppTest(page)
-    await openApp(page)
-    await page.getByLabel('Select a style').selectOption('custom')
-    await expect(page.frameLocator('iframe').locator('#kc-page-title')).toBeVisible()
-    await page.getByLabel('Show realm name').check()
-    await page.getByLabel('Show client name').check()
-    await page.getByLabel('Select a layout').selectOption(layout)
-    await expect(page.frameLocator('iframe').locator('#kc-client-name')).toBeVisible()
+  // Bulma stands in for the styles that left-aligned the names through their own CSS rather than
+  // through the layout: base and Carbon did the same.
+  for (const style of ['custom', 'bulma'] as const) {
+    test(`realm and client stay centred in the ${layout} layout on ${style}`, async ({ page }) => {
+      await page.setViewportSize({ width: 1400, height: 1000 })
+      await prepareAppTest(page)
+      await openApp(page)
+      await page.getByLabel('Select a style').selectOption(style)
+      await expect(page.frameLocator('iframe').locator('#kc-page-title')).toBeVisible()
+      await page.getByLabel('Show realm name').check()
+      await page.getByLabel('Show client name').check()
+      await page.getByLabel('Select a layout').selectOption(layout)
+      await expect(page.frameLocator('iframe').locator('#kc-client-name')).toBeVisible()
 
-    // The horizontal rail used to pin both names to the left of a 73px shrink-to-fit box while
-    // the title above them was centred.
-    await expect.poll(async () => {
-      try {
-        const frame = await getPreviewFrame(page)
-        return await frame.locator('body').evaluate(() => {
-          const mid = (selector: string) => {
-            const r = document.querySelector(selector)?.getBoundingClientRect()
-            return r ? Math.round(r.left + r.width / 2) : -1
-          }
-          const realm = mid('#kc-realm-name')
-          const client = mid('#kc-client-name')
-          return realm > 0 && Math.abs(realm - client) <= 1
-        })
-      }
-      catch {
-        return false
-      }
-    }).toBe(true)
-  })
+      // Assert the text alignment, not the box midpoint: these boxes span the full rail, so their
+      // midpoints matched the centre even while the text inside them sat hard left.
+      await expect.poll(async () => {
+        try {
+          const frame = await getPreviewFrame(page)
+          return await frame.locator('body').evaluate(() => {
+            const align = (selector: string) => {
+              const el = document.querySelector(selector)
+              return el ? getComputedStyle(el).textAlign : 'missing'
+            }
+            const mid = (selector: string) => {
+              const r = document.querySelector(selector)?.getBoundingClientRect()
+              return r ? Math.round(r.left + r.width / 2) : -1
+            }
+            return `${align('#kc-realm-name')}/${align('#kc-client-name')}/${mid('#kc-realm-name') === mid('#kc-client-name')}`
+          })
+        }
+        catch {
+          return 'retry'
+        }
+      }).toBe('center/center/true')
+    })
+  }
 }
 
 test('a Bootstrap card taller than the viewport keeps its header on screen', async ({ page }) => {
