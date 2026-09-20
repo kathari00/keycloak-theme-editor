@@ -5,6 +5,7 @@ import { Bullseye, Spinner } from '@patternfly/react-core'
 import { useEffect, useMemo, useState } from 'react'
 import { useDarkModeState, usePreviewState } from '../../editor/hooks/use-editor'
 import { frameworkCustomCssPath } from '../../editor/lib/css-files'
+import { applyFrameworkColorScheme } from '../../editor/lib/framework-bindings/color-scheme'
 import { useFrameworkBinding } from '../../editor/lib/framework-bindings/use-framework-binding'
 import { getCachedLayoutBinding, useLayoutBindingsReady } from '../../editor/lib/layouts/registry'
 import { getThemePreviewStylesPath } from '../../presets/theme-paths'
@@ -165,6 +166,7 @@ function applyPreviewStyles(params: PreviewStyleParams): void {
   applyFrameworkClassOverlay(doc, frameworkBinding)
   setThemeDesignStylesheetDisabled(doc, frameworkBinding.id !== 'native')
   syncPreviewDarkModeClasses(doc, darkModeClasses, isDarkMode)
+  applyFrameworkColorScheme(doc.documentElement, frameworkBinding, isDarkMode)
 }
 
 function syncPreviewDocumentStyles(params: PreviewStyleParams): void {

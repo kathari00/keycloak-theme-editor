@@ -13,6 +13,12 @@ describe('deriveStyleOptionId', () => {
     expect(deriveStyleOptionId('custom', 'bootstrap')).toBe('bootstrap')
   })
 
+  it('recognizes Bulma by frameworkId and backs it onto base', () => {
+    expect(deriveStyleOptionId('base', 'bulma')).toBe('bulma')
+    expect(styleOptionThemeId('bulma')).toBe('base')
+    expect(styleOptionFrameworkId('bulma')).toBe('bulma')
+  })
+
   it('falls back to base for an unrecognized themeId', () => {
     expect(deriveStyleOptionId('some-imported-theme', 'native')).toBe('base')
   })

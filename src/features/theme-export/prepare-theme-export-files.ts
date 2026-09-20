@@ -3,6 +3,7 @@ import type { ThemeDocument } from '../theme-document'
 import type { DirectoryWriteParams, EditorCssContext, ThemeEditorMetadata } from './types'
 import { frameworkCustomCssPath, isFrameworkCustomCssFile, isQuickStartCssFile } from '../editor/lib/css-files'
 import { sanitizeThemeCssSourceForEditor } from '../editor/lib/css-source-sanitizer'
+import { frameworkColorSchemeScriptLine } from '../editor/lib/framework-bindings/color-scheme'
 import { buildFrameworkThemeProperties, NATIVE_BINDING } from '../editor/lib/framework-bindings/types'
 import { getLayoutBinding } from '../editor/lib/layouts/registry'
 import {
@@ -298,6 +299,22 @@ export async function prepareThemeExportFiles(
     }
   }
 
+  // Dynamic import: `registry.ts` pulls in `bootstrap.ts`'s Vite-only `?raw` CSS imports, which
+  // `tsx` (used by `tools/build-theme-fixture.ts`, a caller of this pipeline) can't load. Skipping
+  // the import entirely for the 'native' case keeps that Node-executed path working.
+  // Neither load depends on the other's result, so run them concurrently, and overlap them with
+  // the quick-start CSS fetch below.
+  const frameworkAndLayoutBindings = Promise.all([
+    themeDocument.frameworkId === 'native'
+      ? Promise.resolve(NATIVE_BINDING)
+      : import('../editor/lib/framework-bindings/registry').then(({ loadFrameworkBinding }) =>
+          loadFrameworkBinding(themeDocument.frameworkId, themeDocument.bootstrapVariantId),
+        ),
+    // Additive, not "replace not layer" like the framework binding above - layout is structural
+    // (grid/flex placement), not a full design swap, so it layers on top of whichever style is active.
+    getLayoutBinding(themeDocument.layoutId),
+  ])
+
   const sourceThemeQuickStartCss = themeDocument.quickStartCss.trim() || (themeQuickStartCssResponse.ok
     ? (await themeQuickStartCssResponse.text()).trim()
     : '')
@@ -305,10 +322,12 @@ export async function prepareThemeExportFiles(
     imprintUrl: exportImprintUrl,
     dataProtectionUrl: exportDataProtectionUrl,
   })
-  if (themeDocument.frameworkId !== 'native') {
+  const [frameworkBinding, layoutBinding] = await frameworkAndLayoutBindings
+  const frameworkFontFamily = frameworkBinding.defaults?.fontFamily
+  if (frameworkFontFamily) {
     for (const modeSettings of Object.values(exportQuickSettingsByMode)) {
       if (!modeSettings.colorPresetFontFamily || modeSettings.colorPresetFontFamily === 'custom') {
-        modeSettings.colorPresetFontFamily = themeDocument.frameworkId === 'carbon' ? '"IBM Plex Sans", sans-serif' : 'var(--bs-font-sans-serif)'
+        modeSettings.colorPresetFontFamily = frameworkFontFamily
       }
     }
   }
@@ -323,20 +342,6 @@ export async function prepareThemeExportFiles(
   })
   const payloadCssParts = extractCssImports(payload.generatedCss)
 
-  // Dynamic import: `registry.ts` pulls in `bootstrap.ts`'s Vite-only `?raw` CSS imports, which
-  // `tsx` (used by `tools/build-theme-fixture.ts`, a caller of this pipeline) can't load. Skipping
-  // the import entirely for the 'native' case keeps that Node-executed path working.
-  // Neither load depends on the other's result, so run them concurrently.
-  const [frameworkBinding, layoutBinding] = await Promise.all([
-    themeDocument.frameworkId === 'native'
-      ? Promise.resolve(NATIVE_BINDING)
-      : import('../editor/lib/framework-bindings/registry').then(({ loadFrameworkBinding }) =>
-          loadFrameworkBinding(themeDocument.frameworkId, themeDocument.bootstrapVariantId),
-        ),
-    // Additive, not "replace not layer" like the framework binding above - layout is structural
-    // (grid/flex placement), not a full design swap, so it layers on top of whichever style is active.
-    getLayoutBinding(themeDocument.layoutId),
-  ])
   const frameworkExportCss = themeDocument.frameworkId !== 'native'
     ? [frameworkBinding.frameworkCss, frameworkBinding.bindingCss].filter(Boolean).join('\n\n')
     : ''
@@ -353,6 +358,7 @@ export async function prepareThemeExportFiles(
   const media = window.matchMedia('(prefers-color-scheme: dark)');
   const sync = () => {
     document.documentElement.classList.toggle('kcDarkModeClass', media.matches);
+    ${frameworkColorSchemeScriptLine(frameworkBinding)}
     document.documentElement.style.colorScheme = media.matches ? 'dark' : 'light';
   };
   sync();

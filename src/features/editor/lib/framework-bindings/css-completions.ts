@@ -17,7 +17,7 @@ export function getFrameworkCssCompletions(binding: FrameworkBinding): Framework
   walk(parse(binding.frameworkCss, { parseValue: false }), (node) => {
     if (node.type === 'ClassSelector')
       identifiers.add(`.${node.name}`)
-    if (node.type === 'Declaration' && node.property.startsWith(binding.id === 'carbon' ? '--cds-' : '--bs-'))
+    if (node.type === 'Declaration' && binding.cssVariablePrefix && node.property.startsWith(binding.cssVariablePrefix))
       variables.add(node.property)
   })
   return {

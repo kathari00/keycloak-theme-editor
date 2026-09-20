@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { BOOTSTRAP_BINDING } from '../bootstrap'
+import { BULMA_BINDING } from '../bulma'
 import { extractBootstrapDarkModeBinding, extractBootstrapDefaultColors, getFrameworkBindingMetadata, loadFrameworkBinding } from '../registry'
 import { buildFrameworkThemeProperties } from '../types'
 
@@ -42,6 +43,38 @@ describe('buildFrameworkThemeProperties', () => {
 })
 
 describe('framework binding registry', () => {
+  it('loads Bulma CSS and its Keycloak token bridge onto the binding', async () => {
+    const binding = await loadFrameworkBinding('bulma')
+
+    expect(binding.id).toBe('bulma')
+    expect(binding.frameworkCss).toContain('.button')
+    expect(binding.frameworkCss).toContain('.input')
+    expect(binding.frameworkCss).toContain('[data-theme=dark]')
+    expect(binding.bindingCss).toContain('--bulma-primary-h: var(--quickstart-primary-h')
+    expect(binding.bindingCss).toContain('html.kcDarkModeClass')
+  })
+
+  it('ships Bulma with the Inter faces and the licences it redistributes', async () => {
+    const binding = await loadFrameworkBinding('bulma')
+
+    expect(binding.frameworkCss).toContain('font-family:"Inter"')
+    expect(binding.frameworkCss).toContain('src:url("data:font/woff2;base64,')
+    expect(binding.frameworkCss).toContain('Permission is hereby granted, free of charge')
+    expect(binding.frameworkCss).toContain('SIL OPEN FONT LICENSE')
+  })
+
+  it('keeps Bulma to the components its class map uses', async () => {
+    const binding = await loadFrameworkBinding('bulma')
+
+    // The full build is ~2.6x this; the login page never renders a navbar, grid or pagination.
+    expect(binding.frameworkCss).not.toContain('.navbar-burger')
+    expect(binding.frameworkCss).not.toContain('.pagination-previous')
+    for (const key of Object.keys(BULMA_BINDING.classMap)) {
+      for (const token of BULMA_BINDING.classMap[key].split(/\s+/))
+        expect(binding.frameworkCss, `${key} -> .${token}`).toContain(`.${token}`)
+    }
+  })
+
   it('falls back to native for an unknown id', () => {
     expect(getFrameworkBindingMetadata('unknown' as never).id).toBe('native')
   })

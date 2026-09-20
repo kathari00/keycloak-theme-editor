@@ -63,5 +63,9 @@ export const BOOTSTRAP_BINDING: FrameworkBinding = {
   label: 'Bootstrap',
   frameworkCss: '',
   bindingCss: '',
+  cssVariablePrefix: '--bs-',
+  customCssPath: 'css/bootstrap-custom.css',
+  // No palette here: each Bootswatch variant's colors are read from its compiled CSS instead.
+  defaults: { fontFamily: 'var(--bs-font-sans-serif)' },
   classMap: BOOTSTRAP_CLASS_MAP,
 }

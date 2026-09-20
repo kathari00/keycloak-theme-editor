@@ -11,6 +11,39 @@ export const CUSTOM_PRESET_ID = 'custom'
 
 export const COLOR_REGEX = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i
 
+function hexToHslTokens(color: string): { h: string, s: string, l: string, invertL: string } | null {
+  const match = color.match(COLOR_REGEX)
+  if (!match)
+    return null
+  const hex = match[1].length === 3 ? [...match[1]].map(value => value.repeat(2)).join('') : match[1]
+  const [r, g, b] = [0, 2, 4].map(offset => Number.parseInt(hex.slice(offset, offset + 2), 16) / 255)
+  const max = Math.max(r, g, b)
+  const min = Math.min(r, g, b)
+  const delta = max - min
+  const lightness = (max + min) / 2
+  let hue = 0
+  if (delta) {
+    if (max === r)
+      hue = ((g - b) / delta) % 6
+    else if (max === g)
+      hue = (b - r) / delta + 2
+    else
+      hue = (r - g) / delta + 4
+    hue = (hue * 60 + 360) % 360
+  }
+  const saturation = delta === 0 ? 0 : delta / (1 - Math.abs(2 * lightness - 1))
+  const linear = [r, g, b].map(value => value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4)
+  const luminance = 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+  // Compare both WCAG contrast ratios rather than cutting at a lightness the eye picked.
+  const contrastAgainst = (other: number) => (Math.max(luminance, other) + 0.05) / (Math.min(luminance, other) + 0.05)
+  return {
+    h: `${Math.round(hue * 100) / 100}deg`,
+    s: `${Math.round(saturation * 10000) / 100}%`,
+    l: `${Math.round(lightness * 10000) / 100}%`,
+    invertL: contrastAgainst(0) >= contrastAgainst(1) ? '4%' : '100%',
+  }
+}
+
 export const BORDER_RADIUS_OPTIONS: {
   value: QuickSettingsStyle['colorPresetBorderRadius']
   label: string
@@ -163,6 +196,20 @@ export function buildQuickStartVariableMap(options: QuickStartCssOptions): Quick
   const variables: Record<string, string> = {
     '--quickstart-primary-color': primaryColor,
     '--quickstart-secondary-color': secondaryColor,
+  }
+  const primaryHsl = hexToHslTokens(primaryColor)
+  const secondaryHsl = hexToHslTokens(secondaryColor)
+  if (primaryHsl) {
+    variables['--quickstart-primary-h'] = primaryHsl.h
+    variables['--quickstart-primary-s'] = primaryHsl.s
+    variables['--quickstart-primary-l'] = primaryHsl.l
+    variables['--quickstart-primary-invert-l'] = primaryHsl.invertL
+  }
+  if (secondaryHsl) {
+    variables['--quickstart-secondary-h'] = secondaryHsl.h
+    variables['--quickstart-secondary-s'] = secondaryHsl.s
+    variables['--quickstart-secondary-l'] = secondaryHsl.l
+    variables['--quickstart-secondary-invert-l'] = secondaryHsl.invertL
   }
   const markers: Partial<Record<string, string>> = {}
 

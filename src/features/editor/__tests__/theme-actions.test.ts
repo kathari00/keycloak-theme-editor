@@ -2,7 +2,7 @@ import type { KeycloakPage } from '../../assets/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { themeActions } from '../actions/theme-actions'
 import { themeSelectionActions } from '../actions/theme-selection-actions'
-import { BOOTSTRAP_CUSTOM_CSS_PATH } from '../lib/css-files'
+import { frameworkCustomCssPath } from '../lib/css-files'
 import { coreStore } from '../stores/core-store'
 import { presetStore } from '../stores/preset-store'
 import { themeStore } from '../stores/theme-store'
@@ -46,6 +46,8 @@ function resetStores() {
     colorPresetHeadingFontFamily: 'custom',
   }))
 }
+
+const BOOTSTRAP_CUSTOM_CSS_PATH = frameworkCustomCssPath('bootstrap') ?? ''
 
 describe('themeActions', () => {
   beforeEach(resetStores)
