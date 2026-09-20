@@ -1,8 +1,13 @@
 import type { AppliedAssets, UploadedAsset } from '../assets/types'
+import type { BootstrapVariantId, FrameworkId } from '../editor/lib/framework-bindings/types'
+import type { LayoutId } from '../editor/lib/layouts/types'
 import type { QuickSettings, QuickStartContentByLocale } from '../editor/stores/types'
 
 export interface ThemeEditorMetadata {
   sourceThemeId?: string
+  frameworkId?: FrameworkId
+  bootstrapVariantId?: BootstrapVariantId
+  layoutId?: LayoutId
 }
 
 export interface ThemeExportPayload {
@@ -50,6 +55,9 @@ export interface JarImportResult {
   properties: string
   themeName: string
   sourceThemeId?: string
+  frameworkId?: FrameworkId
+  bootstrapVariantId?: BootstrapVariantId
+  layoutId?: LayoutId
   quickSettingsByMode?: ImportedQuickSettingsByMode
   enabledLocales?: string[]
   quickStartContentByLocale?: QuickStartContentByLocale

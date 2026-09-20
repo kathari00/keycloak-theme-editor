@@ -4,6 +4,8 @@ import { useEffect } from 'react'
 import { editorActions } from '../../features/editor/actions'
 import { QUICK_START_CSS_PATH, singleFileMap } from '../../features/editor/lib/css-files'
 import { sanitizeThemeCssSourceForEditor } from '../../features/editor/lib/css-source-sanitizer'
+import { DEFAULT_BOOTSTRAP_VARIANT_ID, DEFAULT_FRAMEWORK_ID } from '../../features/editor/lib/framework-bindings/types'
+import { DEFAULT_LAYOUT_ID } from '../../features/editor/lib/layouts/types'
 import { assetStore } from '../../features/editor/stores/asset-store'
 import { getThemeCssStructuredCached, resolveThemeIdFromConfig } from '../../features/presets/queries'
 import { THEME_JAR_IMPORTED_EVENT } from '../../features/theme-export/jar-import-service'
@@ -24,6 +26,9 @@ export function useThemeJarImportHandler(params: {
         }
 
         const targetThemeId = resolveThemeIdFromConfig(themeConfig, detail.sourceThemeId || detail.themeName || selectedThemeId)
+        editorActions.setFrameworkIdForTheme(detail.frameworkId ?? DEFAULT_FRAMEWORK_ID, targetThemeId)
+        editorActions.setBootstrapVariantIdForTheme(detail.bootstrapVariantId ?? DEFAULT_BOOTSTRAP_VARIANT_ID, targetThemeId)
+        editorActions.setLayoutIdForTheme(detail.layoutId ?? DEFAULT_LAYOUT_ID, targetThemeId)
         const themeCssStructured = await getThemeCssStructuredCached(targetThemeId).catch(() => ({ quickStartDefaults: '', stylesCss: '' }))
         const importedCss = sanitizeThemeCssSourceForEditor((detail.css || '').trim())
         const importedQuickStartCss = (detail.quickStartCss || '').trim() || themeCssStructured.quickStartDefaults

@@ -77,6 +77,9 @@ describe('importJarFile', () => {
         })),
         'keycloak-theme-editor.json': fileEntry(JSON.stringify({
           sourceThemeId: 'keycloak/login',
+          frameworkId: 'bootstrap',
+          bootstrapVariantId: 'darkly',
+          layoutId: 'split',
         })),
       },
       'theme': {
@@ -92,6 +95,9 @@ describe('importJarFile', () => {
     })
 
     expect(result.sourceThemeId).toBe('keycloak/login')
+    expect(result.frameworkId).toBe('bootstrap')
+    expect(result.bootstrapVariantId).toBe('darkly')
+    expect(result.layoutId).toBe('split')
   })
 
   it('loads legacy single-file exports without quick-start css or editor metadata', async () => {

@@ -263,6 +263,9 @@ export async function prepareThemeExportFiles(
 
   const editorMetadata: ThemeEditorMetadata = {
     sourceThemeId: resolvedThemeId,
+    ...(themeDocument.frameworkId !== 'native' ? { frameworkId: themeDocument.frameworkId } : {}),
+    ...(themeDocument.frameworkId === 'bootstrap' ? { bootstrapVariantId: themeDocument.bootstrapVariantId } : {}),
+    ...(themeDocument.layoutId !== 'card' ? { layoutId: themeDocument.layoutId } : {}),
   }
 
   if (!isPresetTheme) {
