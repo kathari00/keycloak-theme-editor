@@ -78,7 +78,8 @@ body, body#keycloak-bg {
   color: var(--kte-split-text);
   font-size: clamp(1.75rem, 2vw, 2.25rem);
   line-height: 1.2;
-  text-align: center;
+  /* Left, as upstream base renders it. Only the realm and client names are centered. */
+  text-align: start;
   overflow-wrap: anywhere;
 }
 /* Custom nests branding and title together. Expose both to the outer grid so the h1 heading

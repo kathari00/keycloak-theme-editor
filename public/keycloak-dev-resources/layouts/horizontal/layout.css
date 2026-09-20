@@ -320,7 +320,8 @@ body > .kc-footer-legal-links:has(a:not([style*='display: none'])) {
 
 .kcFormHeaderClass #kc-page-title {
   overflow-wrap: anywhere;
-  text-align: center;
+  /* Left, as upstream base renders it. Only the realm and client names are centered. */
+  text-align: start;
 }
 
 /* Custom places the name header before its page title in source order. Reorder those two flex

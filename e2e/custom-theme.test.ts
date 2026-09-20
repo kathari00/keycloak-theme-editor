@@ -86,13 +86,15 @@ for (const layout of ['card', 'horizontal', 'split'] as const) {
               const r = document.querySelector(selector)?.getBoundingClientRect()
               return r ? Math.round(r.left + r.width / 2) : -1
             }
-            return `${align('#kc-realm-name')}/${align('#kc-client-name')}/${mid('#kc-realm-name') === mid('#kc-client-name')}`
+            // The page title stays as upstream base renders it, left, and is not centred with them.
+            const titleCentred = align('#kc-page-title') === 'center'
+            return `${align('#kc-realm-name')}/${align('#kc-client-name')}/${mid('#kc-realm-name') === mid('#kc-client-name')}/title-centred=${titleCentred}`
           })
         }
         catch {
           return 'retry'
         }
-      }).toBe('center/center/true')
+      }).toBe('center/center/true/title-centred=false')
     })
   }
 }
