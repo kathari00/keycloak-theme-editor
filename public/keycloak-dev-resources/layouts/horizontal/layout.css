@@ -57,9 +57,9 @@
 .kcLoginContainer #kc-header-wrapper,
 .kcLoginContainer .kc-logo-text,
 .kcLoginContainer #kc-header-wrapper::before {
-  margin-inline: 0;
+  margin-inline: auto;
   max-width: 100%;
-  text-align: start;
+  text-align: center;
 }
 
 /* PatternFly draws form-control borders with pseudo-elements even on the locale wrapper. */
@@ -266,7 +266,7 @@ body > .kc-footer-legal-links:has(a:not([style*='display: none'])) {
   grid-column: 1;
   grid-row: 2;
   margin: 0;
-  text-align: left;
+  text-align: center;
   align-self: start;
 }
 
@@ -275,7 +275,7 @@ body > .kc-footer-legal-links:has(a:not([style*='display: none'])) {
   grid-column: 1;
   grid-row: 2;
   margin: 0;
-  text-align: left;
+  text-align: center;
   align-self: start;
 }
 
@@ -303,7 +303,9 @@ body > .kc-footer-legal-links:has(a:not([style*='display: none'])) {
   margin: 0;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  /* Stretch, not flex-start: the children centre their own text, so a shrink-to-fit box would
+     pin short names like a realm id to the left edge of the rail. */
+  align-items: stretch;
   /* Keep the title and branding together at the top even when the form column is taller. */
   gap: 20px;
 }
@@ -311,13 +313,14 @@ body > .kc-footer-legal-links:has(a:not([style*='display: none'])) {
 .kcFormHeaderClass .kcContentWrapperClass {
   display: flex;
   flex-direction: column-reverse;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 0.75rem;
   width: 100%;
 }
 
 .kcFormHeaderClass #kc-page-title {
   overflow-wrap: anywhere;
+  text-align: center;
 }
 
 /* Custom places the name header before its page title in source order. Reorder those two flex
