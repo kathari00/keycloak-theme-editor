@@ -666,12 +666,6 @@ textarea:focus {
   text-align: center;
 }
 
-@media (max-width: 480px) {
-  .kcLoginMainTitle {
-    font-size: 28px;
-  }
-}
-
 h1, h2, h3, h4, h5, h6,
 #kc-header-wrapper,
 #kc-realm-name,
@@ -2185,20 +2179,6 @@ html body .pf-v5-c-login {
 #kc-logout-confirm #kc-info-message > p > a:active {
   background: color-mix(in srgb, var(--quickstart-primary-color) 16%, transparent);
   filter: none;
-}
-
-/* Hide client name */
-#kc-client-name,
-.kc-client-name,
-[data-kc-client="name"] {
-  display: none !important;
-}
-
-/* Hide info message */
-#kc-info-message.kcAlertClass,
-.kc-info-message,
-[data-kc-i18n-key="infoMessage"] {
-  display: none !important;
 }
 
 #kc-terms-text {
