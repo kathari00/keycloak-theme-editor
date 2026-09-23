@@ -616,7 +616,8 @@ input[type='radio'][name='selectedCredentialId']:focus-visible + label.kcLoginOT
   cursor: pointer;
 }
 
-.kcLocaleDropDownClass > button::before {
+/* Fallback label only when Keycloak renders no current-locale text in the button. */
+.kcLocaleDropDownClass > button:empty::before {
   content: attr(aria-label);
   text-transform: capitalize;
 }

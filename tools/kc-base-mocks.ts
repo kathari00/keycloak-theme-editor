@@ -7,6 +7,7 @@ const locale = {
     { languageTag: 'de', label: 'Deutsch', url: '#' },
   ],
   currentLanguageTag: 'en',
+  current: 'English',
 }
 
 const url = {

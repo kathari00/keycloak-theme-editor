@@ -260,7 +260,8 @@ input:focus-visible + .kcLoginOTPListClass { outline: 2px solid var(--cds-focus)
   border: 1px solid var(--cds-border-subtle-01);
   box-shadow: 0 2px 6px #0003;
 }
-.kcLocaleDropDownClass > button::before { content: attr(aria-label); }
+/* Fallback label only when Keycloak renders no current-locale text in the button. */
+.kcLocaleDropDownClass > button:empty::before { content: attr(aria-label); }
 .kcLocaleDropDownClass > button[aria-expanded='true'] + .kcLocaleListClass { display: block; }
 .kcLocaleListClass a { display: block; padding: 0.75rem 1rem; color: var(--cds-text-primary); }
 .kcLocaleListClass a:hover { background: var(--cds-layer-hover-01); }
