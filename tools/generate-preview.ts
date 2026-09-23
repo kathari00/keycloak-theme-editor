@@ -74,6 +74,7 @@ export function buildLocaleRenderSpecs(localeTags: string[]): LocaleRenderSpec[]
       locale: {
         supported,
         currentLanguageTag: tag,
+        current: localeNativeName(tag),
         rtl: isRtlLocale(tag),
       },
     },

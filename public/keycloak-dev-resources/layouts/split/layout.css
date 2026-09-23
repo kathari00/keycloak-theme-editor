@@ -169,7 +169,8 @@ body, body#keycloak-bg {
   border: 1px solid var(--kte-border, #8d8d8d);
   border-radius: var(--quickstart-border-radius, 0);
 }
-.kcLocaleDropDownClass > button::before { content: attr(aria-label); }
+/* Fallback label only when Keycloak renders no current-locale text in the button. */
+.kcLocaleDropDownClass > button:empty::before { content: attr(aria-label); }
 .kcLocaleListClass {
   display: none;
   position: absolute;
