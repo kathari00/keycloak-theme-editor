@@ -75,7 +75,10 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   justify-content: space-between;
   gap: 1rem;
 }
-#kc-page-title { order: -1; flex: 1 1 12rem; }
+/* Profile pages nest the title inside kcContentWrapperClass, out of reach of `order`. */
+.kcFormHeaderClass > .kcLocaleMainClass { order: 1; }
+.kcFormHeaderClass > .kcContentWrapperClass { flex: 1 1 12rem; min-width: 0; }
+#kc-page-title { flex: 1 1 12rem; }
 #kc-content, #kc-content-wrapper { min-width: 0; }
 #kc-content-wrapper { display: flex; flex-direction: column; }
 
