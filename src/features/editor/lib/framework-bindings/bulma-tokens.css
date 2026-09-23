@@ -81,7 +81,8 @@ select.kcInputClass { appearance: auto; }
 #kc-registration > span { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: .375rem; }
 .kcLocaleDropDownClass { position: relative; }
 .kcLocaleDropDownClass > button { display: inline-flex; align-items: center; justify-content: space-between; min-width: 8rem; padding: .5rem .75rem; color: var(--bulma-text); background: var(--bulma-scheme-main); border: 1px solid var(--bulma-border); border-radius: var(--bulma-radius); font: inherit; cursor: pointer; }
-.kcLocaleDropDownClass > button::before { content: attr(aria-label); text-transform: capitalize; }
+/* Fallback label only when Keycloak renders no current-locale text in the button. */
+.kcLocaleDropDownClass > button:empty::before { content: attr(aria-label); text-transform: capitalize; }
 .kcLocaleDropDownClass > button::after { content: ''; width: .5rem; height: .5rem; margin-inline-start: .75rem; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: translateY(-20%) rotate(45deg); }
 .kcLocaleListClass { display: none; position: absolute; inset-inline-end: 0; z-index: 20; min-width: 10rem; max-height: min(20rem, 50vh); overflow-y: auto; margin: .25rem 0 0; padding: .25rem 0; list-style: none; background: var(--bulma-scheme-main); border: 1px solid var(--bulma-border); border-radius: var(--bulma-radius); box-shadow: var(--bulma-shadow); }
 .kcLocaleDropDownClass > button[aria-expanded='true'] + .kcLocaleListClass { display: block; }
