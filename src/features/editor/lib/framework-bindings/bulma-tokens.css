@@ -54,7 +54,10 @@ h2 { font-size: 1.25rem; font-weight: var(--bulma-weight-medium); }
 #kc-client-name { color: var(--bulma-text-weak); }
 .kcFormHeaderClass { margin-block-end: 1.5rem; }
 .kcFormHeaderClass:has(.kcLocaleMainClass) { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1rem; }
-#kc-page-title { order: -1; flex: 1 1 12rem; }
+/* Profile pages nest the title inside kcContentWrapperClass, out of reach of `order`. */
+.kcFormHeaderClass > .kcLocaleMainClass { order: 1; }
+.kcFormHeaderClass > .kcContentWrapperClass { flex: 1 1 12rem; min-width: 0; }
+#kc-page-title { flex: 1 1 12rem; }
 #kc-content-wrapper { display: flex; flex-direction: column; }
 .kcInputGroup { display: flex; align-items: stretch; }
 .kcInputGroup .kcInputClass { min-width: 0; border-start-end-radius: 0; border-end-end-radius: 0; }
