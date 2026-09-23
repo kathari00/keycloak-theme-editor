@@ -17,6 +17,7 @@ import {
 import { InfoCircleIcon } from '@patternfly/react-icons'
 import { useRef } from 'react'
 import { editorActions } from '../../actions'
+import { getFrameworkBindingMetadata } from '../../lib/framework-bindings/metadata'
 import { BOOTSTRAP_VARIANTS, loadBootstrapVariantDefaultColors } from '../../lib/framework-bindings/registry'
 import { LAYOUT_OPTIONS } from '../../lib/layouts/registry'
 import {
@@ -141,14 +142,19 @@ export function ColorSettingsPanel({
       if (!applied || latestColorRequestIdRef.current !== requestId) {
         return
       }
-      if (nextStyleOptionId === 'bootstrap')
+      const defaults = getFrameworkBindingMetadata(styleOptionFrameworkId(nextStyleOptionId)).defaults
+      if (nextStyleOptionId === 'bootstrap') {
         await applyBootstrapDefaultColors(bootstrapVariantId, requestId)
-      if (nextStyleOptionId === 'carbon') {
-        editorActions.setQuickStartStyle('#0f62fe', '#393939', '"IBM Plex Sans", sans-serif', {
-          headingFontFamily: '"IBM Plex Sans", sans-serif',
+      }
+      else if (defaults?.primaryColor && defaults.secondaryColor) {
+        editorActions.setQuickStartStyle(defaults.primaryColor, defaults.secondaryColor, defaults.fontFamily, {
+          headingFontFamily: defaults.fontFamily,
           recordHistory: false,
         })
-        editorActions.setQuickStartExtras({ colorPresetBorderRadius: 'sharp', colorPresetCardShadow: 'none' })
+        editorActions.setQuickStartExtras({
+          colorPresetBorderRadius: defaults.borderRadius,
+          colorPresetCardShadow: defaults.cardShadow,
+        })
       }
     })()
   }

@@ -68,7 +68,7 @@ body, body#keycloak-bg {
   margin: 0 0 1.5rem;
   border: 0;
   color: var(--kte-split-text);
-  text-align: start;
+  text-align: center;
 }
 .kcFormHeaderClass #kc-page-title {
   order: -1;
@@ -78,6 +78,7 @@ body, body#keycloak-bg {
   color: var(--kte-split-text);
   font-size: clamp(1.75rem, 2vw, 2.25rem);
   line-height: 1.2;
+  /* Left, as upstream base renders it. Only the realm and client names are centered. */
   text-align: start;
   overflow-wrap: anywhere;
 }
@@ -105,12 +106,12 @@ body, body#keycloak-bg {
   max-width: 30rem;
   padding: 0;
   margin: var(--kte-split-inset) 0 0.5rem;
-  text-align: start;
+  text-align: center;
 }
 #kc-header-wrapper, #kc-header-wrapper::before {
   max-width: 100%;
-  margin-inline: 0;
-  text-align: start;
+  margin-inline: auto;
+  text-align: center;
 }
 #kc-header-wrapper #kc-realm-name {
   color: var(--kte-split-text);

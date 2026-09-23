@@ -9,6 +9,15 @@ export const CARBON_BINDING: FrameworkBinding = {
   label: 'Carbon',
   frameworkCss: '',
   bindingCss: '',
+  cssVariablePrefix: '--cds-',
+  customCssPath: 'css/carbon-custom.css',
+  defaults: {
+    fontFamily: '"IBM Plex Sans", sans-serif',
+    primaryColor: '#0f62fe',
+    secondaryColor: '#393939',
+    borderRadius: 'sharp',
+    cardShadow: 'none',
+  },
   classMap: {
     kcButtonClass: 'cds--btn',
     kcButtonPrimaryClass: 'cds--btn cds--btn--primary',

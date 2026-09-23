@@ -225,8 +225,10 @@ h1, h2, h3, h4, h5, h6,
 body,
 body#keycloak-bg {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  /* `safe` so a card taller than the viewport starts at the top edge instead of centring with its
+     head cut off and unreachable - the realm and client names sit above the card here. */
+  align-items: safe center;
+  justify-content: safe center;
   min-height: 100vh;
 }
 

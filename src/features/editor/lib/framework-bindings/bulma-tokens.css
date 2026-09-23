@@ -1,0 +1,99 @@
+/* Bulma's native HTML bridge. Dark mode rides Bulma's own data-theme, set by colorSchemeAttribute. */
+:root {
+  color-scheme: light;
+  --bulma-primary-h: var(--quickstart-primary-h, 171deg);
+  --bulma-primary-s: var(--quickstart-primary-s, 100%);
+  --bulma-primary-l: var(--quickstart-primary-l, 41%);
+  --bulma-primary-invert-l: var(--quickstart-primary-invert-l, 4%);
+  --bulma-link-h: var(--quickstart-secondary-h, 233deg);
+  --bulma-link-s: var(--quickstart-secondary-s, 62%);
+  --bulma-link-l: var(--quickstart-secondary-l, 53%);
+  --bulma-link-invert-l: var(--quickstart-secondary-invert-l, 100%);
+  --bulma-radius: var(--quickstart-border-radius, 0.375rem);
+  --bulma-box-radius: var(--quickstart-border-radius, 0.375rem);
+  --bulma-box-shadow: var(--quickstart-card-shadow, 0 0.5em 1em -0.125em rgba(10,10,10,.1));
+}
+html.kcDarkModeClass {
+  color-scheme: dark;
+}
+
+html { background: var(--bulma-background); }
+body, body#keycloak-bg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: safe center;
+  min-height: 100vh;
+  padding-block: 2rem;
+  color: var(--bulma-text);
+  background-color: var(--quickstart-bg-color, var(--bulma-background));
+  background-image: var(--quickstart-bg-image, none);
+  background-size: cover;
+  background-position: center;
+  font-family: var(--quickstart-font-family, var(--bulma-family-primary));
+}
+h1, h2, h3, #kc-header-wrapper { color: var(--bulma-text-title); font-family: var(--quickstart-heading-font-family, var(--bulma-family-primary)); }
+#kc-page-title { font-size: 1.5rem; font-weight: var(--bulma-weight-semibold); line-height: 1.25; }
+h2 { font-size: 1.25rem; font-weight: var(--bulma-weight-medium); }
+.kcLoginClass { width: min(100%, 36rem); padding: 1rem; }
+.kcFormCardClass.box {
+  --bulma-box-radius: var(--quickstart-border-radius, var(--bulma-radius-large));
+  --bulma-box-shadow: var(--quickstart-card-shadow, var(--bulma-shadow));
+  width: 100%;
+  padding: clamp(1.5rem, 4vw, 3rem);
+}
+:root {
+  --kte-surface: var(--bulma-scheme-main);
+  --kte-text: var(--bulma-text);
+  --kte-border: var(--bulma-border);
+  --kte-radius: var(--quickstart-border-radius, var(--bulma-radius));
+}
+#kc-header { margin-block-end: 1rem; }
+#kc-header-wrapper { display: flex; flex-direction: column; gap: .25rem; }
+#kc-realm-name { font-weight: 600; }
+#kc-client-name { color: var(--bulma-text-weak); }
+.kcFormHeaderClass { margin-block-end: 1.5rem; }
+.kcFormHeaderClass:has(.kcLocaleMainClass) { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1rem; }
+/* Profile pages nest the title inside kcContentWrapperClass, out of reach of `order`. */
+.kcFormHeaderClass > .kcLocaleMainClass { order: 1; }
+.kcFormHeaderClass > .kcContentWrapperClass { flex: 1 1 12rem; min-width: 0; }
+#kc-page-title { flex: 1 1 12rem; }
+#kc-content-wrapper { display: flex; flex-direction: column; }
+.kcInputGroup { display: flex; align-items: stretch; }
+.kcInputGroup .kcInputClass { min-width: 0; border-start-end-radius: 0; border-end-end-radius: 0; }
+.kcInputGroup .kcFormPasswordVisibilityButtonClass { border-start-start-radius: 0; border-end-start-radius: 0; }
+select.kcInputClass { appearance: auto; }
+.kcFormSettingClass { display: flex; justify-content: space-between; align-items: center; margin-block-end: 1rem; }
+.checkbox label { display: inline-flex; align-items: center; gap: .5rem; cursor: pointer; }
+.kcFormActionGroupClass .button, #kc-form-buttons .button { width: 100%; }
+.kcFormSocialAccountListClass { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
+.kcFormSocialAccountListClass .button { margin: 0; }
+#kc-info-message[data-kc-state='info-message'] {
+  order: -1;
+  margin-block-end: 1.5rem;
+  padding: 1.25em 1.5em;
+  color: hsl(var(--bulma-info-h), var(--bulma-info-s), var(--bulma-info-light-invert-l));
+  background-color: hsl(var(--bulma-info-h), var(--bulma-info-s), 90%);
+  border-radius: var(--quickstart-border-radius, var(--bulma-radius));
+}
+#kc-info-message[data-kc-state='info-message'] .kc-feedback-text { color: inherit; }
+.notification.kcError { --bulma-notification-h: var(--bulma-danger-h); --bulma-notification-s: var(--bulma-danger-s); --bulma-notification-background-l: 90%; --bulma-notification-color-l: var(--bulma-danger-light-invert-l); }
+.notification.kcWarning { --bulma-notification-h: var(--bulma-warning-h); --bulma-notification-s: var(--bulma-warning-s); --bulma-notification-background-l: 90%; --bulma-notification-color-l: var(--bulma-warning-light-invert-l); }
+.notification.kcSuccess { --bulma-notification-h: var(--bulma-success-h); --bulma-notification-s: var(--bulma-success-s); --bulma-notification-background-l: 90%; --bulma-notification-color-l: var(--bulma-success-light-invert-l); }
+#kc-info:has(#kc-registration) { order: 10; margin-block-start: 1.5rem; }
+#kc-registration > span { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: .375rem; }
+.kcLocaleDropDownClass { position: relative; }
+.kcLocaleDropDownClass > button { display: inline-flex; align-items: center; justify-content: space-between; min-width: 8rem; padding: .5rem .75rem; color: var(--bulma-text); background: var(--bulma-scheme-main); border: 1px solid var(--bulma-border); border-radius: var(--bulma-radius); font: inherit; cursor: pointer; }
+/* Fallback label only when Keycloak renders no current-locale text in the button. */
+.kcLocaleDropDownClass > button:empty::before { content: attr(aria-label); text-transform: capitalize; }
+.kcLocaleDropDownClass > button::after { content: ''; width: .5rem; height: .5rem; margin-inline-start: .75rem; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: translateY(-20%) rotate(45deg); }
+.kcLocaleListClass { display: none; position: absolute; inset-inline-end: 0; z-index: 20; min-width: 10rem; max-height: min(20rem, 50vh); overflow-y: auto; margin: .25rem 0 0; padding: .25rem 0; list-style: none; background: var(--bulma-scheme-main); border: 1px solid var(--bulma-border); border-radius: var(--bulma-radius); box-shadow: var(--bulma-shadow); }
+.kcLocaleDropDownClass > button[aria-expanded='true'] + .kcLocaleListClass { display: block; }
+.kcLocaleItemClass { display: block; padding: .5rem .75rem; color: var(--bulma-text); white-space: nowrap; }
+.kcLocaleItemClass:hover, .kcLocaleItemClass:focus { color: var(--bulma-text); background: var(--bulma-background-hover); }
+.kcFormPasswordVisibilityButtonClass { display: inline-flex; align-items: center; justify-content: center; min-width: 2.75rem; }
+.kcFormPasswordVisibilityIconShow, .kcFormPasswordVisibilityIconHide { display: block; width: 1.125rem; height: 1.125rem; color: currentColor; }
+.kcFormPasswordVisibilityIconShow::before, .kcFormPasswordVisibilityIconHide::before { content: ''; display: block; width: 100%; height: 100%; background-color: currentColor; mask-repeat: no-repeat; mask-position: center; mask-size: contain; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center; -webkit-mask-size: contain; }
+.kcFormPasswordVisibilityIconShow::before { mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E"); -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E"); }
+.kcFormPasswordVisibilityIconHide::before { mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 3l18 18M10.6 5.2A10.8 10.8 0 0 1 12 5c6.5 0 10 7 10 7a15 15 0 0 1-2.1 3.1M6.6 6.6C3.6 8.5 2 12 2 12s3.5 7 10 7c1.8 0 3.3-.5 4.6-1.2M9.9 9.9a3 3 0 0 0 4.2 4.2'/%3E%3C/svg%3E"); -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 3l18 18M10.6 5.2A10.8 10.8 0 0 1 12 5c6.5 0 10 7 10 7a15 15 0 0 1-2.1 3.1M6.6 6.6C3.6 8.5 2 12 2 12s3.5 7 10 7c1.8 0 3.3-.5 4.6-1.2M9.9 9.9a3 3 0 0 0 4.2 4.2'/%3E%3C/svg%3E"); }
+@media (max-width: 30rem) { .kcFormSocialAccountListClass { grid-template-columns: 1fr; } }

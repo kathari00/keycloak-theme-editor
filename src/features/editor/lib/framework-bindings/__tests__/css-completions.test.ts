@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { BOOTSTRAP_BINDING } from '../bootstrap'
+import { BULMA_BINDING } from '../bulma'
 import { getFrameworkCssCompletions } from '../css-completions'
 import { NATIVE_BINDING } from '../types'
 
@@ -13,7 +14,21 @@ describe('framework CSS completions', () => {
     expect(new Set(result.identifiers).size).toBe(result.identifiers.length)
   })
 
+  it('offers each framework only its own variable namespace, under its own name', () => {
+    const css = '.button { --bulma-primary-l: 41%; --bs-btn-bg: red; }'
+    const bulma = getFrameworkCssCompletions({ ...BULMA_BINDING, frameworkCss: css })
+
+    expect(bulma.variables.map(variable => variable.name)).toEqual(['--bulma-primary-l'])
+    expect(bulma.identifiers).toEqual(['.button'])
+    // Suggestions are attributed to the framework that contributed them, not always Bootstrap.
+    expect(bulma.label).toBe('Bulma')
+    expect(bulma.variables[0].detail).toBe('Bulma variable')
+  })
+
   it('does not suggest Bootstrap vocabulary for native themes', () => {
-    expect(getFrameworkCssCompletions({ ...NATIVE_BINDING, frameworkCss: '.btn { --bs-btn-bg: red; }' })).toEqual({ identifiers: [], variables: [] })
+    const native = getFrameworkCssCompletions({ ...NATIVE_BINDING, frameworkCss: '.btn { --bs-btn-bg: red; }' })
+
+    expect(native.identifiers).toEqual([])
+    expect(native.variables).toEqual([])
   })
 })

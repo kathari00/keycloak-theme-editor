@@ -1,18 +1,15 @@
+import type { FrameworkId } from './framework-bindings/types'
 import { THEME_QUICK_START_CSS_PATH, THEME_STYLES_CSS_PATH } from '../../keycloak-theme/paths'
+import { FRAMEWORK_BINDINGS, getFrameworkBindingMetadata } from './framework-bindings/metadata'
 
 export const QUICK_START_CSS_PATH = THEME_QUICK_START_CSS_PATH
-export const BOOTSTRAP_CUSTOM_CSS_PATH = 'css/bootstrap-custom.css'
-export const CARBON_CUSTOM_CSS_PATH = 'css/carbon-custom.css'
 
 export function frameworkCustomCssPath(frameworkId: string): string | undefined {
-  if (frameworkId === 'bootstrap')
-    return BOOTSTRAP_CUSTOM_CSS_PATH
-  if (frameworkId === 'carbon')
-    return CARBON_CUSTOM_CSS_PATH
+  return getFrameworkBindingMetadata(frameworkId as FrameworkId).customCssPath
 }
 
 export function isFrameworkCustomCssFile(path: string): boolean {
-  return path === BOOTSTRAP_CUSTOM_CSS_PATH || path === CARBON_CUSTOM_CSS_PATH
+  return FRAMEWORK_BINDINGS.some(binding => binding.customCssPath === path)
 }
 
 /** Check if a file path is the editor-managed quick-start.css. */

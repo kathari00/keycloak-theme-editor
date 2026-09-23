@@ -1,4 +1,4 @@
-export type FrameworkId = 'native' | 'bootstrap' | 'carbon'
+export type FrameworkId = 'native' | 'bootstrap' | 'bulma' | 'carbon'
 
 export type BootstrapVariantId
   = | 'default'
@@ -32,6 +32,24 @@ export type BootstrapVariantId
 export const DEFAULT_FRAMEWORK_ID: FrameworkId = 'native'
 export const DEFAULT_BOOTSTRAP_VARIANT_ID: BootstrapVariantId = 'default'
 
+/** Quick Start values a framework's own look expects, applied when the user switches to it. */
+export interface FrameworkQuickStartDefaults {
+  /** Font stack to fall back to on export when the theme has no explicit font of its own. */
+  fontFamily: string
+  /** Omitted where the palette is read from the framework's compiled CSS instead (Bootstrap variants). */
+  primaryColor?: string
+  secondaryColor?: string
+  borderRadius?: 'sharp' | 'rounded' | 'pill'
+  cardShadow?: 'none' | 'subtle' | 'strong'
+}
+
+/** Root-element attribute a framework keys its own light/dark palette off. */
+export interface FrameworkColorSchemeAttribute {
+  name: string
+  light: string
+  dark: string
+}
+
 export interface FrameworkBinding {
   id: FrameworkId
   label: string
@@ -39,6 +57,12 @@ export interface FrameworkBinding {
   frameworkCss: string
   /** Hand-authored CSS binding our `--quickstart-*` tokens onto the framework's own variables. */
   bindingCss: string
+  /** Prefix of the framework's own CSS variables, for editor autocomplete. */
+  cssVariablePrefix?: string
+  /** Theme-relative path of this framework's editable override file. */
+  customCssPath?: string
+  defaults?: FrameworkQuickStartDefaults
+  colorSchemeAttribute?: FrameworkColorSchemeAttribute
   /**
    * `kc*Class` theme.properties key -> framework classes to append. Mirrors how `v2` layers
    * PatternFly classes onto the same bare `kc*Class` hooks (`kcButtonClass=kcButtonClass pf-v5-c-button`)

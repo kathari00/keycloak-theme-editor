@@ -1,7 +1,9 @@
 import type { BootstrapVariantId, FrameworkBinding, FrameworkId } from './types'
 import { BOOTSTRAP_BINDING } from './bootstrap'
-import { CARBON_BINDING } from './carbon'
+import { getFrameworkBindingMetadata } from './metadata'
 import { NATIVE_BINDING } from './types'
+
+export { getFrameworkBindingMetadata } from './metadata'
 
 export const BOOTSTRAP_VARIANTS: readonly { id: BootstrapVariantId, label: string }[] = [
   { id: 'default', label: 'Default' },
@@ -87,22 +89,21 @@ const bootstrapVariantBindingCss: Partial<Record<BootstrapVariantId, string>> = 
 `,
 }
 
-export function getFrameworkBindingMetadata(frameworkId: FrameworkId): FrameworkBinding {
-  if (frameworkId === 'carbon')
-    return CARBON_BINDING
-  return frameworkId === 'bootstrap' ? BOOTSTRAP_BINDING : NATIVE_BINDING
+// Local generated copies, not `?raw` imports from the packages: Vite's CSS pipeline resolves
+// a package `?raw` import to an empty module under Vitest. See `npm run generate:*`.
+const frameworkCssLoaders: Partial<Record<FrameworkId, () => Promise<[CssModule, CssModule]>>> = {
+  bulma: () => Promise.all([import('./bulma.generated.css?raw'), import('./bulma-tokens.css?raw')]),
+  carbon: () => Promise.all([import('./carbon.generated.css?raw'), import('./carbon-tokens.css?raw')]),
 }
 
 export function loadFrameworkBinding(
   frameworkId: FrameworkId,
   bootstrapVariantId: BootstrapVariantId = 'default',
 ): Promise<FrameworkBinding> {
-  if (frameworkId === 'carbon') {
-    return Promise.all([
-      import('./carbon.generated.css?raw'),
-      import('./carbon-tokens.css?raw'),
-    ]).then(([frameworkCss, bindingCss]) => ({
-      ...CARBON_BINDING,
+  const loadCss = frameworkCssLoaders[frameworkId]
+  if (loadCss) {
+    return loadCss().then(([frameworkCss, bindingCss]) => ({
+      ...getFrameworkBindingMetadata(frameworkId),
       frameworkCss: frameworkCss.default,
       bindingCss: bindingCss.default,
     }))

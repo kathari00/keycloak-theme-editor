@@ -30,8 +30,22 @@ describe('quick-start-css', () => {
       expect(result).toContain('--quickstart-secondary-color-light: #00ff00;')
       expect(result).toContain('--quickstart-secondary-color-dark: #00ff00;')
       expect(result).toContain('--quickstart-secondary-color: var(--quickstart-secondary-color-light);')
+      expect(result).toContain('--quickstart-primary-h: 0deg;')
+      expect(result).toContain('--quickstart-primary-s: 100%;')
+      expect(result).toContain('--quickstart-primary-l: 50%;')
+      expect(result).toContain('--quickstart-primary-invert-l: 4%;')
+      expect(result).toContain('--quickstart-secondary-h: 120deg;')
       expect(result).toContain('html.pf-v5-theme-dark,')
       expect(result).toContain('html.kcDarkModeClass {')
+    })
+
+    it('picks the contrast lightness that actually wins WCAG contrast, not a lightness cut-off', () => {
+      // Mid-tone brand colors (luminance between ~0.18 and ~0.45) read better against near-black.
+      expect(build({ primaryColor: '#ca8a04' })).toContain('--quickstart-primary-invert-l: 4%;')
+      expect(build({ primaryColor: '#16a34a' })).toContain('--quickstart-primary-invert-l: 4%;')
+      expect(build({ primaryColor: '#00d1b2' })).toContain('--quickstart-primary-invert-l: 4%;')
+      expect(build({ primaryColor: '#485fc7' })).toContain('--quickstart-primary-invert-l: 100%;')
+      expect(build({ primaryColor: '#000000' })).toContain('--quickstart-primary-invert-l: 100%;')
     })
 
     it('emits optional quickstart variables only when configured', () => {

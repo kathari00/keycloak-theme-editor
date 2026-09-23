@@ -176,7 +176,7 @@ html.pf-v5-theme-dark #kc-recovery-codes-list li span {
   outline-offset: 2px;
 }
 
-html.pf-v5-theme-dark p, 
+html.pf-v5-theme-dark p:not(#kc-client-name),
 html.pf-v5-theme-dark ul {
   color: var(--quickstart-text-primary-dark) !important;
 }
@@ -185,7 +185,8 @@ div:nth-of-type(2) > p:nth-of-type(1) {
   margin-bottom: 1rem;
 }
 
-p,
+/* Body copy only: the client name is a <p> in the header with its own subtitle colour. */
+p:not(#kc-client-name),
 ul {
   color: var(--quickstart-text-primary-light) !important;
 }
@@ -484,14 +485,17 @@ a.kcButtonPrimaryClass:focus-visible:focus-visible {
 }
 
 html.pf-v5-theme-dark #kc-realm-name,
-html.pf-v5-theme-dark #kc-client-name,
 body.pf-v5-theme-dark #kc-realm-name,
-body.pf-v5-theme-dark #kc-client-name,
 html.kcDarkModeClass #kc-realm-name,
-html.kcDarkModeClass #kc-client-name,
-body.kcDarkModeClass #kc-realm-name,
-body.kcDarkModeClass #kc-client-name {
+body.kcDarkModeClass #kc-realm-name {
   color: var(--quickstart-text-primary-dark);
+}
+
+html.pf-v5-theme-dark #kc-client-name,
+body.pf-v5-theme-dark #kc-client-name,
+html.kcDarkModeClass #kc-client-name,
+body.kcDarkModeClass #kc-client-name {
+  color: var(--quickstart-text-secondary-dark, #cbd5e1);
 }
 
 html.pf-v5-theme-dark .kcLoginMainTitle,
@@ -608,7 +612,6 @@ textarea:focus {
   border-top: none;
   padding-bottom: 0.5rem;
   margin-bottom: 2rem;
-  text-align: center;
   display: block;
   width: 100%;
   position: relative;
@@ -631,14 +634,22 @@ textarea:focus {
   margin-top: 0.25rem;
 }
 
-#kc-realm-name,
-#kc-client-name {
+#kc-realm-name {
   font-weight: 600;
   letter-spacing: -0.02em;
   color: var(--quickstart-text-primary-light);
   font-size: 32px;
   display: block;
   line-height: 1.2;
+}
+
+/* The client name is a subtitle under the realm, not a second heading the same size as it. */
+#kc-client-name {
+  font-weight: 400;
+  color: var(--quickstart-text-secondary-light, #6b7280);
+  font-size: 15px;
+  display: block;
+  line-height: 1.4;
 }
 
 .kcLoginMainTitle,
@@ -651,13 +662,6 @@ textarea:focus {
   display: block;
   line-height: 1.25;
   width: 100%;
-  text-align: center;
-}
-
-@media (max-width: 480px) {
-  .kcLoginMainTitle {
-    font-size: 28px;
-  }
 }
 
 h1, h2, h3, h4, h5, h6,
@@ -1933,9 +1937,7 @@ div#kc-social-providers > h2:nth-of-type(1) {
   }
 }
 
-.subtitle,
-#kc-client-name,
-#kc-realm-name {
+.subtitle {
   color: var(--quickstart-secondary-color);
 }
 
@@ -2175,20 +2177,6 @@ html body .pf-v5-c-login {
 #kc-logout-confirm #kc-info-message > p > a:active {
   background: color-mix(in srgb, var(--quickstart-primary-color) 16%, transparent);
   filter: none;
-}
-
-/* Hide client name */
-#kc-client-name,
-.kc-client-name,
-[data-kc-client="name"] {
-  display: none !important;
-}
-
-/* Hide info message */
-#kc-info-message.kcAlertClass,
-.kc-info-message,
-[data-kc-i18n-key="infoMessage"] {
-  display: none !important;
 }
 
 #kc-terms-text {
