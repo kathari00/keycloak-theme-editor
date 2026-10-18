@@ -16,11 +16,6 @@
     border-top: 4px solid var(--quickstart-primary-color, var(--keycloak-card-top-color));
 }
 
-/* Keep the card's bottom spacing consistent with its surrounding content. */
-#kc-content.pf-v5-c-login__main-body {
-    padding-bottom: var(--pf-v5-global--spacer--lg);
-}
-
 /* Info section - top margin + bottom padding */
 .pf-v5-c-login__main-footer-band:first-child {
     margin-block-start: var(--pf-v5-global--spacer--lg);
@@ -307,6 +302,10 @@ a {
   width: 100%;
   border-top: 0;
   padding-top: 0;
+}
+
+.pf-v5-c-login .kc-legal-footer[hidden] {
+  display: none;
 }
 
 #kc-info a.pf-v5-c-login__main-footer-band-item,

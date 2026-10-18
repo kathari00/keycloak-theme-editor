@@ -174,7 +174,26 @@ dass V2s Live-Validierung einschließlich `textContent` für Fehlermeldungen
 verwendet wird. Zusammen mit `LoginLayoutComponentsTest` und
 `LoginFieldComponentsTest` wurden 15 Maven-Tests erfolgreich ausgeführt.
 
-Nach dem Layoutvergleich wurde der allgemeine untere Innenabstand der
-V2-Login-Karte von PatternFlys 64 px auf den `lg`-Abstand (24 px) gesetzt.
-Dies ist eine bewusste Änderung gegenüber dem ursprünglichen V2-Layout;
-die vorherigen Null-Differenz-Aussagen beziehen sich auf den Stand davor.
+Der Editor-Override für `template.ftl` hatte den V2-Footer innerhalb des
+Karteninhalts platziert. Dadurch wurde dieser zum letzten Kind von `<main>`;
+PatternFlys Regel für das letzte Kind erhöhte den unteren Innenabstand in
+der Editor-Vorschau von Upstreams 32 px auf 64 px. Der innere Footer für
+Social Login und Info wird nun wie bei Keycloak immer gerendert; der äußere
+Footer liegt wieder als Geschwisterelement des Karteninhalts. Ein zwischenzeitlicher
+24-px-CSS-Workaround wurde entfernt; die originale Keycloak-V2-CSS bleibt
+unverändert.
+
+Für den PR-Vergleich verwendet `verify.ts --as-is` nun keine Editor-Overrides
+mehr. Das ist wichtig: Der frühere Vergleich prüfte zwar die Keycloak-Seiten,
+renderte aber mit dem angepassten Editor-`template.ftl` und dessen
+Theme-Eigenschaften. Der reine Keycloak-Vergleich ergibt null Unterschiede
+bei den geprüften Steuerelementen, Attributen und Layoutboxen. Die lokale
+Editor-Vorschau kann mit `--with-editor-overrides --write-editor-preview`
+weiterhin ausdrücklich mit den Editor-Anpassungen erzeugt werden.
+
+Der Editor ist auf Keycloak 26.7.3 festgelegt, während der PR-Checkout eine
+neuere Entwicklungsversion enthält. Deren Theme-Eigenschaften unterscheiden
+sich an weiteren Stellen, etwa beim unteren Abstand der Social-Login-Liste.
+Die Editor-Vorschau belegt deshalb die korrigierte Footer-Struktur und den
+32-px-Innenabstand, aber keine vollständige Pixelgleichheit mit dem neueren
+Keycloak-Checkout. Dafür dient der reine Keycloak-Vergleich ohne Overrides.

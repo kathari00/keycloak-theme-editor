@@ -24,15 +24,19 @@ async function main() {
   const keycloakSourceArg = process.argv.find(arg => arg.startsWith('--keycloak-source='))
   const keycloakSource = keycloakSourceArg ? path.resolve(keycloakSourceArg.slice('--keycloak-source='.length)) : null
   const asIs = process.argv.includes('--as-is')
+  const withEditorOverrides = process.argv.includes('--with-editor-overrides')
   assert.ok(!asIs || keycloakSource, '--as-is requires --keycloak-source')
   const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'keycloak-v2-login-prototype-'))
   try {
     const inputRoot = path.join(tempRoot, 'input')
+    const emptyOverrideRoot = path.join(tempRoot, 'empty-overrides')
+    const renderOverrideRoot = keycloakSource && asIs && !withEditorOverrides ? emptyOverrideRoot : overrideRoot
     const baselineRoot = path.join(tempRoot, 'baseline')
     const outputRoot = path.join(tempRoot, 'output')
     const baselineOutputRoot = path.join(tempRoot, 'baseline-output')
     const mocksPath = path.join(tempRoot, 'context-mocks.json')
     await mkdir(inputRoot, { recursive: true })
+    await mkdir(emptyOverrideRoot, { recursive: true })
 
     for (const themeId of ['base', 'v2']) {
       if (keycloakSource) {
@@ -44,6 +48,12 @@ async function main() {
       else {
         await cp(path.join(upstreamRoot, themeId), path.join(inputRoot, themeId), { recursive: true })
       }
+    }
+    if (keycloakSource && asIs) {
+      // Keycloak's abstract Base theme has no theme.properties. The preview
+      // renderer requires one to register Base as a variant; no template or
+      // V2 properties are overlaid in this mode.
+      await writeFile(path.join(inputRoot, 'base/login/theme.properties'), 'parent=base\n')
     }
     if (keycloakSource) {
       await cp(inputRoot, baselineRoot, { recursive: true })
@@ -146,8 +156,8 @@ async function main() {
         '-jar',
         jarPath,
         `--input=${baselineRoot}`,
-        `--overrides=${overrideRoot}`,
-        `--presets=${overrideRoot}`,
+        `--overrides=${renderOverrideRoot}`,
+        `--presets=${renderOverrideRoot}`,
         `--output=${baselineOutputRoot}`,
         `--context-mocks=${mocksPath}`,
         '--tag=keycloak-pr-baseline',
@@ -165,8 +175,8 @@ async function main() {
       '-jar',
       jarPath,
       `--input=${inputRoot}`,
-      `--overrides=${overrideRoot}`,
-      `--presets=${overrideRoot}`,
+      `--overrides=${renderOverrideRoot}`,
+      `--presets=${renderOverrideRoot}`,
       `--output=${outputRoot}`,
       `--context-mocks=${mocksPath}`,
       `--tag=${configuredTag}+pr-${prototypePrHead.slice(0, 8)}-prototype`,

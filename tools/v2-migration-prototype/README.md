@@ -33,7 +33,11 @@ This proves file-level inheritance and rendering only. The username field and re
 
 `--keycloak-source=<path>` copies Base and V2 templates from that Keycloak
 checkout and renders a baseline before applying the prototype. `--as-is`
-renders the checkout exactly as it is, without prototype overlays. Both
+renders the checkout without prototype or editor template overrides. Because
+Keycloak's Base theme has no `theme.properties`, the verifier supplies only
+that minimal file so the preview renderer can register Base. Add
+`--with-editor-overrides --write-editor-preview` to `--as-is` when generating
+the local interactive editor preview. Both
 commands write ignored `generated/pr-baseline-pages.json` and
 `generated/pr-candidate-pages.json`, so save the original baseline as
 `generated/pr-original-pages.json` before running against the migrated

@@ -28,7 +28,9 @@ async function main() {
     'public/keycloak-dev-resources/resources-common/vendor/patternfly-v5/patternfly.min.css',
     'public/keycloak-dev-resources/resources-common/vendor/patternfly-v5/patternfly-addons.css',
     'public/keycloak-dev-resources/themes/v2/login/resources/css/quick-start.css',
-    '../keycloak-v2-pr-validation/themes/src/main/resources/theme/keycloak.v2/login/resources/css/styles.css',
+    process.argv.includes('--editor-css')
+      ? 'public/keycloak-dev-resources/themes/v2/login/resources/css/styles.css'
+      : '../keycloak-v2-pr-validation/themes/src/main/resources/theme/keycloak.v2/login/resources/css/styles.css',
   ].map(file => readFile(path.resolve(repo, file), 'utf8')))
 
   const browser = await chromium.launch({ headless: true })

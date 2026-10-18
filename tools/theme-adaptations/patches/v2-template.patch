@@ -1,60 +1,33 @@
-diff --git a/template.ftl b/template.ftl
-index c5c179f..5ae5544 100644
---- a/template.ftl
-+++ b/template.ftl
-@@ -14,5 +14,5 @@
-       </div>
-       <div class="${properties.kcInputGroupItemClass}">
+diff --git a/public/keycloak-upstream/v2/login/template.ftl b/public/keycloak-dev-resources/themes/v2/login/template.ftl
+index c5c179f..9ce1df9 100644
+--- a/public/keycloak-upstream/v2/login/template.ftl
++++ b/public/keycloak-dev-resources/themes/v2/login/template.ftl
+@@ -16 +16 @@
 -        <button id="reset-login" class="${properties.kcFormPasswordVisibilityButtonClass} kc-login-tooltip" type="button" 
 +        <button id="reset-login" class="${properties.kcFormPasswordVisibilityButtonClass} kc-login-tooltip" type="button"
-               aria-label="${msg('restartLoginTooltip')}" onclick="location.href='${url.loginRestartFlowUrl}'">
-             <i class="fa-sync-alt fas" aria-hidden="true"></i>
-@@ -39,5 +39,5 @@
-         </#list>
-     </#if>
+@@ -41 +41 @@
 -    <title>${title!}</title>
 +    <title>${msg("loginTitle",(realm.displayName!''))}</title>
-     <#if themeResources?? && themeResources.favicons?has_content>
-         <@themeResourceTags.renderFavicons themeResources.favicons url.resourcesPath />
-@@ -68,6 +68,6 @@
-     <#if darkMode>
-       <script type="module" async blocking="render">
+@@ -70,2 +70,2 @@
 -          <#outputformat "JavaScript">
 -          const DARK_MODE_CLASS = ${properties.kcDarkModeClass?c};
 +          const DARK_MODE_CLASS = "${properties.kcDarkModeClass!'kcDarkModeClass pf-v5-theme-dark'}";
 +          const darkModeClasses = DARK_MODE_CLASS.split(/\s+/).filter(Boolean);
-           const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
- 
-@@ -79,10 +79,9 @@
- 
-             if (isEnabled) {
+@@ -81 +81 @@
 -              classList.add(DARK_MODE_CLASS);
 +              classList.add(...darkModeClasses);
-             } else {
+@@ -83 +83 @@
 -              classList.remove(DARK_MODE_CLASS);
 +              classList.remove(...darkModeClasses);
-             }
-           }
+@@ -86 +85,0 @@
 -          </#outputformat>
-       </script>
-     </#if>
-@@ -102,5 +101,5 @@
-     <script type="module">
-         <#outputformat "JavaScript">
+@@ -104 +103 @@
 -        import { startSessionPolling } from ${(url.resourcesPath + "/js/authChecker.js")?c};
 +        import { startSessionPolling } from "${url.resourcesPath}/js/authChecker.js";
- 
-         startSessionPolling(
-@@ -135,5 +134,5 @@
-         <script type="module">
-              <#outputformat "JavaScript">
+@@ -137 +136 @@
 -            import { checkAuthSession } from ${(url.resourcesPath + "/js/authChecker.js")?c};
 +            import { checkAuthSession } from "${url.resourcesPath}/js/authChecker.js";
- 
-             checkAuthSession(
-@@ -152,10 +151,29 @@
- <div class="${properties.kcLogin!}">
-   <div class="${properties.kcLoginContainer!}">
+@@ -154,6 +153,25 @@
 -    <header id="kc-header" class="pf-v5-c-login__header">
 -      <div id="kc-header-wrapper"
 -              class="pf-v5-c-brand">${kcSanitize(msg("loginTitleHtml",(realm.displayNameHtml!'')))?no_esc}</div>
@@ -86,19 +59,11 @@ index c5c179f..5ae5544 100644
 +           literal hook name since it always resolves to this bare token anyway (see base's own
 +           kcFormHeaderClass=kcFormHeaderClass). -->
 +      <div class="${properties.kcLoginMainHeader!} kcFormHeaderClass">
-         <h1 class="${properties.kcLoginMainTitle!}" id="kc-page-title"><#nested "header"></h1>
-         <#if realm.internationalizationEnabled  && locale.supported?size gt 1>
-@@ -198,5 +216,6 @@
-         </#if>
-       </div>
+@@ -200 +218,2 @@
 -      <div class="${properties.kcLoginMainBody!}">
 +      <div class="${properties.kcLoginMainBody!}" id="kc-content">
 +      <div id="kc-content-wrapper">
-         <#if !(auth?has_content && auth.showUsername() && !auth.showResetCredentials())>
-             <#if displayRequiredFields>
-@@ -232,17 +251,25 @@
-         <#-- App-initiated actions should not see warning messages about the need to complete the action -->
-         <#-- during login.                                                                               -->
+@@ -234,11 +253,19 @@
 -        <#if displayMessage && message?has_content && (message.type != 'warning' || !isAppInitiatedAction??)>
 -            <div class="${properties.kcAlertClass!} pf-m-${(message.type = 'error')?then('danger', message.type)}">
 -                <div class="${properties.kcAlertIconClass!}">
@@ -129,35 +94,17 @@ index c5c179f..5ae5544 100644
 +                        </div>
 +                        <span class="${properties.kcAlertTitleClass!} kc-feedback-text"><#if _hasInfo>${_infoMsg}</#if></span>
 +                    </div>
- 
+@@ -246 +273 @@
 -        <#nested "form">
 +                <#nested "form">
- 
-         <#if auth?has_content && auth.showTryAnotherWayLink()>
-@@ -266,5 +293,5 @@
-         </#if>
- 
--          <div class="${properties.kcLoginMainFooter!}">
-+          <#assign footerContent>
-               <#nested "socialProviders">
- 
-@@ -276,10 +303,14 @@
-                   </div>
-               </#if>
--          </div>
+@@ -279 +305,0 @@
 -      </div>
-+          </#assign>
-+          <#if footerContent?markup_string?trim?has_content>
-+            <div class="${properties.kcLoginMainFooter!}">
-+              ${footerContent?no_esc}
-+            </div>
-+          </#if>
- 
+@@ -281,3 +307,5 @@
 -        <div class="${properties.kcLoginMainFooter!}">
 -            <@loginFooter.content/>
 -        </div>
-+      <@loginFooter.content/>
 +      </div>
 +      </div>
-     </main>
-   </div>
++      <div class="${properties.kcLoginMainFooter!}">
++          <@loginFooter.content/>
++      </div>
