@@ -5,6 +5,11 @@ import type {
 import { DEFAULT_LOCALE_TAG } from '../i18n/locale-catalog'
 import generatedPagesUrl from './generated/pages.json?url'
 
+export const isV2PrototypePreview = import.meta.env.DEV
+  && typeof window !== 'undefined'
+  && new URLSearchParams(window.location.search).get('v2Prototype') === '1'
+const initialPagesUrl = isV2PrototypePreview ? '/tools/v2-migration-prototype/generated/pages.json' : generatedPagesUrl
+
 interface PreviewStateOption {
   id: string
   name: string
@@ -57,7 +62,7 @@ function rememberLoadedLocale(localeTag: string): void {
 }
 
 export function getAvailablePreviewLocaleTags(): string[] {
-  return [DEFAULT_LOCALE_TAG, ...Object.keys(localePagesUrls)]
+  return isV2PrototypePreview ? [DEFAULT_LOCALE_TAG] : [DEFAULT_LOCALE_TAG, ...Object.keys(localePagesUrls)]
 }
 
 /**
@@ -66,7 +71,7 @@ export function getAvailablePreviewLocaleTags(): string[] {
  * be enabled for export before anyone has generated a preview for it.
  */
 export async function ensureLocalePreviewPagesLoaded(localeTag: string): Promise<void> {
-  if (localeTag === DEFAULT_LOCALE_TAG) {
+  if (isV2PrototypePreview || localeTag === DEFAULT_LOCALE_TAG) {
     return
   }
   if (localeVariants[localeTag]) {
@@ -95,7 +100,7 @@ export async function ensureLocalePreviewPagesLoaded(localeTag: string): Promise
 }
 
 function getVariantsForLocale(localeTag: string | undefined): PreviewVariantMap {
-  if (!localeTag || localeTag === DEFAULT_LOCALE_TAG) {
+  if (isV2PrototypePreview || !localeTag || localeTag === DEFAULT_LOCALE_TAG) {
     return previewVariants
   }
   return localeVariants[localeTag] ?? previewVariants
@@ -132,7 +137,7 @@ export async function ensureGeneratedPreviewPagesLoaded(): Promise<void> {
     return previewPagesLoadPromise
   }
 
-  previewPagesLoadPromise = fetchPreviewPages(generatedPagesUrl)
+  previewPagesLoadPromise = fetchPreviewPages(initialPagesUrl)
     .then((previewPages) => {
       applyPreviewPages(previewPages)
     })

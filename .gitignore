@@ -11,6 +11,7 @@ tools/preview-renderer/preview-renderer.jar
 tools/preview-renderer/lib/
 e2e/keycloak-integration/generated/
 public/keycloak-upstream/
+tools/v2-migration-prototype/generated/
 public/keycloak-dev-resources/resources-common/
 public/fonts/
 .vscode/*

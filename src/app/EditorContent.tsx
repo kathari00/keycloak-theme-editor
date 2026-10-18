@@ -17,6 +17,7 @@ import { useDarkModeState, usePresetState } from '../features/editor/hooks/use-e
 import { resolveThemeIdFromConfig, useThemeConfig } from '../features/presets/queries'
 import { PreviewProvider } from '../features/preview/components/PreviewProvider'
 import { PreviewShell } from '../features/preview/components/PreviewShell'
+import { isV2PrototypePreview } from '../features/preview/load-generated'
 import { useDesktopLayout } from './hooks/useDesktopLayout'
 import { useDocumentDarkModeClass } from './hooks/useDocumentDarkModeClass'
 import { useGeneratedPreviewPages } from './hooks/useGeneratedPreviewPages'
@@ -24,6 +25,19 @@ import { useInitialThemeBootstrap } from './hooks/useInitialThemeBootstrap'
 import { usePreviewPageSelection } from './hooks/usePreviewPageSelection'
 import { useThemeJarImportHandler } from './hooks/useThemeJarImportHandler'
 import LoadingScreen, { useLoadingIndicatorVisibility } from './LoadingScreen'
+
+function PrototypeBanner() {
+  if (!isV2PrototypePreview)
+    return null
+
+  return (
+    <StackItem>
+      <Alert isInline variant="info" title="V2 prototype preview · mixed sources" style={{ margin: '0.5rem' }}>
+        Preview combines Keycloak 26.7.3 templates with buttons from PR #52724. Export still uses Keycloak 26.7.3.
+      </Alert>
+    </StackItem>
+  )
+}
 
 function EditorHeader() {
   return (
@@ -38,6 +52,7 @@ function EditorHeader() {
           <ContextBar />
         </ErrorBoundary>
       </StackItem>
+      <PrototypeBanner />
     </>
   )
 }
@@ -101,6 +116,7 @@ function MobileEditorLayout() {
           <ContextBar />
         </ErrorBoundary>
       </StackItem>
+      <PrototypeBanner />
       <StackItem isFilled style={{ minWidth: 0, minHeight: 0 }}>
         <div
           id="mobile-editor-pager"

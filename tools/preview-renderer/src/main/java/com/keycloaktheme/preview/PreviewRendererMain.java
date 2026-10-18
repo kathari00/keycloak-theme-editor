@@ -298,7 +298,8 @@ public final class PreviewRendererMain {
     }
 
     System.err.println("Skipped " + skippedTemplates.size() + " template(s) for variant " + variantId + " due to unsupported preview context.");
-    int sampleCount = Math.min(3, skippedTemplates.size());
+    int sampleCount = "1".equals(System.getenv("KEYCLOAK_PREVIEW_VERBOSE_SKIPS"))
+        ? skippedTemplates.size() : Math.min(3, skippedTemplates.size());
     for (int i = 0; i < sampleCount; i++) {
       System.err.println("  - " + skippedTemplates.get(i));
     }
