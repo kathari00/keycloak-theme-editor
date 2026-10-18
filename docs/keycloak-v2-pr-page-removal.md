@@ -173,3 +173,8 @@ Passwortvalidierungsmakro mit der Reihenfolge V2 vor Base und prüft,
 dass V2s Live-Validierung einschließlich `textContent` für Fehlermeldungen
 verwendet wird. Zusammen mit `LoginLayoutComponentsTest` und
 `LoginFieldComponentsTest` wurden 15 Maven-Tests erfolgreich ausgeführt.
+
+Nach dem Layoutvergleich wurde der allgemeine untere Innenabstand der
+V2-Login-Karte von PatternFlys 64 px auf den `lg`-Abstand (24 px) gesetzt.
+Dies ist eine bewusste Änderung gegenüber dem ursprünglichen V2-Layout;
+die vorherigen Null-Differenz-Aussagen beziehen sich auf den Stand davor.
