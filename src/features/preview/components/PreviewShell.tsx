@@ -21,7 +21,7 @@ import { applyPreviewMessageOverrides } from '../lib/preview-message-catalog'
 import { applyQuickStartTemplateContent } from '../lib/quickstart-template-content'
 import { sanitizePreviewHtml } from '../lib/sanitize-preview-html'
 import { createElementSelector } from '../lib/selector-utils'
-import { getVariantPages, isRawPrototypePreview, resolveStateHtml } from '../load-generated'
+import { getVariantPages, resolveStateHtml } from '../load-generated'
 
 const deviceWidthMap = { desktop: '100%', tablet: '900px', mobile: '430px' } as const
 interface PreviewStyleParams {
@@ -114,16 +114,14 @@ function hashUrl(url: string): string {
 }
 
 function preparePreviewSrcDoc(pageHtml: string, themeStylesPath: string): { html: string, version: string } {
-  const doc = new DOMParser().parseFromString(sanitizePreviewHtml(pageHtml, { keepPageStylesheets: isRawPrototypePreview }), 'text/html')
+  const doc = new DOMParser().parseFromString(sanitizePreviewHtml(pageHtml), 'text/html')
   const version = hashUrl(`${themeStylesPath}\0${pageHtml}`)
 
   // These resources must be present while srcDoc is parsed. The iframe load
   // event then waits for them instead of briefly painting the bare document
-  // before PreviewShell injects them. A raw Keycloak render keeps its own.
-  if (!isRawPrototypePreview) {
-    ensureBaseHref(doc, 'preview-theme-base', new URL(themeStylesPath, window.location.href).toString())
-    ensureStylesheetLink(doc, 'preview-patternfly-v5', new URL(patternflyV5PreviewStylesheetUrl, window.location.href).toString())
-  }
+  // before PreviewShell injects them.
+  ensureBaseHref(doc, 'preview-theme-base', new URL(themeStylesPath, window.location.href).toString())
+  ensureStylesheetLink(doc, 'preview-patternfly-v5', new URL(patternflyV5PreviewStylesheetUrl, window.location.href).toString())
   doc.documentElement.dataset.previewDocumentVersion = version
 
   return { html: `<!doctype html>${doc.documentElement.outerHTML}`, version }
@@ -174,10 +172,6 @@ function applyPreviewStyles(params: PreviewStyleParams): void {
 function syncPreviewDocumentStyles(params: PreviewStyleParams): void {
   const { doc, themeStylesPath, googleFontUrls } = params
 
-  if (isRawPrototypePreview) {
-    syncPreviewDarkModeClasses(doc, [doc.documentElement.dataset.upstreamDarkModeClass || 'pf-v6-theme-dark'], params.isDarkMode)
-    return
-  }
   if (!doc.head || !doc.body)
     return
 
@@ -311,7 +305,7 @@ export function PreviewShell({ onHorizontalSwipe }: PreviewShellProps = {}) {
       darkModeClasses: resolvedTheme?.darkModeClasses,
       isDarkMode,
     })
-    if (isPresetTheme && !isRawPrototypePreview) {
+    if (isPresetTheme) {
       applyQuickStartTemplateContent(doc, {
         showClientName: quickSettings.showClientName,
         showRealmName: quickSettings.showRealmName,
@@ -328,7 +322,7 @@ export function PreviewShell({ onHorizontalSwipe }: PreviewShellProps = {}) {
 
   useEffect(() => {
     const doc = iframeRef.current?.contentDocument
-    if (!doc || isRawPrototypePreview)
+    if (!doc)
       return
 
     void applyPreviewMessageOverrides(

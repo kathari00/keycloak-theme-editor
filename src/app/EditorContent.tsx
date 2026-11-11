@@ -17,7 +17,7 @@ import { useDarkModeState, usePresetState } from '../features/editor/hooks/use-e
 import { resolveThemeIdFromConfig, useThemeConfig } from '../features/presets/queries'
 import { PreviewProvider } from '../features/preview/components/PreviewProvider'
 import { PreviewShell } from '../features/preview/components/PreviewShell'
-import { isV2PrototypePreview, v2PrototypeSource } from '../features/preview/load-generated'
+import { isV2PrototypePreview } from '../features/preview/load-generated'
 import { useDesktopLayout } from './hooks/useDesktopLayout'
 import { useDocumentDarkModeClass } from './hooks/useDocumentDarkModeClass'
 import { useGeneratedPreviewPages } from './hooks/useGeneratedPreviewPages'
@@ -27,7 +27,7 @@ import { useThemeJarImportHandler } from './hooks/useThemeJarImportHandler'
 import LoadingScreen, { useLoadingIndicatorVisibility } from './LoadingScreen'
 
 function PrototypeBanner() {
-  if (!isV2PrototypePreview || v2PrototypeSource)
+  if (!isV2PrototypePreview)
     return null
 
   return (

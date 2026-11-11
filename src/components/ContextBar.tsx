@@ -1,7 +1,5 @@
 import {
   Button,
-  FormSelect,
-  FormSelectOption,
   Toolbar,
   ToolbarContent,
   ToolbarGroup,
@@ -9,7 +7,7 @@ import {
 } from '@patternfly/react-core'
 import { useEffect } from 'react'
 import { usePreviewContext } from '../features/preview/hooks/use-preview-context'
-import { getVariantPages, getVariantStateOptions, isRawPrototypePreview } from '../features/preview/load-generated'
+import { getVariantStateOptions } from '../features/preview/load-generated'
 import { cx } from '../lib/cx'
 
 interface ContextBarProps {
@@ -23,7 +21,6 @@ export default function ContextBar({ className }: ContextBarProps) {
     activePageId,
     activeStateId,
     setActiveState,
-    setActivePage,
   } = preview
 
   const states = getVariantStateOptions({
@@ -61,13 +58,6 @@ export default function ContextBar({ className }: ContextBarProps) {
       }}
     >
       <ToolbarContent style={{ rowGap: '0.5rem' }}>
-        {isRawPrototypePreview && (
-          <ToolbarItem>
-            <FormSelect aria-label="Preview page" value={activePageId} onChange={(_, value) => setActivePage(value)}>
-              {Object.keys(getVariantPages(activeVariantId)).map(page => <FormSelectOption key={page} value={page} label={page.replace('.html', '.ftl')} />)}
-            </FormSelect>
-          </ToolbarItem>
-        )}
         <ToolbarGroup
           style={{
             alignItems: 'center',
@@ -79,25 +69,17 @@ export default function ContextBar({ className }: ContextBarProps) {
           <ToolbarItem style={{ marginInlineEnd: 0, color: 'var(--pf-v6-global--Color--200)', fontSize: 'var(--pf-t--global--font--size--body--sm)' }}>
             States
           </ToolbarItem>
-          {states.length > 6
-            ? (
-                <ToolbarItem>
-                  <FormSelect aria-label="Preview scenario" value={activeStateId} onChange={(_, value) => setActiveState(value)}>
-                    {states.map(state => <FormSelectOption key={state.id} value={state.id} label={state.name} />)}
-                  </FormSelect>
-                </ToolbarItem>
-              )
-            : states.map(state => (
-                <ToolbarItem key={state.id} style={{ marginInlineEnd: 0 }}>
-                  <Button
-                    variant={activeStateId === state.id ? 'primary' : 'secondary'}
-                    size="sm"
-                    onClick={() => setActiveState(state.id)}
-                  >
-                    {state.name}
-                  </Button>
-                </ToolbarItem>
-              ))}
+          {states.map(state => (
+            <ToolbarItem key={state.id} style={{ marginInlineEnd: 0 }}>
+              <Button
+                variant={activeStateId === state.id ? 'primary' : 'secondary'}
+                size="sm"
+                onClick={() => setActiveState(state.id)}
+              >
+                {state.name}
+              </Button>
+            </ToolbarItem>
+          ))}
         </ToolbarGroup>
       </ToolbarContent>
     </Toolbar>
