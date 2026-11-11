@@ -2,7 +2,7 @@
  * Preview HTML should be static and deterministic.
  * Strip scripts and inline event handlers to prevent network calls and runtime side effects.
  */
-export function sanitizePreviewHtml(html: string): string {
+export function sanitizePreviewHtml(html: string, options: { keepPageStylesheets?: boolean } = {}): string {
   if (!html) {
     return '<!doctype html><html><body></body></html>'
   }
@@ -11,7 +11,9 @@ export function sanitizePreviewHtml(html: string): string {
 
   doc.querySelectorAll('script').forEach(element => element.remove())
   doc.querySelectorAll('iframe, frame, object, embed').forEach(element => element.remove())
-  doc.querySelectorAll<HTMLLinkElement>('link[href*="patternfly-v5"]').forEach(element => element.remove())
+  if (!options.keepPageStylesheets) {
+    doc.querySelectorAll<HTMLLinkElement>('link[href*="patternfly-v5"]').forEach(element => element.remove())
+  }
 
   doc.querySelectorAll('*').forEach((element) => {
     for (const attributeName of element.getAttributeNames()) {

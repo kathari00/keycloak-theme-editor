@@ -225,24 +225,30 @@ public final class ContextObjects {
   }
 
   public static final class TotpPolicyContext {
+    private final Map<String, Object> values;
+
+    public TotpPolicyContext(Map<String, Object> values) {
+      this.values = values;
+    }
+
     public String getAlgorithmKey() {
-      return "HmacSHA1";
+      return String.valueOf(values.getOrDefault("algorithm", "HmacSHA1"));
     }
 
     public int getDigits() {
-      return 6;
+      return ((Number) values.getOrDefault("digits", 6)).intValue();
     }
 
     public String getType() {
-      return "totp";
+      return String.valueOf(values.getOrDefault("type", "totp"));
     }
 
     public int getPeriod() {
-      return 30;
+      return ((Number) values.getOrDefault("period", 30)).intValue();
     }
 
     public int getInitialCounter() {
-      return 0;
+      return ((Number) values.getOrDefault("initialCounter", 0)).intValue();
     }
   }
 }

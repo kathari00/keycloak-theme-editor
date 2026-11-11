@@ -5,10 +5,16 @@ import type {
 import { DEFAULT_LOCALE_TAG } from '../i18n/locale-catalog'
 import generatedPagesUrl from './generated/pages.json?url'
 
-export const isV2PrototypePreview = import.meta.env.DEV
-  && typeof window !== 'undefined'
-  && new URLSearchParams(window.location.search).get('v2Prototype') === '1'
-const initialPagesUrl = isV2PrototypePreview ? '/tools/v2-migration-prototype/generated/pages.json' : generatedPagesUrl
+const v2PrototypeParam = import.meta.env.DEV && typeof window !== 'undefined'
+  ? new URLSearchParams(window.location.search).get('v2Prototype')
+  : null
+/** A raw Keycloak render staged by `verify.ts --stage-preview=<label>`, e.g. `upstream` or `candidate`. */
+export const v2PrototypeSource = v2PrototypeParam && v2PrototypeParam !== '1' && /^[a-z0-9-]+$/.test(v2PrototypeParam) ? v2PrototypeParam : null
+export const isRawPrototypePreview = v2PrototypeSource !== null
+export const isV2PrototypePreview = v2PrototypeParam === '1' || isRawPrototypePreview
+const initialPagesUrl = v2PrototypeSource
+  ? `/tools/v2-migration-prototype/generated/pages-${v2PrototypeSource}.json`
+  : isV2PrototypePreview ? '/tools/v2-migration-prototype/generated/pages.json' : generatedPagesUrl
 
 interface PreviewStateOption {
   id: string
@@ -160,7 +166,7 @@ export async function reloadPreviewPages(): Promise<void> {
 let sseConnected = false
 
 export function connectLiveReload(onPagesUpdated: () => void): void {
-  if (sseConnected)
+  if (isRawPrototypePreview || sseConnected)
     return
   sseConnected = true
   fetch('/api/save-theme').then((r) => {
@@ -184,6 +190,8 @@ export function connectLiveReload(onPagesUpdated: () => void): void {
 export function resolvePreviewVariantId(params: {
   selectedThemeId?: string | null
 }): PreviewVariantId {
+  if (isRawPrototypePreview)
+    return 'v2'
   const { selectedThemeId } = params
   const normalizedThemeId = (selectedThemeId || '').trim()
   if (normalizedThemeId && previewVariants[normalizedThemeId]) {

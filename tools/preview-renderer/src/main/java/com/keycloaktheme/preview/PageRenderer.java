@@ -95,6 +95,7 @@ public final class PageRenderer {
   ) {
     Map<String, Object> model = contextBuilder.deepCopyMap(pageContextOverride);
     model.put("properties", properties);
+    model.put("darkMode", Boolean.parseBoolean(properties.getOrDefault("darkMode", "false")));
     model.put("msg", new ContextObjects.MessageMethod(messages));
     model.put("advancedMsg", new ContextObjects.AdvancedMessageMethod(messages));
     model.put("kcSanitize", new ContextObjects.PassthroughMethod());
@@ -129,7 +130,10 @@ public final class PageRenderer {
     if (totpValue instanceof Map) {
       @SuppressWarnings("unchecked")
       Map<String, Object> rawTotp = (Map<String, Object>) totpValue;
-      rawTotp.put("policy", new ContextObjects.TotpPolicyContext());
+      Object policyValue = rawTotp.get("policy");
+      @SuppressWarnings("unchecked")
+      Map<String, Object> policy = policyValue instanceof Map ? (Map<String, Object>) policyValue : new java.util.LinkedHashMap<String, Object>();
+      rawTotp.put("policy", new ContextObjects.TotpPolicyContext(policy));
     }
 
     return model;

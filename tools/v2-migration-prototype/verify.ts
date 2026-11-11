@@ -6,6 +6,7 @@ import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { normalizePreviewArtifact, resolveContextMocks } from '../generate-preview'
+import { addReviewScenarios, assertReviewCoverage } from './scenarios'
 
 const prototypeRoot = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(prototypeRoot, '../..')
@@ -13,9 +14,66 @@ const upstreamRoot = path.join(repoRoot, 'public/keycloak-upstream')
 const overrideRoot = path.join(repoRoot, 'public/keycloak-dev-resources/themes')
 const jarPath = path.join(repoRoot, 'tools/preview-renderer/preview-renderer.jar')
 const prototypePrHead = 'db6c308504ff16de0fd8859261b75237803414a5'
+// The checkout's theme rendered as the `v2` variant, e.g. keycloak.v3 on a PatternFly 6 branch.
+const v2ThemeDir = process.argv.find(arg => arg.startsWith('--v2-theme='))?.slice('--v2-theme='.length) ?? 'keycloak.v2'
 
 interface PagesOutput {
   variants: Record<string, Record<string, Record<string, string>>>
+}
+
+/**
+ * Stages a raw render for `?v2Prototype=<label>`: the pages load the login
+ * resources of the same checkout instead of the editor's modified copies.
+ * PatternFly 5 stays on the editor's shared vendor files; PatternFly 6, which
+ * the editor does not ship, is staged from an unpacked npm package.
+ */
+async function stagePreview(label: string, keycloakSource: string, renderedPagesPath: string, generatedDir: string, patternflyV6Dir: string | undefined) {
+  const resourcesDir = path.join(generatedDir, `resources-${label}`)
+  const resourcesUrl = `/tools/v2-migration-prototype/generated/resources-${label}`
+  assert.equal(path.dirname(resourcesDir), generatedDir)
+  await rm(resourcesDir, { recursive: true, force: true })
+  for (const [themeId, upstreamTheme] of [['base', 'base'], ['v2', v2ThemeDir]]) {
+    // Keycloak resolves missing child resources through the parent theme.
+    await cp(path.join(keycloakSource, 'themes/src/main/resources/theme/base/login/resources'), path.join(resourcesDir, themeId, 'login/resources'), { recursive: true })
+    await cp(
+      path.join(keycloakSource, 'themes/src/main/resources/theme', upstreamTheme, 'login/resources'),
+      path.join(resourcesDir, themeId, 'login/resources'),
+      { recursive: true },
+    )
+  }
+  let pages = (await readFile(renderedPagesPath, 'utf8'))
+    .replaceAll('/keycloak-dev-resources/themes/', `${resourcesUrl}/`)
+  if (patternflyV6Dir) {
+    // Same files Keycloak's themes-vendor module copies.
+    for (const file of ['patternfly.min.css', 'patternfly-addons.css', 'assets']) {
+      await cp(path.join(patternflyV6Dir, file), path.join(resourcesDir, 'common/vendor/patternfly-v6', file), { recursive: true })
+    }
+    pages = pages.replaceAll('/keycloak-dev-resources/resources-common/vendor/patternfly-v6/', `${resourcesUrl}/common/vendor/patternfly-v6/`)
+  }
+  const pagesPath = path.join(generatedDir, `pages-${label}.json`)
+  const properties = await readFile(path.join(keycloakSource, 'themes/src/main/resources/theme', v2ThemeDir, 'login/theme.properties'), 'utf8')
+  const darkClass = properties.match(/^kcDarkModeClass=(.*)$/m)?.[1].trim() ?? 'kcDarkModeClass'
+  const parsed = JSON.parse(pages) as PagesOutput
+  for (const states of Object.values(parsed.variants.v2)) {
+    for (const [state, html] of Object.entries(states)) states[state] = html.replace('<html', `<html data-upstream-dark-mode-class="${darkClass}"`)
+  }
+  pages = JSON.stringify(parsed)
+  await writeFile(pagesPath, pages)
+  // Raw review must not inject Quick Start placeholders or rewrite passkey markup.
+  // The iframe sanitizes scripts when loading this document.
+
+  const git = (...args: string[]) => spawnSync('git', ['-C', keycloakSource, ...args], { encoding: 'utf8' }).stdout.trim()
+  const branch = git('rev-parse', '--abbrev-ref', 'HEAD')
+  const mainName = git('name-rev', '--name-only', '--refs=*/main', 'HEAD')
+  await writeFile(path.join(generatedDir, `pages-${label}.source.json`), `${JSON.stringify({
+    label: branch !== 'HEAD' ? branch : mainName !== 'undefined' ? mainName : v2ThemeDir,
+    commit: git('rev-parse', '--short', 'HEAD') + (git('status', '--porcelain') ? ' + local changes' : ''),
+    fullCommit: git('rev-parse', 'HEAD'),
+    theme: v2ThemeDir,
+    patternflyVersion: patternflyV6Dir ? JSON.parse(await readFile(path.join(patternflyV6Dir, 'package.json'), 'utf8')).version : null,
+    subject: git('log', '-1', '--format=%s'),
+    path: keycloakSource,
+  }, null, 2)}\n`)
 }
 
 async function main() {
@@ -26,6 +84,10 @@ async function main() {
   const asIs = process.argv.includes('--as-is')
   const withEditorOverrides = process.argv.includes('--with-editor-overrides')
   assert.ok(!asIs || keycloakSource, '--as-is requires --keycloak-source')
+  const stageLabel = process.argv.find(arg => arg.startsWith('--stage-preview='))?.slice('--stage-preview='.length)
+  assert.ok(!stageLabel || /^[a-z0-9-]+$/.test(stageLabel), '--stage-preview takes a lowercase label such as upstream or candidate')
+  const patternflyV6Dir = process.argv.find(arg => arg.startsWith('--patternfly-v6='))?.slice('--patternfly-v6='.length)
+  assert.ok(!stageLabel || (asIs && !withEditorOverrides), '--stage-preview requires --keycloak-source and --as-is without editor overrides')
   const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'keycloak-v2-login-prototype-'))
   try {
     const inputRoot = path.join(tempRoot, 'input')
@@ -40,7 +102,7 @@ async function main() {
 
     for (const themeId of ['base', 'v2']) {
       if (keycloakSource) {
-        const upstreamTheme = themeId === 'v2' ? 'keycloak.v2' : 'base'
+        const upstreamTheme = themeId === 'v2' ? v2ThemeDir : 'base'
         const sourceLogin = path.join(keycloakSource, 'themes/src/main/resources/theme', upstreamTheme, 'login')
         await cp(sourceLogin, path.join(inputRoot, themeId, 'login'), { recursive: true })
         await cp(path.join(sourceLogin, 'messages'), path.join(inputRoot, themeId, 'messages'), { recursive: true })
@@ -150,6 +212,8 @@ async function main() {
         recaptchaAction: 'register',
       }
     }
+    if (stageLabel)
+      addReviewScenarios(mocks)
     await writeFile(mocksPath, JSON.stringify(mocks))
     if (keycloakSource) {
       const baselineResult = spawnSync('java', [
@@ -170,6 +234,15 @@ async function main() {
       const comparisonDir = path.join(prototypeRoot, 'generated')
       await mkdir(comparisonDir, { recursive: true })
       await cp(path.join(baselineOutputRoot, 'pages.json'), path.join(comparisonDir, 'pr-baseline-pages.json'))
+      if (stageLabel) {
+        process.stdout.write(baselineResult.stderr)
+        assertReviewCoverage(mocks, baseline.variants.v2)
+        await stagePreview(stageLabel, keycloakSource, path.join(baselineOutputRoot, 'pages.json'), comparisonDir, patternflyV6Dir)
+        const coverage = Object.fromEntries(Object.entries(baseline.variants.v2).map(([page, states]) => [page, Object.keys(states)]))
+        await writeFile(path.join(comparisonDir, `pages-${stageLabel}.coverage.json`), JSON.stringify(coverage, null, 2))
+        process.stdout.write(`Staged the ${stageLabel} preview; open http://localhost:5173/?v2Prototype=${stageLabel}\n`)
+        return
+      }
     }
     const result = spawnSync('java', [
       '-jar',
