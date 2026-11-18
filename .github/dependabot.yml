@@ -11,6 +11,11 @@ updates:
       npm-dependencies:
         patterns:
           - '*'
+    ignore:
+      # TypeScript 7 (the native port) has no JavaScript compiler API, which typescript-eslint needs.
+      # Drop this once typescript-eslint supports TypeScript 7.
+      - dependency-name: typescript
+        update-types: ['version-update:semver-major']
 
   - package-ecosystem: maven
     directory: /tools/preview-renderer
