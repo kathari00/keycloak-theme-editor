@@ -434,10 +434,12 @@ function runMaven(pomPath: string, contextMocksPath: string, outputDir: string) 
     `--output=${toForwardSlashPath(outputDir)}`,
   ].join(' ')
 
+  // These flags silence warnings on newer JVMs, but older ones (e.g. Java 17 in CI) refuse to start with them.
+  const javaVersion = getJavaMajorVersion() ?? 0
   const mavenOpts = [
     process.env.MAVEN_OPTS || '',
-    '--enable-native-access=ALL-UNNAMED',
-    '--sun-misc-unsafe-memory-access=allow',
+    javaVersion >= 22 ? '--enable-native-access=ALL-UNNAMED' : '',
+    javaVersion >= 24 ? '--sun-misc-unsafe-memory-access=allow' : '',
   ].filter(Boolean).join(' ')
 
   return spawnSync('mvn', [
@@ -670,8 +672,11 @@ if (isDirectRun) {
       ? localesValue.split(',').map(tag => tag.trim()).filter(Boolean)
       : []
 
+  // Prefer the built renderer (npm run build:jar): faster than compiling it through Maven.
+  const jarPath = path.join(process.cwd(), 'tools', 'preview-renderer', 'preview-renderer.jar')
   generatePreview({
     packageRoot: process.cwd(),
+    jarPath: fs.existsSync(jarPath) ? jarPath : undefined,
     locales,
   }).then((result) => {
     if (!result.success) {
