@@ -57,8 +57,19 @@ function formatError(error: unknown): string {
   return String(error)
 }
 
+/** Retries rate limits and server errors, which Maven Central and GitHub return now and then in CI. */
+async function fetchWithRetry(url: string, init: RequestInit, attempts = 4): Promise<Response> {
+  for (let attempt = 1; ; attempt++) {
+    const response = await fetch(url, init)
+    if (attempt >= attempts || (response.status !== 429 && response.status < 500))
+      return response
+    const retryAfter = Number(response.headers.get('retry-after'))
+    await new Promise(resolve => setTimeout(resolve, (retryAfter > 0 ? retryAfter : 2 ** attempt * 5) * 1000))
+  }
+}
+
 async function fetchJson(url: string) {
-  const response = await fetch(url, {
+  const response = await fetchWithRetry(url, {
     headers: {
       'User-Agent': 'keycloak-theme-editor-sync',
       'Accept': 'application/vnd.github+json',
@@ -71,7 +82,7 @@ async function fetchJson(url: string) {
 }
 
 async function fetchText(url: string) {
-  const response = await fetch(url, {
+  const response = await fetchWithRetry(url, {
     headers: { 'User-Agent': 'keycloak-theme-editor-sync' },
   })
   if (!response.ok) {
@@ -81,7 +92,7 @@ async function fetchText(url: string) {
 }
 
 async function fetchBuffer(url: string): Promise<Buffer> {
-  const response = await fetch(url, {
+  const response = await fetchWithRetry(url, {
     headers: { 'User-Agent': 'keycloak-theme-editor-sync' },
   })
   if (!response.ok) {
@@ -91,7 +102,7 @@ async function fetchBuffer(url: string): Promise<Buffer> {
 }
 
 async function fetchOptionalText(url: string) {
-  const response = await fetch(url, {
+  const response = await fetchWithRetry(url, {
     headers: { 'User-Agent': 'keycloak-theme-editor-sync' },
   })
   if (response.status === 404) {
