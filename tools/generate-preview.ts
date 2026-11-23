@@ -13,6 +13,7 @@ import {
   propertiesSuffixForLocale,
 } from '../src/features/i18n/locale-catalog'
 import kcBaseMocks from './kc-base-mocks.ts'
+import { kcPageStates } from './kc-page-states.ts'
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -119,29 +120,7 @@ function cloneJson<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T
 }
 
-const builtInStates: Record<string, Record<string, Record<string, unknown>>> = {
-  'login.ftl': {
-    'minimal': {
-      realm: { internationalizationEnabled: false, rememberMe: false, registrationAllowed: false, resetPasswordAllowed: false },
-      social: { displayInfo: false, providers: [] },
-      enableWebAuthnConditionalUI: null,
-    },
-    'one-social-provider': {
-      social: {
-        displayInfo: true,
-        providers: [
-          { alias: 'google', providerId: 'google', displayName: 'Google', loginUrl: '#' },
-        ],
-      },
-    },
-    'invalid-state': {
-      realm: { rememberMe: false, resetPasswordAllowed: false },
-      social: { displayInfo: false, providers: [] },
-      message: { type: 'info', summary: 'infoMessage' },
-      messagesPerField: { username: 'Invalid username or password.', password: 'Invalid username or password.' },
-    },
-  },
-}
+const builtInStates = kcPageStates
 
 export function resolveContextMocks(userMocks?: UserMocks, localeTags: string[] = []): ContextMocks {
   const baseMocks = cloneJson(kcBaseMocks) as Record<string, Record<string, unknown>>

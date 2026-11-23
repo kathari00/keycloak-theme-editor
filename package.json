@@ -47,6 +47,7 @@
     "test:e2e": "playwright test",
     "sync:keycloak": "npx --no-install tsx tools/sync-keycloak.ts",
     "generate:preview": "npx --no-install tsx tools/generate-preview.ts",
+    "preview:coverage": "npx --no-install tsx tools/preview-coverage.ts",
     "vendor:check": "npx --no-install tsx tools/apply-vendor-adaptations.ts --check",
     "vendor:apply": "npx --no-install tsx tools/apply-vendor-adaptations.ts",
     "build:keycloak-fixture": "npx --no-install tsx tools/build-theme-fixture.ts",

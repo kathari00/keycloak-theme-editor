@@ -113,7 +113,7 @@ const common = {
     attributes: {},
   },
   scripts: [],
-  isAppInitiatedAction: false,
+  // Keycloak only sets isAppInitiatedAction for app-initiated actions; templates test it with ??.
   authenticatorAttachment: '',
   properties: {},
 }
@@ -428,6 +428,7 @@ const kcBaseMocks = {
     ...common,
     pageId: 'webauthn-error.ftl',
     isAppInitiatedAction: true,
+    execution: 'webauthn-authenticator-execution',
   },
   'login-passkeys-conditional-authenticate.ftl': {
     ...common,

@@ -224,25 +224,125 @@ public final class ContextObjects {
     }
   }
 
+  /**
+   * A user profile attribute group. Templates compare it with strings (`group != currentGroup`),
+   * which works for Keycloak's bean because FreeMarker reads its toString(): the group name.
+   */
+  public static final class AttributeGroupContext {
+    private final Map<?, ?> values;
+
+    private AttributeGroupContext(Map<?, ?> values) {
+      this.values = values;
+    }
+
+    /** Wraps every attribute's group map in profile.attributes and profile.attributesByName. */
+    public static void wrapProfileGroups(Object profile) {
+      if (!(profile instanceof Map)) {
+        return;
+      }
+      Map<?, ?> profileMap = (Map<?, ?>) profile;
+      Object attributes = profileMap.get("attributes");
+      if (attributes instanceof List) {
+        for (Object attribute : (List<?>) attributes) {
+          wrapGroup(attribute);
+        }
+      }
+      Object byName = profileMap.get("attributesByName");
+      if (byName instanceof Map) {
+        for (Object attribute : ((Map<?, ?>) byName).values()) {
+          wrapGroup(attribute);
+        }
+      }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void wrapGroup(Object attribute) {
+      if (attribute instanceof Map && ((Map<?, ?>) attribute).get("group") instanceof Map) {
+        Map<String, Object> attributeMap = (Map<String, Object>) attribute;
+        attributeMap.put("group", new AttributeGroupContext((Map<?, ?>) attributeMap.get("group")));
+      }
+    }
+
+    public Object getName() {
+      return values.get("name");
+    }
+
+    public Object getDisplayHeader() {
+      return values.get("displayHeader");
+    }
+
+    public Object getDisplayDescription() {
+      return values.get("displayDescription");
+    }
+
+    public Object getHtml5DataAnnotations() {
+      Object annotations = values.get("html5DataAnnotations");
+      return annotations == null ? Collections.emptyMap() : annotations;
+    }
+
+    @Override
+    public String toString() {
+      Object name = values.get("name");
+      return name == null ? "" : name.toString();
+    }
+  }
+
+  /** The OTP policy bean; values come from the mock's totp.policy, with Keycloak's defaults. */
   public static final class TotpPolicyContext {
+    private String algorithmKey = "HmacSHA1";
+    private int digits = 6;
+    private String type = "totp";
+    private int period = 30;
+    private int initialCounter = 0;
+
+    public static TotpPolicyContext fromMap(Object raw) {
+      TotpPolicyContext context = new TotpPolicyContext();
+      if (!(raw instanceof Map)) {
+        return context;
+      }
+      Map<?, ?> values = (Map<?, ?>) raw;
+      Object algorithm = values.containsKey("algorithmKey") ? values.get("algorithmKey") : values.get("algorithm");
+      if (algorithm != null) {
+        context.algorithmKey = String.valueOf(algorithm);
+      }
+      if (values.get("type") != null) {
+        context.type = String.valueOf(values.get("type"));
+      }
+      context.digits = intValue(values.get("digits"), context.digits);
+      context.period = intValue(values.get("period"), context.period);
+      context.initialCounter = intValue(values.get("initialCounter"), context.initialCounter);
+      return context;
+    }
+
+    private static int intValue(Object value, int fallback) {
+      if (value instanceof Number) {
+        return ((Number) value).intValue();
+      }
+      try {
+        return value == null ? fallback : Integer.parseInt(String.valueOf(value));
+      } catch (NumberFormatException error) {
+        return fallback;
+      }
+    }
+
     public String getAlgorithmKey() {
-      return "HmacSHA1";
+      return algorithmKey;
     }
 
     public int getDigits() {
-      return 6;
+      return digits;
     }
 
     public String getType() {
-      return "totp";
+      return type;
     }
 
     public int getPeriod() {
-      return 30;
+      return period;
     }
 
     public int getInitialCounter() {
-      return 0;
+      return initialCounter;
     }
   }
 }

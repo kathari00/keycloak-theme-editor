@@ -125,11 +125,13 @@ public final class PageRenderer {
       model.put("auth", new ContextObjects.AuthContext());
     }
 
+    ContextObjects.AttributeGroupContext.wrapProfileGroups(model.get("profile"));
+
     Object totpValue = model.get("totp");
     if (totpValue instanceof Map) {
       @SuppressWarnings("unchecked")
       Map<String, Object> rawTotp = (Map<String, Object>) totpValue;
-      rawTotp.put("policy", new ContextObjects.TotpPolicyContext());
+      rawTotp.put("policy", ContextObjects.TotpPolicyContext.fromMap(rawTotp.get("policy")));
     }
 
     return model;
