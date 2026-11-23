@@ -21,10 +21,13 @@ jobs:
           distribution: temurin
           java-version: 17
       - run: npm ci
+      # The rendered preview pages are build output: render every language once for tests and the build.
+      - run: npm run sync:keycloak
+      - run: npm run build:jar
+      - run: npm run generate:preview -- --locales=all
       - run: npm run lint
       - run: npm run test
       - run: npm run build
-      - run: npm run build:jar
       - run: npm run build:cli
       - run: npm pack --dry-run
       - run: npx playwright install --with-deps chromium

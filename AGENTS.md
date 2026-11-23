@@ -20,6 +20,10 @@ npm run build:cli                  # tsup build for bin/cli.js
 
 Other scripts (`sync:keycloak`, `generate:preview`, `vendor:check`/`vendor:apply`, `build:keycloak-fixture`) are one-off tooling - see `package.json`.
 
+The rendered preview pages (`src/features/preview/generated/`) are build output and not committed. `dev`, `build` and the Vitest scripts generate them when missing, which needs `npm run sync:keycloak` once (and Java). CI renders every curated language before testing and building.
+
+Preview states live in `tools/kc-page-states.ts`, merged on top of the page mocks in `tools/kc-base-mocks.ts`. `npm run preview:coverage` reports which `<#if>` branches of the login templates no mock or state renders (`--uncovered` lists them).
+
 ## Architecture
 
 Feature-based structure under `src/features/`:

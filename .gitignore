@@ -16,3 +16,6 @@ public/fonts/
 .vscode/*
 !.vscode/extensions.json
 .idea
+
+# Rendered preview pages: build output (npm run generate:preview), see AGENTS.md
+src/features/preview/generated/

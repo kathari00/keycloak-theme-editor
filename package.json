@@ -34,7 +34,9 @@
     "node": ">=20.19.0"
   },
   "scripts": {
+    "predev": "npx --no-install tsx tools/ensure-preview.ts",
     "dev": "vite",
+    "prebuild": "npx --no-install tsx tools/ensure-preview.ts",
     "build": "tsc -b && vite build",
     "build:jar": "mvn -f tools/preview-renderer/pom.xml clean package -q",
     "build:cli": "tsup --config bin/tsup.config.ts",
@@ -42,7 +44,9 @@
     "lint": "eslint .",
     "prepare": "husky",
     "preview": "vite preview",
+    "pretest": "npx --no-install tsx tools/ensure-preview.ts",
     "test": "vitest",
+    "pretest:run": "npx --no-install tsx tools/ensure-preview.ts",
     "test:run": "vitest run",
     "test:e2e": "playwright test",
     "sync:keycloak": "npx --no-install tsx tools/sync-keycloak.ts",
