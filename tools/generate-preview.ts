@@ -174,13 +174,17 @@ function ensureQuickStartElement(params: {
   state: string
   tagName: keyof HTMLElementTagNameMap
   fallbackText?: string
+  /** Reuse an untagged element that already has `id`. Off when page templates use the id for their own content. */
+  adoptById?: boolean
 }): HTMLElement {
-  const { doc, container, id, state, tagName, fallbackText } = params
+  const { doc, container, id, state, tagName, fallbackText, adoptById = true } = params
   let placeholder = doc.querySelector<HTMLElement>(`#${id}[data-kc-state="${state}"]`)
-    ?? doc.getElementById(id) as HTMLElement | null
+    ?? (adoptById ? doc.getElementById(id) as HTMLElement | null : null)
   if (!placeholder) {
     placeholder = doc.createElement(tagName)
-    placeholder.id = id
+    if (!doc.getElementById(id)) {
+      placeholder.id = id
+    }
     container.appendChild(placeholder)
   }
   placeholder.setAttribute('data-kc-state', state)
@@ -231,7 +235,7 @@ function ensureFooterLinkContainer(doc: Document): Element {
   return newWrapper
 }
 
-function injectQuickStartPlaceholders(html: string): string {
+export function injectQuickStartPlaceholders(html: string): string {
   const dom = new JSDOM(html)
   const { document } = dom.window
 
@@ -272,6 +276,9 @@ function injectQuickStartPlaceholders(html: string): string {
     state: 'info-message',
     tagName: 'div',
     fallbackText: '',
+    // info.ftl and logout-confirm.ftl wrap their page body in #kc-info-message; adopting it
+    // would let the quick-start toggle hide the whole page body.
+    adoptById: false,
   })
   // A synthesized placeholder would otherwise be appended below the page form.
   if (infoMessage.parentElement === contentWrapper && contentWrapper.firstElementChild !== infoMessage) {
